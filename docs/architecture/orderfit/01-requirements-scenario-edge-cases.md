@@ -128,7 +128,6 @@ Source: the team's 89-case catalogue `[R: docs/discussion/edgecase.pdf, transcri
 | P-06 discount demanded after delivery | compute (break-even) | IF-TIME | PL-P-06 |
 | P-07 early-payment discount offered | compute | DEFER | PL-P-07 |
 | P-08 government customer | compute (owner sets a long downside delay) | DEFER | PL-P-08 |
-| T-01 trusted client now bankrupt | escalate (owner sets a 100% haircut; no trust ladder) | IF-TIME | PL-T-01 |
 | T-02 new customer, no history | warn (owner-set scenarios) | DEFER | PL-T-02 |
 | T-03 good history, slowing | warn | DEFER | PL-T-03 |
 | T-04 order much larger than any before | warn | DEFER | PL-T-04 |
@@ -153,7 +152,6 @@ Source: the team's 89-case catalogue `[R: docs/discussion/edgecase.pdf, transcri
 | S-01 supplier delivers late | compute | DEFER | PL-S-01 |
 | S-02 supplier raises prices | compute (cost-overrun scenario) | IF-TIME | PL-S-02 |
 | S-03 supplier demands full prepayment | compute (edit input, recompute) | MUST | ST-STALE, FX-OF-02 |
-| S-04 supplier bankrupt after the deposit | warn | DEFER | PL-S-04 |
 | S-05 factory fire, flood, strike | compute | DEFER | PL-S-05 |
 | S-06 goods rejected on quality | compute | DEFER | PL-S-06 |
 | S-07 shipping disruption | compute | DEFER | PL-S-07 |
