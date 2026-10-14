@@ -27,10 +27,13 @@ export function OldVsNewWay() {
             {/* Real Internet Visual Header: Spreadsheet Chaos */}
             <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4]">
               <img
-                src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80"
+                src="/images/manual-spreadsheets.jpg"
                 alt="Manual financial spreadsheets and invoice clutter"
                 className="w-full h-full object-cover brightness-90 filter grayscale-[25%]"
-                loading="lazy"
+                loading="eager"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">
@@ -97,10 +100,13 @@ export function OldVsNewWay() {
             {/* Real Internet Visual Header: Modern Analytics Clarity */}
             <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4]">
               <img
-                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+                src="/images/financial-charts.jpg"
                 alt="Automated financial charts and cash visibility dashboard"
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading="eager"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#004D3B]/80 via-[#004D3B]/30 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">

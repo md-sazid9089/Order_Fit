@@ -1,29 +1,73 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, Menu, X, ArrowRight, ShieldCheck, Layers, FileText, CheckCircle2 } from "lucide-react";
 
 export function Navbar() {
+  const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
+      const currentScrollY = window.scrollY;
+
+      // Update background styling threshold
+      setIsScrolled(currentScrollY > 20);
+
+      // Don't collapse if mobile menu is open
+      if (mobileMenuOpen) {
+        setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
       }
+
+      // Always show when near the very top of the page
+      if (currentScrollY <= 60) {
+        setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      // Safeguard against bounce/rubber-banding at the bottom of the page
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (currentScrollY > maxScroll) {
+        return;
+      }
+
+      const delta = currentScrollY - lastScrollY.current;
+
+      // Minimum delta to avoid jitter from micro-scrolls
+      if (Math.abs(delta) < 8) {
+        return;
+      }
+
+      if (delta > 0) {
+        // Scrolling DOWN -> Collapse with smooth transition
+        setIsVisible(false);
+        setOpenDropdown(null);
+      } else {
+        // Scrolling UP -> Reveal with smooth transition
+        setIsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [mobileMenuOpen]);
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 z-50 transition-all duration-300 ease-in-out ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      } ${
         isScrolled
           ? "bg-[#00382B]/95 backdrop-blur-md border-b border-white/10 shadow-sm"
           : "bg-[#004D3B] border-b border-transparent"
@@ -31,8 +75,17 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
-          {/* Settle-Style Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          {/* Settle-Style Logo with Smooth Scroll to Top */}
+          <Link
+            href="/"
+            onClick={(e) => {
+              if (window.location.pathname === "/") {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+            className="flex items-center gap-2 group cursor-pointer"
+          >
             <span className="font-radio-grotesk text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors">
               orderfit
             </span>
@@ -161,28 +214,28 @@ export function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="hidden sm:flex items-center gap-4">
-            <a
-              href="#simulator"
+            <Link
+              href="/auth/signin"
               className="text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
             >
-              Log in
-            </a>
-            <a
-              href="#simulator"
+              Log In
+            </Link>
+            <Link
+              href="/auth/signup"
               className="flex items-center justify-center rounded-full tracking-wider border border-solid border-transparent font-sans font-semibold px-5 h-10 bg-[#B5F2C6] text-[#004D3B] hover:bg-[#a3ebb6] uppercase text-xs transition-all shadow-sm active:scale-95"
             >
               Get started
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex lg:hidden items-center gap-3">
-            <a
-              href="#simulator"
+            <Link
+              href="/auth/signup"
               className="flex sm:hidden items-center justify-center rounded-full px-4 h-8 text-[11px] font-semibold uppercase tracking-wider font-sans bg-[#B5F2C6] text-[#004D3B]"
             >
               Get started
-            </a>
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1.5 text-white hover:text-[#B5F2C6] transition-colors"
@@ -235,13 +288,20 @@ export function Navbar() {
             </a>
           </div>
           <div className="pt-2 flex flex-col gap-3">
-            <a
-              href="#simulator"
+            <Link
+              href="/auth/signin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2.5 rounded-full border border-white/20 text-[#FFFAEC] font-semibold uppercase text-xs tracking-wider font-sans hover:bg-white/10 transition-colors"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/auth/signup"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center py-3 rounded-full bg-[#B5F2C6] text-[#004D3B] font-semibold uppercase text-xs tracking-wider shadow-sm font-sans"
             >
               Get started
-            </a>
+            </Link>
           </div>
         </div>
       )}

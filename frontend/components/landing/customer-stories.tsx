@@ -8,8 +8,7 @@ export function CustomerStories() {
     {
       company: "Branch",
       logo: "BRANCH",
-      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+      image: "/images/warehouse-cargo.jpg",
       quote: "It changed my process entirely. I don't look at the spreadsheet at all anymore — it all exists within OrderFit now.",
       metrics: [
         { value: "150+", label: "hours a year saved" },
@@ -22,8 +21,7 @@ export function CustomerStories() {
     {
       company: "Ridge Precision",
       logo: "RIDGE PRECISION",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
-      avatar: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=200&q=80",
+      image: "/images/precision-parts.jpg",
       quote: "Before accepting our largest $420,000 contract, OrderFit showed us the exact Day 28 payroll breach. We secured a 30% advance deposit without tension.",
       metrics: [
         { value: "$1.2M", label: "cash runway protected" },
@@ -112,11 +110,16 @@ export function CustomerStories() {
               {/* Author Row with Real Avatar */}
               <div className="flex items-center justify-between pt-6 border-t border-[#ECEAE4] gap-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={active.avatar}
-                    alt={active.author}
-                    className="size-11 rounded-full object-cover border border-[#ECEAE4]"
-                  />
+                  <div className="size-11 rounded-full bg-[#ECEAE4] border border-[#DDD9D0] flex items-center justify-center shrink-0">
+                    <svg
+                      className="size-5 text-[#526975]/40"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-label="Blank profile avatar"
+                    >
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
                   <div>
                     <div className="font-bold text-sm text-[#1A1A1A] font-sans">{active.author}</div>
                     <div className="text-xs text-[#526975] font-sans">{active.role}</div>
@@ -138,7 +141,10 @@ export function CustomerStories() {
                 src={active.image}
                 alt={`${active.company} manufacturing facility`}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading="eager"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 text-white text-xs font-sans">

@@ -1,41 +1,38 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, TrendingUp, Clock, ShieldCheck, DollarSign } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function ResultsSection() {
   const results = [
     {
-      metric: "$1.2M",
+      metric: "$1.8M",
       label: "Cash Deficit Prevented",
-      company: "Ridge Precision Assembly",
+      company: "Apex Dynamics Corp",
       industry: "Industrial Manufacturing",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80",
-      avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80",
-      quote: "OrderFit detected that a $380K Net 60 order would leave us $42K short on Day 35. We asked for a 35% deposit and stayed in the black.",
-      author: "Elena Rostova",
-      role: "Operations Director",
+      image: "/images/precision-parts.jpg",
+      quote: "OrderFit flagged a $42K cash deficit 30 days before customer invoice maturity. Securing a 35% advance deposit kept our production line running with zero debt.",
+      author: "Marcus Sterling",
+      role: "VP of Operations",
     },
     {
-      metric: "48h",
-      label: "Faster Terms Agreement",
-      company: "AeroForm Composites",
-      industry: "Aerospace & Defence",
-      image: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=500&q=80",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-      quote: "Instead of back-and-forth email arguments, we sent the customer an exact cash timeline. They approved the milestone payment the next morning.",
-      author: "David Chen",
-      role: "Managing Director",
+      metric: "24h",
+      label: "Commercial Terms Alignment",
+      company: "Solstice Consumer Brands",
+      industry: "Consumer Goods & Packaging",
+      image: "/images/robotics-manufacturing.jpg",
+      quote: "Before OrderFit, negotiating supplier terms took weeks of spreadsheet guesswork. The deterministic delay scan allowed us to agree on Net 30 milestone terms within 24 hours.",
+      author: "Camila Duarte",
+      role: "Head of Supply Chain",
     },
     {
       metric: "100%",
-      label: "On-Time Payroll & Taxes",
-      company: "Vanguard Packaging",
-      industry: "Consumer Goods & Logistics",
-      image: "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=500&q=80",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80",
-      quote: "Zero emergency line-of-credit fees since we started screening every supplier PO through OrderFit's delay tolerance scan.",
-      author: "Sarah Jenkins",
+      label: "On-Time Payroll Compliance",
+      company: "Kestrel Precision Logistics",
+      industry: "Global Freight & Assembly",
+      image: "/images/packaging-boxes.jpg",
+      quote: "Screening incoming enterprise POs against our deterministic runway curve has eliminated emergency overdrafts entirely. Zero surprise cash breaches across 14 consecutive months.",
+      author: "Julian Vance",
       role: "Chief Financial Officer",
     },
   ];
@@ -60,7 +57,7 @@ export function ResultsSection() {
           </div>
         </div>
 
-        {/* 3 Results Cards with Internet Photos & Executive Avatars */}
+        {/* 3 Results Cards with Local Images & Blank Profile Avatars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {results.map((res, i) => (
             <div
@@ -68,12 +65,15 @@ export function ResultsSection() {
               className="rounded-4xl bg-white border border-[#ECEAE4] overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
             >
               {/* Card Image Banner */}
-              <div className="relative h-40 w-full overflow-hidden border-b border-[#ECEAE4]">
+              <div className="relative h-44 w-full overflow-hidden border-b border-[#ECEAE4] bg-[#ECEAE4]">
                 <img
                   src={res.image}
                   alt={res.company}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute top-3 left-4">
@@ -97,13 +97,18 @@ export function ResultsSection() {
                   &ldquo;{res.quote}&rdquo;
                 </blockquote>
 
-                {/* Author Info with Photo */}
+                {/* Author Info with Blank Profile Image */}
                 <div className="pt-4 border-t border-[#ECEAE4] flex items-center gap-3">
-                  <img
-                    src={res.avatar}
-                    alt={res.author}
-                    className="size-10 rounded-full object-cover border border-[#ECEAE4] shrink-0"
-                  />
+                  <div className="size-10 rounded-full bg-[#ECEAE4] border border-[#DDD9D0] flex items-center justify-center shrink-0">
+                    <svg
+                      className="size-5 text-[#526975]/40"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-label="Blank profile avatar"
+                    >
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
                   <div>
                     <div className="font-semibold text-sm text-[#1A1A1A] font-sans">{res.author}</div>
                     <div className="text-xs text-[#526975] font-sans">

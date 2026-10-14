@@ -163,9 +163,13 @@ export function OrderSimulator() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4 mb-8">
               <div className="flex items-center gap-3">
                 <img
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=150&q=80"
+                  src="/images/precision-parts.jpg"
                   alt="Simulated component parts"
                   className="size-12 rounded-xl object-cover border border-[#ECEAE4] shrink-0 shadow-xs"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <div>
                   <span className="text-xs font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">

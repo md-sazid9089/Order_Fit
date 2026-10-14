@@ -8,7 +8,7 @@ export function InsightsSection() {
     {
       tag: "Working Capital",
       readTime: "6 min read",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80",
+      image: "/images/capital-growth.jpg",
       title: "The 10 Best Working Capital Solutions for Manufacturing & CPG Brands in 2026",
       summary:
         "Running a growing brand today is capital-intensive. The right terms solution doesn't just fund your next purchase order — it keeps cash flowing without giving up equity.",
@@ -16,7 +16,7 @@ export function InsightsSection() {
     {
       tag: "Procurement Guide",
       readTime: "8 min read",
-      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
+      image: "/images/warehouse-cargo.jpg",
       title: "Non-Dilutive Funding & Negotiation Guide for Growing Brands",
       summary:
         "A popular source of capital is external debt or equity. Yet many companies fail to use commercial levers — where no ownership or interest fees are paid.",
@@ -24,7 +24,7 @@ export function InsightsSection() {
     {
       tag: "Risk Intelligence",
       readTime: "5 min read",
-      image: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80",
+      image: "/images/robotics-manufacturing.jpg",
       title: "Ready to Scale? Read This Before You Commit to an Enterprise PO",
       summary:
         "Hidden payment terms, 60-day customer delay cliffs, and strict raw material supplier milestones can drain cash reserves. Know your delay tolerance before signing.",
@@ -32,7 +32,7 @@ export function InsightsSection() {
     {
       tag: "Accounting & Margins",
       readTime: "7 min read",
-      image: "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=600&q=80",
+      image: "/images/packaging-boxes.jpg",
       title: "The Margin & Landed Cost Conversation Operators Should Have Early",
       summary:
         "Why inventory-led brands need landed margin clarity, day-by-day cash flow planning, and working capital strategies in place before high season.",
@@ -62,12 +62,15 @@ export function InsightsSection() {
             >
               <div>
                 {/* Visual Image Header */}
-                <div className="relative w-full h-44 overflow-hidden border-b border-[#ECEAE4]">
+                <div className="relative w-full h-44 overflow-hidden border-b border-[#ECEAE4] bg-[#ECEAE4]">
                   <img
                     src={art.image}
                     alt={art.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
+                    loading="eager"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-3 left-3">

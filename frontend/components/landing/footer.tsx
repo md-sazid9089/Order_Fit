@@ -160,11 +160,20 @@ export function Footer() {
         {/* Backed By & Brand Row */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#FFFAEC]">
+            <Link
+              href="/"
+              onClick={(e) => {
+                if (window.location.pathname === "/") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              className="flex items-center gap-2 group cursor-pointer"
+            >
+              <span className="font-heading text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors">
                 orderfit
               </span>
-              <span className="size-2 rounded-full bg-[#B5F2C6]" />
+              <span className="size-2 rounded-full bg-[#B5F2C6] group-hover:scale-125 transition-transform" />
             </Link>
             <span className="text-xs text-[#E6F4F1]/60 border-l border-white/20 pl-3 font-sans">
               Purchase, Plan, and Protect Cash Flow
@@ -196,6 +205,15 @@ export function Footer() {
             <a href="#security" className="hover:text-white transition-colors">Security</a>
             <a href="#cookies" className="hover:text-white transition-colors">Cookie Preferences</a>
           </div>
+        </div>
+
+        {/* Big Centered Orderfit Text */}
+        <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-white/5 flex justify-center items-center text-center">
+          <Link href="/" className="inline-block group">
+            <span className="font-radio-grotesk text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors duration-300 select-none leading-none">
+              Orderfit
+            </span>
+          </Link>
         </div>
 
       </div>

@@ -27,10 +27,13 @@ export function FeaturePillars() {
               {/* Visual Banner Header */}
               <div className="relative h-44 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4]">
                 <img
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80"
+                  src="/images/financial-charts.jpg"
                   alt="Day-by-day cash trajectory telemetry"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">
@@ -95,10 +98,13 @@ export function FeaturePillars() {
               {/* Visual Banner Header */}
               <div className="relative h-44 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4]">
                 <img
-                  src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
+                  src="/images/electronics-inspection.jpg"
                   alt="Precision component procurement and inspection"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">
@@ -159,10 +165,13 @@ export function FeaturePillars() {
               {/* Visual Banner Header */}
               <div className="relative h-44 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4]">
                 <img
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80"
+                  src="/images/capital-growth.jpg"
                   alt="Growth capital and non-dilutive term planning"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">

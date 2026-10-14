@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { ArrowRight, Layers, Sparkles, CheckCircle2 } from "lucide-react";
 
 export function SupportTiers() {
@@ -15,21 +16,15 @@ export function SupportTiers() {
           <div className="flex w-full xl:w-1/2 flex-col items-start gap-5">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-3">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-                  alt="Customer Success Specialist"
-                  className="size-11 rounded-full border-2 border-[#004D3B] object-cover shadow-sm"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"
-                  alt="Commercial Terms Director"
-                  className="size-11 rounded-full border-2 border-[#004D3B] object-cover shadow-sm"
-                />
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
-                  alt="Working Capital Engineer"
-                  className="size-11 rounded-full border-2 border-[#004D3B] object-cover shadow-sm"
-                />
+                <div className="size-11 rounded-full bg-[#EBEAE4] border-2 border-[#004D3B] flex items-center justify-center shadow-sm">
+                  <svg className="size-5 text-[#004D3B]/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                </div>
+                <div className="size-11 rounded-full bg-[#ECEAE4] border-2 border-[#004D3B] flex items-center justify-center shadow-sm">
+                  <svg className="size-5 text-[#004D3B]/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                </div>
+                <div className="size-11 rounded-full bg-[#EBEAE4] border-2 border-[#004D3B] flex items-center justify-center shadow-sm">
+                  <svg className="size-5 text-[#004D3B]/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                </div>
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-sans">
                 <span className="size-2 rounded-full bg-[#B5F2C6] animate-pulse" />
@@ -91,12 +86,12 @@ export function SupportTiers() {
                 </p>
               </div>
 
-              <a
-                href="#simulator"
+              <Link
+                href="/auth/signup"
                 className="inline-flex items-center justify-center rounded-full tracking-wider font-sans font-semibold px-5 h-10 bg-[#004D3B] text-[#FFFAEC] hover:bg-[#00382B] uppercase text-xs transition-all mt-4"
               >
                 Get started
-              </a>
+              </Link>
             </div>
 
           </div>
