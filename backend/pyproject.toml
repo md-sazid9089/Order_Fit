@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "orderfit"
+version = "0.1.0"
+description = "Order decision assistant: AI reads and writes, a deterministic engine decides."
+requires-python = ">=3.12"
+# Lower bounds only for now; freeze exact versions with a lockfile after the first install.
+dependencies = [
+  "pydantic>=2.9",
+  "pydantic-settings>=2.5",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "python-multipart>=0.0.9",
+  "langgraph>=0.2",
+  "langgraph-checkpoint-sqlite>=2.0",
+  # AI provider SDK is added on 16 Oct, when agent/llm.py is implemented.
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff>=0.6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["orderfit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "e2e: calls the real AI model; costs money; run before submission only",
+]
+addopts = "-m 'not e2e'"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]  # the formatter owns code width; long docstrings are fine
