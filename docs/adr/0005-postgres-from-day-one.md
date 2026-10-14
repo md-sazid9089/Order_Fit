@@ -9,3 +9,5 @@
 - LangGraph's Postgres checkpointer gives us restart-resume in the same transactional store.
 
 **Cost:** One more container locally. Tests that touch the store need a running database (CI provides one as a service).
+
+**Hosting:** Neon (Postgres 18). The app connects through the pooled endpoint; Alembic connects through the direct endpoint (`DATABASE_URL_DIRECT`). Local Docker Postgres stays available for offline development.

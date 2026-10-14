@@ -3,4 +3,7 @@
 Tables are defined in store/tables.py and changed only through Alembic
 migrations (backend/migrations). Every query is scoped by business_id.
 Money columns are BIGINT minor units, never NUMERIC or float.
+
+Windows dev note: psycopg async cannot run on the default ProactorEventLoop;
+use asyncio.WindowsSelectorEventLoopPolicy() (Linux containers are unaffected).
 """

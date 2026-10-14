@@ -7,7 +7,8 @@
 
 name: orderfit
 
-x-db-url: &db-url postgresql+psycopg://${POSTGRES_USER:-orderfit}:${POSTGRES_PASSWORD:-orderfit}@db:5432/${POSTGRES_DB:-orderfit}
+# DATABASE_URL in the root .env (e.g. Neon) overrides the local db service.
+x-db-url: &db-url ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-orderfit}:${POSTGRES_PASSWORD:-orderfit}@db:5432/${POSTGRES_DB:-orderfit}}
 
 services:
   db:
@@ -35,6 +36,7 @@ services:
       disable: true       # one-shot job; the image's HTTP healthcheck doesn't apply
     environment:
       DATABASE_URL: *db-url
+      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:-}   # Neon direct endpoint for DDL
     depends_on:
       db:
         condition: service_healthy
@@ -49,6 +51,7 @@ services:
     environment:
       DATABASE_URL: *db-url
       DOCUMENT_DIR: /app/var/documents
+      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:-}
       CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
     ports:
       - "${API_PORT:-8000}:8000"

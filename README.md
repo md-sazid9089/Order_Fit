@@ -199,6 +199,21 @@ npm run dev
 
 ## Configuration
 
+### Database (Neon)
+
+The shared database is Postgres on [Neon](https://neon.tech). Local Docker Postgres remains
+the offline default.
+
+- `DATABASE_URL`: the **pooled** endpoint (host contains `-pooler`), with the scheme changed to
+  `postgresql+psycopg://`. The app and the LangGraph checkpointer use it.
+- `DATABASE_URL_DIRECT`: the same URL without `-pooler`. Alembic uses it, because schema
+  changes should not go through the transaction-mode pooler.
+- Keep `?sslmode=require&channel_binding=require`.
+
+Put both in `backend/.env` for local runs. Put both in the repo-root `.env` to point
+`docker compose` at Neon instead of the local `db` service. Both files are gitignored.
+
+
 Backend settings are read from `backend/.env`. See [backend/.env.example](backend/.env.example).
 
 | Variable | Default | Description |
@@ -207,6 +222,7 @@ Backend settings are read from `backend/.env`. See [backend/.env.example](backen
 | `AI_MODEL` | *(empty)* | Model identifier |
 | `AI_TEMPERATURE` | `0` | Sampling temperature |
 | `DATABASE_URL` | `postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit` | SQLAlchemy URL. Docker Compose points it at the `db` service |
+| `DATABASE_URL_DIRECT` | *(empty)* | Non-pooled URL used by Alembic. Set it on Neon (same host without `-pooler`) |
 | `DOCUMENT_DIR` | `./var/documents` | Where uploaded documents are stored |
 | `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed browser origins (JSON list) |
 | `TARGET_TOLERANCE_DAYS` | `15` | Late-payment days an option must survive to count as safe |

@@ -1,4 +1,4 @@
-"""Alembic environment. Database URL comes from settings, never from alembic.ini."""
+"""Alembic environment. Database URL comes from settings (migration_url: the direct endpoint on Neon), never from alembic.ini."""
 
 from logging.config import fileConfig
 
@@ -9,7 +9,8 @@ from orderfit.config import settings
 from orderfit.store.tables import metadata
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# ConfigParser treats % as interpolation; escape it so passwords with % survive.
+config.set_main_option("sqlalchemy.url", settings.migration_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -28,7 +29,7 @@ def include_object(obj, name, type_, reflected, compare_to) -> bool:
 def run_migrations_offline() -> None:
     """Emit SQL to stdout without a connection (alembic upgrade head --sql)."""
     context.configure(
-        url=settings.database_url,
+        url=settings.migration_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
