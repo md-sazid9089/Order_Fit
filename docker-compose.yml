@@ -1,0 +1,75 @@
+# OrderFit MVP: Postgres + one-shot migrations + API + web.
+#   docker compose up --build
+#   API       http://localhost:8000  (docs at /docs)
+#   Web       http://localhost:3000
+#   Postgres  localhost:5432 (local tools and tests; bound to 127.0.0.1 only)
+
+name: orderfit
+
+x-db-url: &db-url postgresql+psycopg://${POSTGRES_USER:-orderfit}:${POSTGRES_PASSWORD:-orderfit}@db:5432/${POSTGRES_DB:-orderfit}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-orderfit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderfit}   # local default only; set a real one when deployed
+      POSTGRES_DB: ${POSTGRES_DB:-orderfit}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    healthcheck:
+      disable: true       # one-shot job; the image's HTTP healthcheck doesn't apply
+    environment:
+      DATABASE_URL: *db-url
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false   # AI_API_KEY and friends; runs without it until the agent lands
+    environment:
+      DATABASE_URL: *db-url
+      DOCUMENT_DIR: /app/var/documents
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      - documents:/app/var      # uploaded documents survive restarts
+      - ./data:/app/data:ro     # demo business, catalogue, test cases
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        # Browser-facing URL, baked in at build time.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  documents:

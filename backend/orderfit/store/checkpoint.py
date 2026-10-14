@@ -1,5 +1,8 @@
-"""LangGraph checkpointer factory (SQLite now, Postgres later) and the
-prune-to-final-state step run when a deal closes (~500 KB -> ~20 KB)."""
+"""LangGraph checkpointer on the same Postgres database (AsyncPostgresSaver,
+connected with settings.psycopg_conninfo; call .setup() once at startup).
+
+prune(): when a deal closes, keep only the final checkpoint (~500 KB -> ~20 KB).
+"""
 
 
 def get_checkpointer():

@@ -1,5 +1,6 @@
 """Append-only audit log. Only append() and read functions exist here.
-SQLite: triggers reject UPDATE/DELETE. Postgres: revoke UPDATE/DELETE from the app role.
+Enforced in the database, not by convention: the migration that creates the
+table adds a trigger that raises on UPDATE, DELETE and TRUNCATE.
 Names and bank numbers are masked before writing."""
 
 from orderfit.domain import AuditEntry

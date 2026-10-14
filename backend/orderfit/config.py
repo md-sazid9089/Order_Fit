@@ -14,13 +14,18 @@ class Settings(BaseSettings):
     ai_model: str = ""
     ai_temperature: float = 0.0
 
-    database_url: str = "sqlite:///./var/orderfit.db"
-    checkpoint_db_path: str = "./var/checkpoints.db"
+    # SQLAlchemy form. psycopg 3 serves both sync (Alembic) and async (app) use.
+    database_url: str = "postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit"
     document_dir: str = "./var/documents"
 
     cors_origins: list[str] = ["http://localhost:3000"]
 
     target_tolerance_days: int = 15
+
+    @property
+    def psycopg_conninfo(self) -> str:
+        """Plain libpq URL for psycopg and the LangGraph Postgres checkpointer."""
+        return self.database_url.replace("postgresql+psycopg://", "postgresql://", 1)
 
 
 settings = Settings()
