@@ -1,0 +1,14 @@
+{
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-17",
+  "decision": "blocked_data_conflict",
+  "escalations": [
+    {
+      "code": "E-DUPLICATE-OBLIGATION",
+      "message": "cost resupply_inv duplicates baseline invoice INV-1007 (counted once only)"
+    }
+  ],
+  "flags": [],
+  "input_hash": "aed813f5f9c7b06dc2a10bdf126b61f2c3219f2be8a63c0c0afffdc16617868e",
+  "recommended": null
+}

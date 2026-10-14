@@ -1,0 +1,280 @@
+{
+  "accept_as_is": {
+    "base": {
+      "absolute_gap_vs_reserve": 30000000,
+      "feasible": false,
+      "final_balance": 40000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-12-01",
+      "first_violation_date": "2026-12-01",
+      "headroom": -30000000,
+      "lowest_balance": -30000000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 30000000,
+      "order_caused_violation_days": 1,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 30000000,
+      "feasible": false,
+      "final_balance": 40000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-12-01",
+      "first_violation_date": "2026-12-01",
+      "headroom": -30000000,
+      "lowest_balance": -30000000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 30000000,
+      "order_caused_violation_days": 16,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 30000000,
+    "resilience": 0,
+    "severe": {
+      "absolute_gap_vs_reserve": 31200000,
+      "feasible": false,
+      "final_balance": 38800000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-12-01",
+      "first_violation_date": "2026-12-01",
+      "headroom": -31200000,
+      "lowest_balance": -31200000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 31200000,
+      "order_caused_violation_days": 46,
+      "scenario": "severe"
+    },
+    "strategy_id": "accept_as_is"
+  },
+  "alerts": {
+    "accept_as_is": [
+      {
+        "balance_that_day": -30000000,
+        "date": "2026-12-01",
+        "gap_to_reserve": 30000000,
+        "rule": "A1"
+      },
+      {
+        "days_exposed": null,
+        "first_violation_date": "2026-12-01",
+        "next_inflow_that_restores_the_reserve": null,
+        "rule": "A2"
+      }
+    ],
+    "baseline": [],
+    "recommended": []
+  },
+  "baseline": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 10000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 10000000,
+      "lowest_balance": 10000000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 10000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 10000000,
+      "lowest_balance": 10000000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 0,
+    "resilience": 3,
+    "severe": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 10000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 10000000,
+      "lowest_balance": 10000000,
+      "lowest_date": "2026-12-01",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "severe"
+    },
+    "strategy_id": "decline"
+  },
+  "best_plan_by_receipt_delay": {
+    "changes": [
+      {
+        "from_delay_days": 0,
+        "top": "dep50"
+      },
+      {
+        "from_delay_days": 22,
+        "top": null
+      }
+    ],
+    "first_delay_with_no_feasible_shortlisted_strategy": 22,
+    "scanned_to": 90
+  },
+  "best_profit_strategy": "dep60",
+  "best_without_financing": "dep50",
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-13",
+  "counts": {
+    "dominated_pruned": 0,
+    "enumerated": 6,
+    "hard_feasible_after_dominance_pruning": 2,
+    "rejected": 3
+  },
+  "decision": "accept_with_changes",
+  "delay_scan_top": {
+    "first_failing_delay_days": 22,
+    "scanned_to": 90,
+    "survives_full_scan": false,
+    "tolerance_days": 21
+  },
+  "escalate": false,
+  "escalations": [],
+  "flags": [
+    {
+      "code": "W-BASELINE-COVERAGE",
+      "message": "baseline events end on 2026-12-01; the order's last possible receipt is 2027-01-15: obligations after the data ends are not modelled"
+    }
+  ],
+  "hard_rejection_reasons": {
+    "reserve": 3
+  },
+  "input_hash": "afec82124f1dc6b376f64c649acefe892665847157c8917eac9c86be5a832e2f",
+  "offers_without_feasible_amount": [],
+  "profit_given_up_for_resilience": 0,
+  "profit_summary": {
+    "excluded_non_incremental_costs": [],
+    "incremental_cost": 40000000,
+    "order_profit_before_financing": 30000000,
+    "order_revenue": 70000000
+  },
+  "ranked_top": [
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 40000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 5000000,
+        "lowest_balance": 5000000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 40000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 5000000,
+        "lowest_balance": 5000000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "downside"
+      },
+      "financing_cost": 0,
+      "meets_target_resilience": true,
+      "net_order_profit": 30000000,
+      "resilience": 2,
+      "severe": {
+        "absolute_gap_vs_reserve": 31200000,
+        "feasible": false,
+        "final_balance": 38800000,
+        "financing_cost": 0,
+        "first_shortfall_date": "2026-12-01",
+        "first_violation_date": "2026-12-01",
+        "headroom": -31200000,
+        "lowest_balance": -31200000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 31200000,
+        "order_caused_violation_days": 24,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep50"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 40000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 12000000,
+        "lowest_balance": 12000000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 40000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 12000000,
+        "lowest_balance": 12000000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "downside"
+      },
+      "financing_cost": 0,
+      "meets_target_resilience": true,
+      "net_order_profit": 30000000,
+      "resilience": 2,
+      "severe": {
+        "absolute_gap_vs_reserve": 31200000,
+        "feasible": false,
+        "final_balance": 38800000,
+        "financing_cost": 0,
+        "first_shortfall_date": "2026-12-01",
+        "first_violation_date": "2026-12-01",
+        "headroom": -31200000,
+        "lowest_balance": -31200000,
+        "lowest_date": "2026-12-01",
+        "max_funding_gap": 31200000,
+        "order_caused_violation_days": 24,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep60"
+    }
+  ],
+  "recommended": "dep50"
+}

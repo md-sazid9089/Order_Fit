@@ -1,0 +1,18 @@
+{
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-08",
+  "decision": "blocked_data_conflict",
+  "escalations": [
+    {
+      "code": "E-DATA-CONFLICT",
+      "message": "PO total 300000000 != quote total 285000000"
+    },
+    {
+      "code": "E-DATA-CONFLICT",
+      "message": "line items sum 285000000 != order revenue 300000000"
+    }
+  ],
+  "flags": [],
+  "input_hash": "c4ceac01c9cb998b5c33d173f7e9ac0cb1ae06858fed45e847443d76da38cd20",
+  "recommended": null
+}

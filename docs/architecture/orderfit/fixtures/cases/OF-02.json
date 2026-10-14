@@ -1,0 +1,370 @@
+{
+ "as_of": "2026-11-02",
+ "baseline_events": [
+  {
+   "amount": 12000000,
+   "certainty": "confirmed",
+   "date": "2026-11-10",
+   "direction": "out",
+   "id": "rent_202611",
+   "kind": "rent"
+  },
+  {
+   "amount": 70000000,
+   "certainty": "expected",
+   "date": "2026-11-20",
+   "direction": "in",
+   "id": "collections_202611",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 15000000,
+   "certainty": "confirmed",
+   "date": "2026-11-25",
+   "direction": "out",
+   "id": "loan_installment_202611",
+   "kind": "loan_installment"
+  },
+  {
+   "amount": 45000000,
+   "certainty": "confirmed",
+   "date": "2026-11-30",
+   "direction": "out",
+   "id": "payroll_202611",
+   "kind": "payroll"
+  },
+  {
+   "amount": 12000000,
+   "certainty": "confirmed",
+   "date": "2026-12-10",
+   "direction": "out",
+   "id": "rent_202612",
+   "kind": "rent"
+  },
+  {
+   "amount": 70000000,
+   "certainty": "expected",
+   "date": "2026-12-20",
+   "direction": "in",
+   "id": "collections_202612",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 15000000,
+   "certainty": "confirmed",
+   "date": "2026-12-25",
+   "direction": "out",
+   "id": "loan_installment_202612",
+   "kind": "loan_installment"
+  },
+  {
+   "amount": 45000000,
+   "certainty": "confirmed",
+   "date": "2026-12-30",
+   "direction": "out",
+   "id": "payroll_202612",
+   "kind": "payroll"
+  },
+  {
+   "amount": 12000000,
+   "certainty": "confirmed",
+   "date": "2027-01-10",
+   "direction": "out",
+   "id": "rent_202701",
+   "kind": "rent"
+  },
+  {
+   "amount": 70000000,
+   "certainty": "expected",
+   "date": "2027-01-20",
+   "direction": "in",
+   "id": "collections_202701",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 15000000,
+   "certainty": "confirmed",
+   "date": "2027-01-25",
+   "direction": "out",
+   "id": "loan_installment_202701",
+   "kind": "loan_installment"
+  },
+  {
+   "amount": 45000000,
+   "certainty": "confirmed",
+   "date": "2027-01-30",
+   "direction": "out",
+   "id": "payroll_202701",
+   "kind": "payroll"
+  },
+  {
+   "amount": 12000000,
+   "certainty": "confirmed",
+   "date": "2027-02-10",
+   "direction": "out",
+   "id": "rent_202702",
+   "kind": "rent"
+  },
+  {
+   "amount": 70000000,
+   "certainty": "expected",
+   "date": "2027-02-20",
+   "direction": "in",
+   "id": "collections_202702",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 15000000,
+   "certainty": "confirmed",
+   "date": "2027-02-25",
+   "direction": "out",
+   "id": "loan_installment_202702",
+   "kind": "loan_installment"
+  },
+  {
+   "amount": 45000000,
+   "certainty": "confirmed",
+   "date": "2027-02-26",
+   "direction": "out",
+   "id": "payroll_202702",
+   "kind": "payroll"
+  },
+  {
+   "amount": 12000000,
+   "certainty": "confirmed",
+   "date": "2027-03-10",
+   "direction": "out",
+   "id": "rent_202703",
+   "kind": "rent"
+  },
+  {
+   "amount": 70000000,
+   "certainty": "expected",
+   "date": "2027-03-20",
+   "direction": "in",
+   "id": "collections_202703",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 15000000,
+   "certainty": "confirmed",
+   "date": "2027-03-25",
+   "direction": "out",
+   "id": "loan_installment_202703",
+   "kind": "loan_installment"
+  },
+  {
+   "amount": 45000000,
+   "certainty": "confirmed",
+   "date": "2027-03-30",
+   "direction": "out",
+   "id": "payroll_202703",
+   "kind": "payroll"
+  },
+  {
+   "amount": 38000000,
+   "certainty": "confirmed",
+   "date": "2026-11-15",
+   "direction": "out",
+   "id": "ap_INV-1007",
+   "invoice_ref": "INV-1007",
+   "kind": "ap_payment"
+  }
+ ],
+ "case_id": "OF-02",
+ "currency": "BDT",
+ "exponent": 2,
+ "financing_offers": [
+  {
+   "fee_at": "draw",
+   "fee_bps": 100,
+   "interest_bps": 300,
+   "lead_days": 5,
+   "max": 250000000,
+   "min": 50000000,
+   "name": "Bank working-capital loan (user-supplied illustrative term sheet)",
+   "offer_id": "BANK_WC",
+   "shape": "term_loan",
+   "step": 10000000,
+   "term_days": 90
+  }
+ ],
+ "intent": {
+  "best_plan_by_receipt_delay.changes.1.from_delay_days": 8,
+  "best_profit_strategy": "fin:BANK_WC@130000000",
+  "decision": "accept_with_changes",
+  "escalation_codes": [],
+  "profit_given_up_for_resilience": 2000000,
+  "ranked_top.0.meets_target_resilience": true,
+  "recommended": "dep40"
+ },
+ "named_strategies": [
+  {
+   "kind": "decline",
+   "label": "Decline"
+  },
+  {
+   "label": "Accept as-is"
+  },
+  {
+   "deposit_pct": 30,
+   "label": "30% deposit"
+  },
+  {
+   "ext_days": 30,
+   "label": "Supplier +30d only"
+  }
+ ],
+ "opening_balance": 215000000,
+ "order": {
+  "anchor_dates": {
+   "delivery": "2026-12-14",
+   "invoice": "2026-12-14",
+   "order": "2026-11-02"
+  },
+  "costs": [
+   {
+    "amount": 90000000,
+    "date": "2026-11-04",
+    "deferrable": false,
+    "id": "mat_deposit",
+    "incremental": true,
+    "kind": "supplier_payment"
+   },
+   {
+    "amount": 90000000,
+    "date": "2026-12-07",
+    "deferrable": true,
+    "id": "mat_balance",
+    "incremental": true,
+    "kind": "supplier_payment"
+   },
+   {
+    "amount": 30000000,
+    "date": "2026-12-10",
+    "deferrable": false,
+    "id": "plates_labour",
+    "incremental": true,
+    "kind": "labour"
+   },
+   {
+    "amount": 10000000,
+    "date": "2026-12-14",
+    "deferrable": false,
+    "id": "freight",
+    "incremental": true,
+    "kind": "freight"
+   }
+  ],
+  "customer": "Dhaka FMCG buyer",
+  "deposit_discount_bps_per_10pct": 50,
+  "id": "PO-8841",
+  "revenue": 360000000,
+  "terms": {
+   "anchor": "delivery",
+   "convention": "calendar",
+   "days": 45
+  }
+ },
+ "owner": {
+  "close_call_bps": 200,
+  "max_financing_cost": null,
+  "min_order_profit": 0,
+  "priorities": [
+   "profit",
+   "independence_any",
+   "simplicity"
+  ],
+  "target_scenario": "downside"
+ },
+ "reserve": 60000000,
+ "scan_days": 90,
+ "scenarios": {
+  "downside": {
+   "ar_delay_days": 5,
+   "cost_overrun_bps": 0,
+   "order_receipt_delay_days": 15
+  },
+  "severe": {
+   "ar_delay_days": 15,
+   "cost_overrun_bps": 300,
+   "order_receipt_delay_days": 45
+  }
+ },
+ "sensitivity": [
+  {
+   "path": "order.deposit_discount_bps_per_10pct",
+   "values": [
+    0,
+    25,
+    100,
+    150
+   ]
+  },
+  {
+   "path": "scenarios.downside.order_receipt_delay_days",
+   "values": [
+    5,
+    10,
+    20,
+    30
+   ]
+  },
+  {
+   "path": "scenarios.downside.ar_delay_days",
+   "values": [
+    0,
+    10,
+    15
+   ]
+  },
+  {
+   "path": "scenarios.severe.cost_overrun_bps",
+   "values": [
+    0,
+    500
+   ]
+  },
+  {
+   "path": "strategy_space.deposit_lead_days",
+   "values": [
+    3,
+    14
+   ]
+  }
+ ],
+ "strategy_space": {
+  "deposit_lead_days": 7,
+  "deposit_pcts": [
+   0,
+   5,
+   10,
+   15,
+   20,
+   25,
+   30,
+   35,
+   40,
+   45,
+   50
+  ],
+  "extensions": [
+   {
+    "days": 0,
+    "surcharge_bps": 0
+   },
+   {
+    "days": 30,
+    "surcharge_bps": 0
+   }
+  ],
+  "offer_ids": [
+   "BANK_WC"
+  ],
+  "stage_gap_days": 14,
+  "stages": [
+   1
+  ]
+ },
+ "title": "ANCHOR order A: profitable but hard to fund"
+}

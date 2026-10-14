@@ -1,0 +1,32 @@
+{
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-14",
+  "decision": "needs_input",
+  "escalations": [
+    {
+      "code": "E-MISSING-ANCHOR",
+      "message": "payment-term anchor event is unknown; ask the owner"
+    }
+  ],
+  "flags": [],
+  "input_hash": "fffc6eb225a27d628c6e71eae3af73703acc638c2abd018fe11014fbc6aaca4c",
+  "recommended": null,
+  "voi": [
+    {
+      "alternatives": {
+        "from delivery date": {
+          "accept_as_is_feasible": false,
+          "decision": "accept_with_changes",
+          "recommended": "dep40"
+        },
+        "from invoice date": {
+          "accept_as_is_feasible": false,
+          "decision": "accept_with_changes",
+          "recommended": "dep20+ext30"
+        }
+      },
+      "flips_decision": true,
+      "input": "payment_anchor"
+    }
+  ]
+}

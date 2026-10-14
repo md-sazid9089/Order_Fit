@@ -1,0 +1,140 @@
+{
+  "accept_as_is": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 137000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 67000000,
+      "lowest_balance": 127000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 137000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 5000000,
+      "lowest_balance": 65000000,
+      "lowest_date": "2026-11-15",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": -30000000,
+    "resilience": 2,
+    "severe": {
+      "absolute_gap_vs_reserve": 140400000,
+      "feasible": false,
+      "final_balance": 130100000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-25",
+      "first_violation_date": "2026-11-25",
+      "headroom": -140400000,
+      "lowest_balance": -80400000,
+      "lowest_date": "2026-12-05",
+      "max_funding_gap": 140400000,
+      "order_caused_violation_days": 23,
+      "scenario": "severe"
+    },
+    "strategy_id": "accept_as_is"
+  },
+  "alerts": {
+    "accept_as_is": [],
+    "baseline": [],
+    "recommended": []
+  },
+  "baseline": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 97000000,
+      "lowest_balance": 157000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 82000000,
+      "lowest_balance": 142000000,
+      "lowest_date": "2027-03-25",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 0,
+    "resilience": 3,
+    "severe": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 37000000,
+      "lowest_balance": 97000000,
+      "lowest_date": "2027-03-30",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "severe"
+    },
+    "strategy_id": "decline"
+  },
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-03",
+  "counts": {
+    "dominated_pruned": 0,
+    "enumerated": 2,
+    "hard_feasible_after_dominance_pruning": 0,
+    "rejected": 1
+  },
+  "decision": "decline_or_renegotiate",
+  "escalate": true,
+  "escalations": [
+    {
+      "best_cash_feasible": "accept_as_is",
+      "code": "E-UNPROFITABLE-AFTER-COSTS",
+      "its_net_profit": -30000000,
+      "message": "cash-feasible strategies exist but none clears the owner's minimum order profit",
+      "owner_min_order_profit": 0
+    }
+  ],
+  "flags": [],
+  "hard_rejection_reasons": {
+    "min_order_profit": 1
+  },
+  "input_hash": "0c19e3c920d945e35f4ae000251d8db3c9a05df43eda3ee92e3b850b41152baa",
+  "offers_without_feasible_amount": [],
+  "profit_summary": {
+    "excluded_non_incremental_costs": [],
+    "incremental_cost": 230000000,
+    "order_profit_before_financing": -30000000,
+    "order_revenue": 200000000
+  },
+  "ranked_top": [],
+  "recommended": "decline"
+}

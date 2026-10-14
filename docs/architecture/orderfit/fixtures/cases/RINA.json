@@ -1,0 +1,211 @@
+{
+ "as_of": "2026-03-02",
+ "baseline_events": [
+  {
+   "amount": 800000,
+   "certainty": "confirmed",
+   "date": "2026-03-17",
+   "direction": "out",
+   "id": "payroll_d15",
+   "kind": "payroll"
+  },
+  {
+   "amount": 800000,
+   "certainty": "confirmed",
+   "date": "2026-04-01",
+   "direction": "out",
+   "id": "payroll_d30",
+   "kind": "payroll"
+  },
+  {
+   "amount": 800000,
+   "certainty": "confirmed",
+   "date": "2026-04-16",
+   "direction": "out",
+   "id": "payroll_d45",
+   "kind": "payroll"
+  },
+  {
+   "amount": 800000,
+   "certainty": "confirmed",
+   "date": "2026-05-01",
+   "direction": "out",
+   "id": "payroll_d60",
+   "kind": "payroll"
+  },
+  {
+   "amount": 800000,
+   "certainty": "confirmed",
+   "date": "2026-05-16",
+   "direction": "out",
+   "id": "payroll_d75",
+   "kind": "payroll"
+  },
+  {
+   "amount": 1000000,
+   "certainty": "expected",
+   "date": "2026-03-22",
+   "direction": "in",
+   "id": "ar_d20",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 1000000,
+   "certainty": "expected",
+   "date": "2026-04-11",
+   "direction": "in",
+   "id": "ar_d40",
+   "kind": "ar_collection"
+  },
+  {
+   "amount": 1000000,
+   "certainty": "expected",
+   "date": "2026-05-11",
+   "direction": "in",
+   "id": "ar_d70",
+   "kind": "ar_collection"
+  }
+ ],
+ "case_id": "RINA",
+ "currency": "USD",
+ "exponent": 2,
+ "financing_offers": [
+  {
+   "fee_at": "repayment",
+   "fee_flat": 10000,
+   "interest_bps": 300,
+   "lead_days": 25,
+   "max": 3000000,
+   "min": 100000,
+   "offer_id": "RINA_LOAN",
+   "shape": "term_loan",
+   "step": 50000,
+   "term_days": 60
+  }
+ ],
+ "intent": {
+  "decision": "accept_with_changes"
+ },
+ "named_strategies": [
+  {
+   "kind": "decline",
+   "label": "R-06 D: decline"
+  },
+  {
+   "label": "R-02 accept as offered"
+  },
+  {
+   "deposit_pct": 10,
+   "label": "R-03 A: 10% advance"
+  },
+  {
+   "ext_days": 34,
+   "label": "R-04 B: supplier defers balance to day 59"
+  },
+  {
+   "label": "R-05 C: 5,000 loan",
+   "loan_minor": 500000,
+   "offer_id": "RINA_LOAN"
+  },
+  {
+   "label": "R-08 C: 9,000 loan",
+   "loan_minor": 900000,
+   "offer_id": "RINA_LOAN",
+   "scan_days": 90
+  },
+  {
+   "deposit_pct": 5,
+   "label": "R-10 5% advance + 7,500 loan",
+   "loan_minor": 750000,
+   "offer_id": "RINA_LOAN"
+  },
+  {
+   "deposit_pct": 10,
+   "label": "R-10 10% advance + 6,000 loan",
+   "loan_minor": 600000,
+   "offer_id": "RINA_LOAN"
+  }
+ ],
+ "opening_balance": 2500000,
+ "order": {
+  "anchor_dates": {
+   "delivery": "2026-03-30",
+   "invoice": "2026-03-03",
+   "order": "2026-03-02"
+  },
+  "costs": [
+   {
+    "amount": 1200000,
+    "date": "2026-03-03",
+    "deferrable": false,
+    "id": "supplier_deposit",
+    "incremental": true,
+    "kind": "supplier_payment"
+   },
+   {
+    "amount": 500000,
+    "date": "2026-03-27",
+    "deferrable": true,
+    "id": "supplier_balance",
+    "incremental": true,
+    "kind": "supplier_payment"
+   }
+  ],
+  "customer": "Rina's customer",
+  "id": "RINA-ORDER",
+  "revenue": 3000000,
+  "terms": {
+   "anchor": "delivery",
+   "convention": "calendar",
+   "days": 30
+  }
+ },
+ "owner": {
+  "close_call_bps": 200,
+  "max_financing_cost": null,
+  "min_order_profit": 0,
+  "priorities": [
+   "profit",
+   "independence_any",
+   "simplicity"
+  ],
+  "target_scenario": "downside"
+ },
+ "reserve": 500000,
+ "scan_days": 90,
+ "scenarios": {
+  "downside": {
+   "deposit_follows_customer_delay": false,
+   "order_receipt_delay_days": 15
+  },
+  "severe": {
+   "deposit_follows_customer_delay": false,
+   "order_receipt_delay_days": 45
+  }
+ },
+ "strategy_space": {
+  "deposit_lead_days": 1,
+  "deposit_pcts": [
+   0,
+   5,
+   10
+  ],
+  "extensions": [
+   {
+    "days": 0,
+    "surcharge_bps": 0
+   },
+   {
+    "days": 34,
+    "surcharge_bps": 0
+   }
+  ],
+  "offer_ids": [
+   "RINA_LOAN"
+  ],
+  "stages": [
+   1
+  ]
+ },
+ "title": "Golden Rina scenario (reconstructed from edgecase.pdf; USD)"
+}

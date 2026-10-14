@@ -1,0 +1,14 @@
+{
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-16",
+  "decision": "unsupported_escalate",
+  "escalations": [
+    {
+      "code": "E-UNSUPPORTED-MULTICCY",
+      "message": "cost imported_parts is in USD but case currency is BDT; no FX rate supplied"
+    }
+  ],
+  "flags": [],
+  "input_hash": "2d7ad0667d06e10ce6010a9e089fa48c4aa8604d3968c30fbe48741a093c4f20",
+  "recommended": null
+}

@@ -1,0 +1,196 @@
+{
+ "as_of": "2026-03-02",
+ "baseline_events": [
+  {
+   "amount": 300000,
+   "certainty": "confirmed",
+   "date": "2026-03-12",
+   "direction": "out",
+   "id": "bill_d10",
+   "kind": "ap_payment"
+  },
+  {
+   "amount": 300000,
+   "certainty": "confirmed",
+   "date": "2026-04-11",
+   "direction": "out",
+   "id": "bill_d40",
+   "kind": "ap_payment"
+  },
+  {
+   "amount": 700000,
+   "certainty": "confirmed",
+   "date": "2026-03-17",
+   "direction": "out",
+   "id": "payroll_d15",
+   "kind": "payroll"
+  },
+  {
+   "amount": 700000,
+   "certainty": "confirmed",
+   "date": "2026-04-16",
+   "direction": "out",
+   "id": "payroll_d45",
+   "kind": "payroll"
+  },
+  {
+   "amount": 400000,
+   "certainty": "expected",
+   "date": "2026-03-27",
+   "direction": "in",
+   "id": "ar_d25",
+   "kind": "ar_collection"
+  }
+ ],
+ "case_id": "PX-01",
+ "currency": "USD",
+ "exponent": 2,
+ "financing_offers": [
+  {
+   "fee_at": "repayment",
+   "fee_bps": 350,
+   "fee_flat": 15000,
+   "lead_days": 0,
+   "max": 2000000,
+   "min": 500000,
+   "offer_id": "PX_FIN",
+   "shape": "term_loan",
+   "step": 500000,
+   "term_days": 61
+  }
+ ],
+ "named_strategies": [
+  {
+   "kind": "decline",
+   "label": "Decline (baseline)"
+  },
+  {
+   "label": "Accept as-is"
+  },
+  {
+   "deposit_pct": 50,
+   "label": "A: 50% advance"
+  },
+  {
+   "deposit_pct": 40,
+   "label": "A': 40% advance"
+  },
+  {
+   "ext_days": 40,
+   "label": "B: supplier extension (40d: lands on receipt day)"
+  },
+  {
+   "ext_days": 41,
+   "label": "B: supplier extension (41d)"
+  },
+  {
+   "label": "C: financing 15,000",
+   "loan_minor": 1500000,
+   "offer_id": "PX_FIN"
+  },
+  {
+   "ext_days": 40,
+   "label": "B+C: extension 40d + financing 10,000",
+   "loan_minor": 1000000,
+   "offer_id": "PX_FIN"
+  },
+  {
+   "ext_days": 41,
+   "label": "B+C: extension 41d + financing 10,000",
+   "loan_minor": 1000000,
+   "offer_id": "PX_FIN"
+  }
+ ],
+ "opening_balance": 3000000,
+ "order": {
+  "anchor_dates": {
+   "delivery": "2026-04-01",
+   "invoice": "2026-04-01",
+   "order": "2026-03-02"
+  },
+  "costs": [
+   {
+    "amount": 1200000,
+    "date": "2026-03-02",
+    "deferrable": false,
+    "id": "deposit",
+    "incremental": true,
+    "kind": "supplier_payment"
+   },
+   {
+    "amount": 500000,
+    "date": "2026-03-22",
+    "deferrable": true,
+    "id": "pre_delivery",
+    "incremental": true,
+    "kind": "supplier_payment"
+   },
+   {
+    "amount": 150000,
+    "date": "2026-04-01",
+    "deferrable": false,
+    "id": "shipping",
+    "incremental": true,
+    "kind": "supplier_payment"
+   }
+  ],
+  "customer": "Proposal customer",
+  "id": "PX-ORDER",
+  "revenue": 3000000,
+  "terms": {
+   "anchor": "delivery",
+   "convention": "calendar",
+   "days": 30
+  }
+ },
+ "owner": {
+  "close_call_bps": 200,
+  "max_financing_cost": null,
+  "min_order_profit": 0,
+  "priorities": [
+   "profit",
+   "independence_any",
+   "simplicity"
+  ],
+  "target_scenario": "downside"
+ },
+ "reserve": 800000,
+ "scan_days": 90,
+ "scenarios": {
+  "downside": {
+   "deposit_follows_customer_delay": false,
+   "order_receipt_delay_days": 15
+  },
+  "severe": {
+   "deposit_follows_customer_delay": false,
+   "order_receipt_delay_days": 45
+  }
+ },
+ "strategy_space": {
+  "deposit_lead_days": 0,
+  "deposit_pcts": [
+   0,
+   25,
+   40,
+   50
+  ],
+  "extensions": [
+   {
+    "days": 0
+   },
+   {
+    "days": 40
+   },
+   {
+    "days": 41
+   }
+  ],
+  "offer_ids": [
+   "PX_FIN"
+  ],
+  "stages": [
+   1
+  ]
+ },
+ "title": "Proposal worked example (section 6), day offsets mapped to dates; USD"
+}

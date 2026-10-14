@@ -1,0 +1,154 @@
+{
+  "accept_as_is": {
+    "base": {
+      "absolute_gap_vs_reserve": 80000000,
+      "feasible": false,
+      "final_balance": 136000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-15",
+      "first_violation_date": "2026-11-15",
+      "headroom": -80000000,
+      "lowest_balance": -20000000,
+      "lowest_date": "2027-01-10",
+      "max_funding_gap": 80000000,
+      "order_caused_violation_days": 64,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 95000000,
+      "feasible": false,
+      "final_balance": 136000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-15",
+      "first_violation_date": "2026-11-15",
+      "headroom": -95000000,
+      "lowest_balance": -35000000,
+      "lowest_date": "2027-01-25",
+      "max_funding_gap": 95000000,
+      "order_caused_violation_days": 84,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 34000000,
+    "resilience": 0,
+    "severe": {
+      "absolute_gap_vs_reserve": 145480000,
+      "feasible": false,
+      "final_balance": 132520000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-15",
+      "first_violation_date": "2026-11-15",
+      "headroom": -145480000,
+      "lowest_balance": -85480000,
+      "lowest_date": "2027-02-26",
+      "max_funding_gap": 119480000,
+      "order_caused_violation_days": 118,
+      "scenario": "severe"
+    },
+    "strategy_id": "accept_as_is"
+  },
+  "alerts": {
+    "accept_as_is": [
+      {
+        "balance_that_day": 30000000,
+        "date": "2026-11-15",
+        "gap_to_reserve": 30000000,
+        "rule": "A1"
+      },
+      {
+        "days_exposed": 5,
+        "first_violation_date": "2026-11-15",
+        "next_inflow_that_restores_the_reserve": "2026-11-20",
+        "rule": "A2"
+      }
+    ],
+    "baseline": [],
+    "recommended": []
+  },
+  "baseline": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 102000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 32000000,
+      "lowest_balance": 92000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 102000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 17000000,
+      "lowest_balance": 77000000,
+      "lowest_date": "2027-03-25",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 0,
+    "resilience": 3,
+    "severe": {
+      "absolute_gap_vs_reserve": 28000000,
+      "feasible": true,
+      "final_balance": 102000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-30",
+      "first_violation_date": null,
+      "headroom": -28000000,
+      "lowest_balance": 32000000,
+      "lowest_date": "2027-03-30",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "severe"
+    },
+    "strategy_id": "decline"
+  },
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-06",
+  "counts": {
+    "dominated_pruned": 0,
+    "enumerated": 3,
+    "hard_feasible_after_dominance_pruning": 0,
+    "rejected": 2
+  },
+  "decision": "decline_or_renegotiate",
+  "escalate": true,
+  "escalations": [
+    {
+      "best_cash_feasible": "fin:BANK_WC@90000000",
+      "code": "E-UNPROFITABLE-AFTER-COSTS",
+      "its_net_profit": 30400000,
+      "message": "cash-feasible strategies exist but none clears the owner's minimum order profit",
+      "owner_min_order_profit": 32000000
+    }
+  ],
+  "flags": [],
+  "hard_rejection_reasons": {
+    "min_order_profit": 1,
+    "reserve": 1
+  },
+  "input_hash": "b1499b53c3343a3b9783455825cec2d7efc2ff3737012dbdd4b4f83fb5f69989",
+  "offers_without_feasible_amount": [],
+  "profit_summary": {
+    "excluded_non_incremental_costs": [],
+    "incremental_cost": 116000000,
+    "order_profit_before_financing": 34000000,
+    "order_revenue": 150000000
+  },
+  "ranked_top": [],
+  "recommended": "decline"
+}

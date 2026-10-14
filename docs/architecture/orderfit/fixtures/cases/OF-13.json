@@ -1,0 +1,103 @@
+{
+ "as_of": "2026-11-02",
+ "baseline_events": [
+  {
+   "amount": 30000000,
+   "certainty": "confirmed",
+   "date": "2026-11-20",
+   "direction": "out",
+   "id": "rent_nov",
+   "kind": "rent"
+  },
+  {
+   "amount": 80000000,
+   "certainty": "confirmed",
+   "date": "2026-12-01",
+   "direction": "out",
+   "id": "payroll_dec1",
+   "kind": "payroll"
+  }
+ ],
+ "case_id": "OF-13",
+ "currency": "BDT",
+ "exponent": 2,
+ "financing_offers": [],
+ "intent": {
+  "accept_as_is.base.feasible": false,
+  "accept_as_is.base.first_shortfall_date": "2026-12-01",
+  "baseline.base.feasible": true
+ },
+ "opening_balance": 120000000,
+ "order": {
+  "anchor_dates": {
+   "delivery": "2026-12-01",
+   "invoice": "2026-12-01",
+   "order": "2026-11-02"
+  },
+  "costs": [
+   {
+    "amount": 40000000,
+    "date": "2026-11-25",
+    "deferrable": false,
+    "id": "mat_1",
+    "incremental": true,
+    "kind": "supplier_payment"
+   }
+  ],
+  "customer": "Buyer N",
+  "deposit_discount_bps": 0,
+  "id": "PO-1414",
+  "revenue": 70000000,
+  "terms": {
+   "anchor": "delivery",
+   "convention": "calendar",
+   "days": 0
+  }
+ },
+ "owner": {
+  "close_call_bps": 200,
+  "max_financing_cost": null,
+  "min_order_profit": 0,
+  "priorities": [
+   "profit",
+   "independence_any",
+   "simplicity"
+  ],
+  "target_scenario": "downside"
+ },
+ "reserve": 0,
+ "scan_days": 90,
+ "scenarios": {
+  "downside": {
+   "ar_delay_days": 5,
+   "cost_overrun_bps": 0,
+   "order_receipt_delay_days": 15
+  },
+  "severe": {
+   "ar_delay_days": 15,
+   "cost_overrun_bps": 300,
+   "order_receipt_delay_days": 45
+  }
+ },
+ "strategy_space": {
+  "deposit_lead_days": 7,
+  "deposit_pcts": [
+   0,
+   20,
+   30,
+   50,
+   60
+  ],
+  "extensions": [
+   {
+    "days": 0
+   }
+  ],
+  "offer_ids": [],
+  "stage_gap_days": 14,
+  "stages": [
+   1
+  ]
+ },
+ "title": "Same-day payroll and customer payment: outflow first"
+}

@@ -1,0 +1,164 @@
+{
+  "accept_as_is": {
+    "base": {
+      "absolute_gap_vs_reserve": 353000000,
+      "feasible": false,
+      "final_balance": 217000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-05",
+      "first_violation_date": "2026-11-05",
+      "headroom": -353000000,
+      "lowest_balance": -293000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 353000000,
+      "order_caused_violation_days": 166,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 368000000,
+      "feasible": false,
+      "final_balance": 217000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-05",
+      "first_violation_date": "2026-11-05",
+      "headroom": -368000000,
+      "lowest_balance": -308000000,
+      "lowest_date": "2027-03-25",
+      "max_funding_gap": 368000000,
+      "order_caused_violation_days": 181,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 50000000,
+    "resilience": 0,
+    "severe": {
+      "absolute_gap_vs_reserve": 426500000,
+      "feasible": false,
+      "final_balance": 203500000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-05",
+      "first_violation_date": "2026-11-05",
+      "headroom": -426500000,
+      "lowest_balance": -366500000,
+      "lowest_date": "2027-03-30",
+      "max_funding_gap": 426500000,
+      "order_caused_violation_days": 211,
+      "scenario": "severe"
+    },
+    "strategy_id": "accept_as_is"
+  },
+  "alerts": {
+    "accept_as_is": [
+      {
+        "balance_that_day": -35000000,
+        "date": "2026-11-05",
+        "gap_to_reserve": 95000000,
+        "rule": "A1"
+      },
+      {
+        "days_exposed": 165,
+        "first_violation_date": "2026-11-05",
+        "next_inflow_that_restores_the_reserve": "2027-04-19",
+        "rule": "A2"
+      }
+    ],
+    "baseline": [],
+    "recommended": []
+  },
+  "baseline": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 97000000,
+      "lowest_balance": 157000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 82000000,
+      "lowest_balance": 142000000,
+      "lowest_date": "2027-03-25",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 0,
+    "resilience": 3,
+    "severe": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 37000000,
+      "lowest_balance": 97000000,
+      "lowest_date": "2027-03-30",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "severe"
+    },
+    "strategy_id": "decline"
+  },
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-09",
+  "counts": {
+    "dominated_pruned": 0,
+    "enumerated": 7,
+    "hard_feasible_after_dominance_pruning": 0,
+    "rejected": 6
+  },
+  "decision": "decline_or_renegotiate",
+  "escalate": true,
+  "escalations": [
+    {
+      "code": "E-NO-FEASIBLE",
+      "max_funding_gap_accept_as_is": 353000000,
+      "message": "no enumerated strategy satisfies the hard constraints",
+      "min_deposit_pct_alone": null
+    }
+  ],
+  "flags": [
+    {
+      "code": "W-BASELINE-COVERAGE",
+      "message": "baseline events end on 2027-03-30; the order's last possible receipt is 2027-06-03: obligations after the data ends are not modelled"
+    }
+  ],
+  "hard_rejection_reasons": {
+    "reserve": 6
+  },
+  "input_hash": "e827850f0961c784bb794ed4ade36bad29f27c1574b6c66dbaeb96bdfa6953b7",
+  "minimum_change": {
+    "first_violation_date_even_with_100pct_deposit": "2026-11-05",
+    "max_funding_gap_accept_as_is": 353000000,
+    "min_deposit_pct_with_no_other_lever": null
+  },
+  "offers_without_feasible_amount": [
+    "BANK_SMALL"
+  ],
+  "profit_summary": {
+    "excluded_non_incremental_costs": [],
+    "incremental_cost": 450000000,
+    "order_profit_before_financing": 50000000,
+    "order_revenue": 500000000
+  },
+  "ranked_top": [],
+  "recommended": "decline"
+}

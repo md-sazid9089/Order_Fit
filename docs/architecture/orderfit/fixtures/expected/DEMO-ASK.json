@@ -1,0 +1,32 @@
+{
+  "calc_version": "ref-0.1.0",
+  "case_id": "DEMO-ASK",
+  "decision": "needs_input",
+  "escalations": [
+    {
+      "code": "E-MISSING-ANCHOR",
+      "message": "payment-term anchor event is unknown; ask the owner"
+    }
+  ],
+  "flags": [],
+  "input_hash": "1ce23986b624e5110504cd333b3c90c74318000451cc715e3cde648f0b95ae3f",
+  "recommended": null,
+  "voi": [
+    {
+      "alternatives": {
+        "from delivery date": {
+          "accept_as_is_feasible": false,
+          "decision": "accept_with_changes",
+          "recommended": "dep40"
+        },
+        "from invoice date": {
+          "accept_as_is_feasible": false,
+          "decision": "accept_with_changes",
+          "recommended": "ext30+fin:BANK_WC@50000000"
+        }
+      },
+      "flips_decision": true,
+      "input": "payment_anchor"
+    }
+  ]
+}

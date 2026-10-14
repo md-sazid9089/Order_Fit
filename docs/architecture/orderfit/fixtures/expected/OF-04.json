@@ -1,0 +1,506 @@
+{
+  "accept_as_is": {
+    "base": {
+      "absolute_gap_vs_reserve": 34000000,
+      "feasible": false,
+      "final_balance": 272000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-12-10",
+      "first_violation_date": "2026-12-10",
+      "headroom": -34000000,
+      "lowest_balance": 26000000,
+      "lowest_date": "2027-01-10",
+      "max_funding_gap": 34000000,
+      "order_caused_violation_days": 33,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 49000000,
+      "feasible": false,
+      "final_balance": 272000000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-12-10",
+      "first_violation_date": "2026-12-10",
+      "headroom": -49000000,
+      "lowest_balance": 11000000,
+      "lowest_date": "2027-01-25",
+      "max_funding_gap": 49000000,
+      "order_caused_violation_days": 53,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 105000000,
+    "resilience": 0,
+    "severe": {
+      "absolute_gap_vs_reserve": 100050000,
+      "feasible": false,
+      "final_balance": 267950000,
+      "financing_cost": 0,
+      "first_shortfall_date": "2026-11-30",
+      "first_violation_date": "2026-11-30",
+      "headroom": -100050000,
+      "lowest_balance": -40050000,
+      "lowest_date": "2027-02-26",
+      "max_funding_gap": 100050000,
+      "order_caused_violation_days": 97,
+      "scenario": "severe"
+    },
+    "strategy_id": "accept_as_is"
+  },
+  "alerts": {
+    "accept_as_is": [
+      {
+        "balance_that_day": 28000000,
+        "date": "2026-12-10",
+        "gap_to_reserve": 32000000,
+        "rule": "A1"
+      },
+      {
+        "days_exposed": 10,
+        "first_violation_date": "2026-12-10",
+        "next_inflow_that_restores_the_reserve": "2026-12-20",
+        "rule": "A2"
+      }
+    ],
+    "baseline": [],
+    "recommended": []
+  },
+  "baseline": {
+    "base": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 97000000,
+      "lowest_balance": 157000000,
+      "lowest_date": "2027-03-10",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "base"
+    },
+    "concession": 0,
+    "dependencies": [],
+    "downside": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 82000000,
+      "lowest_balance": 142000000,
+      "lowest_date": "2027-03-25",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "downside"
+    },
+    "financing_cost": 0,
+    "net_order_profit": 0,
+    "resilience": 3,
+    "severe": {
+      "absolute_gap_vs_reserve": 0,
+      "feasible": true,
+      "final_balance": 167000000,
+      "financing_cost": 0,
+      "first_shortfall_date": null,
+      "first_violation_date": null,
+      "headroom": 37000000,
+      "lowest_balance": 97000000,
+      "lowest_date": "2027-03-30",
+      "max_funding_gap": 0,
+      "order_caused_violation_days": 0,
+      "scenario": "severe"
+    },
+    "strategy_id": "decline"
+  },
+  "best_plan_by_receipt_delay": {
+    "changes": [
+      {
+        "from_delay_days": 0,
+        "top": "dep20"
+      },
+      {
+        "from_delay_days": 31,
+        "top": "dep20+fin:BANK_WC@50000000"
+      },
+      {
+        "from_delay_days": 88,
+        "top": null
+      }
+    ],
+    "first_delay_with_no_feasible_shortlisted_strategy": 88,
+    "scanned_to": 90
+  },
+  "best_profit_strategy": "dep30",
+  "best_without_financing": "dep20",
+  "calc_version": "ref-0.1.0",
+  "case_id": "OF-04",
+  "counts": {
+    "dominated_pruned": 0,
+    "enumerated": 9,
+    "hard_feasible_after_dominance_pruning": 6,
+    "rejected": 2
+  },
+  "decision": "accept_with_changes",
+  "delay_scan_top": {
+    "first_failing_delay_days": 31,
+    "scanned_to": 90,
+    "survives_full_scan": false,
+    "tolerance_days": 30
+  },
+  "escalate": true,
+  "escalations": [
+    {
+      "code": "E-CLOSE-CALL",
+      "message": "dep20 and fin:BANK_WC@50000000 are within 200 bps on profit with different dependencies; the runner-up is better on: independence_customer",
+      "runner_up": "fin:BANK_WC@50000000",
+      "runner_up_better_on": [
+        "independence_customer"
+      ],
+      "top": "dep20"
+    }
+  ],
+  "flags": [],
+  "hard_rejection_reasons": {
+    "reserve": 2
+  },
+  "input_hash": "d3595239ef96ebfff4c3314fca0810ecfa01234a821a92797e78422245508a0a",
+  "offers_without_feasible_amount": [],
+  "profit_given_up_for_resilience": 0,
+  "profit_summary": {
+    "excluded_non_incremental_costs": [
+      "inventory_used"
+    ],
+    "incremental_cost": 135000000,
+    "order_profit_before_financing": 105000000,
+    "order_revenue": 240000000
+  },
+  "ranked_top": [
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 272000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 14000000,
+        "lowest_balance": 74000000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 1000000,
+        "feasible": false,
+        "final_balance": 272000000,
+        "financing_cost": 0,
+        "first_shortfall_date": "2027-01-25",
+        "first_violation_date": "2027-01-25",
+        "headroom": -1000000,
+        "lowest_balance": 59000000,
+        "lowest_date": "2027-01-25",
+        "max_funding_gap": 1000000,
+        "order_caused_violation_days": 1,
+        "scenario": "downside"
+      },
+      "financing_cost": 0,
+      "meets_target_resilience": true,
+      "net_order_profit": 105000000,
+      "resilience": 1,
+      "severe": {
+        "absolute_gap_vs_reserve": 52050000,
+        "feasible": false,
+        "final_balance": 267950000,
+        "financing_cost": 0,
+        "first_shortfall_date": "2026-11-30",
+        "first_violation_date": "2026-11-30",
+        "headroom": -52050000,
+        "lowest_balance": 7950000,
+        "lowest_date": "2027-02-26",
+        "max_funding_gap": 52050000,
+        "order_caused_violation_days": 54,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep20"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 272000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 38000000,
+        "lowest_balance": 98000000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 272000000,
+        "financing_cost": 0,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 23000000,
+        "lowest_balance": 83000000,
+        "lowest_date": "2027-01-25",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "downside"
+      },
+      "financing_cost": 0,
+      "meets_target_resilience": true,
+      "net_order_profit": 105000000,
+      "resilience": 2,
+      "severe": {
+        "absolute_gap_vs_reserve": 36050000,
+        "feasible": false,
+        "final_balance": 267950000,
+        "financing_cost": 0,
+        "first_shortfall_date": "2026-11-30",
+        "first_violation_date": "2026-11-30",
+        "headroom": -36050000,
+        "lowest_balance": 23950000,
+        "lowest_date": "2026-12-10",
+        "max_funding_gap": 36050000,
+        "order_caused_violation_days": 43,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep30"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 15500000,
+        "lowest_balance": 75500000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "lender"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 26000000,
+        "feasible": false,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2027-02-05",
+        "first_violation_date": "2027-02-05",
+        "headroom": -26000000,
+        "lowest_balance": 34000000,
+        "lowest_date": "2027-02-05",
+        "max_funding_gap": 26000000,
+        "order_caused_violation_days": 4,
+        "scenario": "downside"
+      },
+      "financing_cost": 2000000,
+      "meets_target_resilience": true,
+      "net_order_profit": 103000000,
+      "resilience": 1,
+      "severe": {
+        "absolute_gap_vs_reserve": 102050000,
+        "feasible": false,
+        "final_balance": 265950000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2026-12-25",
+        "first_violation_date": "2026-12-25",
+        "headroom": -102050000,
+        "lowest_balance": -42050000,
+        "lowest_date": "2027-02-26",
+        "max_funding_gap": 102050000,
+        "order_caused_violation_days": 56,
+        "scenario": "severe"
+      },
+      "strategy_id": "fin:BANK_WC@50000000"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 39500000,
+        "lowest_balance": 99500000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer",
+        "lender"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 2000000,
+        "feasible": false,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2027-02-05",
+        "first_violation_date": "2027-02-05",
+        "headroom": -2000000,
+        "lowest_balance": 58000000,
+        "lowest_date": "2027-02-05",
+        "max_funding_gap": 2000000,
+        "order_caused_violation_days": 4,
+        "scenario": "downside"
+      },
+      "financing_cost": 2000000,
+      "meets_target_resilience": true,
+      "net_order_profit": 103000000,
+      "resilience": 1,
+      "severe": {
+        "absolute_gap_vs_reserve": 78050000,
+        "feasible": false,
+        "final_balance": 265950000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2026-12-30",
+        "first_violation_date": "2026-12-30",
+        "headroom": -78050000,
+        "lowest_balance": -18050000,
+        "lowest_date": "2027-02-26",
+        "max_funding_gap": 78050000,
+        "order_caused_violation_days": 46,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep10+fin:BANK_WC@50000000"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 63500000,
+        "lowest_balance": 123500000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer",
+        "lender"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 22000000,
+        "lowest_balance": 82000000,
+        "lowest_date": "2027-02-05",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "downside"
+      },
+      "financing_cost": 2000000,
+      "meets_target_resilience": true,
+      "net_order_profit": 103000000,
+      "resilience": 2,
+      "severe": {
+        "absolute_gap_vs_reserve": 54050000,
+        "feasible": false,
+        "final_balance": 265950000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2027-01-30",
+        "first_violation_date": "2027-01-30",
+        "headroom": -54050000,
+        "lowest_balance": 5950000,
+        "lowest_date": "2027-02-26",
+        "max_funding_gap": 54050000,
+        "order_caused_violation_days": 17,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep20+fin:BANK_WC@50000000"
+    },
+    {
+      "base": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 87500000,
+        "lowest_balance": 147500000,
+        "lowest_date": "2027-01-10",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "base"
+      },
+      "concession": 0,
+      "dependencies": [
+        "customer",
+        "lender"
+      ],
+      "downside": {
+        "absolute_gap_vs_reserve": 0,
+        "feasible": true,
+        "final_balance": 270000000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": null,
+        "first_violation_date": null,
+        "headroom": 46000000,
+        "lowest_balance": 106000000,
+        "lowest_date": "2027-02-05",
+        "max_funding_gap": 0,
+        "order_caused_violation_days": 0,
+        "scenario": "downside"
+      },
+      "financing_cost": 2000000,
+      "meets_target_resilience": true,
+      "net_order_profit": 103000000,
+      "resilience": 2,
+      "severe": {
+        "absolute_gap_vs_reserve": 30050000,
+        "feasible": false,
+        "final_balance": 265950000,
+        "financing_cost": 2000000,
+        "first_shortfall_date": "2027-02-26",
+        "first_violation_date": "2027-02-26",
+        "headroom": -30050000,
+        "lowest_balance": 29950000,
+        "lowest_date": "2027-02-26",
+        "max_funding_gap": 30050000,
+        "order_caused_violation_days": 10,
+        "scenario": "severe"
+      },
+      "strategy_id": "dep30+fin:BANK_WC@50000000"
+    }
+  ],
+  "recommended": "dep20"
+}
