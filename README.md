@@ -278,6 +278,8 @@ To regenerate the frontend API types from a running backend, run `npm run gen:ty
 | [docs/technical.md](docs/technical.md) | Technical write-up |
 | [docs/security-assessment.md](docs/security-assessment.md) | Threat model and mitigations |
 | [docs/evaluation.md](docs/evaluation.md) | Evaluation against a plain-AI baseline |
+| [docs/checkpoint.md](docs/checkpoint.md) | Progress report, next targets and risks |
+| [docs/team-assessment.md](docs/team-assessment.md) | Team, ownership, skills and working agreements |
 
 ## Contributing
 

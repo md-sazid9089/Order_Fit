@@ -10,3 +10,5 @@ For the project overview, setup and configuration, see the [main README](../READ
 | [technical.md](technical.md) | Technical write-up (competition) |
 | [security-assessment.md](security-assessment.md) | Threat model and mitigations (competition) |
 | [evaluation.md](evaluation.md) | Evaluation against a plain-AI baseline (competition) |
+| [checkpoint.md](checkpoint.md) | Progress, decisions, next targets and risks at each checkpoint |
+| [team-assessment.md](team-assessment.md) | Team, ownership, skills and working agreements |
