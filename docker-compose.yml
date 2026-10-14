@@ -1,8 +1,9 @@
 # OrderFit MVP: Postgres + one-shot migrations + API + web.
 #   docker compose up --build
-#   API       http://localhost:8000  (docs at /docs)
-#   Web       http://localhost:3000
-#   Postgres  localhost:5432 (local tools and tests; bound to 127.0.0.1 only)
+#   API       http://localhost:${API_PORT:-8000}  (docs at /docs)
+#   Web       http://localhost:${WEB_PORT:-3000}
+#   Postgres  localhost:${DB_PORT:-5432} (bound to 127.0.0.1 only)
+# Host ports are overridable when taken, e.g. WEB_PORT=3001 in a root .env file.
 
 name: orderfit
 
@@ -16,7 +17,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderfit}   # local default only; set a real one when deployed
       POSTGRES_DB: ${POSTGRES_DB:-orderfit}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
     healthcheck:
@@ -27,7 +28,8 @@ services:
     restart: unless-stopped
 
   migrate:
-    build: ./backend
+    image: orderfit-api:local   # same image as api, built once
+    pull_policy: never
     command: ["alembic", "upgrade", "head"]
     healthcheck:
       disable: true       # one-shot job; the image's HTTP healthcheck doesn't apply
@@ -40,15 +42,16 @@ services:
 
   api:
     build: ./backend
+    image: orderfit-api:local
     env_file:
       - path: ./backend/.env
         required: false   # AI_API_KEY and friends; runs without it until the agent lands
     environment:
       DATABASE_URL: *db-url
       DOCUMENT_DIR: /app/var/documents
-      CORS_ORIGINS: '["http://localhost:3000"]'
+      CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases
@@ -62,9 +65,10 @@ services:
       context: ./web
       args:
         # Browser-facing URL, baked in at build time.
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
+    image: orderfit-web:local
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     depends_on:
       api:
         condition: service_healthy

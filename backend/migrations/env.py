@@ -16,6 +16,14 @@ if config.config_file_name is not None:
 
 target_metadata = metadata
 
+# Tables owned by LangGraph's checkpointer (created by AsyncPostgresSaver.setup()).
+# Without this, autogenerate sees them as unknown and emits DROP TABLE.
+EXTERNAL_TABLES = {"checkpoints", "checkpoint_blobs", "checkpoint_writes", "checkpoint_migrations"}
+
+
+def include_object(obj, name, type_, reflected, compare_to) -> bool:
+    return not (type_ == "table" and reflected and name in EXTERNAL_TABLES)
+
 
 def run_migrations_offline() -> None:
     """Emit SQL to stdout without a connection (alembic upgrade head --sql)."""
@@ -25,6 +33,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -37,7 +46,12 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            include_object=include_object,
+        )
         with context.begin_transaction():
             context.run_migrations()
 

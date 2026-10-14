@@ -109,7 +109,7 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 |----------|------------|
 | Backend  | Python 3.12, FastAPI, Pydantic v2, Uvicorn |
 | Agent    | LangGraph with checkpointing |
-| Storage  | SQLite (Docker / MVP) or PostgreSQL, SQLAlchemy 2, Alembic |
+| Storage  | PostgreSQL 17 (psycopg 3), SQLAlchemy 2, Alembic |
 | Frontend | Next.js 15, React 19, TypeScript |
 | Tooling  | pytest, Ruff, GitHub Actions, Docker Compose |
 
@@ -153,17 +153,25 @@ docker compose up --build
 | Service | URL |
 |---------|-----|
 | Web     | http://localhost:3000 |
+| Postgres | localhost:5432 (bound to 127.0.0.1) |
 | API     | http://localhost:8000 |
 | API docs (OpenAPI) | http://localhost:8000/docs |
 | Health check | http://localhost:8000/health |
 
+Startup order: `db` becomes healthy → `migrate` runs `alembic upgrade head` and exits →
+`api` → `web`.
+
 To stop the services, run `docker compose down`. Data is kept; add `-v` to also delete the
-`api-data` volume.
+`pg-data` and `documents` volumes.
+
+If a port is already taken on your machine, copy `.env.example` to `.env` at the repo root and
+change `WEB_PORT`, `API_PORT` or `DB_PORT`.
 
 > [!TIP]
-> The SQLite database, workflow checkpoints and uploaded documents live in the `api-data`
-> volume. `data/` is mounted read-only at `/app/data`. `NEXT_PUBLIC_API_URL` is baked into the
-> web image at build time, so rebuild `web` after changing it.
+> Deals, workflow checkpoints and the audit log live in Postgres (`pg-data` volume). Uploaded
+> documents live in the `documents` volume. `data/` is mounted read-only at `/app/data`.
+> `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so rebuild `web` after
+> changing it.
 
 ### Run locally
 
@@ -175,6 +183,8 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 cp .env.example .env
+docker compose up -d db          # Postgres only (run from the repo root)
+alembic upgrade head
 uvicorn orderfit.api.main:app --reload
 ```
 
@@ -196,7 +206,7 @@ Backend settings are read from `backend/.env`. See [backend/.env.example](backen
 | `AI_API_KEY` | *(empty)* | API key for the AI provider |
 | `AI_MODEL` | *(empty)* | Model identifier |
 | `AI_TEMPERATURE` | `0` | Sampling temperature |
-| `DATABASE_URL` | `postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit` | SQLAlchemy URL. Docker Compose overrides this with SQLite |
+| `DATABASE_URL` | `postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit` | SQLAlchemy URL. Docker Compose points it at the `db` service |
 | `DOCUMENT_DIR` | `./var/documents` | Where uploaded documents are stored |
 | `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed browser origins (JSON list) |
 | `TARGET_TOLERANCE_DAYS` | `15` | Late-payment days an option must survive to count as safe |
