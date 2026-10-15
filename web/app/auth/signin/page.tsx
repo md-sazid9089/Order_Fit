@@ -27,5 +27,5 @@ export default function SignInPage() {
     <label className="block text-sm">Email<input required type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
     <label className="block text-sm">Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
     <button disabled={busy} className="w-full rounded-lg bg-neutral-900 text-white p-3 disabled:opacity-50">{busy ? "Signing in…" : "Sign in"}</button>
-  </form></main>;
+  <p className="text-sm"><Link className="underline" href="/auth/signup">Create an account</Link></p></form></main>;
 }

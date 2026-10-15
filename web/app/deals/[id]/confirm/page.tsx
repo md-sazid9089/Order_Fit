@@ -1,19 +1,13 @@
 import { Suspense } from "react";
-import { DealConfirmClient } from "@/components/deals/deal-confirm-client";
+import { redirect } from "next/navigation";
 
-interface DealConfirmPageProps {
-  params: Promise<{ id: string }>;
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string }> };
+async function PersistedConfirmation({ params, searchParams }: Props) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const scope = query.businessId ? `?businessId=${encodeURIComponent(query.businessId)}` : "";
+  redirect(`/deals/${encodeURIComponent(id)}${scope}`);
+  return null;
 }
-
-async function ConfirmContent({ params }: DealConfirmPageProps) {
-  const { id } = await params;
-  return <DealConfirmClient id={id} />;
-}
-
-export default function DealConfirmPage({ params }: DealConfirmPageProps) {
-  return (
-    <Suspense fallback={<div className="p-8 font-mono text-xs">Loading confirmation...</div>}>
-      <ConfirmContent params={params} />
-    </Suspense>
-  );
+export default function DealConfirmPage(props: Props) {
+  return <Suspense fallback={<main className="p-8">Opening saved order review...</main>}><PersistedConfirmation {...props} /></Suspense>;
 }

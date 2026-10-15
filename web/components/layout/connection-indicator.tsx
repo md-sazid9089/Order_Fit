@@ -1,26 +1,22 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Wifi, WifiOff, RefreshCw, X, ChevronUp, ChevronDown, Server } from "lucide-react";
+import { RefreshCw, X, ChevronUp, ChevronDown } from "lucide-react";
+
+import { API_URL } from "@/lib/api";
 
 export function ConnectionIndicator() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [lastChecked, setLastChecked] = useState<string>("");
-  const [backendUrl, setBackendUrl] = useState("http://localhost:8000");
+  const backendUrl = API_URL;
   const [isMinimized, setIsMinimized] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   const checkConnection = useCallback(async () => {
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setIsConnected(Boolean(data.connected));
-        if (data.backendUrl) setBackendUrl(data.backendUrl);
-      } else {
-        setIsConnected(false);
-      }
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/health`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      setIsConnected(res.ok);
     } catch {
       setIsConnected(false);
     } finally {
@@ -35,10 +31,10 @@ export function ConnectionIndicator() {
   }, [checkConnection]);
 
   useEffect(() => {
-    void checkConnection();
+    const initial = setTimeout(() => { void checkConnection(); }, 0);
     // Re-check periodically every 10 seconds
     const interval = setInterval(checkConnection, 10000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(initial); clearInterval(interval); };
   }, [checkConnection]);
 
   if (!isVisible) {
@@ -90,10 +86,10 @@ export function ConnectionIndicator() {
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="font-bold text-xs tracking-tight truncate">
                 {isConnected
-                  ? "Server Connected"
+                  ? "API Reachable"
                   : isConnected === false
-                  ? "Server Disconnected"
-                  : "Checking Server..."}
+                  ? "API Unreachable"
+                  : "Checking API..."}
               </span>
 
               {isChecking && (
@@ -147,7 +143,7 @@ export function ConnectionIndicator() {
             <div className="flex items-center justify-between">
               <span className="text-[#737373]">Status:</span>
               <span className={`font-semibold ${isConnected ? "text-[#004D3B]" : "text-[#991B1B]"}`}>
-                {isConnected ? "HTTP 200 OK (Running)" : "No Response (Offline)"}
+                {isConnected ? "Health endpoint reachable" : "No Response (Offline)"}
               </span>
             </div>
 
