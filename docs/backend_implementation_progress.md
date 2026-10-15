@@ -1,8 +1,8 @@
 # Backend implementation progress
 
-Current phase status: **P1 acceptance passed locally** (15 October 2026).
-The P0 entry below is historical; the P1 entry records the resumed implementation
-and current evidence. P2 has not started.
+Current phase status: **P2 acceptance passed locally** (15 October 2026).
+Earlier entries are historical. The P2 entry below records verification of P1,
+the completed pure engine, final test evidence and limits. P3 has not started.
 
 ## P0 — contract freeze (15 October 2026)
 
@@ -369,3 +369,148 @@ The separate user `.gitignore` edit remains preserved.
 This completes the approved hosted connection/setup work, not full hosted P1
 workflow acceptance. Hosted auth/multi-tenant business jobs, recovery/concurrency,
 backup/restore, browser and live OpenAI remain unverified. P2 has not started.
+
+## P2 — deterministic financial engine (15 October 2026)
+
+### Reconciliation and preceding-phase verification
+
+Started on `backend/initial` at `0727198`. Read root/backend instructions, the
+implementation plan and this progress record; inspected the current contracts,
+compute boundary, engine scaffolds, migrations, database fixtures and financial
+reference. The only initial local edit was the user's `.gitignore` change; it is
+preserved and excluded from this commit. No branch switch or cleanup was used.
+
+P1 completion was checked against actual code and execution, not its historical
+report: the pre-P2 full suite passed **108 tests in 22.27s** on a newly created
+disposable PostgreSQL 17 database using actual restricted runtime LOGINs. The
+final suite reruns that evidence: migration from empty and populated 0001,
+original SQL suite, tenant isolation/no-context/pool reset, auth/revocation,
+idempotency, operation claim/restart/fencing and private storage. Existing P0
+contracts, generated types, strict startup and role-separated runtime launcher
+remain in use. No configured Neon database was used for destructive tests or
+contacted during this phase. Earlier hosted setup evidence is historical;
+local acceptance does not establish all hosted workflows.
+
+### Actual implementation and decisions
+
+- Replaced the old trust/day-offset financial stubs in `backend/orderfit/engine/`
+  with strict dated financial inputs, integer money, exact rounding, event
+  generation, calendar sweeps, per-day baseline floors, incremental profit,
+  deposit concessions, eligible supplier extensions, fixed-term financing,
+  scenarios, hard-policy evaluation, lexicographic ranking and linear tolerance.
+- Added pure `events`, `evaluation`, `diagnostics`, `horizon`, `utilities` and
+  `validation` modules. VOI/sensitivity rerun the same internal calculator.
+  No file/network/provider/database/environment/clock access is in the engine.
+  Source text and prompt-injection heuristics are outside the calculator boundary.
+- `agent/nodes/compute.py` now maps the complete P0 confirmed snapshot into engine
+  inputs, retains the complete snapshot hash plus reference-style projection hash,
+  and remains the sole application caller of `analyse`. It never infers trust,
+  adds generated receipts/loans as costs or substitutes privileged DB access.
+- Retained the complete candidate catalogue with canonical parameters, all three
+  scenario metrics/daily series/events, eligible cost keys, hard failures and ranks.
+  Added explicit inherited-baseline and order-caused breach intervals. Diagnostics
+  retain reference reasons, alerts, VOI, sensitivity and shortlist comparisons.
+  Finite scan success is `capped_scan`, never proof of nonpayment survival.
+- Calculator version is **engine-0.2.0**. Corrected complete-horizon construction,
+  existing-baseline loan-fee attribution, unresolved-anchor handling, missing
+  as-offered comparator and invalid-strategy scan behavior. ADR 0010 documents
+  these differences. A focused zero-financing-cap test failed before the fee
+  correction and passed afterward. A direct reference probe on late funding
+  demonstrates the horizon defect: reference horizon `2027-03-12` yields low
+  cash `-20`; corrected horizon `2029-01-10` includes day-800 repayment and yields
+  the independently expected `-110`. No golden outputs were rewritten.
+- Bounded full horizon, expanded money, strategy/loan-grid combinations, output
+  retention and estimated/actual work. Actual work is shared across nested reruns.
+  Exhaustion returns `analysis_limit` with no recommendation/partial catalogue.
+  Added a conservative **500,000 scenario/day point** output bound because storing
+  all candidate series is material memory cost; individual maxima cannot all be
+  combined. Invalid products/policies, enums, fields and sensitivity ranges fail
+  explicitly. No automatic FX/APR conversion or unsupported financing is enabled.
+- Added separate legacy fixture and application adapters, 22 golden comparisons,
+  25 named canonical-strategy checks, 27 independent financial/resource tests and
+  a confirmed-input adapter/provenance test. The differential projection excludes
+  labels/version/hash/source-injection flags and unsupported prose, while checking
+  all financial diagnostic values, ranks, decisions, reason codes, VOI and
+  sensitivity. Named strategies are checked separately; full series get independent
+  checks rather than being hidden from production output.
+- Added the repeatable CPU/memory benchmark, ADR 0010 and
+  `docs/p2_engine_verification.md`; updated README/contract status. No SQL, migration,
+  frontend, reference fixture, dependency or environment-file change is needed.
+
+### Checks actually executed
+
+Commands run from `backend/` unless otherwise stated. Provider mode stayed off;
+tests required no OpenAI key.
+
+| Check | Actual result |
+|---|---|
+| Final `uv run --frozen pytest -q -s --tb=short -x -p no:cacheprovider --basetemp <fresh local path>` | **183 passed**, 105.55s; one existing Starlette/TestClient `httpx` deprecation warning |
+| SQL and migration evidence inside final suite | Fresh and populated-0001 upgrades; **296/296 original SQL checks before and after 0002**; both audit/optimistic-lock concurrency runs passed; rollback/role/tenant/operations tests passed |
+| Golden comparisons in final suite | **22/22** financial diagnostic comparisons and **25/25** named strategies passed, unchanged expected files |
+| Independent engine and adapter checks | **27 independent cases + 1 adapter case** passed; exact OF-02 deposit profit `132800000`, base/downside headroom `22120000`/`7120000`, loan profit `134800000`; OF-15 tolerance **16** |
+| Reference CLI `reference_engine.py --check` | **22 cases, 0 problems**, unchanged `ref-0.1.0` |
+| Reference `selftest.py` | **0 failures**, including independent sweeps/financial bounds and reference-only deferred-product checks (those products remain disabled in application) |
+| `uv run --frozen ruff check .` | Passed on backend scope |
+| `uv run --frozen python -m orderfit.contracts.export --check` | Passed, **101 operations**, no regenerated target DTO/type changes |
+| TypeScript contract consumer | Passed with cached **TypeScript 5.9.3**: `node <workspace npm cache>/typescript/lib/tsc.js --strict --noEmit docs/contracts/frontend-api.d.ts docs/contracts/typecheck.ts` from repository root; no frontend install or edits |
+| Architecture boundary checks | Passed in full suite: pure imports, only compute imports public analyse, only llm imports provider SDK |
+| Additional inspection | Engine AST scan found no file/eval/implicit-clock calls; new documentation links resolve; `git diff --check` passed |
+
+An export probe issued from repository root used the system Python and failed to
+resolve the package; the correctly scoped frozen backend command passed. An
+`npx --no-install` TypeScript probe found no frontend-local compiler and tried a
+blocked registry lookup; direct execution of the existing workspace-cached 5.9.3
+compiler passed without network access. An
+accidental root-wide Ruff attempt touched six unrelated reference/skill files;
+those exact clean-at-start paths were restored, and scoped Ruff passed. Final
+diff verification confirms reference/expected files, migrations, frontend and
+skills remain unchanged. No tests were skipped or assertions weakened to obtain
+the passing gate.
+
+### Measured resources and limits
+
+Final `uv run --frozen python -m tests.engine.benchmark_engine`, local Windows,
+locked Python 3.12:
+
+| Case | Wall seconds | CPU seconds | Actual work units | Retained candidates / points |
+|---|---:|---:|---:|---:|
+| OF-02 | 15.887 | 15.438 | 8,093,975 | 45 / 46,440 |
+| 10,000-combination boundary | 14.191 | 13.922 | 7,530,568 | 51 / 111,996 |
+| Near work-admission ceiling, 900 baseline events | 36.776 | 35.750 | 16,704,863 | 51 / 111,996 |
+
+OS-measured process lifetime peak working set: **342,982,656 bytes (327.1 MiB)**,
+including imports and retained preceding results. This is process RSS, not an
+isolated per-candidate allocation estimate. The 900-event case's conservative
+estimate is 99,103,504 units, just below the 100,000,000 ceiling; caching and early
+failure reduce actual charged work. Earlier runs and a repeat under concurrent
+test load are retained in the verification document to show timing variation.
+Deterministic work/candidate totals were stable.
+
+These stress-envelope measurements do not prove a universal worst-case wall time
+or memory bound for every admitted distribution. P3 must enforce subprocess
+time/memory limits and turn exhaustion into a technical incomplete outcome before
+enabling evaluation jobs. It must validate budgets on its deployment hardware;
+P2 has not added an unbounded enabled worker compute path.
+
+### Gate verdict and remaining work
+
+**P2 acceptance gate passed locally.** Reference parity with documented versioned
+corrections, independent financial/property/edge checks, exact anchors, full
+horizon/late repayment/large scans, hard-versus-soft policy, explicit unsupported
+outcomes, deterministic hashes, architectural purity and measured resource
+admission are evidenced above. Existing database objects and contracts are
+preserved. There are no known blocking P2 gaps.
+
+Unverified/out of this phase: full hosted auth/business job recovery/concurrency,
+browser journeys, live OpenAI, deployment resource enforcement, backup/restore,
+and rotation of previously shared owner credentials. The existing TestClient
+dependency deprecation remains. The output-point ceiling deliberately limits
+large catalogues; callers must handle `analysis_limit` without presenting decline.
+
+P3 requires persisted baseline/defaults/offers/customers/payees and manual deals,
+review/confirmation into immutable snapshots, fenced bounded evaluation jobs,
+atomic reuse of evaluation/option/series storage, stale-result/version handling,
+authorized result/export APIs and corresponding real-session frontend flows.
+Its gate must cover restart/refresh, stale edits, concurrent writers, tenant
+isolation and API-key-free end-to-end operation. **No P3 route, handler, persistence
+flow or frontend integration was implemented or enabled here.**
