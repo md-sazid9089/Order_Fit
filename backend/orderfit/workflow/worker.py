@@ -48,24 +48,29 @@ def failure(code):
     )
 
 
-def _compute_child(snapshot_json, send_conn):
+def _compute_child(snapshot_json, send_conn, memory_bytes):
     try:
+        from orderfit.workflow.compute_limits import limit_memory
+
+        memory_job = limit_memory(memory_bytes)
         snapshot = ConfirmedInputV1.model_validate_json(snapshot_json)
         comp = compute(snapshot)
         send_conn.send({"snapshot_hash": comp.snapshot_hash,
                         "reference_input_hash": comp.reference_input_hash,
                         "result": comp.result.model_dump(mode="json")})
+        del memory_job
     except BaseException as exc:
         send_conn.send({"error": type(exc).__name__})
     finally:
         send_conn.close()
 
 
-def bounded_compute(snapshot: ConfirmedInputV1, timeout_seconds: int = 90):
+def bounded_compute(snapshot: ConfirmedInputV1, timeout_seconds: int = 90,
+                    memory_bytes: int = 512 * 1024 * 1024):
     ctx = multiprocessing.get_context("spawn")
     receive, send = ctx.Pipe(duplex=False)
     process = ctx.Process(target=_compute_child,
-                          args=(snapshot.model_dump_json(), send), daemon=True)
+                          args=(snapshot.model_dump_json(), send, memory_bytes), daemon=True)
     process.start()
     send.close()
     try:
@@ -76,6 +81,8 @@ def bounded_compute(snapshot: ConfirmedInputV1, timeout_seconds: int = 90):
         payload = receive.recv()
         process.join(5)
         if "error" in payload:
+            if payload["error"] == "MemoryError":
+                raise MemoryError("analysis memory budget exceeded")
             raise RuntimeError("analysis subprocess failed")
         from orderfit.agent.nodes.compute import Computation
         return Computation(payload["snapshot_hash"], payload["reference_input_hash"],
@@ -174,17 +181,22 @@ def run_once(operations, worker, handlers, runtime=None):
                     result = handler(job, c, scope)
                 else:
                     result = handler(job)
+            elif job.kind == "csv_preview" and runtime is not None:
+                from orderfit.workflow.extraction import handle_csv_preview
+
+                result = handle_csv_preview(job, c, scope, runtime)
             else:
                 result = failure("CAPABILITY_UNAVAILABLE")
+    except (TimeoutError, MemoryError):
+        result = BlockedResult(kind="blocked", outcome="analysis_limit", findings=[Finding(
+            code="ANALYSIS-LIMIT", field=None,
+            message="The analysis exceeded the process time or memory limit. Reduce the analysis size before retrying.",
+            blocking=True, resolution="correct_input")])
     except RetryableJobError:
         result, retry = failure("TRANSIENT_JOB_FAILURE"), True
     except Exception:
         result = failure("JOB_FAILED")
     finally:
-            elif job.kind == "csv_preview" and runtime is not None:
-                from orderfit.workflow.extraction import handle_csv_preview
-
-                result = handle_csv_preview(job, c, scope, runtime)
         stopped.set()
         thread.join(timeout=2)
     operations.finish(claim, result, retry=retry)

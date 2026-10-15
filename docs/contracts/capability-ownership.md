@@ -64,6 +64,7 @@ All business operations are planned, not deployed. Test column is the required p
 | document_get | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/documents/{document_id}` | read | `documents.get` | document | P4 | V07 |
 | document_download | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/documents/{document_id}/download` | read | `documents.download` | document,private_files | P4 | V07 |
 | document_extract | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/documents/{document_id}/extract` | prepare | `documents.extract` | document,document_parse,extraction_candidate,operation | P4 | V08 |
+| deal_fields | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/fields` | read | `review.fields` | extracted_field,extraction_candidate | P4 | V07 |
 | review | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/review` | prepare | `review.build` | deal,extracted_field,cash_event | P3 | V09 |
 | field_resolve | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/fields/resolve` | prepare | `review.resolve` | extracted_field,extraction_candidate,operation_log | P4 | V07 |
 | confirm | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/confirm` | prepare | `review.confirm` | input_snapshot,approval,deal,operation_log | P3 | V09 |
@@ -97,9 +98,9 @@ All business operations are planned, not deployed. Test column is the required p
 | notification_read | `POST /api/v1/businesses/{business_id}/notifications/{notification_id}/read` | read | `notifications.read_own` | notification | P7 | V03 |
 | notifications_read | `POST /api/v1/businesses/{business_id}/notifications/read` | read | `notifications.read_through` | notification | P7 | V03 |
 | audit_list | `GET /api/v1/businesses/{business_id}/audit` | audit | `audit.list` | operation_log | P7 | V14 |
-| audit_export | `GET /api/v1/businesses/{business_id}/audit/export` | audit | `audit.export` | operation_log,operation_log_canonical | P7 | V14 |
-| decision_export | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/decision-export` | audit | `exports.decision` | input_snapshot,evaluation,approval,execution_action,operation_log | P7 | V14 |
-| export_download | `GET /api/v1/businesses/{business_id}/exports/{export_id}/download` | read | `exports.download` | private_files | P7 | V03 |
+| audit_export | `GET /api/v1/businesses/{business_id}/audit/export` | audit | `audit.export` | operation_log,operation_log_canonical | P3 | V14 |
+| decision_export | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/decision-export` | audit | `exports.decision` | decision_export,input_snapshot,evaluation,operation_log | P3 | V14 |
+| export_download | `GET /api/v1/businesses/{business_id}/exports/{export_id}/download` | audit | `exports.download` | decision_export | P3 | V03 |
 | csrf_challenge | `GET /api/v1/auth/csrf` | public | `identity.csrf_challenge` | auth_session | P1 | V04 |
 | baseline_get | `GET /api/v1/businesses/{business_id}/baseline` | read | `baseline.balance` | business | P3 | V09 |
 | baseline_update | `PATCH /api/v1/businesses/{business_id}/baseline` | manage_finance | `baseline.update_balance` | business,operation_log | P3 | V09 |

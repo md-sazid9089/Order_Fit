@@ -2927,6 +2927,103 @@
         "title": "DealWrite",
         "type": "object"
       },
+      "DecisionRecordV1": {
+        "additionalProperties": false,
+        "properties": {
+          "audit_head_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Head Hash"
+          },
+          "audit_head_sequence": {
+            "anyOf": [
+              {
+                "maxLength": 19,
+                "pattern": "^[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Head Sequence"
+          },
+          "business_id": {
+            "format": "uuid",
+            "title": "Business Id",
+            "type": "string"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/EvaluationResultV1"
+          },
+          "exported_at": {
+            "format": "date-time",
+            "title": "Exported At",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "decision-export.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "const": "manual_evaluation",
+            "title": "Scope",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ConfirmedInputV1"
+          },
+          "snapshot_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "format": "uuid",
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "scope",
+          "exported_at",
+          "business_id",
+          "deal_id",
+          "snapshot_id",
+          "snapshot_hash",
+          "snapshot",
+          "evaluation",
+          "audit_head_sequence",
+          "audit_head_hash",
+          "limitations"
+        ],
+        "title": "DecisionRecordV1",
+        "type": "object"
+      },
       "DelayChange": {
         "additionalProperties": false,
         "properties": {
@@ -4145,6 +4242,194 @@
           "days"
         ],
         "title": "ExtensionChange",
+        "type": "object"
+      },
+      "ExtractedFieldView": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractionCandidateView"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "field_id": {
+            "maxLength": 19,
+            "pattern": "^[1-9][0-9]*$",
+            "title": "Field Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "extracted",
+              "ambiguous",
+              "missing",
+              "conflicting",
+              "confirmed",
+              "overridden",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "field_id",
+          "document_id",
+          "field",
+          "value",
+          "status",
+          "candidate_id",
+          "candidates",
+          "version"
+        ],
+        "title": "ExtractedFieldView",
+        "type": "object"
+      },
+      "ExtractionCandidateView": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "source_page": {
+            "anyOf": [
+              {
+                "maximum": 50,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Page"
+          },
+          "source_quote": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Quote"
+          },
+          "source_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "customer_order",
+                  "customer_sales_quote",
+                  "supplier_cost_quote",
+                  "baseline",
+                  "financing",
+                  "owner_constraints",
+                  "reply",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Role"
+          },
+          "status": {
+            "enum": [
+              "extracted",
+              "ambiguous",
+              "missing",
+              "conflicting"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "field",
+          "value",
+          "status",
+          "source_page",
+          "source_quote",
+          "confidence",
+          "source_role",
+          "flags"
+        ],
+        "title": "ExtractionCandidateView",
         "type": "object"
       },
       "FactSentence": {
@@ -6548,6 +6833,36 @@
           "next_cursor"
         ],
         "title": "Page[EvaluationResultV1]",
+        "type": "object"
+      },
+      "Page_ExtractedFieldView_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedFieldView"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[ExtractedFieldView]",
         "type": "object"
       },
       "Page_InvoiceView_": {
@@ -11028,7 +11343,7 @@
                 }
               }
             },
-            "description": "Target contract; implementation phase P7"
+            "description": "Target contract; implementation phase P3"
           },
           "400": {
             "content": {
@@ -11138,7 +11453,7 @@
         ],
         "summary": "audit.export",
         "x-acceptance-test": "V14",
-        "x-implementation-phase": "P7",
+        "x-implementation-phase": "P3",
         "x-permission": "audit",
         "x-service-owner": "audit.export",
         "x-storage-owner": [
@@ -17348,7 +17663,7 @@
                 }
               }
             },
-            "description": "Target contract; implementation phase P7"
+            "description": "Target contract; implementation phase P3"
           },
           "400": {
             "content": {
@@ -17458,14 +17773,13 @@
         ],
         "summary": "exports.decision",
         "x-acceptance-test": "V14",
-        "x-implementation-phase": "P7",
+        "x-implementation-phase": "P3",
         "x-permission": "audit",
         "x-service-owner": "exports.decision",
         "x-storage-owner": [
+          "decision_export",
           "input_snapshot",
           "evaluation",
-          "approval",
-          "execution_action",
           "operation_log"
         ]
       }
@@ -18908,6 +19222,178 @@
           "operation",
           "deal",
           "idempotency_key"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/deals/{deal_id}/fields": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "deal_fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ExtractedFieldView_"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P4"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "review.fields",
+        "x-acceptance-test": "V07",
+        "x-implementation-phase": "P4",
+        "x-permission": "read",
+        "x-service-owner": "review.fields",
+        "x-storage-owner": [
+          "extracted_field",
+          "extraction_candidate"
         ]
       }
     },
@@ -21054,7 +21540,7 @@
                 }
               }
             },
-            "description": "Target contract; implementation phase P7"
+            "description": "Target contract; implementation phase P3"
           },
           "400": {
             "content": {
@@ -21164,11 +21650,11 @@
         ],
         "summary": "exports.download",
         "x-acceptance-test": "V03",
-        "x-implementation-phase": "P7",
-        "x-permission": "read",
+        "x-implementation-phase": "P3",
+        "x-permission": "audit",
         "x-service-owner": "exports.download",
         "x-storage-owner": [
-          "private_files"
+          "decision_export"
         ]
       }
     },

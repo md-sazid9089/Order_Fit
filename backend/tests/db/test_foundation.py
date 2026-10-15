@@ -718,7 +718,9 @@ def test_runtime_core_mappings_match_manual_sql(postgres):
 def test_worker_process_death_and_restart_recovers_same_operation(postgres, accounts, config):
     a = accounts[0]
     api = Operations(postgres["database"])
-    accepted = api.admit(a.token, a.business_id, str(uuid4()), admission(postgres["database"], a))
+    # Keep this recovery test independent of newly enabled P4 CSV handlers.
+    pending = admission(postgres["database"], a).model_copy(update={"kind": "explain"})
+    accepted = api.admit(a.token, a.business_id, str(uuid4()), pending)
     environment = {
         key: value
         for key, value in os.environ.items()

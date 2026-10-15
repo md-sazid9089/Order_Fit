@@ -12,6 +12,7 @@ from pathlib import Path
 from pydantic.json_schema import models_json_schema
 
 from .catalogue import ENDPOINTS
+from .exports import DecisionRecordV1
 from .financial import ConfirmedInputV1
 from .language import LanguageRequest, LanguageResult, TypedJSONImportV1
 from .protocol import IdempotencyMaterial
@@ -28,6 +29,7 @@ def ref(model):
 def build_openapi():
     models = {
         ConfirmedInputV1,
+        DecisionRecordV1,
         ActionBundleV1,
         IdempotencyMaterial,
         ErrorEnvelope,
@@ -293,11 +295,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    for name, content in artifacts().items():
-        path = DEST / name
+    generated = {DEST / name: content for name, content in artifacts().items()}
+    # Keep the browser's checked declaration inside its Docker build context.
+    generated[DEST.parents[1] / "web" / "lib" / "generated-api.d.ts"] = generated[DEST / "frontend-api.d.ts"]
+    for path, content in generated.items():
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:
-                raise SystemExit(f"Contract artifact drift: {name}")
+                raise SystemExit(f"Contract artifact drift: {path.name}")
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8", newline="\n")
