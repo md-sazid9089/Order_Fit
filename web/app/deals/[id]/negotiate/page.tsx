@@ -1,11 +1,13 @@
-import { Suspense } from "react";
-import { PreparationWorkspace } from "@/components/preparation-workspace";
+import Link from "next/link";
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> };
-async function PreparationContent({ params, searchParams }: Props) {
-  const [p, q] = await Promise.all([params, searchParams]);
-  return <PreparationWorkspace key={`${p.id}:${q.businessId}`} dealId={p.id} businessId={q.businessId} operationId={q.operationId} />;
-}
-export default function PreparationPage(props: Props) {
-  return <Suspense fallback={<main className="p-8">Loading saved preparation…</main>}><PreparationContent {...props} /></Suspense>;
+// Negotiation drafting and approval arrive in P5/P6. Until then this route shows a notice for
+// every id: the former demo client faked a step-up approval and must not be reachable.
+export default function DealNegotiatePage() {
+  return (
+    <main className="space-y-3 p-8">
+      <h1 className="text-xl font-semibold">Negotiation preparation is unavailable</h1>
+      <p>This workflow requires P5. Saved manual order reviews and financial results are available from your orders.</p>
+      <Link className="underline" href="/deals">Saved orders</Link>
+    </main>
+  );
 }
