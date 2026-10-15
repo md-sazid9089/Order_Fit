@@ -687,3 +687,13 @@ The concurrent P4 branch remains integrated through merge-only migration
   navigation presents P5 routes as unavailable rather than implying support.
 - P4 document extraction remains a concurrent scope and needs its own final
   acceptance review. The existing TestClient dependency deprecation remains.
+
+### P4 review pass (same day)
+
+Self-review fixes: rejected uploads no longer leave orphaned bytes; prompt text escapes `<` so
+source text cannot close the `<document>` data tag; SDK finish-reason errors map to
+`INCOMPLETE`/`REFUSAL`; "missing" candidates never store a model-invented quote; injection-flagged
+quotes are stored as `ambiguous` consistently in evidence and projection; CSV import currency must
+equal the business currency. Live-path error mapping is covered with a fake SDK client (no network).
+Note: `extraction_candidate.confidence` is a fixed validation-outcome marker (0.8 passed all guards,
+0.5 otherwise), not a model probability; the provider returns no confidence.
