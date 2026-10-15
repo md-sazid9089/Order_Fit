@@ -1,116 +1,397 @@
-"""Engine input and output types.
+"""Strict financial-only contracts; no HTTP, storage, source text or implicit time."""
 
-These know nothing about documents, extraction, or confidence; that lives in
-``orderfit.domain``. The agent's compute node translates a confirmed Deal into
-an ``EngineInput``.
-"""
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
+from typing import Annotated, Literal
 
-from enum import StrEnum
-
-from pydantic import BaseModel, ConfigDict, Field
-
-from orderfit.engine.constants import FAILS_ON_TIME, HORIZON_DAYS, MAX_DELAY_DAYS
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, JsonValue, model_validator
 
 
-class _Frozen(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+def business_date(value):
+    if isinstance(value, str) and len(value) == 10:
+        value = date.fromisoformat(value)
+    if type(value) is not date or not date(2000, 1, 1) <= value <= date(2100, 12, 31):
+        raise ValueError("ISO business date within 2000..2100 required")
+    return value
 
 
-class Direction(StrEnum):
-    IN = "in"
-    OUT = "out"
+Date = Annotated[date, BeforeValidator(business_date)]
+Money = Annotated[int, Field(ge=-9_000_000_000_000_000, le=9_000_000_000_000_000)]
+Positive = Annotated[Money, Field(gt=0)]
+Nonnegative = Annotated[Money, Field(ge=0)]
+Days = Annotated[int, Field(ge=0, le=365)]
+Bps = Annotated[int, Field(ge=0, le=10000)]
+ScenarioName = Literal["base", "downside", "severe"]
+Priority = Literal[
+    "profit",
+    "robustness",
+    "independence_any",
+    "independence_customer",
+    "simplicity",
+    "low_financing_cost",
+]
 
 
-class CashEvent(_Frozen):
-    """One dated cash movement. Amount is always positive; direction carries the sign."""
-
-    event_id: str
-    day: int = Field(ge=0, le=HORIZON_DAYS)
-    amount_minor: int = Field(gt=0)
-    direction: Direction
-    kind: str  # payroll, supplier_payment, receipt, loan_draw, loan_repayment, ...
-    is_order_receipt: bool = False  # the receipt the stress test shifts
+class Frozen(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
 
-class FinancingOffer(_Frozen):
-    """A catalogue row. The AI can never add one."""
+class EventInput(Frozen):
+    id: str
+    date: Date
+    amount: Positive
+    direction: Literal["in", "out"]
+    kind: Literal[
+        "payroll",
+        "rent",
+        "tax",
+        "ap_payment",
+        "ar_collection",
+        "loan_installment",
+        "supplier_payment",
+        "labour",
+        "freight",
+        "subcontract",
+        "existing_inventory",
+        "order_deposit",
+        "order_receipt",
+        "order_final_receipt",
+        "order_stage_receipt",
+        "loan_draw",
+        "loan_fee",
+        "loan_interest",
+        "loan_repayment",
+        "other",
+    ]
+    certainty: Literal["confirmed", "expected", "assumed"] = "confirmed"
+    ccy: Literal["BDT", "USD", "EUR", "GBP"] | None = None
+    invoice_ref: str | None = None
 
+
+class Cost(Frozen):
+    id: str
+    date: Date
+    amount: Positive
+    kind: Literal["supplier_payment", "labour", "freight", "subcontract", "existing_inventory"]
+    incremental: bool
+    deferrable: bool
+    ccy: Literal["BDT", "USD", "EUR", "GBP"] | None = None
+    invoice_ref: str | None = None
+
+
+class Terms(Frozen):
+    anchor: Literal["order", "invoice", "delivery", "unknown"] | None
+    days: Days
+    convention: Literal["calendar"] = "calendar"
+
+
+class Order(Frozen):
+    revenue: Positive
+    anchor_dates: dict[Literal["order", "invoice", "delivery"], Date | None]
+    terms: Terms
+    costs: list[Cost] = Field(max_length=2000)
+    deposit_discount_bps: Bps = 0
+    deposit_discount_bps_per_10pct: Bps = 0
+
+
+class FinancingOffer(Frozen):
     offer_id: str
     name: str
-    rate_bps_per_month: int = Field(ge=0)
-    fee_bps: int = Field(ge=0, default=0)
-    fee_flat_minor: int = Field(ge=0, default=0)
-    min_minor: int = Field(gt=0)
-    max_minor: int = Field(gt=0)
-    term_days: int = Field(gt=0)
-    step_minor: int = Field(gt=0, default=1)  # loans are drawn in multiples of this
+    shape: Literal["term_loan"]
+    interest_bps: Bps
+    fee_bps: Bps
+    fee_flat: Nonnegative
+    fee_at: Literal["draw", "repayment"]
+    lead_days: Days
+    min: Positive
+    max: Positive
+    step: Positive
+    term_days: Annotated[int, Field(ge=1, le=540)]
+    available_from: Date | None = None
+    valid_until: Date | None = None
+
+    @model_validator(mode="after")
+    def grid(self):
+        if self.min > self.max or (self.max - self.min) // self.step + 1 > 200:
+            raise ValueError("invalid or excessive draw grid")
+        return self
 
 
-class LeverKind(StrEnum):
-    DEFER_PAYMENT = "defer_payment"  # move an outflow later
-    ASK_DEPOSIT = "ask_deposit"  # pull part of the receipt earlier
-    BORROW = "borrow"  # draw a catalogue loan and repay it
-    EARLY_PAY_DISCOUNT = "early_pay_discount"  # receive earlier, scaled down
-    DECLINE = "decline"  # drop the order's events entirely
+class Owner(Frozen):
+    priorities: list[Priority] = Field(min_length=1, max_length=6)
+    min_order_profit: Nonnegative
+    max_financing_cost: Nonnegative | None
+    target_scenario: ScenarioName
+    close_call_bps: Bps
+    max_deposit_concession_bps: Bps | None = None
+    max_supplier_extension_days: Days | None = None
+    min_delay_tolerance_days: None = None
+    max_customer_concentration_bps: None = None
+    max_financing_cost_bps: None = None
 
 
-class Lever(_Frozen):
-    lever_id: str
-    kind: LeverKind
-    params: dict[str, int] = {}  # all integers: days, minor units, bps
+class Extension(Frozen):
+    days: Days
+    surcharge_bps: Bps
 
 
-class StressScenario(StrEnum):
-    DELAY = "delay"
-    PARTIAL = "partial"
-    CANCELLATION = "cancellation"
-    DISCOUNT = "discount"
+class Space(Frozen):
+    deposit_pcts: list[Annotated[int, Field(ge=0, le=100)]] = Field(min_length=1, max_length=101)
+    deposit_lead_days: Days
+    extensions: list[Extension] = Field(min_length=1, max_length=366)
+    offer_ids: list[str] = Field(max_length=20)
+    stages: list[Literal[1]] = [1]
 
 
-class EngineInput(_Frozen):
-    currency: str = Field(min_length=3, max_length=3)
-    cash_today_minor: int
-    reserve_minor: int = Field(ge=0)
-    events: tuple[CashEvent, ...]
-    levers: tuple[Lever, ...] = Field(max_length=5)
-    catalogue: tuple[FinancingOffer, ...]
-    target_tolerance_days: int = Field(ge=0, le=MAX_DELAY_DAYS)
+class Stress(Frozen):
+    order_receipt_delay_days: Days = 0
+    ar_delay_days: Days = 0
+    cost_overrun_bps: Bps = 0
+    deposit_follows_customer_delay: bool = True
+    order_receipt_haircut_bps: Bps = 0
 
 
-class Timeline(_Frozen):
-    lowest_balance_minor: int
-    lowest_day: int
-    first_breach_day: int | None  # first day balance < reserve
-    breach_intervals: tuple[tuple[int, int], ...]  # inclusive (start, end) days
+SENSITIVITY_PATHS = Literal[
+    "order.deposit_discount_bps_per_10pct",
+    "scenarios.downside.order_receipt_delay_days",
+    "scenarios.downside.ar_delay_days",
+    "scenarios.severe.cost_overrun_bps",
+    "strategy_space.deposit_lead_days",
+]
 
 
-class OptionResult(_Frozen):
-    option_id: str  # sorted lever ids joined by "+", or "baseline"
-    lever_ids: tuple[str, ...]
-    timeline: Timeline
-    # FAILS_ON_TIME (-1): breaches even when paid on time.
-    # 0..MAX_DELAY_DAYS: last delay before the first failing delay.
-    # If no delay in the scan fails, equals MAX_DELAY_DAYS and survives_full_scan is True.
-    delay_tolerance_days: int = Field(ge=FAILS_ON_TIME, le=MAX_DELAY_DAYS)
-    survives_full_scan: bool
-    survives_non_payment: bool  # still safe if the order is never paid
-    cost_minor: int = Field(ge=0)
-    borrowed_minor: int = Field(ge=0)
-    meets_target: bool
+class Sensitivity(Frozen):
+    path: SENSITIVITY_PATHS
+    values: list[Annotated[int, Field(ge=0, le=10000)]] = Field(min_length=1, max_length=20)
+
+    @model_validator(mode="after")
+    def field_bounds(self):
+        basis_points = {
+            "order.deposit_discount_bps_per_10pct",
+            "scenarios.severe.cost_overrun_bps",
+        }
+        if self.path not in basis_points and any(value > 365 for value in self.values):
+            raise ValueError("sensitivity day value outside field bounds")
+        return self
 
 
-class StressRow(_Frozen):
-    option_id: str
-    scenario: StressScenario
-    delay_days: int
-    lowest_balance_minor: int
-    passes: bool
+class Alternative(Frozen):
+    label: str
+    patch: dict[Literal["order.terms.anchor", "order.terms.days"], str | int]
+
+    @model_validator(mode="after")
+    def bounded(self):
+        for path, value in self.patch.items():
+            if path.endswith("anchor") and value not in {"order", "invoice", "delivery"}:
+                raise ValueError("supported anchor required")
+            if path.endswith("days") and (type(value) is not int or not 0 <= value <= 365):
+                raise ValueError("calendar day bound")
+        return self
 
 
-class Result(_Frozen):
-    engine_version: str
-    input_hash: str  # sha256 of the canonical EngineInput JSON; makes results reproducible
-    baseline: OptionResult
-    options: tuple[OptionResult, ...]  # ranked, best first
-    stress: tuple[StressRow, ...]
-    recommended_option_id: str | None  # None when no option meets any safety bar
+class Uncertainty(Frozen):
+    id: str
+    alternatives: list[Alternative] = Field(min_length=2, max_length=10)
+
+
+class Issue(Frozen):
+    code: str
+    message: str
+
+
+class EngineInput(Frozen):
+    as_of: Date
+    currency: Literal["BDT", "USD", "EUR", "GBP"]
+    exponent: Literal[2] = 2
+    opening_balance: Money
+    reserve: Nonnegative
+    baseline_events: list[EventInput] = Field(max_length=2000)
+    order: Order
+    financing_offers: list[FinancingOffer] = Field(max_length=20)
+    owner: Owner
+    strategy_space: Space
+    scenarios: dict[Literal["downside", "severe"], Stress]
+    scan_days: Annotated[int, Field(ge=1, le=540)] = 90
+    sensitivity: list[Sensitivity] = Field(default_factory=list, max_length=10)
+    uncertain_inputs: list[Uncertainty] = Field(default_factory=list, max_length=20)
+    review_issues: list[Issue] = Field(default_factory=list, max_length=100)
+    max_work_units: Annotated[int, Field(ge=1, le=100_000_000)] = 100_000_000
+
+    @model_validator(mode="after")
+    def dimensions(self):
+        if set(self.scenarios) != {"downside", "severe"}:
+            raise ValueError("downside and severe required")
+        if len(self.baseline_events) + len(self.order.costs) > 2000:
+            raise ValueError("event limit")
+        offers = {o.offer_id for o in self.financing_offers}
+        if (
+            len(offers) != len(self.financing_offers)
+            or not set(self.strategy_space.offer_ids) <= offers
+        ):
+            raise ValueError("duplicate or unknown offer")
+        for items in (
+            self.owner.priorities,
+            self.strategy_space.deposit_pcts,
+            self.strategy_space.offer_ids,
+            [e.days for e in self.strategy_space.extensions],
+        ):
+            if len(items) != len(set(items)):
+                raise ValueError("duplicate dimension")
+        if self.strategy_space.stages != [1]:
+            raise ValueError("staged delivery unsupported")
+        return self
+
+
+@dataclass(frozen=True)
+class CashEvent:
+    id: str
+    date: date
+    amount: int
+    direction: str
+    kind: str
+    certainty: str = "confirmed"
+    scope: str = "baseline"
+
+    def moved(self, days):
+        return replace(self, date=self.date + timedelta(days=days))
+
+
+@dataclass(frozen=True)
+class Strategy:
+    kind: str = "plan"
+    deposit_pct: int = 0
+    ext_days: int = 0
+    ext_surcharge_bps: int = 0
+    stages: int = 1
+    defer_days: int = 0
+    offer_id: str | None = None
+    loan_minor: int = 0
+    sized_for: str | None = None
+
+    def __post_init__(self):
+        for value, limit in (
+            (self.deposit_pct, 100),
+            (self.ext_days, 365),
+            (self.ext_surcharge_bps, 10000),
+            (self.loan_minor, 9_000_000_000_000_000),
+        ):
+            if type(value) is not int or not 0 <= value <= limit:
+                raise ValueError("invalid strategy parameter")
+        if self.kind not in {"plan", "decline"} or self.stages != 1 or self.defer_days != 0:
+            raise ValueError("unsupported strategy kind, stages or deferral")
+        if (self.offer_id is None) != (self.loan_minor == 0):
+            raise ValueError("loan identity and amount required together")
+        if self.kind == "decline" and (self.deposit_pct or self.ext_days or self.offer_id):
+            raise ValueError("decline cannot carry financial levers")
+
+    @property
+    def id(self):
+        if self.kind == "decline":
+            return "decline"
+        parts = []
+        if self.deposit_pct:
+            parts.append(f"dep{self.deposit_pct}")
+        if self.ext_days:
+            parts.append(
+                f"ext{self.ext_days}"
+                + (f"s{self.ext_surcharge_bps}" if self.ext_surcharge_bps else "")
+            )
+        if self.offer_id:
+            parts.append(f"fin:{self.offer_id}@{self.loan_minor}")
+        return "+".join(parts) or "accept_as_is"
+
+    @property
+    def dependencies(self):
+        return tuple(
+            name
+            for active, name in [
+                (self.deposit_pct, "customer"),
+                (self.ext_days, "supplier"),
+                (self.offer_id, "lender"),
+            ]
+            if active
+        )
+
+    @property
+    def n_levers(self):
+        return len(self.dependencies)
+
+
+class SeriesPoint(Frozen):
+    date: Date
+    baseline_trough: int
+    baseline_close: int
+    candidate_trough: int
+    candidate_close: int
+    reserve: int
+    effective_floor: int
+
+
+class BreachInterval(Frozen):
+    start: Date
+    end: Date
+    days: Annotated[int, Field(ge=1)]
+    max_gap: Annotated[int, Field(ge=1)]
+
+
+class ScenarioMetrics(Frozen):
+    scenario: str
+    lowest_balance: int
+    headroom: int
+    lowest_date: Date
+    first_shortfall_date: Date | None
+    order_caused_violation_days: int
+    first_violation_date: Date | None
+    max_funding_gap: int
+    absolute_gap_vs_reserve: int
+    feasible: bool
+    final_balance: int
+    financing_cost: int
+    inherited_baseline_breaches: list[BreachInterval] = Field(default_factory=list)
+    order_caused_breaches: list[BreachInterval] = Field(default_factory=list)
+
+
+class Candidate(Frozen):
+    strategy: Strategy
+    net_profit: int
+    profit_before_financing: int
+    financing_cost: int
+    concession: int
+    surcharge: int
+    revenue_net: int
+    resilience: Annotated[int, Field(ge=0, le=3)]
+    excluded_costs: list[str]
+    scenarios: dict[ScenarioName, ScenarioMetrics]
+    series: dict[ScenarioName, list[SeriesPoint]]
+    hard_feasible: bool
+    hard_failures: list[str]
+    rank: int | None
+    eligible_cost_keys: list[str]
+    events: dict[ScenarioName, list[CashEvent]]
+
+
+class Tolerance(Frozen):
+    status: Literal["fails_on_time", "first_failure", "capped_scan"]
+    observed_safe_days: Annotated[int, Field(ge=-1, le=540)]
+    first_failure_days: Annotated[int, Field(ge=0, le=540)] | None
+    scan_cap_days: Annotated[int, Field(ge=1, le=540)]
+
+
+class Result(Frozen):
+    calculator_version: str
+    input_hash: str
+    horizon_end: Date | None
+    decision: Literal[
+        "accept_as_is",
+        "accept_with_changes",
+        "decline_or_renegotiate",
+        "needs_input",
+        "unsupported_escalate",
+        "blocked_data_conflict",
+        "analysis_limit",
+    ]
+    recommended: str | None
+    catalogue: list[Candidate]
+    diagnostics: dict[str, JsonValue]
+    work_units: int
+    tolerance: Tolerance | None = None

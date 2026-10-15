@@ -215,8 +215,10 @@ Bounds: total 2000 events, 20 offers, 200 grid points/offer, 10,000 combinations
 540 scan days, 1095 horizon days and biz_date endpoints. Work admission uses
 combinations × (scan+3) × max(1,event count,horizon days) × (1+sum sensitivity points), maximum
 100,000,000 units. This is a conservative contract admission count, not a measured
-timeout guarantee; P2 must measure actual daily-sweep CPU/memory and tighten its
-worker timeout/budget before enabling compute. Expanded monetary bounds account
+timeout guarantee. P2 adds a stricter engine admission estimate, a shared actual
+work counter and a 500,000-point output ceiling; see the
+[P2 engine contract and measurements](../p2_engine_verification.md). P3 must apply
+bounded worker execution before enabling queued compute. Expanded monetary bounds account
 for 100% extension surcharge + 100% stress overrun and fees/interest. Full horizon
 includes late offer funding/repayment, extended costs, shifted receipts/deposits,
 baseline AR and scan endpoints. No clipped best-plan or false nonpayment claim.

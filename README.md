@@ -25,7 +25,8 @@ a deterministic engine does every calculation, and the owner approves every outg
 
 > [!NOTE]
 > P1 supplies password sessions, tenant-scoped transactions, durable operations and private
-> storage. Financial business workflows and the application engine remain unimplemented.
+> storage. P2 adds the pure deterministic financial engine and confirmed-input adapter.
+> Persisted financial business workflows and their frontend integration remain P3 work.
 > See [implementation progress](docs/backend_implementation_progress.md),
 > [contract guide](docs/contracts/README.md) and [implementation plan](docs/initial_backend_implementation_plan.md).
 > The feature list below describes intended behavior, not completed capabilities.
