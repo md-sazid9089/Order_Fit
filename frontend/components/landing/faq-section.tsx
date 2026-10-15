@@ -80,7 +80,7 @@ export function FaqSection() {
                   </span>
                   <ChevronDown
                     className={`size-5 shrink-0 text-[#526975] transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-[#004D3B]" : ""
+                      isOpen ? "rotate-180 text-[#1E2021]" : ""
                     }`}
                   />
                 </button>

@@ -8,11 +8,11 @@ export function HeroSection() {
   const [selectedPlan, setSelectedPlan] = useState<"deposit" | "split" | "credit">("deposit");
 
   return (
-    <section className="relative overflow-hidden bg-[#004D3B] text-[#FFFAEC] pt-16 pb-20 md:pt-20 md:pb-28">
+    <section className="relative overflow-hidden bg-[#1E2021] text-[#FFFAEC] pt-16 pb-20 md:pt-20 md:pb-28">
       {/* Subtle radial background glow */}
       <div
         className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] rounded-full blur-3xl opacity-25"
-        style={{ background: "radial-gradient(circle, #3E8672 0%, #004D3B 70%, transparent 100%)" }}
+        style={{ background: "radial-gradient(circle, #3E8672 0%, #1E2021 70%, transparent 100%)" }}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -30,7 +30,7 @@ export function HeroSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8">
             <Link
               href="/auth/signup"
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-full px-8 h-12 bg-[#B5F2C6] text-[#004D3B] hover:bg-[#a3ebb6] font-sans font-semibold tracking-wider uppercase text-xs sm:text-sm transition-all shadow-sm active:scale-98"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-full px-8 h-12 bg-[#FEF3C7] text-[#1E2021] hover:bg-[#FDE68A] font-sans font-semibold tracking-wider uppercase text-xs sm:text-sm transition-all shadow-sm active:scale-98"
             >
               Get started for free
             </Link>
@@ -44,8 +44,8 @@ export function HeroSection() {
 
           {/* Product Tour Video Link & Trust Badge with Avatars */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-6 text-sm">
-            <a href="#simulator" className="inline-flex items-center gap-2 text-[#B5F2C6] font-medium hover:underline hover:underline-offset-2">
-              <span className="flex size-5 items-center justify-center rounded-full bg-[#B5F2C6]/20 text-[#B5F2C6]">
+            <a href="#simulator" className="inline-flex items-center gap-2 text-[#FEF3C7] font-medium hover:underline hover:underline-offset-2">
+              <span className="flex size-5 items-center justify-center rounded-full bg-[#FEF3C7]/20 text-[#FEF3C7]">
                 <Play className="size-2.5 fill-current ml-0.5" />
               </span>
               Take an interactive product tour
@@ -53,14 +53,14 @@ export function HeroSection() {
 
             <div className="hidden sm:flex items-center gap-2 text-xs text-[#FFFAEC]/80 border-l border-white/20 pl-6">
               <div className="flex -space-x-2">
-                <div className="size-6 rounded-full bg-[#EBEAE4] border-2 border-[#004D3B] flex items-center justify-center">
-                  <svg className="size-3 text-[#004D3B]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                <div className="size-6 rounded-full bg-[#EBEAE4] border-2 border-[#1E2021] flex items-center justify-center">
+                  <svg className="size-3 text-[#1E2021]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
                 </div>
-                <div className="size-6 rounded-full bg-[#ECEAE4] border-2 border-[#004D3B] flex items-center justify-center">
-                  <svg className="size-3 text-[#004D3B]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                <div className="size-6 rounded-full bg-[#ECEAE4] border-2 border-[#1E2021] flex items-center justify-center">
+                  <svg className="size-3 text-[#1E2021]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
                 </div>
-                <div className="size-6 rounded-full bg-[#EBEAE4] border-2 border-[#004D3B] flex items-center justify-center">
-                  <svg className="size-3 text-[#004D3B]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                <div className="size-6 rounded-full bg-[#EBEAE4] border-2 border-[#1E2021] flex items-center justify-center">
+                  <svg className="size-3 text-[#1E2021]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
                 </div>
               </div>
               <span className="font-sans font-medium">450+ operators evaluating $120M+ in POs</span>
@@ -92,7 +92,7 @@ export function HeroSection() {
                     <h2 className="text-base sm:text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
                       Apex Precision Products
                     </h2>
-                    <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#EBE3FD] text-[#004D3B] font-sans">
+                    <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#EBE3FD] text-[#1E2021] font-sans">
                       PO #4892 · $120,000 Order
                     </span>
                   </div>
@@ -200,7 +200,7 @@ export function HeroSection() {
             <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#ECEAE4] shadow-xs">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-[#ECEAE4] gap-3">
                 <div>
-                  <span className="text-[11px] font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">
+                  <span className="text-[11px] font-bold text-[#1E2021] uppercase tracking-wider font-sans block mb-0.5">
                     OrderFit Recommended Solutions
                   </span>
                   <h3 className="text-sm sm:text-base font-semibold text-[#1A1A1A] font-heading">
@@ -212,7 +212,7 @@ export function HeroSection() {
                     onClick={() => setSelectedPlan("deposit")}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold font-sans transition-all cursor-pointer ${
                       selectedPlan === "deposit"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                        ? "bg-[#1E2021] text-[#FFFAEC] shadow-xs"
                         : "bg-[#F7F6F5] text-[#526975] hover:text-[#1A1A1A]"
                     }`}
                   >
@@ -222,7 +222,7 @@ export function HeroSection() {
                     onClick={() => setSelectedPlan("split")}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold font-sans transition-all cursor-pointer ${
                       selectedPlan === "split"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                        ? "bg-[#1E2021] text-[#FFFAEC] shadow-xs"
                         : "bg-[#F7F6F5] text-[#526975] hover:text-[#1A1A1A]"
                     }`}
                   >
@@ -232,7 +232,7 @@ export function HeroSection() {
                     onClick={() => setSelectedPlan("credit")}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold font-sans transition-all cursor-pointer ${
                       selectedPlan === "credit"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                        ? "bg-[#1E2021] text-[#FFFAEC] shadow-xs"
                         : "bg-[#F7F6F5] text-[#526975] hover:text-[#1A1A1A]"
                     }`}
                   >
@@ -321,7 +321,7 @@ export function HeroSection() {
                   </div>
                   <a
                     href="#simulator"
-                    className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 bg-[#004D3B] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#00382B] transition-colors font-sans shadow-xs active:scale-98"
+                    className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 bg-[#1E2021] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#121314] transition-colors font-sans shadow-xs active:scale-98"
                   >
                     <span>Try in Simulator</span>
                     <ArrowRight className="size-3.5" />

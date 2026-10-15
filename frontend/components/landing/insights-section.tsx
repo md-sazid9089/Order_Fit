@@ -74,20 +74,20 @@ export function InsightsSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-3 left-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#004D3B] px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-xs font-sans">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#1E2021] px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm shadow-xs font-sans">
                       {art.tag}
                     </span>
                   </div>
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
                     <span className="text-white/90 font-sans">{art.readTime}</span>
-                    <span className="size-7 rounded-full bg-white/90 flex items-center justify-center text-[#004D3B] group-hover:scale-110 transition-transform shadow-xs">
+                    <span className="size-7 rounded-full bg-white/90 flex items-center justify-center text-[#1E2021] group-hover:scale-110 transition-transform shadow-xs">
                       <ArrowUpRight className="size-3.5" />
                     </span>
                   </div>
                 </div>
 
                 <div className="p-6">
-                  <h3 className="font-heading font-semibold text-lg leading-snug text-[#1A1A1A] mb-3 group-hover:text-[#004D3B] transition-colors">
+                  <h3 className="font-heading font-semibold text-lg leading-snug text-[#1A1A1A] mb-3 group-hover:text-[#1E2021] transition-colors">
                     {art.title}
                   </h3>
                   <p className="font-sans text-xs text-[#526975] leading-relaxed line-clamp-3">
@@ -98,7 +98,7 @@ export function InsightsSection() {
 
               <div className="p-6 pt-0 mt-auto">
                 <div className="pt-4 border-t border-[#ECEAE4]">
-                  <span className="text-xs font-semibold text-[#004D3B] group-hover:underline font-sans">
+                  <span className="text-xs font-semibold text-[#1E2021] group-hover:underline font-sans">
                     Read article →
                   </span>
                 </div>

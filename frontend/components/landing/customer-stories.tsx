@@ -61,7 +61,7 @@ export function CustomerStories() {
                         key={idx}
                         onClick={() => setActiveIdx(idx)}
                         className={`text-xl sm:text-2xl font-bold tracking-tight font-radio-grotesk transition-opacity ${
-                          activeIdx === idx ? "text-[#004D3B] opacity-100" : "text-[#526975] opacity-40 hover:opacity-70"
+                          activeIdx === idx ? "text-[#1E2021] opacity-100" : "text-[#526975] opacity-40 hover:opacity-70"
                         }`}
                       >
                         {s.company}
@@ -96,7 +96,7 @@ export function CustomerStories() {
                 <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#ECEAE4] mb-8">
                   {active.metrics.map((m, i) => (
                     <div key={i}>
-                      <div className="font-neue-machina text-2xl sm:text-3xl font-bold text-[#004D3B] tracking-tight mb-1">
+                      <div className="font-neue-machina text-2xl sm:text-3xl font-bold text-[#1E2021] tracking-tight mb-1">
                         {m.value}
                       </div>
                       <div className="text-[11px] text-[#526975] uppercase tracking-wider font-semibold font-sans">
@@ -128,7 +128,7 @@ export function CustomerStories() {
 
                 <a
                   href="#case-studies"
-                  className="inline-flex items-center justify-center rounded-full tracking-wider font-sans font-semibold px-5 h-10 bg-[#004D3B] text-[#FFFAEC] hover:bg-[#00382B] uppercase text-xs transition-all"
+                  className="inline-flex items-center justify-center rounded-full tracking-wider font-sans font-semibold px-5 h-10 bg-[#1E2021] text-[#FFFAEC] hover:bg-[#121314] uppercase text-xs transition-all"
                 >
                   Read story
                 </a>

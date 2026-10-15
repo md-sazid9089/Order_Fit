@@ -18,7 +18,7 @@ export function CtaSection() {
     <section className="py-16 md:py-24 bg-[#F7F6F5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Settle Section 14 Pine Green Card */}
-        <div className="rounded-4xl bg-[#004D3B] text-[#FFFAEC] px-6 py-16 sm:px-12 sm:py-20 text-center shadow-xl">
+        <div className="rounded-4xl bg-[#1E2021] text-[#FFFAEC] px-6 py-16 sm:px-12 sm:py-20 text-center shadow-xl">
           <div className="max-w-3xl mx-auto flex flex-col items-center">
             
             <h2 className="font-heading font-medium text-[2rem] sm:text-[2.5rem] md:text-[3rem] leading-[110%] tracking-tight text-[#FFFAEC] mb-4">
@@ -30,7 +30,7 @@ export function CtaSection() {
             </p>
 
             {subscribed ? (
-              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#B5F2C6] text-[#004D3B] font-semibold text-sm font-sans">
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#FEF3C7] text-[#1E2021] font-semibold text-sm font-sans">
                 <CheckCircle2 className="size-4" />
                 <span>Thank you for subscribing! We&#39;ll be in touch.</span>
               </div>
@@ -45,11 +45,11 @@ export function CtaSection() {
                   placeholder="Enter your business email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-full bg-white px-5 py-3 text-sm text-[#1A1A1A] placeholder:text-[#526975] focus:outline-none focus:ring-2 focus:ring-[#B5F2C6] font-sans"
+                  className="w-full rounded-full bg-white px-5 py-3 text-sm text-[#1A1A1A] placeholder:text-[#526975] focus:outline-none focus:ring-2 focus:ring-[#FEF3C7] font-sans"
                 />
                 <button
                   type="submit"
-                  className="w-full sm:w-auto shrink-0 rounded-full tracking-wider font-sans font-semibold px-7 py-3 bg-[#B5F2C6] text-[#004D3B] hover:bg-[#a3ebb6] uppercase text-xs transition-all cursor-pointer"
+                  className="w-full sm:w-auto shrink-0 rounded-full tracking-wider font-sans font-semibold px-7 py-3 bg-[#FEF3C7] text-[#1E2021] hover:bg-[#FDE68A] uppercase text-xs transition-all cursor-pointer"
                 >
                   Subscribe
                 </button>

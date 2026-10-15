@@ -17,6 +17,7 @@ import {
   Bell,
 } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 interface DealItem {
   id: string;
@@ -177,15 +178,8 @@ export default function DealsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Quick Notifications Button */}
-              <button
-                type="button"
-                className="p-2 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] transition-colors relative"
-                aria-label="Alerts"
-              >
-                <Bell className="size-4" />
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#B45309]" />
-              </button>
+              {/* Quick Notifications Center */}
+              <NotificationsDropdown />
 
               {/* Primary Action Button */}
               <Link
@@ -209,7 +203,7 @@ export default function DealsPage() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-medium text-[#737373] uppercase tracking-wider">
                     <span>Opening Cash Balance</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EAF7EE] text-[#004D3B]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF9F7] text-[#1E2021] border border-[#E8E6E1]">
                       Reconciled
                     </span>
                   </div>

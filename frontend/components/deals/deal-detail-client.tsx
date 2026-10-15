@@ -127,25 +127,88 @@ export function DealDetailClient({ id }: DealDetailClientProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Stage Progress Sequence Stepper Pill - Interactive */}
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF9F7] border border-[#E8E6E1] text-[11px] font-medium text-[#737373]">
+              <Link href="/deals/new" className="hover:text-[#1E2021] transition-colors">
+                1. Ingest
+              </Link>
+              <ChevronRight className="size-3 text-[#A3A3A3]" />
+              <Link href="/deals/new" className="hover:text-[#1E2021] transition-colors">
+                2. Validate
+              </Link>
+              <ChevronRight className="size-3 text-[#A3A3A3]" />
+              <Link href={`/deals/${deal.id}/confirm`} className="hover:text-[#1E2021] transition-colors">
+                3. Confirm
+              </Link>
+              <ChevronRight className="size-3 text-[#A3A3A3]" />
+              <Link href={`/deals/${deal.id}/negotiate`} className="hover:text-[#1E2021] transition-colors">
+                4. Compute
+              </Link>
+              <ChevronRight className="size-3 text-[#A3A3A3]" />
+              <Link href={`/deals/${deal.id}/reply`} className="hover:text-[#1E2021] transition-colors">
+                5. Approve
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-2.5">
               {isOF09 ? (
-                <span className="px-3 py-1.5 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] text-xs font-semibold flex items-center gap-1.5">
-                  <XCircle className="size-4" />
-                  Infeasible Order
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1.5 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] text-xs font-semibold flex items-center gap-1.5">
+                    <XCircle className="size-3.5" />
+                    Infeasible
+                  </span>
+                  <Link
+                    href="/audit-log"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors"
+                  >
+                    <ShieldCheck className="size-3.5 text-[#1E2021]" />
+                    <span>Audit Log</span>
+                  </Link>
+                  <Link
+                    href="/deals/new"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors shadow-xs"
+                  >
+                    <span>New Order</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
               ) : isOF15 ? (
-                <span className="px-3 py-1.5 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-[#1E2021]" />
-                  Feasible As Offered
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1.5 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3.5 text-[#1E2021]" />
+                    Feasible
+                  </span>
+                  <Link
+                    href="/audit-log"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors"
+                  >
+                    <ShieldCheck className="size-3.5 text-[#1E2021]" />
+                    <span>Audit Log</span>
+                  </Link>
+                  <Link
+                    href="/deals"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors shadow-xs"
+                  >
+                    <span>Deals Pipeline</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
               ) : (
-                <Link
-                  href={`/deals/${deal.id}/negotiate`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors"
-                >
-                  <span>Review & Draft Ask</span>
-                  <ArrowRight className="size-3.5" />
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/deals/${deal.id}/negotiate`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] text-xs font-semibold transition-colors"
+                  >
+                    <span>Step 4: Compute</span>
+                  </Link>
+                  <Link
+                    href={`/deals/${deal.id}/reply`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors shadow-xs"
+                  >
+                    <span>Step 5: Counterparty Reply</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
               )}
             </div>
           </div>

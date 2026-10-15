@@ -49,7 +49,7 @@ export function ResultsSection() {
           <div>
             <a
               href="#case-studies"
-              className="font-sans text-xs sm:text-sm font-semibold text-[#004D3B] hover:opacity-75 uppercase tracking-wider inline-flex items-center gap-1.5"
+              className="font-sans text-xs sm:text-sm font-semibold text-[#1E2021] hover:opacity-75 uppercase tracking-wider inline-flex items-center gap-1.5"
             >
               <span>See all customer stories</span>
               <ArrowRight className="size-3.5" />
@@ -77,7 +77,7 @@ export function ResultsSection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute top-3 left-4">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#004D3B] px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm font-sans shadow-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#1E2021] px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm font-sans shadow-xs">
                     {res.industry}
                   </span>
                 </div>

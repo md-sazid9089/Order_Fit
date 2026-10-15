@@ -30,13 +30,13 @@ export function SectorsMarquee() {
             href="#simulator"
             className="group inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F7F6F5] hover:bg-[#ECEAE4] border border-[#ECEAE4] text-xs sm:text-sm text-[#1A1A1A] transition-colors"
           >
-            <span className="font-semibold text-[#004D3B] font-neue-machina">$40M+</span>
+            <span className="font-semibold text-[#1E2021] font-neue-machina">$40M+</span>
             <span className="text-[#526975]">
               OrderFit secures deterministic purchase order evaluation for growing brands globally
             </span>
-            <span className="text-[#004D3B] font-medium inline-flex items-center gap-0.5 group-hover:underline">
+            <span className="text-[#1E2021] font-medium inline-flex items-center gap-0.5 group-hover:underline">
               (explore demo)
-              <ArrowUpRight className="size-3 text-[#004D3B]" />
+              <ArrowUpRight className="size-3 text-[#1E2021]" />
             </span>
           </a>
         </div>

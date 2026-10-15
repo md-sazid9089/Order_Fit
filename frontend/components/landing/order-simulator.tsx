@@ -127,7 +127,7 @@ export function OrderSimulator() {
             Explore on your own or{" "}
             <a
               href="#support"
-              className="font-medium text-[#004D3B] underline underline-offset-4 hover:text-[#00382B]"
+              className="font-medium text-[#1E2021] underline underline-offset-4 hover:text-[#121314]"
             >
               Request a live demo
             </a>
@@ -172,7 +172,7 @@ export function OrderSimulator() {
                   }}
                 />
                 <div>
-                  <span className="text-xs font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">
+                  <span className="text-xs font-bold text-[#1E2021] uppercase tracking-wider font-sans block mb-0.5">
                     Interactive PO Evaluation
                   </span>
                   <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
@@ -197,7 +197,7 @@ export function OrderSimulator() {
                   onClick={() => handlePreset("deposit")}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     advancePercent === 35
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
+                      ? "bg-[#1E2021] text-[#FFFAEC]"
                       : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
                   }`}
                 >
@@ -207,7 +207,7 @@ export function OrderSimulator() {
                   onClick={() => handlePreset("supplier")}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     supplierExtensionDays === 30
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
+                      ? "bg-[#1E2021] text-[#FFFAEC]"
                       : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
                   }`}
                 >
@@ -217,7 +217,7 @@ export function OrderSimulator() {
                   onClick={() => handlePreset("loan")}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     loanAmount === 40000
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
+                      ? "bg-[#1E2021] text-[#FFFAEC]"
                       : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
                   }`}
                 >
@@ -234,7 +234,7 @@ export function OrderSimulator() {
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
                     <span className="text-[#1A1A1A]">Customer Advance Deposit</span>
-                    <span className="font-mono text-[#004D3B] font-bold">
+                    <span className="font-mono text-[#1E2021] font-bold">
                       {advancePercent}% ({formatUSD((ORDER_REVENUE * advancePercent) / 100)})
                     </span>
                   </div>
@@ -245,7 +245,7 @@ export function OrderSimulator() {
                     step="5"
                     value={advancePercent}
                     onChange={(e) => setAdvancePercent(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    className="w-full accent-[#1E2021] cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-[#526975] mt-1">
                     <span>0% (Net 45)</span>
@@ -257,7 +257,7 @@ export function OrderSimulator() {
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
                     <span className="text-[#1A1A1A]">Supplier Term Extension</span>
-                    <span className="font-mono text-[#004D3B] font-bold">+{supplierExtensionDays} Days</span>
+                    <span className="font-mono text-[#1E2021] font-bold">+{supplierExtensionDays} Days</span>
                   </div>
                   <input
                     type="range"
@@ -266,7 +266,7 @@ export function OrderSimulator() {
                     step="15"
                     value={supplierExtensionDays}
                     onChange={(e) => setSupplierExtensionDays(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    className="w-full accent-[#1E2021] cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-[#526975] mt-1">
                     <span>0 Days (Due Day 15)</span>
@@ -299,7 +299,7 @@ export function OrderSimulator() {
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
                     <span className="text-[#1A1A1A]">Working Capital Line</span>
-                    <span className="font-mono text-[#004D3B] font-bold">{formatUSD(loanAmount)}</span>
+                    <span className="font-mono text-[#1E2021] font-bold">{formatUSD(loanAmount)}</span>
                   </div>
                   <input
                     type="range"
@@ -308,7 +308,7 @@ export function OrderSimulator() {
                     step="10000"
                     value={loanAmount}
                     onChange={(e) => setLoanAmount(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    className="w-full accent-[#1E2021] cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-[#526975] mt-1">
                     <span>$0</span>
@@ -398,7 +398,7 @@ export function OrderSimulator() {
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
                       Net Profit
                     </span>
-                    <span className="text-lg sm:text-xl font-bold font-neue-machina text-[#004D3B]">
+                    <span className="text-lg sm:text-xl font-bold font-neue-machina text-[#1E2021]">
                       {formatUSD(simulation.netProfit)}
                     </span>
                   </div>

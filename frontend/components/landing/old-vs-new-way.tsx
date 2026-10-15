@@ -96,7 +96,7 @@ export function OldVsNewWay() {
           </div>
 
           {/* Card 2: The Settle / OrderFit way */}
-          <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white border-2 border-[#004D3B]/20 shadow-xs hover:shadow-md transition-all">
+          <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white border-2 border-[#1E2021]/20 shadow-xs hover:shadow-md transition-all">
             {/* Real Internet Visual Header: Modern Analytics Clarity */}
             <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4]">
               <img
@@ -108,12 +108,12 @@ export function OldVsNewWay() {
                   e.currentTarget.style.display = "none";
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#004D3B]/80 via-[#004D3B]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1E2021]/80 via-[#1E2021]/30 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">
-                <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[#B5F2C6] text-[#004D3B] font-sans">
+                <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[#FEF3C7] text-[#1E2021] font-sans">
                   Automated OrderFeasibility
                 </span>
-                <span className="text-xs text-[#B5F2C6] font-mono">Precision: 100% Deterministic</span>
+                <span className="text-xs text-[#FEF3C7] font-mono">Precision: 100% Deterministic</span>
               </div>
             </div>
 
@@ -125,7 +125,7 @@ export function OldVsNewWay() {
 
                 <ul className="space-y-5">
                   <li className="flex items-start gap-3.5">
-                    <div className="size-6 rounded-full bg-[#B5F2C6] text-[#004D3B] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-6 rounded-full bg-[#FEF3C7] text-[#1E2021] flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="size-4 stroke-[2.5]" />
                     </div>
                     <p className="font-sans text-sm sm:text-base text-[#1A1A1A] leading-relaxed">
@@ -134,7 +134,7 @@ export function OldVsNewWay() {
                   </li>
 
                   <li className="flex items-start gap-3.5">
-                    <div className="size-6 rounded-full bg-[#B5F2C6] text-[#004D3B] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-6 rounded-full bg-[#FEF3C7] text-[#1E2021] flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="size-4 stroke-[2.5]" />
                     </div>
                     <p className="font-sans text-sm sm:text-base text-[#1A1A1A] leading-relaxed">
@@ -143,7 +143,7 @@ export function OldVsNewWay() {
                   </li>
 
                   <li className="flex items-start gap-3.5">
-                    <div className="size-6 rounded-full bg-[#B5F2C6] text-[#004D3B] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-6 rounded-full bg-[#FEF3C7] text-[#1E2021] flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="size-4 stroke-[2.5]" />
                     </div>
                     <p className="font-sans text-sm sm:text-base text-[#1A1A1A] leading-relaxed">
@@ -152,7 +152,7 @@ export function OldVsNewWay() {
                   </li>
 
                   <li className="flex items-start gap-3.5">
-                    <div className="size-6 rounded-full bg-[#B5F2C6] text-[#004D3B] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="size-6 rounded-full bg-[#FEF3C7] text-[#1E2021] flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="size-4 stroke-[2.5]" />
                     </div>
                     <p className="font-sans text-sm sm:text-base text-[#1A1A1A] leading-relaxed">
@@ -162,7 +162,7 @@ export function OldVsNewWay() {
                 </ul>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-[#ECEAE4] text-xs text-[#004D3B] font-medium">
+              <div className="mt-8 pt-4 border-t border-[#ECEAE4] text-xs text-[#1E2021] font-medium">
                 Outcome: Predictable cash runway, zero overdraft surprises, and protected gross margins.
               </div>
             </div>

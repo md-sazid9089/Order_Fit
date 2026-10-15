@@ -69,8 +69,8 @@ export function Navbar() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       } ${
         isScrolled
-          ? "bg-[#00382B]/95 backdrop-blur-md border-b border-white/10 shadow-sm"
-          : "bg-[#004D3B] border-b border-transparent"
+          ? "bg-[#121314]/95 backdrop-blur-md border-b border-white/10 shadow-sm"
+          : "bg-[#1E2021] border-b border-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -86,10 +86,10 @@ export function Navbar() {
             }}
             className="flex items-center gap-2 group cursor-pointer"
           >
-            <span className="font-radio-grotesk text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors">
+            <span className="font-radio-grotesk text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#FEF3C7] transition-colors">
               orderfit
             </span>
-            <span className="size-2 rounded-full bg-[#B5F2C6] group-hover:scale-125 transition-transform" />
+            <span className="size-2 rounded-full bg-[#FEF3C7] group-hover:scale-125 transition-transform" />
           </Link>
 
           {/* Desktop Nav Items */}
@@ -101,13 +101,13 @@ export function Navbar() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
-                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
                 onClick={() => setOpenDropdown(openDropdown === "products" ? null : "products")}
               >
                 <span>Products</span>
                 <ChevronDown
                   className={`size-3.5 transition-transform duration-200 ${
-                    openDropdown === "products" ? "rotate-180 text-[#B5F2C6]" : "text-white/60"
+                    openDropdown === "products" ? "rotate-180 text-[#FEF3C7]" : "text-white/60"
                   }`}
                 />
               </button>
@@ -118,7 +118,7 @@ export function Navbar() {
                       href="#products"
                       className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors"
                     >
-                      <div className="p-2 rounded-lg bg-[#D5C4FD]/30 text-[#004D3B]">
+                      <div className="p-2 rounded-lg bg-[#D5C4FD]/30 text-[#1E2021]">
                         <Layers className="size-4" />
                       </div>
                       <div>
@@ -130,7 +130,7 @@ export function Navbar() {
                       href="#products"
                       className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors"
                     >
-                      <div className="p-2 rounded-lg bg-[#B5F2C6]/40 text-[#004D3B]">
+                      <div className="p-2 rounded-lg bg-[#FEF3C7]/40 text-[#1E2021]">
                         <FileText className="size-4" />
                       </div>
                       <div>
@@ -142,7 +142,7 @@ export function Navbar() {
                       href="#products"
                       className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors"
                     >
-                      <div className="p-2 rounded-lg bg-[#EBE3FD] text-[#004D3B]">
+                      <div className="p-2 rounded-lg bg-[#EBE3FD] text-[#1E2021]">
                         <ShieldCheck className="size-4" />
                       </div>
                       <div>
@@ -162,13 +162,13 @@ export function Navbar() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
-                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
                 onClick={() => setOpenDropdown(openDropdown === "solutions" ? null : "solutions")}
               >
                 <span>Solutions</span>
                 <ChevronDown
                   className={`size-3.5 transition-transform duration-200 ${
-                    openDropdown === "solutions" ? "rotate-180 text-[#B5F2C6]" : "text-white/60"
+                    openDropdown === "solutions" ? "rotate-180 text-[#FEF3C7]" : "text-white/60"
                   }`}
                 />
               </button>
@@ -194,19 +194,19 @@ export function Navbar() {
 
             <a
               href="#resources"
-              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
               Resources
             </a>
             <a
               href="#customers"
-              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
               Customers
             </a>
             <a
               href="#support"
-              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
               Pricing
             </a>
@@ -216,13 +216,13 @@ export function Navbar() {
           <div className="hidden sm:flex items-center gap-4">
             <Link
               href="/auth/signin"
-              className="text-sm font-medium text-white/90 hover:text-[#B5F2C6] transition-colors"
+              className="text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
               Log In
             </Link>
             <Link
               href="/auth/signup"
-              className="flex items-center justify-center rounded-full tracking-wider border border-solid border-transparent font-sans font-semibold px-5 h-10 bg-[#B5F2C6] text-[#004D3B] hover:bg-[#a3ebb6] uppercase text-xs transition-all shadow-sm active:scale-95"
+              className="flex items-center justify-center rounded-full tracking-wider border border-solid border-transparent font-sans font-semibold px-5 h-10 bg-[#FEF3C7] text-[#1E2021] hover:bg-[#FDE68A] uppercase text-xs transition-all shadow-sm active:scale-95"
             >
               Get started
             </Link>
@@ -232,13 +232,13 @@ export function Navbar() {
           <div className="flex lg:hidden items-center gap-3">
             <Link
               href="/auth/signup"
-              className="flex sm:hidden items-center justify-center rounded-full px-4 h-8 text-[11px] font-semibold uppercase tracking-wider font-sans bg-[#B5F2C6] text-[#004D3B]"
+              className="flex sm:hidden items-center justify-center rounded-full px-4 h-8 text-[11px] font-semibold uppercase tracking-wider font-sans bg-[#FEF3C7] text-[#1E2021]"
             >
               Get started
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 text-white hover:text-[#B5F2C6] transition-colors"
+              className="p-1.5 text-white hover:text-[#FEF3C7] transition-colors"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
@@ -249,7 +249,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#00382B] border-b border-white/10 px-5 pt-4 pb-8 space-y-4">
+        <div className="lg:hidden bg-[#121314] border-b border-white/10 px-5 pt-4 pb-8 space-y-4">
           <div className="flex flex-col gap-2">
             <a
               href="#products"
@@ -298,7 +298,7 @@ export function Navbar() {
             <Link
               href="/auth/signup"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-3 rounded-full bg-[#B5F2C6] text-[#004D3B] font-semibold uppercase text-xs tracking-wider shadow-sm font-sans"
+              className="w-full text-center py-3 rounded-full bg-[#FEF3C7] text-[#1E2021] font-semibold uppercase text-xs tracking-wider shadow-sm font-sans"
             >
               Get started
             </Link>
