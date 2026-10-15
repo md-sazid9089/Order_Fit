@@ -5,9 +5,10 @@ import os
 import secrets
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import psycopg
 import pytest
@@ -16,6 +17,9 @@ from alembic.config import Config
 from psycopg import sql
 from sqlalchemy import URL
 
+from orderfit.contracts.configuration import RuntimeConfiguration
+from orderfit.contracts.resources import SignUp
+from orderfit.services.identity import IdentityService
 from orderfit.store.db import Database
 from orderfit.store.provision import provision_login
 
@@ -243,3 +247,48 @@ def postgres():
         labels = json.loads(docker("inspect", "--format", "{{json .Config.Labels}}", name))
         if labels.get("orderfit.disposable") == "true" and name.startswith("orderfit-p1-test-"):
             docker("rm", "-f", name)
+
+
+@pytest.fixture
+def config(postgres, tmp_path):
+    return RuntimeConfiguration(
+        database_url=postgres["url"],
+        session_secret="s" * 48,
+        account_fingerprint_key="f" * 48,
+        account_fingerprint_key_version=1,
+        document_dir=str(tmp_path / "documents"),
+        allowed_origins=["http://localhost:3000"],
+        cookie_secure=False,
+        llm_mode="off",
+    )
+
+
+@dataclass
+class Account:
+    token: str
+    csrf: str
+    user_id: UUID
+    business_id: UUID
+
+
+@pytest.fixture
+def accounts(postgres, config):
+    service = IdentityService(postgres["database"], config)
+    result = []
+    for _ in range(2):
+        view, token, csrf = service.authenticate(
+            SignUp(
+                email=f"{uuid4().hex}@example.test",
+                password="Synthetic password 123!",
+                full_name="Synthetic owner",
+                business_name="Synthetic business",
+                currency="BDT",
+                timezone="Asia/Dhaka",
+            ),
+            str(uuid4()),
+            None,
+            service.csrf(),
+            str(uuid4()),
+        )
+        result.append(Account(token, csrf, view.user_id, view.memberships[0].business_id))
+    return result

@@ -1,19 +1,27 @@
-import { Suspense } from "react";
-import { DealDetailClient } from "@/components/deals/deal-detail-client";
+"use client";
 
-interface DealPageProps {
-  params: Promise<{ id: string }>;
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { get, mutate, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
+type Snapshot = { snapshot_id: string; snapshot_hash: string; version: number; input_version: number; financial_revision: number };
+export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string }> }) {
+  const [route, setRoute] = useState<{ dealId: string; businessId: string } | null>(null);
+  useEffect(() => { void Promise.all([params, searchParams]).then(([p, q]) => setRoute({ dealId: p.id, businessId: q.businessId ?? "" })); }, [params, searchParams]);
+  const dealId = route?.dealId ?? ""; const businessId = route?.businessId ?? "";
+  const [deal, setDeal] = useState<Deal | null>(null); const [review, setReview] = useState<Review | null>(null); const [evaluation, setEvaluation] = useState<Evaluation | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const refresh = useCallback(async () => { if (!businessId || !dealId) return; setError(""); try { const d = await get<Deal>(`/businesses/${businessId}/deals/${dealId}`); setDeal(d); if (d.live_evaluation_id) setEvaluation(await get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`)); else setEvaluation(null); setReview(await get<Review>(`/businesses/${businessId}/deals/${dealId}/review`)); } catch (e) { setError(e instanceof Error ? e.message : "Could not load this order."); } }, [businessId, dealId]);
+  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
+  async function evaluate() { if (!deal || !review?.snapshot_hash || !review.candidate_snapshot) return; setBusy(true); setError(""); try {
+    const confirmed = await mutate<Snapshot>(`/businesses/${businessId}/deals/${dealId}/confirm`, "POST", { expected_version: review.version, expected_input_version: review.input_version, expected_financial_revision: review.financial_revision, snapshot_hash: review.snapshot_hash, confirmed_field_ids: [], acknowledged_warning_codes: [] });
+    const afterConfirm = await get<Deal>(`/businesses/${businessId}/deals/${dealId}`);
+    const op = await mutate<Operation>(`/businesses/${businessId}/deals/${dealId}/evaluations`, "POST", { expected_version: afterConfirm.version, expected_input_version: confirmed.input_version, expected_financial_revision: confirmed.financial_revision, snapshot_id: confirmed.snapshot_id });
+    let completed = false; for (let attempt = 0; attempt < 90; attempt++) { const current = await get<Operation>(op.poll_url.replace(/^\/api\/v1/, "")); if (current.status === "succeeded") { completed = true; break; } if (["failed", "cancelled"].includes(current.status)) throw new Error("Evaluation did not complete. Refresh the order for its persisted status."); await new Promise(resolve => setTimeout(resolve, 1000)); } if (!completed) throw new Error("Evaluation is still running. Refresh this order to recover its current status.");
+    await refresh();
+  } catch (e) { setError(e instanceof Error ? e.message : "Could not evaluate this order."); await refresh(); } finally { setBusy(false); } }
+  if (!businessId) return <main className="p-8">This order link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
+  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5"><Link href="/deals" className="text-sm underline">← Saved orders</Link>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}{!deal && !error && <p>Loading saved order…</p>}{deal && <><header className="rounded-2xl border bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">{deal.public_ref}</h1><p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>{deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}</div><button disabled={busy || !review?.snapshot_hash || review.findings.some(f => f.blocking)} onClick={evaluate} className="rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40">{busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}</button></div></header>
+    <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}</li>)}</ul> : <p className="mt-2 text-sm text-neutral-600">{review?.snapshot_hash ? "Inputs and source versions are ready for confirmation." : "Loading review…"}</p>}</section>
+    {evaluation && <section className="space-y-4 rounded-2xl border bg-white p-5"><div><h2 className="text-xl font-semibold">Persisted evaluation</h2><p className="text-sm text-neutral-600">{evaluation.decision.replaceAll("_", " ")} · calculator {evaluation.calculator_version}{evaluation.is_stale ? " · stale" : ""}</p></div><div className="grid gap-3 sm:grid-cols-2"><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">As offered · base lowest balance</p><strong>{evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_balance_minor ?? "Unavailable"} minor units</strong><p className="text-sm">Headroom: {evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_headroom_minor ?? "Unavailable"}</p></article><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">Recommended option</p><strong>{evaluation.recommended_option_key ?? "No recommendation"}</strong><p className="text-sm">{evaluation.ranked_candidates.length} ranked candidates</p></article></div><details><summary className="cursor-pointer text-sm underline">View saved cash series</summary><CashSeries businessId={businessId} evaluationId={evaluation.id} optionKey={evaluation.recommended_option_key} /></details></section>}
+    </>}</div></main>;
 }
-
-async function DealContent({ params }: DealPageProps) {
-  const { id } = await params;
-  return <DealDetailClient id={id} />;
-}
-
-export default function DealPage({ params }: DealPageProps) {
-  return (
-    <Suspense fallback={<div className="p-8 font-mono text-xs">Loading deal overview...</div>}>
-      <DealContent params={params} />
-    </Suspense>
-  );
-}
+function CashSeries({ businessId, evaluationId, optionKey }: { businessId: string; evaluationId: string; optionKey: string | null }) { const [message, setMessage] = useState("Loading stored series…"); useEffect(() => { let active = true; const query = new URLSearchParams({ scenario: "base" }); if (optionKey) query.set("option_key", optionKey); get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(`/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`).then(s => { if (active) setMessage(s.points.map(p => `${p.date}: trough ${p.candidate_trough_minor}, reserve ${p.reserve_minor} (minor units)`).join("\n") || "No points saved."); }).catch(e => { if (active) setMessage(e.message); }); return () => { active = false; }; }, [businessId, evaluationId, optionKey]); return <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-3 text-xs">{message}</pre>; }

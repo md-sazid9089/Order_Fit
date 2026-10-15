@@ -1,11 +1,79 @@
 """Bound persistence queries; services own transactions and permissions."""
 
 import json
+from datetime import UTC, date, datetime
+from uuid import UUID, uuid4
 
-from sqlalchemy import select, text
+from sqlalchemy import desc, select, text
 
 from orderfit.api.errors import ApplicationError
-from orderfit.store.tables import app_user
+from orderfit.contracts.financial import (
+    AnalysisConfig,
+    BaselineEvent,
+    ConfirmedInputV1,
+    CostInput,
+    Evidence,
+    OrderInput,
+    OwnerSettings,
+    Scenarios,
+    SourceRevision,
+    StrategySpace,
+    Stress,
+    TermLoan,
+)
+from orderfit.contracts.primitives import Page, ReasonCommand, RevisionReason
+from orderfit.contracts.protocol import canonical_bytes, canonical_hash
+from orderfit.contracts.resources import (
+    BaselineBalance,
+    BaselineView,
+    BaselineWrite,
+    BusinessProfile,
+    BusinessView,
+    CashEventCreate,
+    CashEventInput,
+    CashEventView,
+    CashEventWrite,
+    ConstraintsView,
+    ConstraintWrite,
+    CustomerCreate,
+    CustomerInput,
+    CustomerView,
+    CustomerWrite,
+    DealView,
+    DealWrite,
+    DraftInputs,
+    FlagResolution,
+    OfferCreate,
+    OfferView,
+    OfferWrite,
+    PayeeCreate,
+    PayeeInput,
+    PayeeView,
+    PayeeWrite,
+)
+from orderfit.contracts.workflow import (
+    ConfirmInputs,
+    CreateDeal,
+    EvaluationResultV1,
+    Finding,
+    Review,
+    Series,
+    SeriesPoint,
+    SnapshotConfirmed,
+)
+from orderfit.services.evaluations import extract_series
+from orderfit.store.tables import (
+    app_user,
+    business,
+    cash_event,
+    customer,
+    deal,
+    evaluation,
+    evaluation_series,
+    financing_offer,
+    owner_constraints,
+    payee,
+)
 
 
 def append_audit(c, scope, action: str, *, deal_id=None, payload=None, outcome="completed"):
@@ -103,3 +171,2163 @@ class IdentityRepository:
             .all()
         )
         return user, memberships
+
+
+class BusinessRepository:
+    @staticmethod
+    def get_profile(c, business_id: UUID) -> BusinessView:
+        row = (
+            c.execute(
+                select(business).where(business.c.id == business_id),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        prof = row["profile"] or {}
+        return BusinessView(
+            id=row["id"],
+            version=row["version"],
+            financial_revision=row["financial_revision"],
+            currency=row["currency"],
+            exponent=2,
+            profile=BusinessProfile(
+                name=row["name"],
+                timezone=row["timezone"],
+                address=prof.get("address"),
+                phone=prof.get("phone"),
+                trade_registration=prof.get("trade_registration"),
+                tax_id=prof.get("tax_id"),
+            ),
+        )
+
+    @staticmethod
+    def get_baseline(c, business_id: UUID) -> BaselineView:
+        row = (
+            c.execute(
+                select(business).where(business.c.id == business_id),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        bs = row["baseline_settings"] or {}
+        if not bs or "opening_cash_minor" not in bs:
+            raise ApplicationError(409, "BASELINE_NOT_CONFIGURED")
+        balance = BaselineBalance.model_validate(bs)
+        return BaselineView(
+            version=row["version"],
+            financial_revision=row["financial_revision"],
+            balance=balance,
+        )
+
+    @staticmethod
+    def update_baseline(c, scope, req: BaselineWrite) -> BaselineView:
+        row = (
+            c.execute(
+                text("SELECT * FROM business WHERE id=:b FOR UPDATE"),
+                {"b": scope.business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        if row["financial_revision"] != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        bs_dump = req.balance.model_dump(mode="json")
+        c.execute(
+            text(
+                "UPDATE business SET baseline_settings = CAST(:bs AS jsonb), financial_revision = financial_revision + 1, version = version + 1 WHERE id = :b"
+            ),
+            {"bs": json.dumps(bs_dump), "b": scope.business_id},
+        )
+        append_audit(c, scope, "update_baseline", payload={"balance": bs_dump})
+        return BaselineView(
+            version=row["version"] + 1,
+            financial_revision=row["financial_revision"] + 1,
+            balance=req.balance,
+        )
+
+
+def _row_to_constraints(row, default_id: UUID | None, fin_rev: int) -> ConstraintsView:
+    strat = row["strategy_space"] or {}
+    stg = strat.get("stages", 1)
+    if isinstance(stg, list):
+        stg = stg[0] if stg else 1
+    exts = strat.get("extensions")
+    if not exts:
+        exts = [{"days": 0, "surcharge_bps": 0}]
+    strategy_space = StrategySpace(
+        deposit_pcts=strat.get("deposit_pcts", [0]),
+        deposit_lead_days=row["deposit_lead_days"] or 7,
+        extensions=exts,
+        offer_ids=strat.get("offer_ids", []),
+        stages=stg,
+    )
+    scenarios = Scenarios(
+        downside=Stress(
+            order_receipt_delay_days=row["downside_order_delay_days"],
+            ar_delay_days=row["downside_ar_delay_days"],
+            cost_overrun_bps=row["downside_cost_overrun_bps"],
+            deposit_follows_delay=row["downside_deposit_follows_delay"],
+            order_receipt_haircut_bps=0,
+        ),
+        severe=Stress(
+            order_receipt_delay_days=row["severe_order_delay_days"],
+            ar_delay_days=row["severe_ar_delay_days"],
+            cost_overrun_bps=row["severe_cost_overrun_bps"],
+            deposit_follows_delay=row["severe_deposit_follows_delay"],
+            order_receipt_haircut_bps=row.get("severe_order_receipt_haircut_bps") or 0,
+        ),
+    )
+    owner = OwnerSettings(
+        priorities=row["priorities"] or ["profit", "independence_customer", "simplicity"],
+        min_order_profit_minor=str(row["min_order_profit_minor"]),
+        max_financing_cost_minor=str(row["max_financing_cost_minor"])
+        if row["max_financing_cost_minor"] is not None
+        else None,
+        target_scenario=row["target_scenario"],
+        close_call_bps=row["close_call_bps"],
+        max_deposit_concession_bps=row["max_deposit_concession_bps"],
+        max_supplier_extension_days=row["max_supplier_extension_days"],
+        max_negotiation_rounds=row["max_negotiation_rounds"] or 3,
+        # These stored columns are inert in the supported engine contract. Do not
+        # activate legacy numeric defaults merely by reading a constraint row.
+        min_delay_tolerance_days=None,
+        max_customer_concentration_bps=None,
+        max_financing_cost_bps=None,
+        constraints_id=row["id"],
+        version=row["version"],
+    )
+    return ConstraintsView(
+        id=row["id"],
+        version=row["version"],
+        financial_revision=fin_rev,
+        reserve_minor=str(row["safety_reserve_minor"]),
+        owner=owner,
+        strategy_space=strategy_space,
+        scenarios=scenarios,
+        is_default=(row["id"] == default_id),
+    )
+
+
+class ConstraintsRepository:
+    @staticmethod
+    def list_constraints(
+        c, business_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[ConstraintsView]:
+        b = (
+            c.execute(
+                text("SELECT default_constraints_id, financial_revision FROM business WHERE id=:b"),
+                {"b": business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not b:
+            raise ApplicationError(404, "NOT_FOUND")
+        rows = (
+            c.execute(
+                select(owner_constraints)
+                .where(owner_constraints.c.business_id == business_id)
+                .order_by(desc(owner_constraints.c.version))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [_row_to_constraints(r, b["default_constraints_id"], b["financial_revision"]) for r in rows]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def get_constraints(c, business_id: UUID, constraints_id: UUID) -> ConstraintsView:
+        b = (
+            c.execute(
+                text("SELECT default_constraints_id, financial_revision FROM business WHERE id=:b"),
+                {"b": business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not b:
+            raise ApplicationError(404, "NOT_FOUND")
+        row = (
+            c.execute(
+                select(owner_constraints).where(
+                    owner_constraints.c.business_id == business_id,
+                    owner_constraints.c.id == constraints_id,
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        return _row_to_constraints(row, b["default_constraints_id"], b["financial_revision"])
+
+    @staticmethod
+    def create_version(c, scope, req: ConstraintWrite) -> ConstraintsView:
+        b = (
+            c.execute(
+                text("SELECT financial_revision, version FROM business WHERE id=:b FOR UPDATE"),
+                {"b": scope.business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not b:
+            raise ApplicationError(404, "NOT_FOUND")
+        if b["financial_revision"] != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        cid = uuid4()
+        max_v = c.execute(
+            text("SELECT COALESCE(MAX(version), 0) + 1 FROM owner_constraints WHERE business_id=:b"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        c.execute(
+            text(
+                """INSERT INTO owner_constraints (
+                    id, business_id, version, safety_reserve_minor, min_delay_tolerance_days,
+                    max_customer_concentration_bps, min_order_profit_minor, max_financing_cost_minor,
+                    max_financing_cost_bps, target_scenario, priorities, close_call_bps,
+                    max_deposit_concession_bps, deposit_lead_days, downside_order_delay_days,
+                    downside_ar_delay_days, downside_cost_overrun_bps, downside_deposit_follows_delay,
+                    severe_order_delay_days, severe_ar_delay_days, severe_cost_overrun_bps,
+                    severe_deposit_follows_delay, max_supplier_extension_days, max_negotiation_rounds,
+                    strategy_space, created_by
+                ) VALUES (
+                    :id, :b, :v, :reserve, :min_delay, :max_conc, :min_profit, :max_fin_minor,
+                    :max_fin_bps, :target_sc, :priorities, :close_call, :max_dep_conc,
+                    :dep_lead, :down_delay, :down_ar, :down_cost, :down_dep, :sev_delay,
+                    :sev_ar, :sev_cost, :sev_dep, :max_ext, :max_rounds, CAST(:strat AS jsonb), :actor
+                )"""
+            ),
+            {
+                "id": cid,
+                "b": scope.business_id,
+                "v": max_v,
+                "reserve": int(req.reserve_minor),
+                "min_delay": req.owner.min_delay_tolerance_days,
+                "max_conc": req.owner.max_customer_concentration_bps,
+                "min_profit": int(req.owner.min_order_profit_minor),
+                "max_fin_minor": int(req.owner.max_financing_cost_minor)
+                if req.owner.max_financing_cost_minor is not None
+                else None,
+                "max_fin_bps": req.owner.max_financing_cost_bps,
+                "target_sc": req.owner.target_scenario,
+                "priorities": req.owner.priorities,
+                "close_call": req.owner.close_call_bps,
+                "max_dep_conc": req.owner.max_deposit_concession_bps,
+                "dep_lead": req.strategy_space.deposit_lead_days,
+                "down_delay": req.scenarios.downside.order_receipt_delay_days,
+                "down_ar": req.scenarios.downside.ar_delay_days,
+                "down_cost": req.scenarios.downside.cost_overrun_bps,
+                "down_dep": req.scenarios.downside.deposit_follows_delay,
+                "sev_delay": req.scenarios.severe.order_receipt_delay_days,
+                "sev_ar": req.scenarios.severe.ar_delay_days,
+                "sev_cost": req.scenarios.severe.cost_overrun_bps,
+                "sev_dep": req.scenarios.severe.deposit_follows_delay,
+                "max_ext": req.owner.max_supplier_extension_days,
+                "max_rounds": req.owner.max_negotiation_rounds,
+                "strat": json.dumps(req.strategy_space.model_dump(mode="json")),
+                "actor": scope.user_id,
+            },
+        )
+        if req.make_default:
+            c.execute(
+                text(
+                    "UPDATE business SET default_constraints_id = :cid, financial_revision = financial_revision + 1, version = version + 1 WHERE id = :b"
+                ),
+                {"cid": cid, "b": scope.business_id},
+            )
+        else:
+            c.execute(
+                text("UPDATE business SET financial_revision = financial_revision + 1 WHERE id = :b"),
+                {"b": scope.business_id},
+            )
+        append_audit(c, scope, "create_constraints", payload={"constraints_id": str(cid), "version": max_v})
+        return ConstraintsRepository.get_constraints(c, scope.business_id, cid)
+
+
+class CustomerRepository:
+    @staticmethod
+    def list_customers(
+        c, business_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[CustomerView]:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        rows = (
+            c.execute(
+                select(customer)
+                .where(customer.c.business_id == business_id)
+                .order_by(desc(customer.c.created_at))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [
+            CustomerView(
+                id=r["id"],
+                version=r["version"],
+                financial_revision=b,
+                customer=CustomerInput(
+                    name=r["name"],
+                    known_domains=r["known_domains"] or [],
+                    red_flags=r["red_flags"] or [],
+                ),
+                archived_at=r["archived_at"],
+            )
+            for r in rows
+        ]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def create_customer(c, scope, req: CustomerCreate) -> CustomerView:
+        b = (
+            c.execute(
+                text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+                {"b": scope.business_id},
+            )
+            .mappings()
+            .one()
+        )
+        if b["financial_revision"] != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        cid = uuid4()
+        c.execute(
+            text(
+                "INSERT INTO customer (id, business_id, name, known_domains, red_flags, version, created_at) VALUES (:id, :b, :name, :kd, :rf, 1, clock_timestamp())"
+            ),
+            {
+                "id": cid,
+                "b": scope.business_id,
+                "name": req.customer.name,
+                "kd": req.customer.known_domains,
+                "rf": req.customer.red_flags,
+            },
+        )
+        append_audit(c, scope, "create_customer", payload={"customer_id": str(cid)})
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return CustomerView(
+            id=cid,
+            version=1,
+            financial_revision=updated_rev,
+            customer=req.customer,
+            archived_at=None,
+        )
+
+    @staticmethod
+    def update_customer(c, scope, customer_id: UUID, req: CustomerWrite) -> CustomerView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        row = (
+            c.execute(
+                text("SELECT * FROM customer WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": customer_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        c.execute(
+            text(
+                "UPDATE customer SET name=:name, known_domains=:kd, red_flags=:rf WHERE id=:id AND business_id=:b"
+            ),
+            {
+                "name": req.customer.name,
+                "kd": req.customer.known_domains,
+                "rf": req.customer.red_flags,
+                "id": customer_id,
+                "b": scope.business_id,
+            },
+        )
+        append_audit(c, scope, "update_customer", payload={"customer_id": str(customer_id)})
+        updated = (
+            c.execute(
+                text("SELECT * FROM customer WHERE business_id=:b AND id=:id"),
+                {"b": scope.business_id, "id": customer_id},
+            )
+            .mappings()
+            .one()
+        )
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return CustomerView(
+            id=customer_id,
+            version=updated["version"],
+            financial_revision=updated_rev,
+            customer=req.customer,
+            archived_at=updated["archived_at"],
+        )
+
+    @staticmethod
+    def archive_customer(c, scope, customer_id: UUID, reason: RevisionReason) -> CustomerView:
+        row = (
+            c.execute(
+                text("SELECT * FROM customer WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": customer_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text("UPDATE customer SET archived_at=clock_timestamp() WHERE id=:id AND business_id=:b"),
+            {"id": customer_id, "b": scope.business_id},
+        )
+        append_audit(c, scope, "archive_customer", payload={"customer_id": str(customer_id), "reason": reason.reason})
+        updated = (
+            c.execute(
+                text("SELECT * FROM customer WHERE business_id=:b AND id=:id"),
+                {"b": scope.business_id, "id": customer_id},
+            )
+            .mappings()
+            .one()
+        )
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return CustomerView(
+            id=customer_id,
+            version=updated["version"],
+            financial_revision=b,
+            customer=CustomerInput(
+                name=updated["name"],
+                known_domains=updated["known_domains"] or [],
+                red_flags=updated["red_flags"] or [],
+            ),
+            archived_at=updated["archived_at"],
+        )
+
+
+class PayeeRepository:
+    @staticmethod
+    def list_payees(
+        c, business_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[PayeeView]:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        rows = (
+            c.execute(
+                select(payee)
+                .where(payee.c.business_id == business_id)
+                .order_by(desc(payee.c.created_at))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [
+            PayeeView(
+                id=r["id"],
+                version=r["version"],
+                financial_revision=b,
+                payee=PayeeInput(
+                    name=r["name"],
+                    kind=r["kind"],
+                    category=r["category"],
+                    terms_days=r["terms_days"],
+                    terms_note=r["terms_note"],
+                    delay_tolerance_note=r["delay_tolerance_note"],
+                    risk_rating=r["risk_rating"],
+                    known_domains=r["known_domains"] or [],
+                ),
+                archived_at=r["archived_at"],
+            )
+            for r in rows
+        ]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def create_payee(c, scope, req: PayeeCreate) -> PayeeView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        pid = uuid4()
+        c.execute(
+            text(
+                """INSERT INTO payee (
+                    id, business_id, name, kind, category, terms_days, terms_note,
+                    delay_tolerance_note, risk_rating, known_domains, version, created_at
+                ) VALUES (
+                    :id, :b, :name, :kind, :cat, :days, :tnote, :dnote, :rr, :kd, 1, clock_timestamp()
+                )"""
+            ),
+            {
+                "id": pid,
+                "b": scope.business_id,
+                "name": req.payee.name,
+                "kind": req.payee.kind,
+                "cat": req.payee.category,
+                "days": req.payee.terms_days,
+                "tnote": req.payee.terms_note,
+                "dnote": req.payee.delay_tolerance_note,
+                "rr": req.payee.risk_rating,
+                "kd": req.payee.known_domains,
+            },
+        )
+        append_audit(c, scope, "create_payee", payload={"payee_id": str(pid)})
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return PayeeView(
+            id=pid,
+            version=1,
+            financial_revision=updated_rev,
+            payee=req.payee,
+            archived_at=None,
+        )
+
+    @staticmethod
+    def update_payee(c, scope, payee_id: UUID, req: PayeeWrite) -> PayeeView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        row = (
+            c.execute(
+                text("SELECT * FROM payee WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": payee_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        c.execute(
+            text(
+                """UPDATE payee SET
+                    name=:name, kind=:kind, category=:cat, terms_days=:days, terms_note=:tnote,
+                    delay_tolerance_note=:dnote, risk_rating=:rr, known_domains=:kd
+                WHERE id=:id AND business_id=:b"""
+            ),
+            {
+                "name": req.payee.name,
+                "kind": req.payee.kind,
+                "cat": req.payee.category,
+                "days": req.payee.terms_days,
+                "tnote": req.payee.terms_note,
+                "dnote": req.payee.delay_tolerance_note,
+                "rr": req.payee.risk_rating,
+                "kd": req.payee.known_domains,
+                "id": payee_id,
+                "b": scope.business_id,
+            },
+        )
+        append_audit(c, scope, "update_payee", payload={"payee_id": str(payee_id)})
+        updated = (
+            c.execute(
+                text("SELECT * FROM payee WHERE business_id=:b AND id=:id"),
+                {"b": scope.business_id, "id": payee_id},
+            )
+            .mappings()
+            .one()
+        )
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return PayeeView(
+            id=payee_id,
+            version=updated["version"],
+            financial_revision=updated_rev,
+            payee=req.payee,
+            archived_at=updated["archived_at"],
+        )
+
+    @staticmethod
+    def archive_payee(c, scope, payee_id: UUID, reason: RevisionReason) -> PayeeView:
+        row = (
+            c.execute(
+                text("SELECT * FROM payee WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": payee_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text("UPDATE payee SET archived_at=clock_timestamp() WHERE id=:id AND business_id=:b"),
+            {"id": payee_id, "b": scope.business_id},
+        )
+        append_audit(c, scope, "archive_payee", payload={"payee_id": str(payee_id), "reason": reason.reason})
+        updated = (
+            c.execute(
+                text("SELECT * FROM payee WHERE business_id=:b AND id=:id"),
+                {"b": scope.business_id, "id": payee_id},
+            )
+            .mappings()
+            .one()
+        )
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return PayeeView(
+            id=payee_id,
+            version=updated["version"],
+            financial_revision=b,
+            payee=PayeeInput(
+                name=updated["name"],
+                kind=updated["kind"],
+                category=updated["category"],
+                terms_days=updated["terms_days"],
+                terms_note=updated["terms_note"],
+                delay_tolerance_note=updated["delay_tolerance_note"],
+                risk_rating=updated["risk_rating"],
+                known_domains=updated["known_domains"] or [],
+            ),
+            archived_at=updated["archived_at"],
+        )
+
+
+def _row_to_offer(row, fin_rev: int) -> OfferView:
+    is_term_loan = row["kind"] == "term_loan"
+    complete = is_term_loan and all(
+        row[key] is not None
+        for key in (
+            "interest_method", "interest_bps", "fee_bps", "fee_flat_minor", "fee_at",
+            "lead_days", "min_minor", "max_minor", "step_minor", "term_days",
+            "available_from", "valid_until", "lender_payee_id", "lender_payee_version",
+        )
+    ) and bool(row["evidence"])
+    return OfferView(
+        id=row["id"],
+        version=row["version"],
+        name=row["name"],
+        kind=row["kind"],
+        status=row["status"],
+        terms=TermLoan(
+            name=row["name"],
+            kind="term_loan",
+            interest_method=row["interest_method"] or "fixed_term",
+            interest_bps=row["interest_bps"],
+            fee_bps=row["fee_bps"],
+            fee_flat_minor=str(row["fee_flat_minor"]),
+            fee_at=row["fee_at"],
+            lead_days=row["lead_days"],
+            min_minor=str(row["min_minor"]),
+            max_minor=str(row["max_minor"]),
+            step_minor=str(row["step_minor"]),
+            term_days=row["term_days"],
+            available_from=row["available_from"],
+            valid_until=row["valid_until"],
+            status=row["status"] if row["status"] in ("active", "pre_approved") else "active",
+            payee_id=row["lender_payee_id"],
+            payee_version=row["lender_payee_version"],
+            account_id=row["lender_account_id"],
+            account_version=row["lender_account_version"],
+            evidence=row["evidence"] or [],
+            offer_id=row["id"],
+            version=row["version"],
+        ) if complete else None,
+        supported=complete,
+        unavailable_reason=None if complete else (
+            "Offer is incomplete or lacks lender, account, date, or evidence provenance."
+            if is_term_loan
+            else "Only fixed term loans are currently supported by the calculation engine"
+        ),
+        financial_revision=fin_rev,
+        archived_at=datetime.now(UTC) if row["status"] == "closed" else None,
+    )
+
+
+class OfferRepository:
+    @staticmethod
+    def list_offers(
+        c, business_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[OfferView]:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        rows = (
+            c.execute(
+                select(financing_offer)
+                .where(financing_offer.c.business_id == business_id)
+                .order_by(desc(financing_offer.c.created_at))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [_row_to_offer(r, b) for r in rows]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def create_offer(c, scope, req: OfferCreate) -> OfferView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        oid = uuid4()
+        terms = req.terms
+        c.execute(
+            text(
+                """INSERT INTO financing_offer (
+                    id, business_id, name, kind, interest_bps, fee_bps, fee_flat_minor,
+                    fee_at, lead_days, min_minor, max_minor, step_minor, term_days,
+                    available_from, valid_until, interest_method, status, source, version, created_at,
+                    lender_payee_id, lender_payee_version, lender_account_id, lender_account_version, evidence
+                ) VALUES (
+                    :id, :b, :name, :kind, :int_bps, :fee_bps, :fee_flat, :fee_at,
+                    :lead, :min, :max, :step, :term, :afrom, :vuntil, :imethod,
+                    :status, 'owner_entered', 1, clock_timestamp(), :payee, :payee_version,
+                    :account, :account_version, CAST(:evidence AS jsonb)
+                )"""
+            ),
+            {
+                "id": oid,
+                "b": scope.business_id,
+                "name": terms.name,
+                "kind": terms.kind,
+                "int_bps": terms.interest_bps,
+                "fee_bps": terms.fee_bps,
+                "fee_flat": int(terms.fee_flat_minor),
+                "fee_at": terms.fee_at,
+                "lead": terms.lead_days,
+                "min": int(terms.min_minor),
+                "max": int(terms.max_minor),
+                "step": int(terms.step_minor),
+                "term": terms.term_days,
+                "afrom": terms.available_from,
+                "vuntil": terms.valid_until,
+                "imethod": terms.interest_method,
+                "status": "active" if terms.status in ("active", "pre_approved") else "active",
+                "payee": terms.payee_id,
+                "payee_version": terms.payee_version,
+                "account": terms.account_id,
+                "account_version": terms.account_version,
+                "evidence": json.dumps([e.model_dump(mode="json") for e in terms.evidence]),
+            },
+        )
+        append_audit(c, scope, "create_offer", payload={"offer_id": str(oid)})
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        row = (
+            c.execute(
+                select(financing_offer).where(financing_offer.c.id == oid),
+            )
+            .mappings()
+            .one()
+        )
+        return _row_to_offer(row, updated_rev)
+
+    @staticmethod
+    def update_offer(c, scope, offer_id: UUID, req: OfferWrite) -> OfferView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        row = (
+            c.execute(
+                text("SELECT * FROM financing_offer WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": offer_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        terms = req.terms
+        c.execute(
+            text(
+                """UPDATE financing_offer SET
+                    name=:name, interest_bps=:int_bps, fee_bps=:fee_bps, fee_flat_minor=:fee_flat,
+                    fee_at=:fee_at, lead_days=:lead, min_minor=:min, max_minor=:max, step_minor=:step,
+                    term_days=:term, available_from=:afrom, valid_until=:vuntil, interest_method=:imethod
+                WHERE id=:id AND business_id=:b"""
+            ),
+            {
+                "name": terms.name,
+                "int_bps": terms.interest_bps,
+                "fee_bps": terms.fee_bps,
+                "fee_flat": int(terms.fee_flat_minor),
+                "fee_at": terms.fee_at,
+                "lead": terms.lead_days,
+                "min": int(terms.min_minor),
+                "max": int(terms.max_minor),
+                "step": int(terms.step_minor),
+                "term": terms.term_days,
+                "afrom": terms.available_from,
+                "vuntil": terms.valid_until,
+                "imethod": terms.interest_method,
+                "id": offer_id,
+                "b": scope.business_id,
+            },
+        )
+        append_audit(c, scope, "update_offer", payload={"offer_id": str(offer_id)})
+        updated = (
+            c.execute(
+                select(financing_offer).where(financing_offer.c.id == offer_id),
+            )
+            .mappings()
+            .one()
+        )
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_offer(updated, updated_rev)
+
+    @staticmethod
+    def archive_offer(c, scope, offer_id: UUID, reason: RevisionReason) -> OfferView:
+        row = (
+            c.execute(
+                text("SELECT * FROM financing_offer WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": offer_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text("UPDATE financing_offer SET status='closed' WHERE id=:id AND business_id=:b"),
+            {"id": offer_id, "b": scope.business_id},
+        )
+        append_audit(c, scope, "archive_offer", payload={"offer_id": str(offer_id), "reason": reason.reason})
+        updated = (
+            c.execute(
+                select(financing_offer).where(financing_offer.c.id == offer_id),
+            )
+            .mappings()
+            .one()
+        )
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_offer(updated, b)
+
+
+def _row_to_cash_event(r, fin_rev: int) -> CashEventView:
+    ev = CashEventInput(
+        deal_id=r["deal_id"],
+        event_date=r["event_date"],
+        amount_minor=str(r["amount_minor"]),
+        direction=r["direction"],
+        kind=r["kind"],
+        certainty=r["certainty"],
+        description=r["description"],
+        invoice_ref=r["invoice_ref"],
+        is_deferrable=r["is_deferrable"],
+        incremental=r["incremental"],
+        customer_id=r["customer_id"],
+        payee_id=r["payee_id"],
+        evidence=Evidence.model_validate(r["evidence"][0]) if r.get("evidence") else Evidence(
+            document_id=None, content_hash=None, candidate_id=None, confirmed_field_id=None,
+            source_role="baseline" if r["deal_id"] is None else "supplier_cost_quote", page=None,
+            quote=None, manual_attestation="Legacy owner-entered event", override_reason=None,
+        ),
+    )
+    return CashEventView(
+        id=str(r["id"]),
+        version=r["version"],
+        financial_revision=fin_rev,
+        event=ev,
+        voided_at=r["voided_at"],
+    )
+
+
+class CashEventRepository:
+    @staticmethod
+    def list_events(
+        c, business_id: UUID, deal_id: UUID | None = None, limit: int = 50, offset: int = 0
+    ) -> Page[CashEventView]:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        query = select(cash_event).where(cash_event.c.business_id == business_id)
+        if deal_id is not None:
+            query = query.where(cash_event.c.deal_id == deal_id)
+        else:
+            query = query.where(cash_event.c.deal_id.is_(None))
+        rows = (
+            c.execute(
+                query.order_by(desc(cash_event.c.event_date)).limit(limit).offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [_row_to_cash_event(r, b) for r in rows]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def create_event(c, scope, req: CashEventCreate) -> CashEventView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        ev = req.event
+        doc_id = ev.evidence.document_id
+        quote = ev.evidence.quote
+        eid = c.execute(
+            text(
+                """INSERT INTO cash_event (
+                    business_id, deal_id, event_date, amount_minor, direction, kind, certainty,
+                    description, invoice_ref, is_deferrable, incremental, customer_id, payee_id,
+                    source_document_id, source_quote, version, created_at, evidence
+                ) VALUES (
+                    :b, :d, :edate, :amt, :dir, :kind, :cert, :desc, :iref, :defer, :incr,
+                    :cid, :pid, :doc, :quote, 1, clock_timestamp(), CAST(:evidence AS jsonb)
+                ) RETURNING id"""
+            ),
+            {
+                "b": scope.business_id,
+                "d": ev.deal_id,
+                "edate": ev.event_date,
+                "amt": int(ev.amount_minor),
+                "dir": ev.direction,
+                "kind": ev.kind,
+                "cert": ev.certainty,
+                "desc": ev.description,
+                "iref": ev.invoice_ref,
+                "defer": ev.is_deferrable,
+                "incr": ev.incremental,
+                "cid": ev.customer_id,
+                "pid": ev.payee_id,
+                "doc": doc_id,
+                "quote": quote,
+                "evidence": json.dumps([ev.evidence.model_dump(mode="json")]),
+            },
+        ).scalar_one()
+        append_audit(c, scope, "create_cash_event", payload={"event_id": eid})
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        row = c.execute(select(cash_event).where(cash_event.c.id == eid)).mappings().one()
+        return _row_to_cash_event(row, updated_rev)
+
+    @staticmethod
+    def update_event(c, scope, event_id: int, req: CashEventWrite) -> CashEventView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        row = (
+            c.execute(
+                text("SELECT * FROM cash_event WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": event_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        ev = req.event
+        doc_id = ev.evidence.document_id
+        quote = ev.evidence.quote
+        c.execute(
+            text(
+                """UPDATE cash_event SET
+                    event_date=:edate, amount_minor=:amt, direction=:dir, kind=:kind, certainty=:cert,
+                    description=:desc, invoice_ref=:iref, is_deferrable=:defer, incremental=:incr,
+                    customer_id=:cid, payee_id=:pid, source_document_id=:doc, source_quote=:quote,
+                    evidence=CAST(:evidence AS jsonb)
+                WHERE id=:id AND business_id=:b"""
+            ),
+            {
+                "edate": ev.event_date,
+                "amt": int(ev.amount_minor),
+                "dir": ev.direction,
+                "kind": ev.kind,
+                "cert": ev.certainty,
+                "desc": ev.description,
+                "iref": ev.invoice_ref,
+                "defer": ev.is_deferrable,
+                "incr": ev.incremental,
+                "cid": ev.customer_id,
+                "pid": ev.payee_id,
+                "doc": doc_id,
+                "quote": quote,
+                "evidence": json.dumps([ev.evidence.model_dump(mode="json")]),
+                "id": event_id,
+                "b": scope.business_id,
+            },
+        )
+        append_audit(c, scope, "update_cash_event", payload={"event_id": event_id})
+        updated = c.execute(select(cash_event).where(cash_event.c.id == event_id)).mappings().one()
+        updated_rev = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_cash_event(updated, updated_rev)
+
+    @staticmethod
+    def void_event(c, scope, event_id: int, reason: RevisionReason) -> CashEventView:
+        row = (
+            c.execute(
+                text("SELECT * FROM cash_event WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": event_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text("UPDATE cash_event SET voided_at=clock_timestamp() WHERE id=:id AND business_id=:b"),
+            {"id": event_id, "b": scope.business_id},
+        )
+        append_audit(c, scope, "void_cash_event", payload={"event_id": event_id, "reason": reason.reason})
+        updated = c.execute(select(cash_event).where(cash_event.c.id == event_id)).mappings().one()
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_cash_event(updated, b)
+
+    @staticmethod
+    def get_cash_flow_series(c, business_id: UUID) -> Series:
+        b = (
+            c.execute(
+                text("SELECT currency, baseline_settings, default_constraints_id FROM business WHERE id=:b"),
+                {"b": business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not b:
+            raise ApplicationError(404, "NOT_FOUND")
+        bs = b["baseline_settings"] or {}
+        if not bs.get("opening_date") or "opening_cash_minor" not in bs:
+            raise ApplicationError(409, "BASELINE_NOT_CONFIGURED")
+        start_date = date.fromisoformat(bs["opening_date"])
+        running_cash = int(bs.get("opening_cash_minor", 0))
+        reserve = 0
+        if b["default_constraints_id"]:
+            cid = b["default_constraints_id"]
+            res = c.execute(
+                text("SELECT safety_reserve_minor FROM owner_constraints WHERE id=:cid"),
+                {"cid": cid},
+            ).scalar_one_or_none()
+            if res is not None:
+                reserve = res
+        events = (
+            c.execute(
+                text(
+                    "SELECT event_date, amount_minor, direction FROM cash_event WHERE business_id=:b AND deal_id IS NULL AND voided_at IS NULL ORDER BY event_date ASC"
+                ),
+                {"b": business_id},
+            )
+            .mappings()
+            .all()
+        )
+        points = [
+            SeriesPoint(
+                date=start_date,
+                baseline_trough_minor=str(running_cash),
+                baseline_close_minor=str(running_cash),
+                candidate_trough_minor=str(running_cash),
+                candidate_close_minor=str(running_cash),
+                reserve_minor=str(reserve),
+                effective_floor_minor=str(reserve),
+            )
+        ]
+        for ev in events:
+            amt = ev["amount_minor"] if ev["direction"] == "in" else -ev["amount_minor"]
+            running_cash += amt
+            points.append(
+                SeriesPoint(
+                    date=ev["event_date"],
+                    baseline_trough_minor=str(running_cash),
+                    baseline_close_minor=str(running_cash),
+                    candidate_trough_minor=str(running_cash),
+                    candidate_close_minor=str(running_cash),
+                    reserve_minor=str(reserve),
+                    effective_floor_minor=str(reserve),
+                )
+            )
+        return Series(
+            evaluation_id=None,
+            option_key="baseline",
+            scenario="base",
+            currency=b["currency"],
+            exponent=2,
+            points=points,
+        )
+
+
+def _row_to_deal(c, r, fin_rev: int) -> DealView:
+    deal_id = r["id"]
+    business_id = r["business_id"]
+    # Check live evaluation
+    live_eval = (
+        c.execute(
+            text(
+                "SELECT id, input_version, financial_revision FROM evaluation WHERE business_id=:b AND deal_id=:d AND superseded_at IS NULL"
+            ),
+            {"b": business_id, "d": deal_id},
+        )
+        .mappings()
+        .one_or_none()
+    )
+    is_stale = False
+    live_id = None
+    if live_eval:
+        live_id = live_eval["id"]
+        is_stale = (live_eval["input_version"] != r["input_version"]) or (
+            live_eval["financial_revision"] != fin_rev
+        )
+    # Check flags
+    flags = (
+        c.execute(
+            text(
+                "SELECT code, field, message, blocking FROM deal_flag WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL"
+            ),
+            {"b": business_id, "d": deal_id},
+        )
+        .mappings()
+        .all()
+    )
+    findings = [
+        Finding(
+            code=f["code"],
+            field=f["field"] or "deal",
+            message=f["message"],
+            blocking=f["blocking"],
+            resolution=None,
+        )
+        for f in flags
+    ]
+    # Allowed actions
+    st = r["status"]
+    has_blocking = any(f["blocking"] for f in flags)
+    actions = []
+    if st == "ingesting":
+        actions = ["edit", "review", "close"]
+    elif st == "awaiting_confirm":
+        actions = ["edit", "review", "close"]
+        if not has_blocking:
+            actions.append("confirm")
+            # If snapshot exists and matches, evaluation is admitted
+            has_snap = c.execute(
+                text("SELECT 1 FROM input_snapshot WHERE business_id=:b AND deal_id=:d"),
+                {"b": business_id, "d": deal_id},
+            ).scalar_one_or_none()
+            if has_snap:
+                actions.append("evaluate")
+    elif st == "computing":
+        actions = ["poll", "close"]
+    elif st == "awaiting_approval":
+        actions = ["inspect_result", "reopen_for_review", "hold", "close"]
+    elif st == "awaiting_reply":
+        actions = ["reopen_for_review", "hold", "close"]
+    elif st in ("committed", "closed"):
+        actions = ["export"]
+    elif st == "failed":
+        actions = ["reopen_for_review", "close"]
+    # Get costs
+    cost_rows = (
+        c.execute(
+            text(
+                "SELECT * FROM cash_event WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL ORDER BY event_date ASC"
+            ),
+            {"b": business_id, "d": deal_id},
+        )
+        .mappings()
+        .all()
+    )
+    costs = [
+        CostInput(
+            event_id=cr["id"],
+            cost_key=f"cost-{cr['id']}",
+            event_date=cr["event_date"],
+            amount_minor=str(cr["amount_minor"]),
+            kind=cr["kind"],
+            is_deferrable=cr["is_deferrable"],
+            incremental=cr["incremental"],
+            nonincremental_reason=None if cr["incremental"] else "Baseline operational cost",
+            invoice_ref=cr["invoice_ref"],
+            payee_id=cr["payee_id"],
+            original_obligation_id=f"obl-{cr['id']}",
+            evidence=[
+                Evidence(
+                    document_id=cr["source_document_id"],
+                    content_hash=None,
+                    candidate_id=None,
+                    confirmed_field_id=None,
+                    source_role="supplier_invoice",
+                    page=None,
+                    quote=cr["source_quote"] or "Order cost entry",
+                    manual_attestation="Owner cost entry" if cr["source_document_id"] is None else None,
+                    override_reason=None,
+                )
+            ],
+        )
+        for cr in cost_rows
+    ]
+    inputs = DraftInputs(
+        opening_cash_minor=str(r["opening_cash_minor"]) if r["opening_cash_minor"] is not None else None,
+        reserve_minor=str(r["reserve_minor"]) if r["reserve_minor"] is not None else None,
+        order_value_minor=str(r["order_value_minor"]) if r["order_value_minor"] is not None else None,
+        order_date=r["order_date"],
+        invoice_date=r["invoice_date"],
+        delivery_date=r["delivery_date"],
+        payment_basis=r["payment_basis"],
+        payment_days=r["payment_days"],
+        customer_id=r["customer_id"],
+        constraints_id=r["constraints_id"],
+        costs=costs,
+    )
+    return DealView(
+        id=deal_id,
+        public_ref=r["public_ref"],
+        status=st,
+        version=r["version"],
+        input_version=r["input_version"],
+        financial_revision=fin_rev,
+        currency=r["currency"],
+        exponent=2,
+        start_date=r["start_date"],
+        opening_cash_minor=str(r["opening_cash_minor"]) if r["opening_cash_minor"] is not None else None,
+        order_value_minor=str(r["order_value_minor"]) if r["order_value_minor"] is not None else None,
+        inputs=inputs,
+        live_evaluation_id=live_id,
+        is_stale=is_stale,
+        findings=findings,
+        allowed_actions=actions,
+    )
+
+
+class DealRepository:
+    @staticmethod
+    def list_deals(
+        c, business_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[DealView]:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        rows = (
+            c.execute(
+                select(deal)
+                .where(deal.c.business_id == business_id)
+                .order_by(desc(deal.c.created_at))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [_row_to_deal(c, r, b) for r in rows]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def create_deal(c, scope, req: CreateDeal) -> DealView:
+        b = (
+            c.execute(
+                text("SELECT currency, default_constraints_id, financial_revision FROM business WHERE id=:b FOR UPDATE"),
+                {"b": scope.business_id},
+            )
+            .mappings()
+            .one()
+        )
+        did = uuid4()
+        pref = req.public_ref
+        sdate = req.start_date
+        cid = req.constraints_id
+        c.execute(
+            text(
+                """INSERT INTO deal (
+                    id, business_id, public_ref, customer_id, status, currency, start_date,
+                    constraints_id, version, input_version, created_by, created_at, updated_at
+                ) VALUES (
+                    :id, :b, :pref, :cust, 'ingesting', :curr, :sdate, :cid, 1, 1, :actor,
+                    clock_timestamp(), clock_timestamp()
+                )"""
+            ),
+            {
+                "id": did,
+                "b": scope.business_id,
+                "pref": pref,
+                "cust": req.customer_id,
+                "curr": b["currency"],
+                "sdate": sdate,
+                "cid": cid,
+                "actor": scope.user_id,
+            },
+        )
+        append_audit(c, scope, "create_deal", deal_id=did, payload={"public_ref": pref})
+        row = c.execute(select(deal).where(deal.c.id == did)).mappings().one()
+        return _row_to_deal(c, row, b["financial_revision"])
+
+    @staticmethod
+    def get_deal(c, business_id: UUID, deal_id: UUID) -> DealView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
+        ).scalar_one()
+        row = (
+            c.execute(
+                select(deal).where(deal.c.business_id == business_id, deal.c.id == deal_id),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        return _row_to_deal(c, row, b)
+
+    @staticmethod
+    def update_deal(c, scope, deal_id: UUID, req: DealWrite) -> DealView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        row = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["version"] != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        if row["input_version"] != req.expected_input_version:
+            raise ApplicationError(409, "STALE_INPUT_VERSION")
+        st = row["status"]
+        if st in ("committed", "closed"):
+            raise ApplicationError(409, "DEAL_TERMINAL")
+        if st == "computing":
+            raise ApplicationError(409, "DEAL_COMPUTING")
+        # DB-08: If deal inputs are frozen (e.g. awaiting_approval or awaiting_reply),
+        # move to awaiting_confirm in first UPDATE, then update inputs in second UPDATE.
+        if st in ("awaiting_approval", "awaiting_reply"):
+            c.execute(
+                text("UPDATE deal SET status='awaiting_confirm' WHERE id=:d AND business_id=:b"),
+                {"d": deal_id, "b": scope.business_id},
+            )
+        inp = req.inputs
+        c.execute(
+            text(
+                """UPDATE deal SET
+                    opening_cash_minor=:ocash, reserve_minor=:res, order_value_minor=:oval,
+                    order_date=:odate, invoice_date=:idate, delivery_date=:ddate,
+                    payment_basis=:pbasis, payment_days=:pdays, customer_id=:cid,
+                    constraints_id=:const_id, updated_at=clock_timestamp()
+                WHERE id=:d AND business_id=:b"""
+            ),
+            {
+                "ocash": int(inp.opening_cash_minor) if inp.opening_cash_minor is not None else None,
+                "res": int(inp.reserve_minor) if inp.reserve_minor is not None else None,
+                "oval": int(inp.order_value_minor) if inp.order_value_minor is not None else None,
+                "odate": inp.order_date,
+                "idate": inp.invoice_date,
+                "ddate": inp.delivery_date,
+                "pbasis": inp.payment_basis,
+                "pdays": inp.payment_days,
+                "cid": inp.customer_id,
+                "const_id": inp.constraints_id,
+                "d": deal_id,
+                "b": scope.business_id,
+            },
+        )
+        # Update costs if provided
+        if inp.costs:
+            for cost in inp.costs:
+                if cost.event_id is not None:
+                    c.execute(
+                        text(
+                            """UPDATE cash_event SET
+                                event_date=:edate, amount_minor=:amt, kind=:kind, is_deferrable=:defer,
+                                incremental=:incr, payee_id=:pid, invoice_ref=:iref
+                            WHERE id=:eid AND business_id=:b AND deal_id=:d"""
+                        ),
+                        {
+                            "edate": cost.event_date,
+                            "amt": int(cost.amount_minor),
+                            "kind": cost.kind,
+                            "defer": cost.is_deferrable,
+                            "incr": cost.incremental,
+                            "pid": cost.payee_id,
+                            "iref": cost.invoice_ref,
+                            "eid": cost.event_id,
+                            "b": scope.business_id,
+                            "d": deal_id,
+                        },
+                    )
+                else:
+                    doc_id = cost.evidence[0].document_id if cost.evidence else None
+                    quote = cost.evidence[0].quote if cost.evidence else None
+                    c.execute(
+                        text(
+                            """INSERT INTO cash_event (
+                                business_id, deal_id, event_date, amount_minor, direction, kind,
+                                certainty, is_deferrable, incremental, payee_id, invoice_ref,
+                                source_document_id, source_quote, version, created_at
+                            ) VALUES (
+                                :b, :d, :edate, :amt, 'out', :kind, 'expected', :defer, :incr,
+                                :pid, :iref, :doc, :quote, 1, clock_timestamp()
+                            )"""
+                        ),
+                        {
+                            "b": scope.business_id,
+                            "d": deal_id,
+                            "edate": cost.event_date,
+                            "amt": int(cost.amount_minor),
+                            "kind": cost.kind,
+                            "defer": cost.is_deferrable,
+                            "incr": cost.incremental,
+                            "pid": cost.payee_id,
+                            "iref": cost.invoice_ref,
+                            "doc": doc_id,
+                            "quote": quote,
+                        },
+                    )
+        append_audit(c, scope, "update_deal_inputs", deal_id=deal_id)
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        b_now = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_deal(c, updated, b_now)
+
+    @staticmethod
+    def close_deal(c, scope, deal_id: UUID, reason: ReasonCommand) -> DealView:
+        row = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text("UPDATE deal SET status='closed', closed_at=clock_timestamp() WHERE id=:id AND business_id=:b"),
+            {"id": deal_id, "b": scope.business_id},
+        )
+        append_audit(c, scope, "close_deal", deal_id=deal_id, payload={"reason": reason.reason})
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_deal(c, updated, b)
+
+    @staticmethod
+    def reopen_for_review(c, scope, deal_id: UUID, reason: ReasonCommand) -> DealView:
+        row = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        if row["status"] in ("awaiting_approval", "awaiting_reply"):
+            c.execute(
+                text("UPDATE deal SET status='awaiting_confirm' WHERE id=:id AND business_id=:b"),
+                {"id": deal_id, "b": scope.business_id},
+            )
+        append_audit(c, scope, "reopen_deal", deal_id=deal_id, payload={"reason": reason.reason})
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_deal(c, updated, b)
+
+    @staticmethod
+    def hold_deal(c, scope, deal_id: UUID, reason: ReasonCommand) -> DealView:
+        row = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "id": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text(
+                """INSERT INTO deal_flag (
+                    business_id, deal_id, kind, code, message, blocking, raised_by, raised_at
+                ) VALUES (
+                    :b, :d, 'hold', 'MANUAL_HOLD', :msg, true, 'owner', clock_timestamp()
+                )"""
+            ),
+            {"b": scope.business_id, "d": deal_id, "msg": reason.reason},
+        )
+        append_audit(c, scope, "hold_deal", deal_id=deal_id, payload={"reason": reason.reason})
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
+        ).scalar_one()
+        return _row_to_deal(c, updated, b)
+
+    @staticmethod
+    def resolve_flag(c, scope, deal_id: UUID, flag_id: int, req: FlagResolution) -> DealView:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        d = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:d FOR UPDATE"),
+                {"b": scope.business_id, "d": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not d:
+            raise ApplicationError(404, "NOT_FOUND")
+        if (d["version"], d["input_version"]) != (req.expected_version, req.expected_input_version):
+            raise ApplicationError(409, "STALE_VERSION")
+        flag = (
+            c.execute(
+                text("SELECT * FROM deal_flag WHERE business_id=:b AND deal_id=:d AND id=:id FOR UPDATE"),
+                {"b": scope.business_id, "d": deal_id, "id": flag_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not flag:
+            raise ApplicationError(404, "NOT_FOUND")
+        c.execute(
+            text(
+                "UPDATE deal_flag SET resolved_at=clock_timestamp(), resolved_by=:u, resolution_note=:note WHERE id=:id AND business_id=:b AND deal_id=:d"
+            ),
+            {"id": flag_id, "u": scope.user_id, "note": req.reason, "b": scope.business_id, "d": deal_id},
+        )
+        append_audit(c, scope, "resolve_flag", deal_id=deal_id, payload={"flag_id": flag_id, "reason": req.reason})
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        return _row_to_deal(c, updated, b)
+
+    @staticmethod
+    def build_review(c, business_id: UUID, deal_id: UUID) -> Review:
+        b_row = (
+            c.execute(
+                text("SELECT currency, baseline_settings, financial_revision, default_constraints_id FROM business WHERE id=:b"),
+                {"b": business_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not b_row:
+            raise ApplicationError(404, "NOT_FOUND")
+        d_row = (
+            c.execute(
+                select(deal).where(deal.c.business_id == business_id, deal.c.id == deal_id),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not d_row:
+            raise ApplicationError(404, "NOT_FOUND")
+        cid = d_row["constraints_id"] or b_row["default_constraints_id"]
+        c_row = (
+            c.execute(
+                select(owner_constraints).where(
+                    owner_constraints.c.business_id == business_id,
+                    owner_constraints.c.id == cid,
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not c_row:
+            raise ApplicationError(404, "CONSTRAINTS_NOT_FOUND")
+        flags = (
+            c.execute(
+                text("SELECT * FROM deal_flag WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL"),
+                {"b": business_id, "d": deal_id},
+            )
+            .mappings()
+            .all()
+        )
+        findings = []
+        for f in flags:
+            findings.append(
+                Finding(
+                    code=f["code"],
+                    field=f["field"] or "deal",
+                    message=f["message"],
+                    blocking=f["blocking"],
+                    resolution=None,
+                )
+            )
+        # Check required fields
+        if d_row["order_value_minor"] is None:
+            findings.append(
+                Finding(
+                    code="MISSING_ORDER_VALUE",
+                    field="order_value_minor",
+                    message="Order value is required",
+                    blocking=True,
+                    resolution="Provide an order value",
+                )
+            )
+        if d_row["delivery_date"] is None:
+            findings.append(
+                Finding(
+                    code="MISSING_DELIVERY_DATE",
+                    field="delivery_date",
+                    message="Delivery date is required",
+                    blocking=True,
+                    resolution="Provide a delivery date",
+                )
+            )
+        if d_row["payment_basis"] is None or d_row["payment_days"] is None:
+            findings.append(Finding(code="MISSING_PAYMENT_TERMS", field="payment_terms", message="Confirm the payment anchor and payment days.", blocking=True, resolution="correct_input"))
+        elif d_row["payment_basis"] == "invoice" and d_row["invoice_date"] is None:
+            findings.append(Finding(code="MISSING_INVOICE_DATE", field="invoice_date", message="The selected invoice payment anchor needs an invoice date.", blocking=True, resolution="correct_input"))
+        if d_row["customer_id"] is None:
+            findings.append(
+                Finding(
+                    code="MISSING_CUSTOMER",
+                    field="customer_id",
+                    message="Customer is required",
+                    blocking=True,
+                    resolution="Select a customer",
+                )
+            )
+        has_blocking = any(f.blocking for f in findings)
+        # Manual values have no extracted_field identity; never fabricate BIGINT evidence IDs.
+        required_field_ids = []
+        if has_blocking:
+            return Review(
+                deal_id=deal_id,
+                version=d_row["version"],
+                input_version=d_row["input_version"],
+                financial_revision=b_row["financial_revision"],
+                candidate_snapshot=None,
+                snapshot_hash=None,
+                findings=findings,
+                required_field_ids=required_field_ids,
+            )
+        # Build confirmed candidate snapshot
+        bs = b_row["baseline_settings"] or {}
+        if "opening_cash_minor" not in bs:
+            findings.append(Finding(code="BASELINE-MISSING", field="baseline", message="Configure a dated opening cash balance and evidence before review.", blocking=True, resolution="provide_evidence"))
+            return Review(deal_id=deal_id, version=d_row["version"], input_version=d_row["input_version"], financial_revision=b_row["financial_revision"], candidate_snapshot=None, snapshot_hash=None, findings=findings, required_field_ids=[])
+        start_date = d_row["start_date"]
+        opening_cash = int(bs["opening_cash_minor"])
+        reserve = d_row["reserve_minor"] if d_row["reserve_minor"] is not None else c_row["safety_reserve_minor"]
+        # Baseline events
+        be_rows = (
+            c.execute(
+                text(
+                    "SELECT * FROM cash_event WHERE business_id=:b AND deal_id IS NULL AND voided_at IS NULL ORDER BY event_date ASC"
+                ),
+                {"b": business_id},
+            )
+            .mappings()
+            .all()
+        )
+        if any(not e["evidence"] for e in be_rows):
+            findings.append(Finding(code="CASH-EVENT-EVIDENCE-MISSING", field="baseline_events", message="Every projected baseline cash event needs evidence.", blocking=True, resolution="provide_evidence"))
+            return Review(deal_id=deal_id, version=d_row["version"], input_version=d_row["input_version"], financial_revision=b_row["financial_revision"], candidate_snapshot=None, snapshot_hash=None, findings=findings, required_field_ids=[])
+        baseline_events = [
+            BaselineEvent(
+                event_id=str(e["id"]),
+                event_date=e["event_date"],
+                amount_minor=str(e["amount_minor"]),
+                direction=e["direction"],
+                kind=e["kind"],
+                certainty=e["certainty"],
+                original_obligation_id=f"obl-{e['id']}",
+                invoice_ref=e["invoice_ref"],
+                projection_action_id=None,
+                evidence=[Evidence.model_validate(v) for v in e["evidence"]] if e["evidence"] else [],
+            )
+            for e in be_rows
+        ]
+        # Deal costs
+        cost_rows = (
+            c.execute(
+                text(
+                    "SELECT * FROM cash_event WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL AND incremental=true ORDER BY event_date ASC"
+                ),
+                {"b": business_id, "d": deal_id},
+            )
+            .mappings()
+            .all()
+        )
+        if any(not row["evidence"] for row in cost_rows):
+            findings.append(Finding(code="CASH-EVENT-EVIDENCE-MISSING", field="costs", message="Every projected order cost needs evidence.", blocking=True, resolution="provide_evidence"))
+            return Review(deal_id=deal_id, version=d_row["version"], input_version=d_row["input_version"], financial_revision=b_row["financial_revision"], candidate_snapshot=None, snapshot_hash=None, findings=findings, required_field_ids=[])
+        costs = [
+            CostInput(
+                event_id=cr["id"],
+                cost_key=f"cost-{cr['id']}",
+                event_date=cr["event_date"],
+                amount_minor=str(cr["amount_minor"]),
+                kind=cr["kind"],
+                is_deferrable=cr["is_deferrable"],
+                incremental=cr["incremental"],
+                nonincremental_reason=None,
+                invoice_ref=cr["invoice_ref"],
+                payee_id=cr["payee_id"],
+                original_obligation_id=f"obl-{cr['id']}",
+                evidence=[Evidence.model_validate(v) for v in cr["evidence"]] if cr["evidence"] else [],
+            )
+            for cr in cost_rows
+        ]
+        # Offers
+        offer_rows = (
+            c.execute(
+                select(financing_offer).where(
+                    financing_offer.c.business_id == business_id,
+                    financing_offer.c.status == "active",
+                    financing_offer.c.kind == "term_loan",
+                ),
+            )
+            .mappings()
+            .all()
+        )
+        offers = [
+            TermLoan(
+                name=o["name"],
+                kind="term_loan",
+                interest_method=o["interest_method"] or "fixed_term",
+                interest_bps=o["interest_bps"],
+                fee_bps=o["fee_bps"],
+                fee_flat_minor=str(o["fee_flat_minor"]),
+                fee_at=o["fee_at"],
+                lead_days=o["lead_days"],
+                min_minor=str(o["min_minor"]),
+                max_minor=str(o["max_minor"]),
+                step_minor=str(o["step_minor"]),
+                term_days=o["term_days"],
+                available_from=o["available_from"],
+                valid_until=o["valid_until"],
+                status="active",
+                payee_id=o["lender_payee_id"],
+                payee_version=o["lender_payee_version"],
+                account_id=o["lender_account_id"],
+                account_version=o["lender_account_version"],
+                evidence=o["evidence"] or [],
+                offer_id=o["id"],
+                version=o["version"],
+            )
+            for o in offer_rows
+            if all(o[key] is not None for key in (
+                "interest_method", "interest_bps", "fee_bps", "fee_flat_minor", "fee_at",
+                "lead_days", "min_minor", "max_minor", "step_minor", "term_days",
+                "available_from", "valid_until", "lender_payee_id", "lender_payee_version",
+            )) and o["evidence"]
+        ]
+        strat_dict = c_row["strategy_space"] or {}
+        strategy_space = StrategySpace(
+            deposit_pcts=strat_dict.get("deposit_pcts", [0, 10, 20, 30, 40]),
+            deposit_lead_days=c_row["deposit_lead_days"] or 7,
+            extensions=strat_dict.get("extensions", []),
+            offer_ids=[o.offer_id for o in offers],
+            stages=1,
+        )
+        scenarios = Scenarios(
+            downside=Stress(
+                order_receipt_delay_days=c_row["downside_order_delay_days"],
+                ar_delay_days=c_row["downside_ar_delay_days"],
+                cost_overrun_bps=c_row["downside_cost_overrun_bps"],
+                deposit_follows_delay=c_row["downside_deposit_follows_delay"],
+                order_receipt_haircut_bps=0,
+            ),
+            severe=Stress(
+                order_receipt_delay_days=c_row["severe_order_delay_days"],
+                ar_delay_days=c_row["severe_ar_delay_days"],
+                cost_overrun_bps=c_row["severe_cost_overrun_bps"],
+                deposit_follows_delay=c_row["severe_deposit_follows_delay"],
+                order_receipt_haircut_bps=c_row.get("severe_order_receipt_haircut_bps") or 0,
+            ),
+        )
+        owner = OwnerSettings(
+            priorities=c_row["priorities"] or ["profit", "independence_customer", "simplicity"],
+            min_order_profit_minor=str(c_row["min_order_profit_minor"]),
+            max_financing_cost_minor=str(c_row["max_financing_cost_minor"])
+            if c_row["max_financing_cost_minor"] is not None
+            else None,
+            target_scenario=c_row["target_scenario"],
+            close_call_bps=c_row["close_call_bps"],
+            max_deposit_concession_bps=c_row["max_deposit_concession_bps"],
+            max_supplier_extension_days=c_row["max_supplier_extension_days"],
+            max_negotiation_rounds=c_row["max_negotiation_rounds"] or 3,
+            min_delay_tolerance_days=None,
+            max_customer_concentration_bps=None,
+            max_financing_cost_bps=None,
+            constraints_id=c_row["id"],
+            version=c_row["version"],
+        )
+        cov_through = (
+            date.fromisoformat(bs["coverage_through"])
+            if "coverage_through" in bs
+            else start_date
+        )
+        candidate = ConfirmedInputV1(
+            schema_version="confirmed-input.v1",
+            business_id=business_id,
+            deal_id=deal_id,
+            input_version=d_row["input_version"],
+            financial_revision=b_row["financial_revision"],
+            source_revisions=[
+                SourceRevision(
+                    resource_kind="constraints",
+                    resource_id=str(c_row["id"]),
+                    revision=c_row["version"],
+                    content_hash=canonical_hash(_row_to_constraints(c_row, c_row["id"], b_row["financial_revision"])),
+                )
+            ],
+            start_date=start_date,
+            currency=d_row["currency"],
+            exponent=2,
+            opening_cash_minor=str(opening_cash),
+            reserve_minor=str(reserve),
+            baseline_revision=b_row["financial_revision"],
+            coverage_through=cov_through,
+            balance_evidence=[
+                Evidence.model_validate(bs["evidence"])
+            ],
+            baseline_events=baseline_events,
+            order=OrderInput(
+                customer_id=d_row["customer_id"],
+                customer_version=c.execute(select(customer.c.version).where(customer.c.business_id == business_id, customer.c.id == d_row["customer_id"])).scalar_one(),
+                po_number=d_row["po_number"] or d_row["public_ref"],
+                order_value_minor=str(d_row["order_value_minor"]),
+                order_date=d_row["order_date"],
+                invoice_date=d_row["invoice_date"],
+                delivery_date=d_row["delivery_date"],
+                payment_basis=d_row["payment_basis"],
+                payment_days=d_row["payment_days"],
+                convention="calendar",
+                deposit_discount_bps=d_row["deposit_discount_bps"] or 0,
+                deposit_discount_bps_per_10pct=d_row["deposit_discount_bps_per_10pct"] or 0,
+                cancellation_clause=d_row["cancellation_clause"] or "none",
+                late_penalty_bps_per_day=None,
+                costs=costs,
+            ),
+            offers=offers,
+            owner=owner,
+            strategy_space=strategy_space,
+            scenarios=scenarios,
+            analysis=AnalysisConfig(
+                scan_days=60,
+                max_horizon_days=1095,
+                max_work_units=100_000,
+                sensitivity=[],
+                uncertainty_questions=[],
+            ),
+            assumptions=["Manual deal input verified by authorized user"],
+            conflict_resolutions=[],
+            coverage_acknowledgement=None,
+        )
+        snap_hash = canonical_hash(candidate)
+        return Review(
+            deal_id=deal_id,
+            version=d_row["version"],
+            input_version=d_row["input_version"],
+            financial_revision=b_row["financial_revision"],
+            candidate_snapshot=candidate,
+            snapshot_hash=snap_hash,
+            findings=findings,
+            required_field_ids=required_field_ids,
+        )
+
+    @staticmethod
+    def confirm(c, scope, deal_id: UUID, req: ConfirmInputs, idempotency_key: str) -> SnapshotConfirmed:
+        b = c.execute(
+            text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+            {"b": scope.business_id},
+        ).scalar_one()
+        if b != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        d = (
+            c.execute(
+                text("SELECT * FROM deal WHERE business_id=:b AND id=:d FOR UPDATE"),
+                {"b": scope.business_id, "d": deal_id},
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not d:
+            raise ApplicationError(404, "NOT_FOUND")
+        if (d["version"], d["input_version"]) != (req.expected_version, req.expected_input_version):
+            raise ApplicationError(409, "STALE_INPUT_VERSION")
+        review = DealRepository.build_review(c, scope.business_id, deal_id)
+        if review.candidate_snapshot is None or review.snapshot_hash != req.snapshot_hash:
+            raise ApplicationError(409, "SNAPSHOT_HASH_MISMATCH")
+        unack = [
+            f.code
+            for f in review.findings
+            if not f.blocking and f.code not in req.acknowledged_warning_codes
+        ]
+        if unack:
+            raise ApplicationError(422, "UNACKNOWLEDGED_WARNINGS")
+        if d["status"] == "ingesting":
+            # The snapshot guard requires review state before immutable snapshot insert.
+            c.execute(
+                text("UPDATE deal SET status='awaiting_confirm' WHERE id=:d AND business_id=:b"),
+                {"d": deal_id, "b": scope.business_id},
+            )
+        snap_id = uuid4()
+        now = datetime.now(UTC)
+        candidate = review.candidate_snapshot
+        canon_bytes = canonical_bytes(candidate)
+        hash_bytes = bytes.fromhex(review.snapshot_hash)
+        c.execute(
+            text(
+                """INSERT INTO input_snapshot (
+                    id, business_id, deal_id, input_version, financial_revision,
+                    schema_version, payload, canonical_payload, snapshot_hash,
+                    confirmed_by, confirmed_at
+                ) VALUES (
+                    :id, :b, :d, :iv, :fr, 'confirmed-input.v1', CAST(:payload AS jsonb),
+                    :cbytes, :hbytes, :u, :now
+                )"""
+            ),
+            {
+                "id": snap_id,
+                "b": scope.business_id,
+                "d": deal_id,
+                "iv": d["input_version"],
+                "fr": b,
+                "payload": json.dumps(candidate.model_dump(mode="json")),
+                "cbytes": canon_bytes,
+                "hbytes": hash_bytes,
+                "u": scope.user_id,
+                "now": now,
+            },
+        )
+        app_id = uuid4()
+        c.execute(
+            text(
+                """INSERT INTO approval (
+                    id, business_id, deal_id, action, action_plan_hash,
+                    approver_id, decision, idempotency_key, created_at
+                ) VALUES (
+                    :id, :b, :d, 'confirm_figures', :hbytes, :u, 'approved', :key, :now
+                )"""
+            ),
+            {
+                "id": app_id,
+                "b": scope.business_id,
+                "d": deal_id,
+                "hbytes": hash_bytes,
+                "u": scope.user_id,
+                "now": now,
+                "key": idempotency_key,
+            },
+        )
+        append_audit(
+            c,
+            scope,
+            "confirm_deal_inputs",
+            deal_id=deal_id,
+            payload={"snapshot_id": str(snap_id), "hash": review.snapshot_hash},
+        )
+        updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
+        return SnapshotConfirmed(
+            snapshot_id=snap_id,
+            snapshot_hash=review.snapshot_hash,
+            approval_id=app_id,
+            version=updated["version"],
+            input_version=updated["input_version"],
+            financial_revision=b,
+            confirmed_at=now,
+        )
+
+
+class EvaluationRepository:
+    @staticmethod
+    def list_evaluations(
+        c, business_id: UUID, deal_id: UUID, limit: int = 50, offset: int = 0
+    ) -> Page[EvaluationResultV1]:
+        rows = (
+            c.execute(
+                select(evaluation)
+                .where(evaluation.c.business_id == business_id, evaluation.c.deal_id == deal_id)
+                .order_by(desc(evaluation.c.created_at))
+                .limit(limit)
+                .offset(offset),
+            )
+            .mappings()
+            .all()
+        )
+        items = [EvaluationResultV1.model_validate(r["output"]) for r in rows]
+        return Page(items=items, next_cursor=None)
+
+    @staticmethod
+    def get_evaluation(c, business_id: UUID, evaluation_id: UUID) -> EvaluationResultV1:
+        row = (
+            c.execute(
+                select(evaluation).where(
+                    evaluation.c.business_id == business_id,
+                    evaluation.c.id == evaluation_id,
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        return EvaluationResultV1.model_validate(row["output"])
+
+    @staticmethod
+    def get_evaluation_series(
+        c, business_id: UUID, evaluation_id: UUID, scenario: str = "base", option_key: str | None = None
+    ) -> Series:
+        row = (
+            c.execute(
+                select(evaluation).where(
+                    evaluation.c.business_id == business_id,
+                    evaluation.c.id == evaluation_id,
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not row:
+            raise ApplicationError(404, "NOT_FOUND")
+        opt_key = option_key or row["recommended_option_key"] or "accept_as_is"
+        stored = c.execute(select(evaluation_series).where(
+            evaluation_series.c.business_id == business_id,
+            evaluation_series.c.evaluation_id == evaluation_id,
+            evaluation_series.c.option_key == opt_key,
+            evaluation_series.c.scenario == scenario,
+        )).mappings().one_or_none()
+        if stored is None:
+            raise ApplicationError(404, "EVALUATION_SERIES_NOT_FOUND")
+        return Series.model_validate({"evaluation_id": evaluation_id, "option_key": opt_key,
+            "scenario": scenario, "currency": stored["currency"], "exponent": stored["exponent"],
+            "points": stored["points"]})
+
+    @staticmethod
+    def publish_evaluation(c, scope, eval_dto: EvaluationResultV1, snapshot: ConfirmedInputV1, computation):
+        # 1. Supersede any existing live evaluation for this deal
+        c.execute(
+            text(
+                "UPDATE evaluation SET superseded_at=clock_timestamp() WHERE business_id=:b AND deal_id=:d AND superseded_at IS NULL"
+            ),
+            {"b": snapshot.business_id, "d": snapshot.deal_id},
+        )
+        # 2. Insert evaluation row
+        c.execute(
+            text(
+                """INSERT INTO evaluation (
+                    id, business_id, deal_id, round, engine_version, input_hash,
+                    inputs, output, verdict, verdict_code, first_breach_date,
+                    lowest_balance_minor, recommended_option_key,
+                    recommended_delay_tolerance_days, snapshot_id, input_version,
+                    financial_revision, tolerance_status, created_at
+                ) VALUES (
+                    :id, :b, :d, 0, :eversion, :ihash,
+                    CAST(:inputs AS jsonb), CAST(:output AS jsonb), :verdict, :vcode,
+                    :first_breach, :lowest_bal, :rec_key, :rec_delay,
+                    :snap_id, :iv, :fr, :tol_status, clock_timestamp()
+                )"""
+            ),
+            {
+                "id": eval_dto.id,
+                "b": snapshot.business_id,
+                "d": snapshot.deal_id,
+                "eversion": eval_dto.calculator_version,
+                "ihash": bytes.fromhex(eval_dto.reference_input_hash),
+                "inputs": json.dumps(snapshot.model_dump(mode="json")),
+                "output": json.dumps(eval_dto.model_dump(mode="json")),
+                "verdict": {"accept_as_is":"feasible_as_offered", "accept_with_changes":"plan_recommended", "decline_or_renegotiate":"no_feasible_plan"}[eval_dto.decision],
+                "vcode": eval_dto.reason_codes[0] if eval_dto.reason_codes else None,
+                "first_breach": next((s.first_breach_date for s in eval_dto.as_is.scenarios if s.scenario == "base"), None),
+                "lowest_bal": int(eval_dto.as_is.scenarios[0].lowest_balance_minor),
+                "rec_key": eval_dto.recommended_option_key,
+                "rec_delay": eval_dto.as_is.tolerance.observed_safe_days if eval_dto.recommended_option_key else None,
+                "snap_id": eval_dto.snapshot_id,
+                "iv": snapshot.input_version,
+                "fr": snapshot.financial_revision,
+                "tol_status": eval_dto.as_is.tolerance.status,
+            },
+        )
+        # 3. Insert evaluation options
+        options = {opt.option_key: opt for opt in [eval_dto.as_is, *eval_dto.ranked_candidates]}
+        for opt in options.values():
+            c.execute(
+                text(
+                    """INSERT INTO evaluation_option (
+                        business_id, evaluation_id, option_key, rank, levers,
+                        delay_tolerance_days, cost_minor, borrowed_minor,
+                        lowest_balance_minor, meets_target, tolerance_status, tolerance_scan_cap
+                    ) VALUES (
+                        :b, :eid, :okey, :rank, CAST(:levers AS jsonb),
+                        :delay_tol, :cost, :borrowed, :lowest_bal, :meets, :tol_status, :scan_cap
+                    )"""
+                ),
+                {
+                    "b": snapshot.business_id,
+                    "eid": eval_dto.id,
+                    "okey": opt.option_key,
+                    "rank": opt.rank,
+                    "levers": json.dumps(opt.parameters.model_dump(mode="json")),
+                    "delay_tol": opt.tolerance.observed_safe_days,
+                    "cost": int(opt.financing_cost_minor),
+                    "borrowed": int(opt.borrowed_minor),
+                    "lowest_bal": min(int(s.lowest_balance_minor) for s in opt.scenarios),
+                    "meets": opt.meets_target,
+                    "tol_status": opt.tolerance.status,
+                    "scan_cap": opt.tolerance.scan_cap_days,
+                },
+            )
+        # Persist full series in the tenant-scoped immutable extension table; reads never rerun analysis.
+        for opt in options.values():
+            for scenario in ("base", "downside", "severe"):
+                series = extract_series(computation.result, snapshot, eval_dto.id, scenario, opt.option_key)
+                c.execute(text("INSERT INTO evaluation_series (business_id,evaluation_id,option_key,scenario,currency,exponent,points) VALUES (:b,:e,:o,:s,:c,:x,CAST(:p AS jsonb))"), {
+                    "b": snapshot.business_id, "e": eval_dto.id, "o": opt.option_key,
+                    "s": scenario, "c": series.currency, "x": series.exponent,
+                    "p": json.dumps([point.model_dump(mode="json") for point in series.points]),
+                })
+        # 4. Advance deal status to awaiting_approval
+        c.execute(
+            text("UPDATE deal SET status='awaiting_approval' WHERE id=:d AND business_id=:b"),
+            {"d": snapshot.deal_id, "b": snapshot.business_id},
+        )
+        append_audit(
+            c,
+            scope,
+            "publish_evaluation",
+            deal_id=snapshot.deal_id,
+            payload={"evaluation_id": str(eval_dto.id), "verdict": eval_dto.decision},
+        )

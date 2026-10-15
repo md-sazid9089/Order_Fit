@@ -366,6 +366,90 @@ No destructive tests targeted Neon. The existing TestClient dependency warning
 remains. `git diff --check` passed.
 The separate user `.gitignore` edit remains preserved.
 
+## P3 — Persisted manual-input vertical slice (15 October 2026)
+
+### Reconciliation and implementation
+
+Recovered the interrupted, unstaged P3 work by comparing the live diff with the
+P3 plan and current P0/P1/P2 contracts. Preserved the existing `.gitignore`
+change and did not use Neon or any configured/shared database for tests.
+
+- Added forward migration `0003_p3_results` / SQL component `0006_p3_results`.
+  It adds lender and evidence provenance to existing financing offers and a
+  tenant-scoped immutable evaluation-series table with grants, composite tenant
+  references and row-level security. Existing evaluation and option tables are
+  reused; no parallel identity, deal or financial ledger was introduced.
+- Registered P3 SQLAlchemy mappings and advanced the required runtime schema
+  revision. Updated the schema inventory test for the one additive table.
+- Added business/customer/payee/offer and evaluation read routes, plus persisted
+  baseline, source and deal repository flows. Confirmed snapshots use the
+  existing immutable snapshot/approval records. Evaluation jobs run the sole
+  deterministic compute boundary in a bounded child process; freshness checks,
+  result/options/series publication and fenced operation completion share one
+  short publication transaction. Series reads come from stored rows.
+- Fixed recovered worker/DTO mismatches, API idempotency-key propagation and
+  result field mappings. Engine outcomes `analysis_limit`, `needs_input`,
+  `unsupported_escalate` and `blocked_data_conflict` now finish as blocked
+  operations rather than being serialized as financial declines or generic
+  worker failures.
+- Removed fabricated opening-balance/date and offer-validity defaults. An
+  unconfigured baseline now returns `BASELINE_NOT_CONFIGURED`; review blocks on
+  missing evidence and payment terms. Incomplete offers are explicitly marked
+  unsupported rather than assigned synthetic validity dates.
+- Replaced the fake sign-in timer and hard-coded deals/new-order screens with a
+  cookie-session client, tenant-scoped saved-order list, manual baseline/order
+  entry, persisted review/confirmation/evaluation, result and stored-series
+  display. The old validation route redirects to the supported manual form.
+  Money remains integer minor-unit text. Live order screens no longer load
+  sample orders from localStorage.
+- The no-target route regression assertion now expects safe `INVALID_INPUT`
+  validation for the implemented route instead of the former absent-route 404.
+
+### Checks actually executed
+
+| Check | Actual result |
+|---|---|
+| Latest P3 integration file `tests/db/test_p3_vertical_slice.py` | **4 passed**, 11.62s on disposable loopback PostgreSQL 17; includes tenant-isolated businesses, manual source setup, confirmation, worker evaluation, persisted result/series, stale result after edit and optimistic concurrent editors |
+| P3 migration/schema preservation | Original and forward schemas each passed **296/296** SQL checks; concurrency scripts passed on both schemas (400-row audit chain and optimistic-lock loser) |
+| Latest complete backend run | **187 passed**, 107.69s, latest checkout on disposable PostgreSQL 17; original and forward schemas each 296/296, both concurrency scripts passed |
+| `uv run --frozen ruff check .` | Passed after P3 edits |
+| Contract export check | Passed; **101** operations unchanged |
+| Changed frontend files ESLint | Passed with no diagnostics |
+| Frontend TypeScript check | Passed |
+| Frontend production build | Passed; Next 16.4.1 generated `/deals` and dynamic `/deals/[id]` routes |
+| `git diff --check` | Passed after removing the extra trailing blank lines. |
+
+One existing warning remains: Starlette's `TestClient` deprecates its current
+httpx integration. Full browser interaction was not run.
+
+### Gate status and unresolved gaps
+
+The backend's core manual create → review → confirm → queued evaluation → result
+and stored series path is exercised, along with stale-edit and concurrent-edit
+behavior. The P3 acceptance gate is **not yet fully passed**. The plan also calls
+for basic audit/decision export and refresh/restart recovery evidence; no
+decision-export/download implementation exists in this P3 diff, and a real
+process restart/browser session was not tested. The minimal new-order UI currently
+does not enter line-item costs or financing offers, so it must not be presented
+as a complete cash projection for an order with material costs or financing.
+
+There is also a result-contract correctness gap to resolve before promoting the
+gate: P0 requires tolerance on every option, while P2 currently computes one
+delay scan for the top option. The interrupted adapter fills other options with
+a synthetic one-day tolerance. That value is not evidence-backed and must be
+replaced with correctly budgeted per-option scans (or an explicitly versioned
+contract decision) before displaying it as a financial result. Source revision
+coverage for all input resources and mapping of engine sensitivity/alerts also
+need review; the current adapter does not establish complete provenance for
+every resource.
+
+No OpenAI API key is required for the tested manual path (`llm_mode=off`). No live
+OpenAI/provider call, browser, hosted Neon migration, hosted role, backup/restore
+or deployment acceptance was performed. No P4 work was started. P4 requires
+private upload/parsing and duplicate handling, immutable evidence candidates,
+review projection, CSV preview/confirm and the bounded OpenAI Responses adapter
+with off/recorded/live modes, provenance and refusal/timeout/rate-limit handling.
+
 This completes the approved hosted connection/setup work, not full hosted P1
 workflow acceptance. Hosted auth/multi-tenant business jobs, recovery/concurrency,
 backup/restore, browser and live OpenAI remain unverified. P2 has not started.
