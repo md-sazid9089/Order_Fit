@@ -6,7 +6,6 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from orderfit.config import settings
-from orderfit.store.tables import metadata
 
 config = context.config
 # ConfigParser treats % as interpolation; escape it so passwords with % survive.
@@ -15,7 +14,11 @@ config.set_main_option("sqlalchemy.url", settings.migration_url.replace("%", "%%
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = metadata
+# The schema is raw SQL (backend/migrations/sql): triggers, RLS, generated columns and partial
+# indexes that autogenerate cannot see. Comparing against store/tables.py (which defines no
+# tables) would emit DROP TABLE for every table, so autogenerate is switched off: with no
+# target metadata, `alembic revision --autogenerate` refuses to run. Write migrations by hand.
+target_metadata = None
 
 # Tables owned by LangGraph's checkpointer (created by AsyncPostgresSaver.setup()).
 # Without this, autogenerate sees them as unknown and emits DROP TABLE.
