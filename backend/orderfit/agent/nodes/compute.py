@@ -29,6 +29,7 @@ def to_engine_input(snapshot: ConfirmedInputV1) -> EngineInput:
     """No storage query, clock, inferred trust/default policy, generated receipt or loan rows."""
     snapshot = ConfirmedInputV1.model_validate(snapshot.model_dump(mode="python"))
     order = snapshot.order
+    selection = snapshot.strategy_space.financing_selection
 
     def stress(value):
         return {
@@ -95,8 +96,8 @@ def to_engine_input(snapshot: ConfirmedInputV1) -> EngineInput:
                     "fee_flat": int(o.fee_flat_minor),
                     "fee_at": o.fee_at,
                     "lead_days": o.lead_days,
-                    "min": int(o.min_minor),
-                    "max": int(o.max_minor),
+                    "min": int(selection.amount_minor) if selection and selection.offer_id == o.offer_id else int(o.min_minor),
+                    "max": int(selection.amount_minor) if selection and selection.offer_id == o.offer_id else int(o.max_minor),
                     "step": int(o.step_minor),
                     "term_days": o.term_days,
                     "available_from": o.available_from,
@@ -150,8 +151,13 @@ def compute(snapshot: ConfirmedInputV1) -> Computation:
     return Computation(
         snapshot_hash=canonical_hash(snapshot),
         reference_input_hash=reference_digest,
-        result=analyse(engine_input),
+        result=compute_review(engine_input),
     )
+
+
+def compute_review(engine_input: EngineInput) -> Result:
+    """Same production engine for incomplete review probes; grants no confirmation."""
+    return analyse(engine_input)
 
 
 async def run(state: dict) -> dict:

@@ -27,8 +27,10 @@ a deterministic engine does every calculation, and the owner approves every outg
 > P1 supplies password sessions, tenant-scoped transactions, durable operations and private
 > storage. P2 adds the pure deterministic financial engine and confirmed-input adapter.
 > P3 adds persisted manual-input workflows; P4 adds private documents, bounded extraction
-> (off/recorded by default; live OpenAI is unverified), field review and CSV import. Sandbox
-> approval and execution (P5-P8) are not implemented.
+> (off/recorded by default; live OpenAI is unverified), field review and CSV import.
+> P5 adds persisted what-if comparisons, exact draft revisions, reviewed reply reassessment
+> and party attestations. All outgoing effects remain disabled; P6 approval/execution and
+> P7/P8 operational work are not implemented. P4's separate final review remains pending.
 > See [implementation progress](docs/backend_implementation_progress.md),
 > [contract guide](docs/contracts/README.md) and [implementation plan](docs/initial_backend_implementation_plan.md).
 > The feature list below describes intended behavior, not completed capabilities.

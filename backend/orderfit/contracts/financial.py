@@ -211,6 +211,11 @@ class Extension(DTO):
     surcharge_bps: Bps
 
 
+class FinancingSelection(DTO):
+    offer_id: UUID
+    amount_minor: PositiveMoney
+
+
 class StrategySpace(DTO):
     deposit_pcts: list[Annotated[int, Field(strict=True, ge=0, le=100)]] = Field(
         min_length=1, max_length=101
@@ -219,6 +224,8 @@ class StrategySpace(DTO):
     extensions: list[Extension] = Field(min_length=1, max_length=366)
     offer_ids: list[UUID] = Field(max_length=20)
     stages: Literal[1] = 1
+    # Exploration narrows an allowed draw grid; immutable lender terms stay intact.
+    financing_selection: FinancingSelection | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def unique_grid(self):
@@ -355,6 +362,14 @@ class ConfirmedInputV1(DTO):
         if len(set(obligations)) != len(obligations) or len(set(keys)) != len(keys):
             raise ValueError("duplicate obligation or event key")
         offers = {o.offer_id: o for o in self.offers}
+        selection = self.strategy_space.financing_selection
+        if selection:
+            offer = offers.get(selection.offer_id)
+            amount = int(selection.amount_minor)
+            if (offer is None or selection.offer_id not in self.strategy_space.offer_ids
+                or not int(offer.min_minor) <= amount <= int(offer.max_minor)
+                or (amount - int(offer.min_minor)) % int(offer.step_minor)):
+                raise ValueError("selected draw is outside the original approved offer grid")
         if (
             len(offers) != len(self.offers)
             or not set(self.strategy_space.offer_ids) <= offers.keys()
