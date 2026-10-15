@@ -10,7 +10,7 @@ a deterministic engine does every calculation, and the owner approves every outg
 [![tests](https://github.com/md-sazid9089/Order_Fit/actions/workflows/tests.yml/badge.svg)](https://github.com/md-sazid9089/Order_Fit/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-agent-1C3C3C)
 
 [Features](#features) ·
@@ -110,7 +110,7 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 | Backend  | Python 3.12, FastAPI, Pydantic v2, Uvicorn |
 | Agent    | LangGraph with checkpointing |
 | Storage  | PostgreSQL 17 (psycopg 3), SQLAlchemy 2, Alembic |
-| Frontend | Next.js 15, React 19, TypeScript |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
 | Tooling  | pytest, Ruff, GitHub Actions, Docker Compose |
 
 ## Project structure
@@ -126,7 +126,7 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 │   │   ├── domain.py    # Shared contracts for agent, API and store
 │   │   └── config.py    # Settings from environment
 │   └── tests/           # architecture, engine, agent, e2e
-├── web/                 # Next.js screens (display only)
+├── frontend/            # Next.js app (display only)
 ├── data/                # Demo business, financing catalogue, test cases
 ├── scripts/             # Demo seeding, PDF generation, baseline evaluation
 ├── docs/                # Design notes and ADRs
@@ -171,7 +171,7 @@ change `WEB_PORT`, `API_PORT` or `DB_PORT`.
 > Deals, workflow checkpoints and the audit log live in Postgres (`pg-data` volume). Uploaded
 > documents live in the `documents` volume. `data/` is mounted read-only at `/app/data`.
 > `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so rebuild `web` after
-> changing it.
+> changing it. The image is built from `frontend/`.
 
 ### Run locally
 
@@ -191,7 +191,7 @@ uvicorn orderfit.api.main:app --reload
 **Frontend** (in a second terminal)
 
 ```bash
-cd web
+cd frontend
 npm install
 cp .env.example .env.local
 npm run dev
@@ -227,11 +227,12 @@ Backend settings are read from `backend/.env`. See [backend/.env.example](backen
 | `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed browser origins (JSON list) |
 | `TARGET_TOLERANCE_DAYS` | `15` | Late-payment days an option must survive to count as safe |
 
-Frontend settings are read from `web/.env.local`:
+Frontend settings are read from `frontend/.env.local`. See [frontend/.env.example](frontend/.env.example).
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-facing API URL |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-facing API URL, inlined at build time |
+| `API_INTERNAL_URL` | *(falls back to `NEXT_PUBLIC_API_URL`)* | API URL for server-side route handlers. Compose sets `http://api:8000` |
 
 > [!WARNING]
 > Never commit `.env` files. They are listed in `.gitignore`.
@@ -246,12 +247,13 @@ pytest -m e2e             # calls the real AI model; needs AI_API_KEY and costs 
 ```
 
 ```bash
-cd web
+cd frontend
 npm run typecheck
+npm run lint
 npm run build
 ```
 
-CI runs lint, the backend tests, the web type check and build, and a Docker build on every push
+CI runs lint, the backend tests, the frontend type check, lint and build, and a Docker build on every push
 and pull request. See [.github/workflows/tests.yml](.github/workflows/tests.yml).
 
 To add an engine test case, add an entry to [data/test_cases.json](data/test_cases.json).
@@ -265,8 +267,6 @@ automatically.
 | [scripts/seed_demo.py](scripts/seed_demo.py) | Load the demo business into the database as `demo-rina` |
 | [scripts/make_demo_pdfs.py](scripts/make_demo_pdfs.py) | Generate demo order and quote PDFs, including adversarial variants |
 | [scripts/run_baseline.py](scripts/run_baseline.py) | Run the core cases through a plain AI model for comparison |
-
-To regenerate the frontend API types from a running backend, run `npm run gen:types` in `web/`.
 
 ## Documentation
 

@@ -65,11 +65,14 @@ services:
 
   web:
     build:
-      context: ./web
+      context: ./frontend
       args:
         # Browser-facing URL, baked in at build time.
         NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
     image: orderfit-web:local
+    environment:
+      # Server-side calls (e.g. /api/health) go over the compose network.
+      API_INTERNAL_URL: http://api:8000
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
