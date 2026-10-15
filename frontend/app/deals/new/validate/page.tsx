@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -68,11 +68,31 @@ const INITIAL_COST_ITEMS: CostLineItem[] = [
   },
 ];
 
+// The draft is written by the previous step before navigating here, so there is nothing to subscribe to.
+const subscribeToNothing = () => () => {};
+
+// Read the PO number from the draft in localStorage, if custom text was entered.
+function readDraftPoNumber(): string | null {
+  try {
+    const stored = localStorage.getItem("orderfit_deal_draft");
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    if (!parsed.poText || parsed.poText.length <= 5) return null;
+    const matchPo = parsed.poText.match(/PO-?\d+/i);
+    return matchPo ? matchPo[0].toUpperCase() : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ValidatePage() {
   const router = useRouter();
 
   // Commercial Parameters & Constraints (Image 2)
-  const [poNumber, setPoNumber] = useState("PO-8841");
+  // null until the user edits the field; until then show the PO number from the saved draft.
+  const [poNumberInput, setPoNumber] = useState<string | null>(null);
+  const draftPoNumber = useSyncExternalStore(subscribeToNothing, readDraftPoNumber, () => null);
+  const poNumber = poNumberInput ?? draftPoNumber ?? "PO-8841";
   const [customerName, setCustomerName] = useState("Apex Retailers Inc");
   const [orderValue, setOrderValue] = useState<number>(360000);
   const [deliveryDate, setDeliveryDate] = useState("2026-12-14");
@@ -85,22 +105,6 @@ export default function ValidatePage() {
   const [costItems, setCostItems] = useState<CostLineItem[]>(INITIAL_COST_ITEMS);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Read draft from localStorage if present
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("orderfit_deal_draft");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.poText && parsed.poText.length > 5) {
-          // If custom text was entered, check for any PO number or name clues
-          const matchPo = parsed.poText.match(/PO-?\d+/i);
-          if (matchPo) setPoNumber(matchPo[0].toUpperCase());
-        }
-      }
-    } catch {
-      // Ignore fallback
-    }
-  }, []);
 
   const handleToggleDeferral = (id: string) => {
     setCostItems((prev) =>

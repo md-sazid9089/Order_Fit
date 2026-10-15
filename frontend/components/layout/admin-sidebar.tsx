@@ -8,7 +8,7 @@ export type { NavItem as AdminNavItem } from "./app-sidebar";
 
 interface AdminSidebarProps {
   activeTab?: string;
-  onSelectTab?: (tabId: any) => void;
+  onSelectTab?: (tabId: string) => void;
   clusterStatus?: string;
 }
 
