@@ -598,3 +598,43 @@ authorized result/export APIs and corresponding real-session frontend flows.
 Its gate must cover restart/refresh, stale edits, concurrent writers, tenant
 isolation and API-key-free end-to-end operation. **No P3 route, handler, persistence
 flow or frontend integration was implemented or enabled here.**
+
+## P4 — documents and bounded OpenAI extraction (15 October 2026)
+
+### Scope and changes
+
+- Migration `0004_p4_documents` (`sql/0007_p4_extraction.sql`): immutable, tenant-RLS tables
+  `document_parse`, `extraction_run`, `extraction_candidate`, `csv_preview`, `csv_confirmation`
+  (SELECT/INSERT only plus an `OF010` immutability trigger); `extracted_field` gains
+  `candidate_id`/`resolution_reason` and stays the reviewed projection; `operation.parameters`
+  carries typed job parameters under the request hash. `operation_finish` is replaced so an
+  extraction's own revision-bearing writes are not reported as staleness (`run_extract` checks
+  freshness under the deal lock first). `0005_p3_p4_integration` joins this with the P3 exports branch.
+- `agent/llm.py`: `off`/`recorded`/`live` modes. Recorded replays
+  `<prompt_version>__<input_hash>.json` from `LLM_RECORDINGS_DIR`; a missing recording returns
+  `RECORDING_NOT_FOUND` and never reaches the provider. Live uses OpenAI Responses typed parsing with
+  timeout/output/concurrency bounds and maps refusal/incomplete/invalid/timeout/rate-limit/quota to
+  `UnavailableLanguage`. The model comes from `OPENAI_MODEL`; none is hardcoded or evaluated.
+- `services/documents.py`: MIME sniffing (bytes over declared type), PDF text layer via `pypdf`
+  (no text -> `ocr_required`), quote-evidence checks (quote must appear on the page; amounts and dates
+  must be supported by the quote; day/month-ambiguous dates -> `ambiguous`), CSV preview parsing.
+- Worker: `extract` runs the provider outside any DB transaction; `csv_preview` is a normal handler.
+  Candidates failing the quote check are dropped; injection flags force `ambiguous`; differing
+  unreviewed values for one field across documents become `conflicting`.
+- API: document upload (25 MiB, multipart), list/get/download (nosniff, attachment), extract (202),
+  `GET /deals/{id}/fields` (new `deal_fields`), `fields/resolve` (human confirm/override/reject),
+  CSV preview/get/confirm. Contracts regenerated. UI: `/deals/{id}/documents`.
+
+### Evidence
+
+- `uv run pytest -q` (backend, disposable PostgreSQL 17 via Docker, real runtime/worker logins):
+  all prior suites plus `tests/db/test_p4_documents.py` and `tests/test_p4_pure.py` passed;
+  `ruff check` clean; `tsc --noEmit` clean for `web/`.
+
+### Not verified / remaining gaps
+
+- No live OpenAI call was made; model selection/evaluation and a live benchmark are not done.
+- The browser UI was typechecked only, not driven in a browser. Hosted PostgreSQL, restart/restore
+  and concurrent-resolve races were not exercised beyond the deal-row lock.
+- OCR, docx/xlsx and `reply` extraction (P5) are unsupported. Override of a field to a value
+  not among the candidates is not supported (select another candidate with a reason).

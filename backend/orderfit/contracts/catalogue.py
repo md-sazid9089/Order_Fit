@@ -796,6 +796,19 @@ add(
 )
 add(
     "GET",
+    "deals/{deal_id}/fields",
+    "deal_fields",
+    None,
+    Page[r.ExtractedFieldView],
+    "read",
+    "review.fields",
+    "extracted_field,extraction_candidate",
+    "P4",
+    "V07",
+    collection=True,
+)
+add(
+    "GET",
     "deals/{deal_id}/review",
     "review",
     None,

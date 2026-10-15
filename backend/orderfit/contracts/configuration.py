@@ -17,6 +17,7 @@ class RuntimeConfiguration(BaseSettings):
     llm_mode: Literal["off", "recorded", "live"] = "off"
     openai_api_key: SecretStr | None = None
     openai_model: str | None = None
+    llm_recordings_dir: str | None = None
     cookie_secure: bool = True
     allowed_origins: list[str]
     session_absolute_seconds: Literal[28800] = 28800

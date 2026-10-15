@@ -1,5 +1,6 @@
 """Durable operation admission/recovery. No engine/provider handler is enabled in P1."""
 
+import json
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -24,6 +25,7 @@ class Admission(DTO):
     expected_financial_revision: Version
     snapshot_id: UUID | None
     source_document_id: UUID | None
+    parameters: dict | None = None
     config_version: Literal["operation.v1"] = "operation.v1"
 
     @model_validator(mode="after")
@@ -138,7 +140,7 @@ class Operations:
             operation_id = uuid4()
             c.execute(
                 text(
-                    "INSERT INTO operation(id,business_id,deal_id,actor_user_id,session_id,kind,request_hash,input_version,financial_revision,snapshot_id,source_document_id,config_version) VALUES(:id,:b,:d,:u,:s,:kind,:hash,:iv,:fr,:snapshot,:document,:config)"
+                    "INSERT INTO operation(id,business_id,deal_id,actor_user_id,session_id,kind,request_hash,input_version,financial_revision,snapshot_id,source_document_id,config_version,parameters) VALUES(:id,:b,:d,:u,:s,:kind,:hash,:iv,:fr,:snapshot,:document,:config,CAST(:params AS jsonb))"
                 ),
                 {
                     "id": operation_id,
@@ -153,6 +155,7 @@ class Operations:
                     "snapshot": command.snapshot_id,
                     "document": command.source_document_id,
                     "config": command.config_version,
+                    "params": None if command.parameters is None else json.dumps(command.parameters),
                 },
             )
             accepted = OperationAccepted(

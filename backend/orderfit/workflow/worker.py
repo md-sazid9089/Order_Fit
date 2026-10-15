@@ -91,7 +91,7 @@ DEFAULT_HANDLERS = {
 }
 
 
-def run_once(operations, worker, handlers):
+def run_once(operations, worker, handlers, runtime=None):
     claim = operations.claim(worker)
     if claim is None:
         return False
@@ -154,7 +154,13 @@ def run_once(operations, worker, handlers):
                 if not finished:
                     raise RuntimeError("operation lease lost before publication")
             return True
-        with operations.database.job(claim["id"], claim["lease_token"]) as (c, scope):
+        if job.kind == "extract" and runtime is not None and "extract" not in handlers:
+            # Provider call happens outside any database transaction.
+            from orderfit.workflow.extraction import run_extract
+
+            result = run_extract(operations, claim, job, runtime)
+        else:
+          with operations.database.job(claim["id"], claim["lease_token"]) as (c, scope):
             row = (
                 c.execute(text("SELECT * FROM operation WHERE id=:id"), {"id": claim["id"]})
                 .mappings()
@@ -175,6 +181,10 @@ def run_once(operations, worker, handlers):
     except Exception:
         result = failure("JOB_FAILED")
     finally:
+            elif job.kind == "csv_preview" and runtime is not None:
+                from orderfit.workflow.extraction import handle_csv_preview
+
+                result = handle_csv_preview(job, c, scope, runtime)
         stopped.set()
         thread.join(timeout=2)
     operations.finish(claim, result, retry=retry)
@@ -189,14 +199,31 @@ def main():
         raise RuntimeError("Migration credentials must not be injected into worker")
     config = RuntimeConfiguration()
     documents = PrivateDocuments(config.document_dir)
-    del documents
+    from pathlib import Path
+
+    from orderfit.agent.llm import LLMSettings
+    from orderfit.workflow.extraction import Runtime
+
+    runtime = Runtime(
+        llm=LLMSettings(
+            mode=config.llm_mode,
+            model=config.openai_model,
+            api_key=config.openai_api_key.get_secret_value() if config.openai_api_key else None,
+            timeout_seconds=config.provider_timeout_seconds,
+            max_output_tokens=config.provider_max_output_tokens,
+            concurrency=config.provider_concurrency,
+            recordings_dir=Path(config.llm_recordings_dir) if config.llm_recordings_dir else None,
+        ),
+        documents=documents,
+        job_attempts=config.job_attempts,
+    )
     database = Database(config.database_url.get_secret_value())
     database.validate_runtime(worker=True)
     operations = Operations(database)
     worker = str(uuid4())
     try:
         while True:
-            worked = run_once(operations, worker, DEFAULT_HANDLERS)
+            worked = run_once(operations, worker, DEFAULT_HANDLERS, runtime)
             if args.once:
                 break
             if not worked:
