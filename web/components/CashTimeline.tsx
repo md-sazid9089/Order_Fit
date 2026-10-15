@@ -134,12 +134,12 @@ export function CashTimeline({
         </svg>
       </div>
 
-      <div className="pt-3 flex items-center justify-between text-xs text-[#737373] border-t border-[#E8E6E1]">
-        <div className="flex items-center gap-1.5">
-          <Shield className="size-3.5 text-[#1E2021]" />
+      <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-[#737373] border-t border-[#E8E6E1] gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Shield className="size-3.5 text-[#1E2021] shrink-0" />
           <span>Strict daily reserve constraint relative to baseline</span>
         </div>
-        <div className="font-mono text-[#1E2021]">
+        <div className="font-mono text-[#1E2021] shrink-0">
           Reserve Target: <strong>{reserveFloor.toLocaleString()} {currency}</strong>
         </div>
       </div>

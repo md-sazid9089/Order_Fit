@@ -93,7 +93,7 @@ export function ConfirmFigures({
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
                 <span className="text-xs font-semibold text-[#1E2021]">{field.name}</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-[#E8E6E1] text-[#737373]">
                   {field.provenance}
@@ -102,7 +102,7 @@ export function ConfirmFigures({
                   ({Math.round(field.confidence * 100)}% confidence)
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="font-mono text-sm font-bold text-[#1E2021]">
                   {field.raw_value}
                 </span>

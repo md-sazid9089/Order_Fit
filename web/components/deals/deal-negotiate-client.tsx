@@ -27,8 +27,15 @@ import {
   KeyRound,
   FileText,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  RefreshCw,
+  Play,
+  Check,
+  Zap,
 } from "lucide-react";
+import { OptionsTable } from "@/components/OptionsTable";
+import { StressTable } from "@/components/StressTable";
+import { AssumptionsPanel } from "@/components/AssumptionsPanel";
 
 interface DealNegotiateClientProps {
   id: string;
@@ -44,6 +51,73 @@ export function DealNegotiateClient({ id }: DealNegotiateClientProps) {
   const [stepUpCode, setStepUpCode] = useState("");
   const [stepUpError, setStepUpError] = useState(false);
   const [showAssumptions, setShowAssumptions] = useState(false);
+
+  // What-If Natural Language Patch Generator state
+  const [whatIfInput, setWhatIfInput] = useState("");
+  const [isEvaluatingWhatIf, setIsEvaluatingWhatIf] = useState(false);
+  const [proposedPatch, setProposedPatch] = useState<{
+    patchId: string;
+    targetPath: string;
+    originalValue: string;
+    patchedValue: string;
+    description: string;
+    impact: string;
+  } | null>(null);
+  const [isStale, setIsStale] = useState(false);
+  const [inputVersion, setInputVersion] = useState(7);
+  const [customerDelayDays, setCustomerDelayDays] = useState(15);
+
+  const handleEvaluateWhatIf = (promptText?: string) => {
+    const text = promptText || whatIfInput;
+    if (!text.trim()) return;
+
+    setIsEvaluatingWhatIf(true);
+    setTimeout(() => {
+      setIsEvaluatingWhatIf(false);
+      if (text.toLowerCase().includes("5 days") || text.toLowerCase().includes("5d")) {
+        setProposedPatch({
+          patchId: "patch-d5",
+          targetPath: "scenarios.downside.order_receipt_delay_days",
+          originalValue: "15 days",
+          patchedValue: "5 days",
+          description: "Reduce assumed downside buyer delay from 15 to 5 days",
+          impact: "Flips recommended plan from 40% Deposit to Working Capital Loan (+20,000 BDT profit gain)",
+        });
+      } else if (text.toLowerCase().includes("supplier") || text.toLowerCase().includes("45")) {
+        setProposedPatch({
+          patchId: "patch-s45",
+          targetPath: "parameters.supplier_payment_terms_days",
+          originalValue: "Net 30",
+          patchedValue: "Net 45",
+          description: "Supplier agrees to 15-day extension on material balances",
+          impact: "Eliminates need for bank loan; 20% deposit becomes resilient through day 40",
+        });
+      } else {
+        setProposedPatch({
+          patchId: "patch-dep25",
+          targetPath: "offers.customer_deposit_pct",
+          originalValue: "40%",
+          patchedValue: "25%",
+          description: "Hypothetical counter-offer with 25% advance ($90,000)",
+          impact: "Creates small $4,500 reserve dip on day 30 requiring $50k credit line bridge",
+        });
+      }
+    }, 400);
+  };
+
+  const handleApplyPatch = () => {
+    if (!proposedPatch) return;
+    if (proposedPatch.patchId === "patch-d5") {
+      setCustomerDelayDays(5);
+      setSelectedPlan("loan");
+    } else if (proposedPatch.patchId === "patch-s45") {
+      setSelectedPlan("split");
+    }
+    setInputVersion((v) => v + 1);
+    setIsStale(true);
+    setProposedPatch(null);
+    setWhatIfInput("");
+  };
 
   // Exact action plan hash (SHA-256)
   const ACTION_PLAN_HASH = "8f7b2c9e1a3d4f5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b";
@@ -241,6 +315,176 @@ Managing Director, Apex Manufacturing`
             </div>
           </div>
 
+          {/* Stale Evaluation Warning Banner (ADR 0004 & Invalidation) */}
+          {isStale && (
+            <div className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle className="size-4 text-[#B45309] shrink-0" />
+                <div>
+                  <span className="font-bold text-[#92400E]">
+                    Evaluation Stale (Input Version v{inputVersion}):
+                  </span>
+                  <span className="text-[#92400E] ml-1">
+                    Parameters were patched by owner. Stored evaluation invalidated per ADR 0004.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStale(false)}
+                className="px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white font-semibold text-xs shrink-0 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RefreshCw className="size-3.5" />
+                <span>Recalculate Current Recommendation</span>
+              </button>
+            </div>
+          )}
+
+          {/* Interactive What-If Scenario Exploration & Sensitivity Slider (Scene 2 Demo) */}
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E8E6E1]">
+              <div>
+                <h3 className="text-sm font-bold text-[#1E2021] flex items-center gap-2">
+                  <Sparkles className="size-4 text-[#1E2021]" />
+                  What-If Conversation &amp; Sensitivity Sweep (parse_whatif)
+                </h3>
+                <p className="text-xs text-[#737373] mt-0.5">
+                  Type a what-if sentence to propose a typed parameter patch, or slide buyer delay to see recommendation flips
+                </p>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FAF9F7] border border-[#E8E6E1] text-[#737373] self-start sm:self-auto">
+                LLM Mode: Schema-Constrained Patch
+              </span>
+            </div>
+
+            {/* Delay Sensitivity Slider */}
+            <div className="p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[#1E2021] flex items-center gap-1.5">
+                  <Sliders className="size-3.5" />
+                  Assumed Buyer Receipt Delay: <span className="font-mono font-bold text-sm">+{customerDelayDays} days</span>
+                </span>
+                <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-[#E8E6E1] text-[#1E2021]">
+                  {customerDelayDays < 8
+                    ? "Optimal: Working Capital Loan ($134.8k Profit)"
+                    : customerDelayDays <= 26
+                    ? "Optimal: 40% Deposit ($132.8k Profit, Resilience Tier 2)"
+                    : "Severe Shortfall: Requires >60% Deposit"}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="45"
+                step="1"
+                value={customerDelayDays}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setCustomerDelayDays(val);
+                  if (val < 8) setSelectedPlan("loan");
+                  else if (val <= 26) setSelectedPlan("dep40");
+                  else setSelectedPlan("split");
+                }}
+                className="w-full accent-[#1E2021] cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] font-mono text-[#737373]">
+                <span>0d (On-Time)</span>
+                <span>8d (Loan Flip)</span>
+                <span>15d (Downside)</span>
+                <span>26d (Max Tolerance)</span>
+                <span>45d (Severe)</span>
+              </div>
+            </div>
+
+            {/* Natural Language Prompt Input */}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={whatIfInput}
+                  onChange={(e) => setWhatIfInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleEvaluateWhatIf()}
+                  placeholder="e.g. 'what if my customer pays 5 days late?' or 'what if the supplier gives 45 days?'"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-[#E8E6E1] text-xs focus:outline-none focus:ring-2 focus:ring-[#1E2021]/10 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleEvaluateWhatIf()}
+                  disabled={isEvaluatingWhatIf || !whatIfInput.trim()}
+                  className="px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                >
+                  {isEvaluatingWhatIf ? <RefreshCw className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+                  <span>Simulate Patch</span>
+                </button>
+              </div>
+
+              {/* Sample Prompt Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] text-[#737373]">Try:</span>
+                {[
+                  "what if my customer pays 5 days late?",
+                  "what if the supplier gives 45 days?",
+                  "what if customer pays a 25% deposit?",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setWhatIfInput(chip);
+                      handleEvaluateWhatIf(chip);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-[#FAF9F7] hover:bg-[#F0EEEA] border border-[#E8E6E1] text-[10px] font-mono text-[#525252] transition-colors cursor-pointer"
+                  >
+                    ⚡ &ldquo;{chip}&rdquo;
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Proposed Patch Review Panel */}
+            {proposedPatch && (
+              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-blue-950 flex items-center gap-1.5">
+                    <Zap className="size-3.5 text-blue-600" />
+                    Proposed Parameter Patch: {proposedPatch.patchId}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-blue-800 border border-blue-200">
+                    Target: {proposedPatch.targetPath}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white border border-blue-200/80 font-mono text-[11px] space-y-1">
+                  <div>
+                    <span className="text-[#737373]">- Current Value:</span> <span className="text-rose-700 font-semibold">{proposedPatch.originalValue}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#737373]">+ Patched Value:</span> <span className="text-emerald-700 font-semibold">{proposedPatch.patchedValue}</span>
+                  </div>
+                </div>
+                <div className="text-[11px] text-blue-900 leading-relaxed">
+                  <strong>Impact:</strong> {proposedPatch.impact}
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setProposedPatch(null)}
+                    className="px-3 py-1 rounded-lg border border-blue-300 text-[11px] font-semibold text-blue-800 hover:bg-blue-100/50"
+                  >
+                    Dismiss
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyPatch}
+                    className="px-4 py-1 rounded-lg bg-[#1E2021] hover:bg-black text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="size-3.5" />
+                    <span>Apply Patch (Increments to v{inputVersion + 1})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Core Two-Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column: Ranked Plans, Sensitivity Matrix & Assumptions (5 Cols) */}
@@ -430,45 +674,7 @@ Managing Director, Apex Manufacturing`
               </div>
 
               {/* Assumptions & Provenance Collapsible Panel */}
-              <div className="bg-white border border-[#E8E6E1] rounded-2xl p-5 shadow-xs space-y-3">
-                <div
-                  onClick={() => setShowAssumptions(!showAssumptions)}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#1E2021]">
-                    <Sliders className="size-4 text-[#1E2021]" />
-                    <span>Assumptions & Parameter Provenance</span>
-                  </div>
-                  <span className="text-xs text-[#737373]">
-                    {showAssumptions ? "Hide Details" : "Show Details"}
-                  </span>
-                </div>
-
-                {showAssumptions && (
-                  <div className="pt-3 border-t border-[#E8E6E1] space-y-2 text-xs text-[#525252]">
-                    <div className="flex justify-between">
-                      <span className="text-[#737373]">Opening Baseline Cash:</span>
-                      <span className="font-mono font-semibold text-[#1E2021]">$159,120 [Verified]</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#737373]">Safety Reserve Floor:</span>
-                      <span className="font-mono font-semibold text-[#1E2021]">$100,000 [Tenant Floor]</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#737373]">Downside Payment Delay:</span>
-                      <span className="font-mono font-semibold text-[#1E2021]">15 Calendar Days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#737373]">Bank Overdraft APR:</span>
-                      <span className="font-mono font-semibold text-[#1E2021]">720 bps (7.20%)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#737373]">Deposit Search Grid:</span>
-                      <span className="font-mono font-semibold text-[#1E2021]">5% Increments</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <AssumptionsPanel defaultExpanded={false} />
             </div>
 
             {/* Right Column: AI-Drafted Counter-Offer & Action Terminal (7 Cols) */}
@@ -533,12 +739,12 @@ Managing Director, Apex Manufacturing`
 
                 {/* Counterparty Reply Trigger Banner (Once Approved) */}
                 {isApproved && (
-                  <div className="mx-5 mb-5 p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
-                    <div className="flex items-start gap-3 min-w-0">
+                  <div className="mx-5 mb-5 p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in duration-300">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div className="size-9 rounded-xl bg-[#EFECE6] text-[#1E2021] flex items-center justify-center shrink-0 mt-0.5">
                         <MessageSquare className="size-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-bold text-[#1E2021]">Counterparty Response Received</span>
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
@@ -552,7 +758,7 @@ Managing Director, Apex Manufacturing`
                     </div>
                     <Link
                       href={`/deals/${id}/reply`}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold shrink-0 transition-colors shadow-xs w-full sm:w-auto"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold shrink-0 transition-colors shadow-xs w-full md:w-auto whitespace-nowrap"
                     >
                       <span>Proceed to Step 5: Counterparty Reply</span>
                       <ArrowRight className="size-3.5" />
@@ -561,60 +767,126 @@ Managing Director, Apex Manufacturing`
                 )}
 
                 {/* Action Footer Strip */}
-                <div className="p-5 border-t border-[#E8E6E1] bg-[#FAF9F7] flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-xs text-[#737373]">
+                <div className="p-4 sm:p-5 border-t border-[#E8E6E1] bg-[#FAF9F7] space-y-3.5">
+                  <div className="text-xs text-[#737373] leading-relaxed">
                     {isApproved ? (
                       <span className="font-semibold text-[#1E2021] flex items-center gap-2">
                         <CheckCircle2 className="size-4 text-[#004D3B] shrink-0" />
                         <span>Counter-proposal approved with step-up verification and dispatched to outbox.</span>
                       </span>
                     ) : (
-                      <span>
-                        Human approval gate active. Action hash binds plan payload before execution.
+                      <span className="flex items-center gap-2">
+                        <ShieldCheck className="size-4 text-[#1E2021] shrink-0" />
+                        <span>Human approval gate active. Action hash binds plan payload before execution.</span>
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                    {!isApproved && (
-                      <Link
-                        href="/deals"
-                        className="flex-1 sm:flex-none text-center px-4 py-2 rounded-xl border border-[#E8E6E1] bg-white hover:bg-[#F4F2ED] text-xs font-semibold text-[#525252] transition-colors"
-                      >
-                        Save as Draft
-                      </Link>
-                    )}
-
-                    {isApproved ? (
-                      <Link
-                        href="/deals"
-                        className="flex-1 sm:flex-none text-center px-4 py-2 rounded-xl border border-[#E8E6E1] bg-white hover:bg-[#F4F2ED] text-xs font-semibold text-[#525252] transition-colors"
-                      >
-                        Return to Pipeline
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#E8E6E1]/60">
+                    <div>
+                      {!isApproved && (
                         <Link
                           href={`/deals/${id}/reply`}
-                          className="hidden sm:inline-flex text-[11px] font-semibold text-[#737373] hover:text-[#1E2021] underline underline-offset-2 shrink-0 mr-1"
+                          className="inline-flex text-[11px] font-semibold text-[#737373] hover:text-[#1E2021] underline underline-offset-2 whitespace-nowrap transition-colors"
                           title="Directly test Step 5 counterparty reply re-planning"
                         >
                           Skip to Reply →
                         </Link>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {!isApproved && (
+                        <Link
+                          href="/deals"
+                          className="px-4 py-2.5 rounded-xl border border-[#E8E6E1] bg-white hover:bg-[#F4F2ED] text-xs font-semibold text-[#525252] transition-colors whitespace-nowrap text-center"
+                        >
+                          Save as Draft
+                        </Link>
+                      )}
+
+                      {isApproved ? (
+                        <Link
+                          href="/deals"
+                          className="px-4 py-2.5 rounded-xl border border-[#E8E6E1] bg-white hover:bg-[#F4F2ED] text-xs font-semibold text-[#525252] transition-colors whitespace-nowrap text-center"
+                        >
+                          Return to Pipeline
+                        </Link>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => setIsStepUpOpen(true)}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#1E2021] hover:bg-black active:scale-[0.98] transition-all shadow-xs cursor-pointer"
+                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#1E2021] hover:bg-black active:scale-[0.98] transition-all shadow-xs cursor-pointer whitespace-nowrap"
                         >
                           <Send className="size-3.5" />
                           <span>Approve & Send Ask</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Canonical Ranked Options & Multi-Scenario Stress Testing Matrix */}
+          <div className="space-y-6 pt-2">
+            <OptionsTable
+              selectedStrategyId={selectedPlan}
+              onSelectOption={(stratId) => {
+                if (stratId === "dep40") setSelectedPlan("dep40");
+                else if (stratId === "split") setSelectedPlan("split");
+                else setSelectedPlan("loan");
+              }}
+            />
+
+            <StressTable
+              options={[
+                {
+                  strategy_id: "dep40",
+                  label: "40% Customer Advance Deposit",
+                  dependencies: ["customer"],
+                  net_order_profit: { amount_minor: 132800000, currency: "USD" },
+                  financing_cost: { amount_minor: 0, currency: "USD" },
+                  concession: { amount_minor: 7200000, currency: "USD" },
+                  resilience: 2,
+                  meets_target_resilience: true,
+                  delay_tolerance_days: 26,
+                  base: { headroom: 2212000, feasible: true },
+                  downside: { headroom: 712000, feasible: true },
+                  severe: { headroom: -12360000, feasible: false },
+                },
+                {
+                  strategy_id: "split",
+                  label: "25% Deposit + 30-day Supplier Deferral",
+                  dependencies: ["customer", "supplier"],
+                  net_order_profit: { amount_minor: 129400000, currency: "USD" },
+                  financing_cost: { amount_minor: 0, currency: "USD" },
+                  concession: { amount_minor: 4500000, currency: "USD" },
+                  resilience: 2,
+                  meets_target_resilience: true,
+                  delay_tolerance_days: 18,
+                  base: { headroom: 1850000, feasible: true },
+                  downside: { headroom: 320000, feasible: true },
+                  severe: { headroom: -14000000, feasible: false },
+                },
+                {
+                  strategy_id: "loan",
+                  label: "0% Deposit + $75k Working Capital Loan",
+                  dependencies: ["lender"],
+                  net_order_profit: { amount_minor: 134800000, currency: "USD" },
+                  financing_cost: { amount_minor: 144000, currency: "USD" },
+                  concession: { amount_minor: 0, currency: "USD" },
+                  resilience: 1,
+                  meets_target_resilience: false,
+                  delay_tolerance_days: 11,
+                  base: { headroom: 3200000, feasible: true },
+                  downside: { headroom: -450000, feasible: false },
+                  severe: { headroom: -18000000, feasible: false },
+                },
+              ]}
+              currency="USD"
+            />
           </div>
         </main>
 
