@@ -5,7 +5,7 @@ Status: built and tested on PostgreSQL 16. The checks are:
 - `test_concurrency.sh`: 8 concurrent writers on the audit chain, plus the optimistic lock.
 - An Alembic upgrade → downgrade → upgrade round trip.
 
-There are 28 tables plus `alembic_version`, 5 views and 1 domain. The independent review and its fixes are in [../database-verification-report.md](../database-verification-report.md).
+There are 28 tables plus `alembic_version`, 5 views and 1 domain. The independent review and its fixes are in [../database-verification-report.md](../database-verification-report.md). For how to connect the backend, see [database-audit.md](database-audit.md).
 
 ## 1. Principles
 
