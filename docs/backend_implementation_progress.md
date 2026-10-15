@@ -698,6 +698,38 @@ equal the business currency. Live-path error mapping is covered with a fake SDK 
 Note: `extraction_candidate.confidence` is a fixed validation-outcome marker (0.8 passed all guards,
 0.5 otherwise), not a model probability; the provider returns no confidence.
 
+## Maintained agent development context — 16 October 2026
+
+At the user's request, added the repository-local skill
+`.agents/skills/orderfit-development-context/SKILL.md`, with standard name and
+description frontmatter. It consolidates the product/working context, phase
+status, code map, financial/security contracts, Neon/runtime boundaries,
+migration graph, verification commands and remaining evidence gaps. Root
+`AGENTS.md` routes development agents to it and requires updates after material
+development changes; `docs/README.md` provides another discovery link. This is
+maintenance during repository work, not a scheduled automation or global memory
+change.
+
+Reconciled against clean `main` at `184324e`, the latest progress entries,
+README/scoped instructions, current runtime/schema constant, migration files,
+result adapter, generated API consumer and test locations. The latest P3
+remediation report supersedes its earlier partial report; P4 final acceptance
+and live OpenAI remain unverified. The frontend is `web/`. Prior test counts
+are explicitly historical; no application/DB/provider/browser checks were rerun
+for this documentation-only task.
+
+Validation: all local Markdown links resolve in the skill and both entrypoints;
+direct frontmatter/name/description/placeholder checks passed; `git diff --check`
+passed. The bundled `quick_validate.py` could not execute because the system
+Python lacks PyYAML; no dependency was installed to validate documentation.
+
+Subsequently optimized at the user's request: reduced the skill from 210 lines
+to a concise status/decision/source handoff, removed repeated AGENTS rules and
+detailed command/history inventories, and shortened its root entrypoint.
+Maintenance now explicitly targets material context changes rather than routine
+edits. Link/frontmatter checks and `git diff --check` passed again; application
+behavior and phase evidence were unchanged.
+
 ## P5 — what-if and negotiation preparation (16 October 2026)
 
 ### Scope, prerequisite reconciliation and preservation
