@@ -22,7 +22,7 @@ interface AuditLogEntry {
   tier: "T0" | "T1" | "T2" | "T3" | "T4";
   action: string;
   payload: string;
-  outcome: "completed" | "blocked" | "confirmed";
+  outcome: "attempted" | "completed" | "blocked" | "failed" | "confirmed";
   hash: string;
   prevHash: string;
   time: string;

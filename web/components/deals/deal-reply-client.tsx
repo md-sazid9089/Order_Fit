@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ApprovalCard } from "@/components/ApprovalCard";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -288,72 +289,72 @@ export function DealReplyClient({ id }: DealReplyClientProps) {
                     </p>
                   </div>
                 </div>
-
-                {/* Execution Footer Strip */}
-                <div className="pt-4 border-t border-[#E8E6E1]">
-                  {isCommitted ? (
-                    <div className="p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-9 rounded-xl bg-[#1E2021] text-white flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="size-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-[#1E2021] flex items-center gap-2">
-                            <span>Reconciled Plan Successfully Committed (Block #04)</span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#EAF7EE] text-[#004D3B]">
-                              VERIFIED
-                            </span>
-                          </div>
-                          <p className="text-xs text-[#525252] mt-0.5">
-                            SHA-256 state hash verified and chained to audit ledger. Commercial terms locked.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
-                        <Link
-                          href="/audit-log"
-                          className="flex-1 sm:flex-none text-center inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors"
-                        >
-                          <ShieldCheck className="size-3.5 text-[#1E2021]" />
-                          <span>Inspect Audit Log</span>
-                        </Link>
-                        <Link
-                          href={`/deals/${id}`}
-                          className="flex-1 sm:flex-none text-center inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors shadow-xs"
-                        >
-                          <span>View Deal Details</span>
-                          <ArrowRight className="size-3.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="text-xs text-[#737373]">
-                        Commit phase binds the SHA-256 state hash before payments schedule.
-                      </div>
-
-                      <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <Link
-                          href="/deals"
-                          className="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-xl border border-[#E8E6E1] hover:bg-[#FAF9F7] text-xs font-semibold text-[#525252] transition-colors"
-                        >
-                          Return to Deals
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={handleCommit}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#1E2021] hover:bg-black active:scale-[0.98] transition-all shadow-xs cursor-pointer"
-                        >
-                          <Send className="size-3.5" />
-                          <span>Approve Commit & Schedule</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
+
+              {/* Pause 2: Owner Action Plan Approval & Step-Up MFA */}
+              <ApprovalCard
+                title="Pause 2: Action Plan Approval Gate"
+                subtitle="Owner authorization seals the commercial counter-proposal and prepares financial schedule"
+                planHash="e4a2d1f9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1"
+                actions={[
+                  {
+                    id: "act-commit-1",
+                    deal_id: id,
+                    kind: "message",
+                    status: isCommitted ? "executed" : "drafted",
+                    idempotency_key: `msg-commit-${id}-final`,
+                    payload: {
+                      recipient: "procurement@apexretailers.com",
+                      subject: "Accepted Terms Agreement: 30% Advance + $75k Line",
+                      preview: "Accepting revised 30% advance ($108,000) with supplementary working capital drawdown...",
+                    },
+                  },
+                ]}
+                isApproved={isCommitted}
+                onApprove={() => handleCommit()}
+                approveButtonText="Approve Commit & Schedule"
+                returnUrl="/deals"
+                returnButtonText="Return to Deals"
+                stepUpNotice="Commit phase binds the SHA-256 state hash before payments schedule."
+              />
+
+              {isCommitted && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] border border-[#E8E6E1] space-y-3.5 animate-in fade-in duration-300">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="size-9 rounded-xl bg-[#1E2021] text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle2 className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-[#1E2021] flex items-center gap-2 flex-wrap">
+                        <span>Reconciled Plan Successfully Committed (Block #04)</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#EAF7EE] text-[#004D3B]">
+                          VERIFIED
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#525252] mt-0.5">
+                        SHA-256 state hash verified and chained to audit ledger. Commercial terms locked.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-[#E8E6E1]/60">
+                    <Link
+                      href="/audit-log"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors whitespace-nowrap"
+                    >
+                      <ShieldCheck className="size-3.5 text-[#1E2021]" />
+                      <span>Inspect Audit Log</span>
+                    </Link>
+                    <Link
+                      href={`/deals/${id}`}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-colors shadow-xs whitespace-nowrap"
+                    >
+                      <span>View Deal Details</span>
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>

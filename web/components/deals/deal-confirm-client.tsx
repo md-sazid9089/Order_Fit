@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ConfirmFigures } from "@/components/ConfirmFigures";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -404,9 +405,54 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
             </>
           )}
 
+          {/* Pause 1: Source Quotes & Figure Grounding Verification */}
+          <ConfirmFigures
+            fields={[
+              {
+                id: "f-1",
+                name: "Total Contract Amount",
+                raw_value: isAmbiguousCase ? "$195,000.00" : "$360,000.00",
+                normalized_value: isAmbiguousCase ? 19500000 : 36000000,
+                confidence: 0.99,
+                source_page: 1,
+                source_quote: isAmbiguousCase
+                  ? "Total Contract Price: USD 195,000.00 for bespoke fabric run"
+                  : "Total Contract Amount: USD 360,000.00 inclusive of shipping",
+                provenance: "extracted",
+                confirmed: true,
+              },
+              {
+                id: "f-2",
+                name: "Payment Terms & Anchor",
+                raw_value: isAmbiguousCase ? "Net 45 (Missing Anchor)" : "Net 45 after delivery",
+                normalized_value: { days: 45, anchor: selectedAnchor },
+                confidence: isAmbiguousCase ? 0.88 : 0.97,
+                source_page: 2,
+                source_quote: isAmbiguousCase
+                  ? "Payment terms: Net 45 days. Start date to be mutually confirmed."
+                  : "Payment terms: Net 45 calendar days following receipt of bill of lading.",
+                provenance: "user_confirmed",
+                confirmed: true,
+              },
+              {
+                id: "f-3",
+                name: "Final Delivery Window",
+                raw_value: isAmbiguousCase ? "28 Nov 2026" : "14 Dec 2026",
+                normalized_value: isAmbiguousCase ? "2026-11-28" : "2026-12-14",
+                confidence: 0.98,
+                source_page: 1,
+                source_quote: isAmbiguousCase
+                  ? "Goods must arrive at Chittagong Port by November 28, 2026."
+                  : "Final shipment delivery deadline: December 14, 2026.",
+                provenance: "extracted",
+                confirmed: true,
+              },
+            ]}
+          />
+
           {/* Action Bar */}
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-[#737373]">
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="text-xs text-[#737373] min-w-0 flex-1">
               {isAmbiguousCase ? (
                 <span>
                   Selected Reading: <strong className="text-[#1E2021]">{selectedAnchor === "delivery" ? "Net 45 after Delivery (dep40 strategy)" : "Net 45 after Invoice (ext30 + loan strategy)"}</strong>. Proceeding will trigger deterministic calculations.
@@ -418,10 +464,10 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0 justify-start md:justify-end">
               <Link
                 href="/deals/new"
-                className="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-xl border border-[#E8E6E1] hover:bg-[#FAF9F7] text-xs font-semibold text-[#525252] transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-[#E8E6E1] hover:bg-[#FAF9F7] text-xs font-semibold text-[#525252] transition-colors whitespace-nowrap text-center"
               >
                 Back to Ingestion
               </Link>
@@ -429,7 +475,7 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={isConfirming || (!isAmbiguousCase && !isConfirmedByOwner)}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all shadow-xs active:scale-[0.98] disabled:opacity-50 cursor-pointer whitespace-nowrap"
               >
                 <span>{isConfirming ? "Running Engine Sweep..." : "Confirm & Proceed to Step 4: Compute"}</span>
                 <ArrowRight className="size-3.5" />
