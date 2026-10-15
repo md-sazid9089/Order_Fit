@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronDown, Menu, X, ArrowRight, ShieldCheck, Layers, FileText, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Menu, X, ShieldCheck, Layers, FileText } from "lucide-react";
+import { useSmoothScroll } from "@/components/layout/smooth-scroll-provider";
 
 export function Navbar() {
+  const { scrollToTop } = useSmoothScroll();
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -81,7 +83,7 @@ export function Navbar() {
             onClick={(e) => {
               if (window.location.pathname === "/") {
                 e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                scrollToTop(1.2);
               }
             }}
             className="flex items-center gap-2 group cursor-pointer"

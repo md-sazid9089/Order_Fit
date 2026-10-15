@@ -8,13 +8,11 @@ import {
   ArrowRight,
   ShieldAlert,
   Search,
-  Building2,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Plus,
   ArrowUpRight,
-  Bell,
 } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
@@ -33,8 +31,6 @@ interface DealItem {
   statusBadgeColor: string;
   engineVerdict: string;
   delayTolerance: string;
-  alertCode?: string;
-  alertMessage?: string;
   actionUrl: string;
   actionText: string;
 }
@@ -50,14 +46,12 @@ const INITIAL_DEALS: DealItem[] = [
     deliveryDate: "14 Dec 2026",
     paymentTerms: "Net 45 after delivery",
     status: "RECOMMENDED",
-    statusLabel: "Recommended Plan: 40% Deposit (dep40)",
-    statusBadgeColor: "bg-[#F3E8FF] text-[#6B21A8] border-[#E9D5FF]",
-    engineVerdict: "Breaches reserve (-$59,000) if taken as offered. 40% deposit preserves $7,120 headroom under 15-day delay.",
-    delayTolerance: "26 days late tolerance",
-    alertCode: "A1 & A2",
-    alertMessage: "A1 Reserve Breach on 07 Dec · A2 52 days cash exposed",
+    statusLabel: "40% Deposit Required",
+    statusBadgeColor: "bg-[#F4F2ED] text-[#1E2021] border-[#E8E6E1]",
+    engineVerdict: "Breaches cash reserve (-$59,000) if taken as offered. A 40% customer deposit safeguards cash flow even under a 15-day delay.",
+    delayTolerance: "26 days buffer",
     actionUrl: "/deals/OF-02/negotiate",
-    actionText: "Review & Draft Ask",
+    actionText: "Review Plan",
   },
   {
     id: "DEMO-ASK",
@@ -67,16 +61,14 @@ const INITIAL_DEALS: DealItem[] = [
     incrementalCosts: "$110,000",
     projectedProfit: "$85,000",
     deliveryDate: "28 Nov 2026",
-    paymentTerms: "Net 45 (ambiguous start)",
+    paymentTerms: "Net 45 terms",
     status: "NEEDS_CONFIRMATION",
-    statusLabel: "Needs Input: Ambiguous Contract Anchor",
-    statusBadgeColor: "bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]",
-    engineVerdict: "Invoice date reading suggests bank loan; delivery date reading recommends 40% deposit. Value of information pause.",
+    statusLabel: "Clarification Needed",
+    statusBadgeColor: "bg-[#F4F2ED] text-[#1E2021] border-[#E8E6E1]",
+    engineVerdict: "Payment start date is ambiguous: confirm whether Net 45 begins upon Invoice or Delivery to finalize safe cash runway.",
     delayTolerance: "Pending clarification",
-    alertCode: "E-MISSING-ANCHOR",
-    alertMessage: "Contract anchor event unknown: Invoice vs. Delivery",
     actionUrl: "/deals/DEMO-ASK/confirm",
-    actionText: "Resolve Ambiguity",
+    actionText: "Clarify Terms",
   },
   {
     id: "DEMO-REPLY",
@@ -86,16 +78,14 @@ const INITIAL_DEALS: DealItem[] = [
     incrementalCosts: "$275,000",
     projectedProfit: "$145,000",
     deliveryDate: "10 Jan 2027",
-    paymentTerms: "Counter-offer: 30% max deposit",
+    paymentTerms: "Counter-offer: 30% deposit",
     status: "AWAITING_REPLY",
-    statusLabel: "Counterparty Reply Re-planning",
-    statusBadgeColor: "bg-[#EDE9FE] text-[#5B21B6] border-[#DDD6FE]",
-    engineVerdict: "Customer offered 30% max deposit. Engine reports fragile downside tolerance; requires secondary financing or owner approval.",
-    delayTolerance: "8 days tolerance at 30%",
-    alertCode: "E-FRAGILE-BEST",
-    alertMessage: "Best plan fails downside target; 38% deposit needed for robust safety",
+    statusLabel: "Counter-Offer Review",
+    statusBadgeColor: "bg-[#F4F2ED] text-[#1E2021] border-[#E8E6E1]",
+    engineVerdict: "Customer offered a 30% deposit cap. Cash buffer is tight; a 38% deposit or supplemental working capital is recommended.",
+    delayTolerance: "8 days buffer",
     actionUrl: "/deals/DEMO-REPLY/reply",
-    actionText: "Re-evaluate Counter-Offer",
+    actionText: "Review Offer",
   },
   {
     id: "OF-15",
@@ -105,14 +95,14 @@ const INITIAL_DEALS: DealItem[] = [
     incrementalCosts: "$140,000",
     projectedProfit: "$140,000",
     deliveryDate: "20 Dec 2026",
-    paymentTerms: "Net 30 (supplier balance due post-payment)",
+    paymentTerms: "Net 30 terms",
     status: "COMMITTED",
-    statusLabel: "Accepted As Offered",
-    statusBadgeColor: "bg-[#E2E8F0] text-[#1E293B] border-[#CBD5E1]",
-    engineVerdict: "Lowest balance holds at $101,000 (well above reserve). Favorable timing allows safe execution without modification.",
+    statusLabel: "Safe As Offered",
+    statusBadgeColor: "bg-[#EAF7EE] text-[#004D3B] border-[#B5F2C6]",
+    engineVerdict: "Lowest cash balance holds at $101,000 (well above reserve). Favorable timing allows safe execution without changes.",
     delayTolerance: "Safe up to 45+ days",
     actionUrl: "/deals/OF-15",
-    actionText: "View Workspace",
+    actionText: "View Order",
   },
   {
     id: "OF-09",
@@ -122,16 +112,14 @@ const INITIAL_DEALS: DealItem[] = [
     incrementalCosts: "$440,000",
     projectedProfit: "$70,000",
     deliveryDate: "05 Dec 2026",
-    paymentTerms: "Net 60",
+    paymentTerms: "Net 60 terms",
     status: "BLOCKED",
-    statusLabel: "Infeasible Order: Severe Funding Gap",
-    statusBadgeColor: "bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]",
-    engineVerdict: "Maximum funding gap of $245,000 exceeds available credit facilities. 100% deposit still breaches reserve on supplier deposit date.",
-    delayTolerance: "Fails on-time (-1)",
-    alertCode: "E-NO-FEASIBLE",
-    alertMessage: "No commercial lever produces safe cash runway",
+    statusLabel: "Infeasible Order",
+    statusBadgeColor: "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]",
+    engineVerdict: "Funding gap of $245,000 exceeds available credit facilities. Cash reserve will be breached even with 100% upfront deposit.",
+    delayTolerance: "Immediate deficit",
     actionUrl: "/deals/OF-09",
-    actionText: "View Infeasibility Report",
+    actionText: "View Report",
   },
 ];
 
@@ -166,7 +154,7 @@ export default function DealsPage() {
 
       {/* ===================== MAIN CONTENT ===================== */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar - Symmetrically centered wider container */}
+        {/* Top Header Bar */}
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -184,7 +172,7 @@ export default function DealsPage() {
               {/* Primary Action Button */}
               <Link
                 href="/deals/new"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer"
               >
                 <Plus className="size-3.5" />
                 <span>Evaluate New Order</span>
@@ -193,10 +181,10 @@ export default function DealsPage() {
           </div>
         </header>
 
-        {/* Workspace Body - Wider centered container (1560px) with balanced left & right space */}
+        {/* Workspace Body */}
         <main className="px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
           <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-            {/* Financial Liquidity & Reserve Runway Header (USD Currency) */}
+            {/* Financial Liquidity & Reserve Runway Header */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Opening Balance */}
               <div className="p-5 bg-white border border-[#E8E6E1] rounded-2xl shadow-xs hover:shadow-sm transition-shadow flex flex-col justify-between">
@@ -241,7 +229,7 @@ export default function DealsPage() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-medium text-[#737373] uppercase tracking-wider">
                     <span>Lowest Projected Trough</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FEF3C7] text-[#92400E]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EAF7EE] text-[#004D3B] border border-[#B5F2C6]">
                       +$7.1K Safe
                     </span>
                   </div>
@@ -249,7 +237,7 @@ export default function DealsPage() {
                     $67,120.00
                   </div>
                 </div>
-                <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] text-xs text-[#B45309] font-medium flex items-center gap-1.5">
+                <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] text-xs text-[#004D3B] font-medium flex items-center gap-1.5">
                   <span>+$7,120 Headroom</span>
                   <span className="text-[#737373] font-normal">(under recommended terms)</span>
                 </div>
@@ -260,12 +248,12 @@ export default function DealsPage() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-medium text-[#737373] uppercase tracking-wider">
                     <span>System Health & Alerts</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FEF2F2] text-[#B91C1C]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FEF2F2] text-[#991B1B]">
                       Action Required
                     </span>
                   </div>
-                  <div className="mt-2 text-2xl lg:text-3xl font-bold font-display text-[#B45309] flex items-center gap-2">
-                    <AlertTriangle className="size-5 lg:size-6 text-[#D97706] shrink-0" />
+                  <div className="mt-2 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] flex items-center gap-2">
+                    <AlertTriangle className="size-5 lg:size-6 text-[#525252] shrink-0" />
                     <span>2 Require Attention</span>
                   </div>
                 </div>
@@ -276,16 +264,21 @@ export default function DealsPage() {
             </div>
 
             {/* Attention Banner: Critical Liquidity Finding */}
-            <div className="p-4 sm:p-5 bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shadow-xs">
+            <div className="p-4 sm:p-5 bg-white border border-[#E8E6E1] rounded-2xl flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 shadow-xs">
               <div className="flex items-start gap-3.5 flex-1">
-                <div className="p-2 rounded-xl bg-[#FEF3C7] text-[#92400E] shrink-0 mt-0.5">
+                <div className="p-2 rounded-xl bg-[#F4F2ED] text-[#1E2021] shrink-0 mt-0.5">
                   <ShieldAlert className="size-4" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs font-bold uppercase tracking-wider text-[#92400E]">
-                    Critical Liquidity Finding — Order PO-8841
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#1E2021]">
+                      Critical Liquidity Finding — Order PO-8841
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F4F2ED] text-[#525252] border border-[#E8E6E1]">
+                      Deposit Required
+                    </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-[#78350F] mt-1 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#525252] mt-1 leading-relaxed">
                     Accepting PO-8841 as offered breaches the cash reserve by <strong>$59,000</strong> on Dec 07 when supplier balance falls due.
                     OrderFit has sized a feasible <strong>40% customer deposit</strong> plan ($144,000 upfront) that safeguards your cash floor even under a 15-day delay.
                   </p>
@@ -293,7 +286,7 @@ export default function DealsPage() {
               </div>
               <Link
                 href="/deals/OF-02/negotiate"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] text-white text-xs font-semibold hover:bg-[#2C302F] shrink-0 transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] text-white text-xs font-semibold hover:bg-black shrink-0 transition-colors shadow-xs"
               >
                 <span>Review Recommendation</span>
                 <ArrowRight className="size-3" />
@@ -359,7 +352,7 @@ export default function DealsPage() {
               </div>
             </div>
 
-            {/* Deals Table Card - Symmetrically wider table */}
+            {/* Deals Table Card */}
             <div className="bg-white border border-[#E8E6E1] rounded-2xl overflow-hidden shadow-xs w-full">
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse">
@@ -368,9 +361,9 @@ export default function DealsPage() {
                       <th className="py-3.5 px-5 min-w-[200px]">Order Reference</th>
                       <th className="py-3.5 px-4 min-w-[140px]">Financials (USD)</th>
                       <th className="py-3.5 px-4 min-w-[170px]">Timeline & Terms</th>
-                      <th className="py-3.5 px-4 min-w-[260px]">Deterministic Engine Verdict</th>
-                      <th className="py-3.5 px-4 min-w-[180px]">Decision Status</th>
-                      <th className="py-3.5 px-5 text-right min-w-[150px]">Action</th>
+                      <th className="py-3.5 px-4 min-w-[280px]">Engine Verdict</th>
+                      <th className="py-3.5 px-4 min-w-[170px] whitespace-nowrap">Decision Status</th>
+                      <th className="py-3.5 px-5 text-right min-w-[160px] whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F0EEEA] text-xs">
@@ -386,18 +379,15 @@ export default function DealsPage() {
                           key={deal.id}
                           className="hover:bg-[#FAF9F7] transition-colors group"
                         >
-                          {/* PO Ref & Customer */}
+                          {/* Order Reference */}
                           <td className="py-4 px-5">
                             <div className="flex items-start gap-2.5">
                               <div className="p-2 rounded-xl bg-[#F4F2ED] text-[#1E2021] mt-0.5 shrink-0">
                                 <FileText className="size-4" />
                               </div>
                               <div>
-                                <div className="font-bold text-[#1E2021] flex items-center gap-1.5">
-                                  <span>{deal.poNumber}</span>
-                                  <span className="font-mono text-[10px] text-neutral-400 font-normal">
-                                    ({deal.id})
-                                  </span>
+                                <div className="font-bold text-[#1E2021]">
+                                  {deal.poNumber}
                                 </div>
                                 <div className="text-[#525252] text-xs mt-0.5 font-medium">
                                   {deal.customerName}
@@ -411,10 +401,10 @@ export default function DealsPage() {
                             <div className="font-bold text-[#1E2021]">
                               {deal.orderValue}
                             </div>
-                            <div className="text-[11px] text-[#737373] mt-0.5">
+                            <div className="text-[11px] text-[#525252] mt-0.5">
                               Profit: <span className="font-medium text-[#1E2021]">{deal.projectedProfit}</span>
                             </div>
-                            <div className="text-[10px] text-neutral-400 font-mono">
+                            <div className="text-[10px] text-[#737373] mt-0.5">
                               Costs: {deal.incrementalCosts}
                             </div>
                           </td>
@@ -428,26 +418,20 @@ export default function DealsPage() {
                             <div className="text-[11px] text-[#525252] mt-0.5">
                               {deal.paymentTerms}
                             </div>
-                            <div className="text-[10px] text-neutral-400 font-mono mt-0.5">
+                            <div className="text-[10px] text-[#737373] mt-0.5">
                               {deal.delayTolerance}
                             </div>
                           </td>
 
-                          {/* Deterministic Engine Verdict & Alerts - Full width */}
+                          {/* Engine Verdict */}
                           <td className="py-4 px-4">
                             <p className="text-[11px] sm:text-xs text-[#525252] leading-relaxed">
                               {deal.engineVerdict}
                             </p>
-                            {deal.alertCode && (
-                              <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-[#B45309] bg-[#FEF3C7] px-2 py-0.5 rounded-md">
-                                <AlertTriangle className="size-3 shrink-0" />
-                                <span>{deal.alertCode}: {deal.alertMessage}</span>
-                              </div>
-                            )}
                           </td>
 
-                          {/* Status Badge */}
-                          <td className="py-4 px-4">
+                          {/* Decision Status */}
+                          <td className="py-4 px-4 whitespace-nowrap">
                             <span
                               className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold border ${deal.statusBadgeColor}`}
                             >
@@ -456,13 +440,13 @@ export default function DealsPage() {
                           </td>
 
                           {/* Action Link */}
-                          <td className="py-4 px-5 text-right">
+                          <td className="py-4 px-5 text-right whitespace-nowrap">
                             <Link
                               href={deal.actionUrl}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#F4F2ED] hover:bg-[#1E2021] text-[#1E2021] hover:text-white text-xs font-semibold transition-all group-hover:border-transparent shrink-0"
+                              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#F4F2ED] hover:bg-[#1E2021] text-[#1E2021] hover:text-white text-xs font-semibold transition-all whitespace-nowrap border border-[#E8E6E1]/80 hover:border-[#1E2021] shadow-2xs shrink-0 cursor-pointer"
                             >
                               <span>{deal.actionText}</span>
-                              <ChevronRight className="size-3" />
+                              <ChevronRight className="size-3.5 shrink-0" />
                             </Link>
                           </td>
                         </tr>

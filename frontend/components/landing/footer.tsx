@@ -3,8 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { useSmoothScroll } from "@/components/layout/smooth-scroll-provider";
 
 export function Footer() {
+  const { scrollToTop } = useSmoothScroll();
   return (
     <footer className="bg-[#093A2F] py-14 text-[#E6F4F1] md:py-20 xl:py-24 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,7 +211,16 @@ export function Footer() {
 
         {/* Big Centered Orderfit Text */}
         <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-white/5 flex justify-center items-center text-center">
-          <Link href="/" className="inline-block group">
+          <Link
+            href="/"
+            onClick={(e) => {
+              if (window.location.pathname === "/") {
+                e.preventDefault();
+                scrollToTop(1.4);
+              }
+            }}
+            className="inline-block group cursor-pointer"
+          >
             <span className="font-radio-grotesk text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#FEF3C7] transition-colors duration-300 select-none leading-none">
               Orderfit
             </span>

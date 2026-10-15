@@ -35,13 +35,15 @@ export const metadata: Metadata = {
   },
 };
 
+import { ConnectionIndicator } from "@/components/layout/connection-indicator";
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased" style={{ backgroundColor: "#F7F6F5" }}>
+    <html lang="en" className="min-h-full antialiased" style={{ backgroundColor: "#F7F6F5" }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -51,7 +53,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#F7F6F5] text-[#1A1A1A] font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <ConnectionIndicator />
+        </Providers>
       </body>
     </html>
   );

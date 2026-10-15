@@ -14,6 +14,7 @@ import { FaqSection } from "@/components/landing/faq-section";
 import { InsightsSection } from "@/components/landing/insights-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
   return (
@@ -30,40 +31,64 @@ export default function Home() {
         <HeroSection />
 
         {/* Section 2: Press ticker and Brand Logos Marquee */}
-        <SectorsMarquee />
+        <ScrollReveal direction="up" distance={24} duration={0.6}>
+          <SectorsMarquee />
+        </ScrollReveal>
 
         {/* Section 3: The back office built for growing brands (3 pillars + 4 capabilities) */}
-        <FeaturePillars />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <FeaturePillars />
+        </ScrollReveal>
 
         {/* Section 4: Let the results speak for themselves */}
-        <ResultsSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <ResultsSection />
+        </ScrollReveal>
 
         {/* Section 5: OrderFit by the numbers (Settle lavender container) */}
-        <MetricsSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <MetricsSection />
+        </ScrollReveal>
 
         {/* Section 6: Less Busywork. More Breakthroughs. (The old way vs The OrderFit way) */}
-        <OldVsNewWay />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <OldVsNewWay />
+        </ScrollReveal>
 
         {/* Section 7: All the integrations you need */}
-        <IntegrationsSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <IntegrationsSection />
+        </ScrollReveal>
 
         {/* Section 8: Customer Stories */}
-        <CustomerStories />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <CustomerStories />
+        </ScrollReveal>
 
         {/* Section 9 & 10: Take an interactive product tour (Live browser container) */}
-        <OrderSimulator />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <OrderSimulator />
+        </ScrollReveal>
 
         {/* Section 11: Dedicated support from real humans — not AI */}
-        <SupportTiers />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <SupportTiers />
+        </ScrollReveal>
 
         {/* Section 12: Frequently asked questions */}
-        <FaqSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <FaqSection />
+        </ScrollReveal>
 
         {/* Section 13: Latest news & insights */}
-        <InsightsSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <InsightsSection />
+        </ScrollReveal>
 
         {/* Section 14: Insights in your inbox (Newsletter CTA) */}
-        <CtaSection />
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <CtaSection />
+        </ScrollReveal>
       </main>
 
       {/* Footer */}
