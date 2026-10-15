@@ -11,7 +11,6 @@ a deterministic engine does every calculation, and the owner approves every outg
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
-![LangGraph](https://img.shields.io/badge/LangGraph-agent-1C3C3C)
 
 [Features](#features) ·
 [Architecture](#architecture) ·
@@ -25,8 +24,12 @@ a deterministic engine does every calculation, and the owner approves every outg
 ---
 
 > [!NOTE]
-> OrderFit is an early-stage MVP under active development. Interfaces and storage may change
-> without notice.
+> P1 supplies password sessions, tenant-scoped transactions, durable operations and private
+> storage. P2 adds the pure deterministic financial engine and confirmed-input adapter.
+> Persisted financial business workflows and their frontend integration remain P3 work.
+> See [implementation progress](docs/backend_implementation_progress.md),
+> [contract guide](docs/contracts/README.md) and [implementation plan](docs/initial_backend_implementation_plan.md).
+> The feature list below describes intended behavior, not completed capabilities.
 
 ## Table of contents
 
@@ -86,13 +89,13 @@ Three rules shape the design:
 flowchart LR
     U[Owner] <--> W[Web<br/>Next.js]
     W <--> A[API<br/>FastAPI]
-    A --> G[Agent<br/>LangGraph]
+    A --> G[Durable PostgreSQL runner<br/>planned]
     G -->|all AI calls| L[llm.py]
     G -->|all calculations| E[Engine<br/>pure Python]
     G --> S[(Store<br/>DB, documents, audit)]
 ```
 
-The agent workflow pauses at two points, `[confirm]` and `[approve]`, using LangGraph interrupts:
+The planned workflow persists confirmation and approval boundaries in PostgreSQL:
 
 ```
 ingest → extract → validate → [confirm] → compute → explain → draft → [approve] → send
@@ -108,7 +111,7 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 | Layer    | Technology |
 |----------|------------|
 | Backend  | Python 3.12, FastAPI, Pydantic v2, Uvicorn |
-| Agent    | LangGraph with checkpointing |
+| Workflow | Plain durable PostgreSQL jobs, separate API/worker (P1+) |
 | Storage  | PostgreSQL 17 (psycopg 3), SQLAlchemy 2, Alembic |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
 | Tooling  | pytest, Ruff, GitHub Actions, Docker Compose |
@@ -120,13 +123,14 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 ├── backend/
 │   ├── orderfit/
 │   │   ├── engine/      # Decision engine. Pure Python, no AI, no I/O.
-│   │   ├── agent/       # LangGraph workflow, nodes, guards, prompts, single AI wrapper
+│   │   ├── agent/       # Compute boundary, language nodes/guards/prompts (scaffold)
+│   │   ├── contracts/   # Strict P0 target DTOs, protocol, OpenAPI/type generator
 │   │   ├── api/         # FastAPI routes (thin)
 │   │   ├── store/       # Database, documents by hash, append-only audit
 │   │   ├── domain.py    # Shared contracts for agent, API and store
 │   │   └── config.py    # Settings from environment
 │   └── tests/           # architecture, engine, agent, e2e
-├── frontend/            # Next.js app (display only)
+├── web/                 # Next.js app (display only)
 ├── data/                # Demo business, financing catalogue, test cases
 ├── scripts/             # Demo seeding, PDF generation, baseline evaluation
 ├── docs/                # Design notes and ADRs
@@ -146,7 +150,9 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 ```bash
 git clone https://github.com/md-sazid9089/Order_Fit.git
 cd Order_Fit
-cp backend/.env.example backend/.env   # optional until the agent needs AI_API_KEY
+cp .env.example .env    # configure separate local runtime/migrator credentials
+docker compose build api
+docker compose --profile setup run --rm provision  # first setup only; refuses existing roles
 docker compose up --build
 ```
 
@@ -158,8 +164,17 @@ docker compose up --build
 | API docs (OpenAPI) | http://localhost:8000/docs |
 | Health check | http://localhost:8000/health |
 
-Startup order: `db` becomes healthy → `migrate` runs `alembic upgrade head` and exits →
-`api` → `web`.
+Use independently generated passwords (at least 32 characters) for the API and
+worker logins, and distinct session/fingerprint secrets (at least 32 characters).
+Keep provisioning passwords consistent with the URL-encoded runtime URLs. The
+setup command migrates first, then creates only non-owner, non-admin logins; it
+deliberately refuses implicit password rotation or reuse of an existing role.
+On later starts, omit the setup command. Startup validates the actual role and
+schema and fails closed if either is wrong. Never point migration regression
+tests at a shared/configured database. Startup order:
+`db` becomes healthy → `migrate` runs `alembic upgrade head` and exits →
+`api` and separate `worker` → `web`. Full-stack/browser deployment acceptance
+remains P8; local P1 acceptance uses disposable PostgreSQL and real runtime logins.
 
 To stop the services, run `docker compose down`. Data is kept; add `-v` to also delete the
 `pg-data` and `documents` volumes.
@@ -168,31 +183,48 @@ If a port is already taken on your machine, copy `.env.example` to `.env` at the
 change `WEB_PORT`, `API_PORT` or `DB_PORT`.
 
 > [!TIP]
-> Deals, workflow checkpoints and the audit log live in Postgres (`pg-data` volume). Uploaded
+> Deals, durable jobs and audit history live in Postgres (`pg-data` volume). Uploaded
 > documents live in the `documents` volume. `data/` is mounted read-only at `/app/data`.
 > `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so rebuild `web` after
-> changing it. The image is built from `frontend/`.
+> changing it. The image is built from `web/`.
 
 ### Run locally
+
+For the configured Neon database, from `backend/` use the explicit launcher in
+two terminals:
+
+```bash
+uv run --frozen python -m orderfit.runtime api
+uv run --frozen python -m orderfit.runtime worker
+```
+
+The launcher reads `backend/.env` explicitly, selects the API or worker URL and
+forwards only runtime settings. It excludes migration/provisioning credentials
+even if they exist in the parent environment. Stop each service with Ctrl+C.
+The default Compose configuration above is for local PostgreSQL; it is not needed
+for these Neon commands. See [Neon setup evidence](docs/neon_connection_review.md).
 
 **Backend**
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-cp .env.example .env
-docker compose up -d db          # Postgres only (run from the repo root)
-alembic upgrade head
-uvicorn orderfit.api.main:app --reload
+uv sync --frozen --extra dev     # uses Python 3.12 and committed uv.lock
+uv run --frozen python -m orderfit.contracts.export --check
+uv run --frozen pytest tests/contracts tests/test_architecture.py -q
+# Inject explicit runtime settings from backend/.env.example into this process.
+# Run migrations/provisioning in separate processes with DATABASE_URL_DIRECT only.
+uv run --frozen uvicorn orderfit.api.main:app --reload
+# Separate terminal with WORKER_DATABASE_URL supplied as DATABASE_URL:
+uv run --frozen python -m orderfit.workflow.worker
+# Disposable PG17 acceptance (requires local Docker; never reads application DB URLs):
+uv run --frozen pytest tests/db tests/test_private_documents.py -q
 ```
 
 **Frontend** (in a second terminal)
 
 ```bash
-cd frontend
-npm install
+cd web
+npm ci
 cp .env.example .env.local
 npm run dev
 ```
@@ -201,33 +233,38 @@ npm run dev
 
 ### Database (Neon)
 
-The shared database is Postgres on [Neon](https://neon.tech). Local Docker Postgres remains
-the offline default.
+Local PostgreSQL 17 is the initial target. Hosted PostgreSQL/Neon requires separate
+role, SSL, pooling, migration, worker and restore acceptance; it is not verified by local P1.
 
 - `DATABASE_URL`: the **pooled** endpoint (host contains `-pooler`), with the scheme changed to
-  `postgresql+psycopg://`. The app and the LangGraph checkpointer use it.
+  `postgresql+psycopg://`. API uses a restricted non-owner `orderfit_app` member login.
+- `WORKER_DATABASE_URL`: a distinct restricted `orderfit_worker` member login;
+  inject it as `DATABASE_URL` in the worker process only.
 - `DATABASE_URL_DIRECT`: the same URL without `-pooler`. Alembic uses it, because schema
   changes should not go through the transaction-mode pooler.
 - Keep `?sslmode=require&channel_binding=require`.
 
-Put both in `backend/.env` for local runs. Put both in the repo-root `.env` to point
-`docker compose` at Neon instead of the local `db` service. Both files are gitignored.
+Inject `DATABASE_URL_DIRECT` only into a migration process. There is no fallback
+to the runtime URL. Compose may interpolate a local ignored root `.env`, but never
+passes direct credentials into API. Never use a shared database for destructive tests.
 
 
-Backend settings are read from `backend/.env`. See [backend/.env.example](backend/.env.example).
+Backend settings read explicit process environment, not developer `.env` automatically.
+See [backend/.env.example](backend/.env.example) and RuntimeConfiguration;
+P1 wires this strict contract into runtime startup. Missing DB/auth settings fail closed.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AI_API_KEY` | *(empty)* | API key for the AI provider |
-| `AI_MODEL` | *(empty)* | Model identifier |
-| `AI_TEMPERATURE` | `0` | Sampling temperature |
-| `DATABASE_URL` | `postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit` | SQLAlchemy URL. Docker Compose points it at the `db` service |
-| `DATABASE_URL_DIRECT` | *(empty)* | Non-pooled URL used by Alembic. Set it on Neon (same host without `-pooler`) |
+| `LLM_MODE` | `off` | Explicit off/recorded/live; no automatic live fallback |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | *(empty)* | Server-only; required for live, model selected/evaluated in P4 |
+| `DATABASE_URL` | *(empty)* | Restricted SQLAlchemy psycopg runtime URL |
+| `DATABASE_URL_DIRECT` | *(empty)* | Required migrator-only direct URL, no runtime fallback |
+| `SESSION_SECRET` | *(required P1)* | At least 32 characters, server-only |
+| `ACCOUNT_FINGERPRINT_KEY`, `ACCOUNT_FINGERPRINT_KEY_VERSION` | *(required P1)* | Distinct versioned HMAC secret |
 | `DOCUMENT_DIR` | `./var/documents` | Where uploaded documents are stored |
-| `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed browser origins (JSON list) |
-| `TARGET_TOLERANCE_DAYS` | `15` | Late-payment days an option must survive to count as safe |
+| `ALLOWED_ORIGINS`, `COOKIE_SECURE` | *(explicit P1)* | Exact permitted origins and HTTPS cookie security |
 
-Frontend settings are read from `frontend/.env.local`. See [frontend/.env.example](frontend/.env.example).
+Frontend settings are read from `web/.env.local`. See [web/.env.example](web/.env.example).
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -241,13 +278,16 @@ Frontend settings are read from `frontend/.env.local`. See [frontend/.env.exampl
 
 ```bash
 cd backend
-pytest                    # architecture, engine and agent tests (AI is faked)
-ruff check .              # lint
-pytest -m e2e             # calls the real AI model; needs AI_API_KEY and costs money
+uv sync --frozen --extra dev
+uv run --frozen pytest tests/contracts tests/test_architecture.py tests/engine tests/agent -q
+uv run --frozen ruff check .
+uv run --frozen python -m orderfit.contracts.export --check
+# e2e suites are scaffolds; default pytest excludes e2e and opt-in live markers.
+# Recorded/manual full-flow tests in later phases require no OpenAI key.
 ```
 
 ```bash
-cd frontend
+cd web
 npm run typecheck
 npm run lint
 npm run build
