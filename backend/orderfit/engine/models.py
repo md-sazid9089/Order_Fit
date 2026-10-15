@@ -1,5 +1,7 @@
 """Strict financial-only contracts; no HTTP, storage, source text or implicit time."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from typing import Annotated, Literal
@@ -368,6 +370,7 @@ class Candidate(Frozen):
     rank: int | None
     eligible_cost_keys: list[str]
     events: dict[ScenarioName, list[CashEvent]]
+    tolerance: Tolerance
 
 
 class Tolerance(Frozen):

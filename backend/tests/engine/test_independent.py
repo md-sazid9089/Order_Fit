@@ -554,3 +554,60 @@ def test_unknown_event_class_and_invalid_sensitivity_are_rejected():
         EngineInput.model_validate(raw)
     raw["sensitivity"] = [{"path": "order.deposit_discount_bps_per_10pct", "values": [1000]}]
     assert EngineInput.model_validate(raw).sensitivity[0].values == [1000]
+
+
+def test_every_catalogue_option_has_actual_full_cap_tolerance():
+    raw = case(small(opening_balance=0))
+    raw["strategy_space"]["deposit_pcts"] = [0, 50]
+    raw["order"]["costs"][0].update(date=(START + timedelta(days=5)).isoformat(), amount=50)
+    raw["scan_days"] = 10
+    result = analyse(EngineInput.model_validate(raw))
+    options = {c.strategy.id: c for c in result.catalogue}
+    assert options["accept_as_is"].tolerance.observed_safe_days == 2
+    assert options["accept_as_is"].tolerance.first_failure_days == 3
+    assert options["dep50"].tolerance.observed_safe_days == 4
+    assert options["dep50"].tolerance.first_failure_days == 5
+    assert options["decline"].tolerance.status == "capped_scan"
+    assert all(c.tolerance.scan_cap_days == 10 for c in result.catalogue)
+    assert result.tolerance == options[result.recommended].tolerance
+
+
+def test_per_option_scan_exhaustion_discards_entire_analysis(monkeypatch):
+    import importlib
+
+    entry = importlib.import_module("orderfit.engine.analyse")
+    original_scan = entry.delay_scan
+    calls = 0
+
+    def scan(raw, *args):
+        nonlocal calls
+        calls += 1
+        if calls == 2:  # recommended scan completed; catalogue scan now exceeds budget
+            raw["_budget"].consume(raw["_budget"].maximum)
+        return original_scan(raw, *args)
+
+    monkeypatch.setattr(entry, "delay_scan", scan)
+    result = analyse(small())
+    assert calls == 2
+    assert result.decision == "analysis_limit"
+    assert result.recommended is None and result.catalogue == []
+
+
+def test_delay_ranking_reuses_only_one_baseline_per_delay(monkeypatch):
+    import orderfit.engine.timeline as timeline
+    from orderfit.engine.tolerance import ranking_by_delay
+
+    original = timeline.sweep
+    sweeps = 0
+
+    def counted(*args):
+        nonlocal sweeps
+        sweeps += 1
+        return original(*args)
+
+    monkeypatch.setattr(timeline, "sweep", counted)
+    shortlist = [Strategy(), Strategy(deposit_pct=50)]
+    ranking_by_delay(case(small()), shortlist, 2)
+    # Three scenario evaluations per strategy + three shared baselines, then
+    # three delays with two candidates and one shared baseline each.
+    assert sweeps == (2 * 3 + 3) + 3 * (2 + 1)
