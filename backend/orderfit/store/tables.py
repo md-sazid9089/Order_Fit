@@ -183,6 +183,7 @@ deal = Table(
     Column("negotiation_round", Integer),
     Column("version", Integer),
     Column("input_version", BigInteger),
+    Column("analysis_changes", JSONB),
     Column("created_by", Uuid),
     Column("created_at", DateTime(timezone=True)),
     Column("updated_at", DateTime(timezone=True)),

@@ -1,7 +1,8 @@
 """Target API inventory, not deployed routes. Every operation has an implementation owner."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from . import preparation as p
 from . import resources as r
 from . import workflow as w
 from .primitives import (
@@ -1305,3 +1306,29 @@ add(
     "P8",
     "V16",
 )
+
+# P5 replaces preparation-time target DTOs with the implemented strict contracts.
+_p5_shapes = {
+    "whatif_create": (p.ForkRequest, w.OperationAccepted),
+    "whatif_get": (None, p.ForkView),
+    "draft_create": (p.DraftPreparationRequest, w.OperationAccepted),
+    "messages": (None, Page[p.PreparedMessage]),
+    "message_get": (None, p.PreparedMessage),
+    "draft_edit": (p.DraftRevisionRequest, p.PreparedMessage),
+    "reply_create": (p.ReplyIntake, w.OperationAccepted),
+    "reply_review": (p.ReplyDecision, w.Review),
+    "acceptance_create": (p.RecordAcceptance, p.AcceptanceEvidence),
+    "acceptances": (None, Page[p.AcceptanceEvidence]),
+}
+ENDPOINTS[:] = [replace(e, request=_p5_shapes[e.operation_id][0], response=_p5_shapes[e.operation_id][1])
+               if e.operation_id in _p5_shapes else e for e in ENDPOINTS]
+for method, path, name, req, response, permission, storage in [
+    ("GET", "evaluations/{evaluation_id}/catalogue", "evaluation_catalogue", None, p.OptionCatalogue, "read", "evaluation,evaluation_option"),
+    ("GET", "evaluations/{evaluation_id}/explanation", "evaluation_explanation", None, p.Explanation, "read", "evaluation"),
+    ("GET", "deals/{deal_id}/preparation", "preparation_state", None, p.PreparationState, "read", "whatif_run,prepared_message,reply_candidate_set,party_acceptance"),
+    ("POST", "messages/{message_id}/review", "preparation_review", p.PreparationReview, p.PreparedMessage, "prepare", "preparation_review"),
+    ("GET", "replies/{reply_id}", "reply_get", None, p.ReplyView, "read", "reply_candidate_set"),
+]:
+    add(method, path, name, req, response, permission, "preparation", storage, "P5", "V09")
+add("POST", "deals/{deal_id}/preparation-settings/reset", "preparation_settings_reset", ExpectedVersions, w.Review,
+    "prepare", "preparation.reset_settings", "deal,operation_log", "P5", "V09")

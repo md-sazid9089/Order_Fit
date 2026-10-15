@@ -93,6 +93,9 @@ def build_openapi():
                     "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
                 },
             ]
+            if endpoint.operation_id in {"messages", "acceptances"}:
+                parameters[-2] = {"name": "offset", "in": "query", "required": False,
+                                  "schema": {"type": "integer", "minimum": 0, "default": 0}}
         queries = {
             "deals": {
                 "search": {"type": "string", "maxLength": 100},
@@ -111,6 +114,8 @@ def build_openapi():
                 "option_key": {"type": "string", "maxLength": 80},
                 "scenario": {"type": "string", "enum": ["base", "downside", "severe"]},
             },
+            "evaluation_explanation": {"option_key": {"type": "string", "minLength": 1, "maxLength": 80}},
+            "preparation_state": {"offset": {"type": "integer", "minimum": 0, "default": 0}},
             "audit_export": {
                 "from_sequence": {"type": "string", "pattern": "^[1-9][0-9]*$"},
                 "to_sequence": {"type": "string", "pattern": "^[1-9][0-9]*$"},
@@ -122,7 +127,7 @@ def build_openapi():
                     "name": name,
                     "in": "query",
                     "required": endpoint.operation_id
-                    in {"customer_history", "cash_flow", "evaluation_series"},
+                    in {"customer_history", "cash_flow", "evaluation_series", "evaluation_explanation"},
                     "schema": shape,
                 }
             )

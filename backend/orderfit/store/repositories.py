@@ -1818,6 +1818,8 @@ class DealRepository:
         )
         if not flag:
             raise ApplicationError(404, "NOT_FOUND")
+        if flag["code"] == "P5-BANK-CHANGE":
+            raise ApplicationError(409, "BANK_VERIFICATION_REQUIRED")
         c.execute(
             text(
                 "UPDATE deal_flag SET resolved_at=clock_timestamp(), resolved_by=:u, resolution_note=:note WHERE id=:id AND business_id=:b AND deal_id=:d"
@@ -1833,7 +1835,11 @@ class DealRepository:
     def build_review(c, business_id: UUID, deal_id: UUID) -> Review:
         try:
             return DealRepository._build_review(c, business_id, deal_id)
-        except ValidationError:
+        except (ValidationError, ApplicationError) as exc:
+            if isinstance(exc, ApplicationError) and exc.code not in {
+                "UNSUPPORTED_EXTENSION_SUBSET", "UNSUPPORTED_EXTENSION_TERMS", "INVALID_FINANCING_GRID"
+            }:
+                raise
             # Invalid combinations remain reviewable instead of becoming HTTP 500 or
             # silently coercing financial assumptions. Never echo confidential values.
             row = c.execute(text("SELECT d.version,d.input_version,b.financial_revision FROM deal d JOIN business b ON b.id=d.business_id WHERE d.business_id=:b AND d.id=:d"), {"b": business_id, "d": deal_id}).mappings().one_or_none()
@@ -2191,6 +2197,12 @@ class DealRepository:
             conflict_resolutions=[],
             coverage_acknowledgement=None,
         )
+        if d_row["analysis_changes"]:
+            from pydantic import TypeAdapter
+
+            from orderfit.contracts.workflow import WhatIfChange
+            from orderfit.services.preparation import fork_snapshot
+            candidate = fork_snapshot(candidate, TypeAdapter(list[WhatIfChange]).validate_python(d_row["analysis_changes"]))
         snap_hash = canonical_hash(candidate)
         return Review(
             deal_id=deal_id,
@@ -2432,7 +2444,7 @@ class EvaluationRepository:
             },
         )
         # 3. Insert evaluation options
-        options = {opt.option_key: opt for opt in [eval_dto.as_is, *eval_dto.ranked_candidates]}
+        options = {opt.option_key: opt for opt in [eval_dto.as_is, *eval_dto.ranked_candidates, *eval_dto.option_catalogue]}
         for opt in options.values():
             c.execute(
                 text(
