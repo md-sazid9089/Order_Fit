@@ -143,8 +143,11 @@ def run_extract(operations, claim, job, runtime: Runtime):
             status = "ambiguous" if verdict == "ambiguous" else cand.status
             flags = injection_flags([cand.exact_quote])
             value = json.dumps(cand.normalized_value)
+            quote = cand.exact_quote or None
             if cand.status == "missing" or cand.normalized_value is None:
-                status, value = "missing", "null"
+                status, value, quote = "missing", "null", None
+            elif flags:
+                status = "ambiguous"  # injection-like quote: a person must look before it counts
             cid = c.execute(
                 text(
                     "INSERT INTO extraction_candidate(business_id,deal_id,document_id,run_id,field,value,source_page,source_quote,confidence,status,source_role)"
@@ -153,14 +156,12 @@ def run_extract(operations, claim, job, runtime: Runtime):
                 {
                     "b": claim["business_id"], "d": op["deal_id"], "doc": doc["id"], "run": run_id,
                     "f": cand.field, "v": value, "p": cand.source.page,
-                    "q": cand.exact_quote or None, "conf": 0.5 if status != "extracted" else 0.8,
+                    "q": quote, "conf": 0.5 if status != "extracted" else 0.8,
                     "s": status, "role": doc["source_role"],
                 },
             ).scalar_one()
             stored += 1
-            if flags:
-                status = "ambiguous"
-            _project(c, claim["business_id"], op["deal_id"], doc["id"], cand, status, value, cid)
+            _project(c, claim["business_id"], op["deal_id"], doc["id"], cand, status, value, cid, quote)
         _mark_conflicts(c, claim["business_id"], op["deal_id"])
         append_audit(c, scope, "extraction_completed", deal_id=op["deal_id"],
                      payload={"run_id": str(run_id), "candidates": stored})
@@ -170,7 +171,7 @@ def run_extract(operations, claim, job, runtime: Runtime):
         )
 
 
-def _project(c, business_id, deal_id, doc_id, cand, status, value, candidate_id):
+def _project(c, business_id, deal_id, doc_id, cand, status, value, candidate_id, quote):
     """Upsert the current projection unless a human has already reviewed that field."""
     c.execute(
         text(
@@ -182,7 +183,7 @@ def _project(c, business_id, deal_id, doc_id, cand, status, value, candidate_id)
         ),
         {
             "b": business_id, "d": deal_id, "doc": doc_id, "f": cand.field, "v": value,
-            "p": cand.source.page, "q": cand.exact_quote or None,
+            "p": cand.source.page, "q": quote,
             "conf": 0.5 if status != "extracted" else 0.8, "s": status, "cid": candidate_id,
         },
     )
@@ -220,6 +221,11 @@ def handle_csv_preview(job, c, scope, runtime: Runtime):
     from datetime import date
 
     as_of_text, currency = _csv_parameters(c, job.operation_id, scope.business_id)
+    business_currency = c.execute(
+        text("SELECT currency FROM business WHERE id=:b"), {"b": scope.business_id}
+    ).scalar_one()
+    if currency != str(business_currency).strip():
+        return _needs_input("CSV-CURRENCY", "The import currency must match the business currency.")
     outcome = parse_cash_csv(raw, date.fromisoformat(as_of_text))
     digest = bytes(doc["content_hash"]).hex()
     h = preview_hash(outcome.events, outcome.errors, outcome.duplicate_keys, digest, as_of_text, currency)
