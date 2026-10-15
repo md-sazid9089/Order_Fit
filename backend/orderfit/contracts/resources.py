@@ -661,3 +661,28 @@ class Readiness(DTO):
     schema_current: StrictBool
     storage: StrictBool
     worker: StrictBool
+
+
+class ExtractionCandidateView(DTO):
+    id: UUID
+    field: str
+    value: str | None
+    status: Literal["extracted", "ambiguous", "missing", "conflicting"]
+    source_page: Annotated[int, Field(strict=True, ge=1, le=50)] | None
+    source_quote: str | None = Field(max_length=2000)
+    confidence: Annotated[float, Field(ge=0, le=1)]
+    source_role: SourceRole | None
+    flags: list[str]
+
+
+class ExtractedFieldView(DTO):
+    field_id: BigId
+    document_id: UUID
+    field: str
+    value: str | None
+    status: Literal[
+        "extracted", "ambiguous", "missing", "conflicting", "confirmed", "overridden", "rejected"
+    ]
+    candidate_id: UUID | None
+    candidates: list[ExtractionCandidateView]
+    version: Version

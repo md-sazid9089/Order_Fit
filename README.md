@@ -256,6 +256,7 @@ P1 wires this strict contract into runtime startup. Missing DB/auth settings fai
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LLM_MODE` | `off` | Explicit off/recorded/live; no automatic live fallback |
+| `LLM_RECORDINGS_DIR` | *(empty)* | Folder of recorded extraction responses for `LLM_MODE=recorded` |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | *(empty)* | Server-only; required for live, model selected/evaluated in P4 |
 | `DATABASE_URL` | *(empty)* | Restricted SQLAlchemy psycopg runtime URL |
 | `DATABASE_URL_DIRECT` | *(empty)* | Required migrator-only direct URL, no runtime fallback |
