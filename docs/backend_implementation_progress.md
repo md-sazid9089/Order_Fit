@@ -300,3 +300,72 @@ and complete-horizon/limit regressions. P3 will build reviewed confirmation and
 atomic fenced evaluation/option publication on this foundation. P2 and P3 were
 not started; no financial formula, engine code, provider SDK boundary or frontend
 workflow was changed in P1.
+
+## Neon connection inspection — 15 October 2026
+
+After P1, the user authorized inspection of the teammate-supplied Neon environment.
+Both direct and pooled connections were tested in explicitly read-only
+transactions over client TLS. Neon reports PostgreSQL 18.6 and Alembic revision
+`0001_core_schema`, not P1. The supplied login has owner/admin/BYPASSRLS privileges;
+it cannot be used as the API/worker login. The original three privilege groups
+exist, but dedicated restricted runtime LOGINs and P1 tables are absent.
+Business/deal row-existence checks returned false. Existing public checkpoint
+tables were observed and preserved. No private row payloads were inspected.
+Read-only migration preflight also confirmed the named constraint/policy, schema,
+composite references and function signature required by the forward migration,
+with no new-table or checked new-column name conflicts. Full schema equivalence
+and the actual hosted migration remain unverified.
+
+An initial pooled probe with extra startup options failed; retrying without
+those options succeeded. Only sanitized error classifications were emitted.
+No URL, password or raw driver error was printed. No migrations, provisioning,
+environment edits or hosted test writes were performed. This is connectivity and
+catalog evidence, not hosted P1 acceptance. Original local PostgreSQL 17 evidence
+remains distinct from this PostgreSQL 18 managed target.
+
+The concrete pending migration/provisioning/configuration steps are recorded in
+`docs/neon_connection_review.md`. Approval is still needed for these hosted
+schema/role changes beyond the completed read-only inspection. P2 remains unstarted.
+
+## Approved Neon P1 setup — 15 October 2026
+
+The user subsequently authorized the proposed migration, role creation and local
+environment updates. Applied the existing `0002_backend_foundation` forward
+migration on the same supplied Neon PostgreSQL 18.6 database. All original public
+table row counts were preserved, except the deliberate additional state-transition
+reference row. Existing checkpoint tables were not dropped or repurposed.
+
+Created separate SQL LOGINs `orderfit_runtime` and `orderfit_worker_login` with
+generated passwords and narrow group membership. Preserved the supplied owner
+credential as migration-only. Updated ignored root/backend environment files,
+generated independent application secrets, retained private ignored originals
+and removed the completed one-time recovery file. No credentials were printed,
+committed or passed as visible shell arguments.
+
+Both environment files pass strict runtime configuration validation. Actual API
+and worker logins pass startup role/schema checks over pooled TLS connections;
+neither has Neon superuser membership. No-context tenant reads, transaction-local
+GUC reset after commit and role-specific queue-helper permissions were verified.
+An actual API child process started against Neon and passed `/health` and OpenAPI;
+it was stopped after verification. No business/auth/job test rows or provider
+calls were created. The owner password and historical credential rotation remain
+unchanged/unverified.
+
+Added the explicit `python -m orderfit.runtime api|worker` local launcher, which
+reads a selected environment file, uses the designated runtime URL and forwards
+only runtime settings plus OS essentials. It excludes inherited migration and
+provisioning secrets. Added two permission-boundary tests, backend environment
+template/README instructions and an explicit python-dotenv dependency already
+present in the locked graph (62 packages; no package version changes).
+
+Checks: frozen offline lock/sync passed; Ruff passed; generated target contracts
+unchanged (101 operations); 86 contract/architecture/launcher tests passed. Full
+provider-free suite passed **108 tests in 24.81s**, including the original SQL,
+concurrency and P1 gate inside a fresh disposable local PostgreSQL 17 container.
+No destructive tests targeted Neon. The existing TestClient dependency warning
+remains. `git diff --check` passed.
+The separate user `.gitignore` edit remains preserved.
+
+This completes the approved hosted connection/setup work, not full hosted P1
+workflow acceptance. Hosted auth/multi-tenant business jobs, recovery/concurrency,
+backup/restore, browser and live OpenAI remain unverified. P2 has not started.

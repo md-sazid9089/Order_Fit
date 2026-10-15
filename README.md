@@ -189,6 +189,20 @@ change `WEB_PORT`, `API_PORT` or `DB_PORT`.
 
 ### Run locally
 
+For the configured Neon database, from `backend/` use the explicit launcher in
+two terminals:
+
+```bash
+uv run --frozen python -m orderfit.runtime api
+uv run --frozen python -m orderfit.runtime worker
+```
+
+The launcher reads `backend/.env` explicitly, selects the API or worker URL and
+forwards only runtime settings. It excludes migration/provisioning credentials
+even if they exist in the parent environment. Stop each service with Ctrl+C.
+The default Compose configuration above is for local PostgreSQL; it is not needed
+for these Neon commands. See [Neon setup evidence](docs/neon_connection_review.md).
+
 **Backend**
 
 ```bash
