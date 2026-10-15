@@ -10,19 +10,7 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: orderfit
-          POSTGRES_PASSWORD: orderfit
-          POSTGRES_DB: orderfit
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U orderfit" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      # Migration-only bootstrap login. Runtime isolation tests land in P1.
-      DATABASE_URL_DIRECT: postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit
       LLM_MODE: off
     steps:
       - uses: actions/checkout@v4
@@ -33,8 +21,9 @@ jobs:
       - run: uv sync --frozen --extra dev
       - run: uv run --frozen ruff check .
       - run: uv run --frozen python -m orderfit.contracts.export --check
-      - run: uv run --frozen alembic upgrade head
-      - run: uv run --frozen pytest tests/test_architecture.py tests/contracts tests/engine tests/agent -q
+      # DB fixture creates a uniquely named, labeled, disposable PG17 container and
+      # real restricted LOGINs; it never consumes application database URLs.
+      - run: uv run --frozen pytest -q
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

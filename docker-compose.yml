@@ -7,8 +7,8 @@
 
 name: orderfit
 
-# P0 freezes separate credential injection; P1 provisions/tests runtime roles.
-# Do not start business services before P1. No shared privileged URL fallback.
+# Run the setup-profile provision job once after migration, before API/worker startup.
+# Credentials are injected separately; runtime startup rejects privileged logins.
 
 services:
   db:
@@ -41,6 +41,24 @@ services:
         condition: service_healthy
     restart: "no"
 
+  provision:
+    profiles: ["setup"]
+    image: orderfit-api:local
+    pull_policy: never
+    command: ["python", "-m", "orderfit.store.provision"]
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:?Set the migration-only direct URL}
+      RUNTIME_LOGIN: ${RUNTIME_LOGIN:-orderfit_runtime}
+      RUNTIME_PASSWORD: ${RUNTIME_PASSWORD:-}
+      WORKER_LOGIN: ${WORKER_LOGIN:-orderfit_worker_login}
+      WORKER_PASSWORD: ${WORKER_PASSWORD:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   api:
     build: ./backend
     image: orderfit-api:local
@@ -55,12 +73,33 @@ services:
       ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
-      CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    image: orderfit-api:local
+    pull_policy: never
+    command: ["python", "-m", "orderfit.workflow.worker"]
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL: ${WORKER_DATABASE_URL:?Set the restricted worker URL}
+      DOCUMENT_DIR: /app/var/documents
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      ACCOUNT_FINGERPRINT_KEY: ${ACCOUNT_FINGERPRINT_KEY:-}
+      ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      LLM_MODE: off
+    volumes:
+      - documents:/app/var
     depends_on:
       migrate:
         condition: service_completed_successfully
