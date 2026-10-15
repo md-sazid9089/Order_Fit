@@ -161,6 +161,10 @@ def run_once(operations, worker, handlers, runtime=None):
                 if not finished:
                     raise RuntimeError("operation lease lost before publication")
             return True
+        if job.kind in {"whatif", "draft", "reply"} and job.kind not in handlers:
+            from orderfit.workflow.preparation import run_preparation
+            run_preparation(operations, claim, job, runtime)
+            return True
         if job.kind == "extract" and runtime is not None and "extract" not in handlers:
             # Provider call happens outside any database transaction.
             from orderfit.workflow.extraction import run_extract

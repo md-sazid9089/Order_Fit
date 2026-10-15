@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from uuid import uuid4
 
 
-def manual_evaluation(client, headers, business_id):
+def manual_evaluation(client, headers, business_id, known_domains=None, customer_name="Synthetic buyer"):
     base = f"/api/v1/businesses/{business_id}"
     day = date(2026, 10, 15)
 
@@ -31,7 +31,7 @@ def manual_evaluation(client, headers, business_id):
     profile = read("/profile")
     customer = write("POST", "/customers", dict(
         expected_financial_revision=profile["financial_revision"],
-        customer=dict(name="Synthetic buyer", known_domains=[], red_flags=[])))
+        customer=dict(name=customer_name, known_domains=known_domains or [], red_flags=[])))
     constraints = read("/constraints")["items"][0]["id"]
     deal = write("POST", "/deals", dict(public_ref="AUDIT-" + uuid4().hex[:12],
         start_date=str(day), customer_id=customer["id"], constraints_id=constraints))

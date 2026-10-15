@@ -697,3 +697,357 @@ quotes are stored as `ambiguous` consistently in evidence and projection; CSV im
 equal the business currency. Live-path error mapping is covered with a fake SDK client (no network).
 Note: `extraction_candidate.confidence` is a fixed validation-outcome marker (0.8 passed all guards,
 0.5 otherwise), not a model probability; the provider returns no confidence.
+
+## Maintained agent development context — 16 October 2026
+
+At the user's request, added the repository-local skill
+`.agents/skills/orderfit-development-context/SKILL.md`, with standard name and
+description frontmatter. It consolidates the product/working context, phase
+status, code map, financial/security contracts, Neon/runtime boundaries,
+migration graph, verification commands and remaining evidence gaps. Root
+`AGENTS.md` routes development agents to it and requires updates after material
+development changes; `docs/README.md` provides another discovery link. This is
+maintenance during repository work, not a scheduled automation or global memory
+change.
+
+Reconciled against clean `main` at `184324e`, the latest progress entries,
+README/scoped instructions, current runtime/schema constant, migration files,
+result adapter, generated API consumer and test locations. The latest P3
+remediation report supersedes its earlier partial report; P4 final acceptance
+and live OpenAI remain unverified. The frontend is `web/`. Prior test counts
+are explicitly historical; no application/DB/provider/browser checks were rerun
+for this documentation-only task.
+
+Validation: all local Markdown links resolve in the skill and both entrypoints;
+direct frontmatter/name/description/placeholder checks passed; `git diff --check`
+passed. The bundled `quick_validate.py` could not execute because the system
+Python lacks PyYAML; no dependency was installed to validate documentation.
+
+Subsequently optimized at the user's request: reduced the skill from 210 lines
+to a concise status/decision/source handoff, removed repeated AGENTS rules and
+detailed command/history inventories, and shortened its root entrypoint.
+Maintenance now explicitly targets material context changes rather than routine
+edits. Link/frontmatter checks and `git diff --check` passed again; application
+behavior and phase evidence were unchanged.
+
+## P5 — what-if and negotiation preparation (16 October 2026)
+
+### Scope, prerequisite reconciliation and preservation
+
+Started on `main` at `184324e`. Read root/backend/web instructions, the development
+context skill, the entire implementation plan and progress file (including later
+P3 remediation and P4 review entries), then current contracts, SQL, repositories,
+worker, engine adapters, document services, generated clients and tests. Initial
+changes were root `AGENTS.md`, `docs/README.md`, this file's context-maintenance
+entry, and the untracked `.agents/` context. Preserved that work. No reset, branch
+switch, configured Neon test, hosted migration, provider call or push was used.
+The context skill receives a material P5 update; unrelated entrypoint edits and
+the pre-existing progress entry are excluded from the P5 commit's staged changes.
+
+The later **P3 local acceptance report supersedes its original incomplete report**.
+P3's source pipeline, confirmations, durable operations, stored series and actual
+runtime roles are reused. The full suite rechecks these prerequisites. P4's
+focused prerequisite suite (`tests/test_p4_pure.py tests/db/test_p4_documents.py`)
+passed **17 tests** against disposable PostgreSQL 17. P4 remains implemented with
+its own final acceptance review pending; this is not a P4 completion declaration.
+No live-model benchmark, hosted or provider quality acceptance is established.
+
+Prerequisite defects addressed within P5:
+
+- Generic flag resolution previously allowed clearing any blocker with a reason.
+  P5 bank-change holds now fail closed in both the service and a forward SQL guard.
+  Their scope/code/blocking state cannot be rewritten to bypass the hold. There
+  is deliberately no P5 bank-verification/override route.
+- The engine retained its full catalogue, but publication stored only ranked/as-is
+  candidates. New evaluations persist every option and its three scenario series;
+  legacy results expose only their actually retained candidates, without backfills
+  or fabricated figures. Confirmation/evaluation still use the same engine.
+- New-customer entry had no way to record known domains, making preparation review
+  impossible for newly created customers. Added explicit human-entered domains;
+  the AI never chooses a party, address or trusted domain.
+
+### Implemented contracts, storage and behavior
+
+- Added strict P5 DTOs and `docs/contracts/p5-preparation.md` before consumers.
+  Replaced the old target-only P5 request/response shapes, added catalogue,
+  explanation, preparation review/state and reply reads, and regenerated the
+  target OpenAPI, ownership map and both TypeScript declarations: **108 operations**.
+  The enabled P5 202 responses provide their durable poll `Location`. Updated
+  the compile-only frontend consumer to use the actual fork/version contract.
+- Forward revision `0007_p5_preparation` / `sql/0008_p5_preparation.sql` preserves
+  the existing 0001–0006 migration history and records. Reuses `whatif_run`,
+  `negotiation_message`, input snapshots, evaluation/options/series, deal flags,
+  idempotency and PostgreSQL audit functions. Adds immutable `prepared_message`,
+  `preparation_review`, `reply_candidate_set`, `reply_review`, `party_acceptance`
+  evidence with tenant/deal composite references, FORCE RLS, indexes and narrow
+  SELECT/INSERT grants. Existing preparation text is frozen even while its legacy
+  message status is `draft`; all outgoing effects remain disabled.
+- Fork admission is durable and idempotent, pins a confirmed snapshot/current
+  revisions, and never changes canonical deal state, sources, approvals or live
+  results. Bounded calculation/provider work occurs outside DB transactions;
+  publication and fenced operation completion commit together. Saved results
+  retain source comparison, fork snapshot, catalogue, all scenario series and
+  language provenance/error category. Stale publication publishes no fork.
+- Supported typed patches cover deposit grid, existing supplier-extension terms
+  and eligible obligations, a valid draw on a supported offer, and explicit
+  downside/severe customer/receivables-delay or cost-overrun assumptions. A new
+  optional `strategy_space.financing_selection` narrows the engine's projected
+  draw grid without changing original confirmed offer terms or database offers.
+  Its absent value is excluded from serialization, preserving prior canonical
+  snapshot fixtures. Ineligible costs, unknown offers and off-grid draws fail.
+- Explicit apply reauthorizes current membership and all optimistic versions,
+  rejects a stale/blocked fork, changes only reviewed `deal.analysis_changes`,
+  and returns frozen states to confirmation before changing inputs. Existing
+  revision triggers supersede the live result. Review reconstructs actual sources
+  and reapplies typed settings; a fork is never promoted into a confirmed snapshot.
+- Exact drafts use an evaluated feasible option and an explicitly selected
+  customer/supplier/lender and recipient. Server hashes bind full content, subject,
+  channel, party/version/address, snapshot/hash/revisions, option/terms, ancestry,
+  creator/time, expiry and sandbox mode. Every edit inserts a new message revision;
+  one successor per previous revision prevents concurrent branches. Old reviews
+  and attestations remain historical and become stale. Preparation review is not
+  an outgoing approval or an action bundle.
+- Explanations render actual engine fact IDs, scenario/headroom/profit/tolerance
+  and coverage qualifiers. Drafts render mandatory typed term lines, including
+  loan interest, fees and dates where applicable, plus approved courtesy sentences.
+  Numeric and semantic-slot guards reject invented digits, written-number claims,
+  guarantees, missing/altered terms and reassigned real amounts. This is deliberately
+  controlled editing, not unrestricted free-form prose. Templates remain useful
+  without an API key and are labeled `template`.
+- `agent/llm.py` remains the sole OpenAI boundary. What-if intents have off,
+  recorded and bounded live modes. The deterministic fallback recognizes explicit
+  requests such as `deposit 30%` and `customer delay 15 days`; unsupported prose
+  stays a reviewable blocked proposal. Missing/invalid recordings never call live.
+  Model/response/input/prompt provenance and safe failure categories are retained.
+- Incoming text and ask/party identity persist atomically at admission; bank/account
+  keywords raise a durable fraud hold before any worker work. Deterministic reply
+  parsing retains immutable quote-grounded and potentially contradictory candidates.
+  Explicit one-time human review selects candidate IDs and a reason, verifies party
+  scope/current versions, and applies supported customer payment/revenue/deposit,
+  supplier-extension or same-offer lender-draw terms for confirmation. It never
+  records a cash receipt, funding arrival, negotiation round or commitment.
+- Party attestations bind exact current reviewed preparation/terms/party, evidence,
+  actor/time and expiry, with same-party supersession. Supporting replies must be
+  same-party/same-ask and cannot contain parsed counterterms contradicting the ask.
+  These are expressly human attestations, not independently authenticated agreement.
+  Preparation expires within 24 hours and by the selected offer's inclusive final
+  day in the business timezone. Archived parties leave readable, stale history.
+- Real-session `web/` flows replace P5 UUID-page placeholders and the standalone
+  mock sandbox calculation. The order page links to preparation; `/sandbox` asks
+  for a saved order. Generated types, tenant-scoped reads, durable operation polling,
+  saved operation recovery, exact revision/review controls, reply selection and
+  acceptance evidence survive refresh/restart. The existing same-key uncertain-POST
+  client remains in use; 409 refetches current state. History loads compact fork
+  summaries, with full catalogue/series fetched only on explicit inspection. An explicit
+  version-checked reset clears obsolete applied assumptions without requiring a fresh
+  evaluation; this prevents archived offers/changed policy from trapping review. Reset
+  preserves source records and fraud holds. Global policy rejects deal-only draw selections.
+
+### Local acceptance evidence
+
+All database runs used newly named loopback-only `orderfit-p1-test-*` PostgreSQL 17
+containers and real restricted API/worker LOGINs. The harness verifies its disposable
+label and database identity and cleans up only that container. No configured URL was
+used. Exact temporary basetemp paths vary by run; uv used `--cache-dir 'D:\Kam 2\.uv-cache'`
+because the default Windows cache was inaccessible.
+
+| P5 condition | Executed evidence / result |
+|---|---|
+| Create/run fork changes no canonical inputs/source revisions/approvals/live evaluation | Integration compares the complete deal and live evaluation before/after, snapshot and approval counts; immutable source snapshot/hash retained; passed |
+| Stale apply fails; apply reauthorizes and checks optimistic versions | Stale second apply, current membership and fresh row/input/business-version checks; competing edit during compute publishes no fork; passed |
+| Reply never silently changes canonical inputs | Customer/supplier/lender intake compared against unchanged saved deal; only explicit reviewed candidates enter confirmation; customer reply is confirmed and reassessed through production evaluation; passed |
+| Recipient/terms/amount changes invalidate preparation identity/review | New immutable subject/body/recipient revisions, unique ancestry under concurrent editors, stale old review/acceptance and renewed review; altered amounts/terms rejected; passed |
+| Invented figures and unsupported terms caught | Digit, written-number guarantee and changed term-role tests; browser receives `UNSUPPORTED_MESSAGE_CONTENT`; passed |
+| Useful no-key explanations/drafts | Actual engine-backed profit/headroom/tolerance qualifiers, exact-term template draft, deterministic language-intent fallback with explicit `AI_OFF`; passed |
+| Bank-change reply blocks dispatch preparation | Hold written at intake, survives worker/refresh, appears in current preparation blockers, generic resolution denied; dispatch eligibility always false; passed |
+| DEMO-ASK / DEMO-REPLY use production engine with expected results | `compute_review` in the sole compute module calls the same production engine. ASK returns needs_input/E-MISSING-ANCHOR, delivery/invoice alternatives recommend dep40 vs ext30+loan 50000000. REPLY caps deposits at 30%, recommends loan 130000000, exact profit 134800000; passed. Missing anchor is never fabricated to create a confirmed ASK snapshot. |
+| Persistence, tenancy, concurrency, recovery and provider failures | Real API/worker kill after claim, expired lease/new fence/restart publishes one fork at attempt 2, same-key replay after API restart, draft history reload, cross-tenant/no-context access, immutable SQL, concurrent revision winner/loser, provider-failure fallbacks; passed |
+
+### Commands and observed results
+
+- `uv ... run --frozen ruff check .`: passed.
+- `uv ... run --frozen python -m orderfit.contracts.export --check`: passed,
+  108 operations; generated web and documentation declarations match.
+- `uv ... run --frozen python -m alembic heads`: sole head `0007_p5_preparation`.
+- Full `uv ... run --frozen python -m pytest -q --tb=short -x -p no:cacheprovider
+  --basetemp 'D:\Kam 2\p5-final-full'`: **241 passed**, 232.30s, before the final
+  two supplier/lender cases and current-membership-specific regression were added.
+  The later final acceptance rerun is recorded below.
+- `tests/contracts tests/test_architecture.py tests/test_p5_pure.py`: **90 passed**,
+  42.55s after the party-term contract extension. Includes canonical snapshots,
+  unchanged reference/production boundaries and fake-provider failures. No actual
+  OpenAI client request was made.
+- Focused supplier/lender reply integration: **2 passed**, 18.75s, with real
+  immutable offer/cost/policy setup and quote selection into the same review pipeline.
+- Migration fixture: fresh upgrade, populated-0001 preservation, **296/296** original
+  SQL checks on 0001 and forward schema, and both original concurrency scripts
+  (400-row audit chain plus optimistic loser). Applied migration components unchanged.
+- `node web/node_modules/typescript/lib/tsc.js --strict --noEmit
+  docs/contracts/frontend-api.d.ts docs/contracts/typecheck.ts`: passed.
+- `web/ npm run typecheck`: passed. Changed-file ESLint: passed without diagnostics.
+- `web/ npm run lint`: **0 errors, 178 existing warnings** in unrelated legacy/demo
+  files. `npm run build`: passed, including P5 dynamic routes under Suspense.
+- `git diff --check`: passed after normalizing mixed Windows line endings on changed
+  implementation files and removing extra EOF whitespace.
+
+Browser evidence used `tests.db.p3_browser_host` with explicit stop/restart files,
+real API/worker subprocesses, disposable database, no-key mode and a real signed-in
+synthetic owner. The existing P3 manual-evaluation HTTP helper created the evaluated
+order fixture. An earlier attempt to fill native date controls in the P3 new-order
+screen through browser automation did not create a valid order; it is not claimed
+as a successful browser create journey. P5 was then exercised in the browser:
+
+1. Load current options, engine-fact explanation and saved series; run a typed
+   deposit fork, reload it, and prepare an exact customer draft.
+2. Edit subject into revision 2; observe a new identity and stale revision 1.
+   Attempt an unsupported written-number guarantee and observe guarded rejection.
+3. Explicitly review revision 2 and record expiring human acceptance evidence.
+4. Ingest a quoted counteroffer; observe unreviewed candidates and unchanged terms.
+   Run the language fallback; reload all evidence.
+5. Actually terminate/restart API and worker while retaining the same database,
+   private-document directory and session secret. Reload the same session; reviewed
+   draft, forks, reply and attestation survive.
+6. Select reply candidates, explicitly apply, confirm and evaluate on the order
+   page, and inspect the new dep30 catalogue. Run/apply a separate dep40 fork.
+   Old forks/reviews/attestations become stale and apply controls are disabled.
+7. Record a bank-change reply; observe the durable blocker after refresh. Restart
+   the final source again and verify compact history loads stored full series on
+   demand. Clear applied what-if assumptions through the browser and verify the bank
+   hold remains. Browser error logs were empty. Screenshot:
+   `docs/evidence/p5-preparation-browser.jpg` (synthetic data only).
+
+Intermediate failures were corrected rather than relabeled: default uv cache
+permissions, sandbox-denied dependency/network and Docker access (authorized
+isolated reruns succeeded), initial SQL policy/search-path inventory mismatch,
+Next cache-components requiring Suspense, updated generated-type consumer shape,
+and setup assertions expecting 201 where existing P3 routes return 200.
+
+### Boundaries and P6 handoff
+
+**P5 local preparation acceptance gate passed.** No sending, payment, approval,
+execution, round increment, commitment or compensation workflow was enabled.
+The new preparation hash is intentionally not an action-bundle approval hash.
+
+Unverified: live OpenAI quality/model benchmark and actual provider behavior,
+hosted Neon schema/roles/pooling, remote CI execution, hosted deployment, restore
+rehearsal, production resource calibration and historical owner-credential rotation.
+No live/hosted changes were made merely to obtain a passing label. P4's independent
+final acceptance review remains pending. Reply parsing has a bounded supported
+English grammar; unsupported/ambiguous prose needs manual source review. Supplier
+subsets and new lender pricing/fee terms cannot bypass the supported engine contract.
+The conservative bank-keyword hold may require verification even for benign wording;
+P5 intentionally has no generic resolution. This is not release/deployment acceptance.
+
+P6 must implement exact immutable action bundles/items and batch-compatible SQL
+approval/message/execution guards; session-bound single-use step-up; current T3
+approval, revocation/expiry and separate send/commit permissions; required exact
+party acceptances; a narrow bank-verification resolution; durable execution runs,
+manifest membership and partial recovery; sandbox outbox/ledger/lender effects;
+round semantics; business-serialized commitment admission and deduplicated baseline
+projection; separately approved compensation. Replace the P5 message freeze only
+with those exact authorized transitions. Keep real external effects disabled.
+No P6 implementation was started.
+
+### Final verification and commit preparation
+
+- Final full backend command with basetemp `D:\Kam 2\p5-final-acceptance`:
+  **244 passed**, 219.58s. This includes supplier/lender reply reviews and current
+  membership authorization on apply, original schema/concurrency suites, migration
+  preservation, engine fixtures, P3/P4 flows and actual P5 process recovery.
+- After the final read-only option-explanation and obsolete-assumption-reset fixes,
+  `tests/db/test_p5_preparation.py tests/test_p5_pure.py tests/contracts
+  tests/test_architecture.py` passed **102 tests**, 91.40s on a newly created
+  disposable PG17 target (`--basetemp 'D:\Kam 2\p5-final-focused'`). These focused
+  checks cover every P5 write, reset/revision invalidation, all supported party
+  replies, provider fallback, tenancy, idempotency, process recovery and contracts.
+  A separate read-only/architecture check passed **9 tests**, 43.55s.
+- Final generated contract check: **108 operations**. Final TypeScript checks,
+  changed-file ESLint and production build passed after the reset UI was added.
+  Full frontend lint remains 0 errors / 178 existing legacy/demo warnings.
+- Final browser pass restarted the final API/worker source, loaded stored full
+  series on demand, and cleared obsolete applied assumptions. The durable bank
+  blocker remained in place. Screenshot was refreshed to show that actual result.
+- No test was skipped or assertion weakened to obtain acceptance. The sole backend
+  warning remains the existing Starlette/TestClient httpx deprecation.
+
+## P6 — approval, sandbox execution and recovery (16 October 2026)
+
+### Reconciliation and implementation status
+
+Started from clean `main` at `f01d197` (P5 commit `dd81b32`). The recorded P5
+acceptance is supported by the P5 code shape: preparation stores immutable
+`prepared_message` rows and acceptance evidence; `p5_message_frozen` blocks edits;
+the P5 API has no approval/send/commit routes, and `DEFAULT_HANDLERS` has no
+execution handler. Real effects were disabled. P4 remains implemented but its
+independent final acceptance review is still pending. No prerequisite defect
+directly blocking P6 was found. The P5 database integration suite was rerun after
+the P6 schema upgrade and passed.
+
+P6 is **incomplete; acceptance gate not passed**. The scoped changes so far are:
+
+- New Alembic revision `0008_p6_execution` and additive SQL component
+  `0009_p6_execution.sql`. It adds immutable `action_bundle` / items, optional
+  bundle and step-up references on legacy approvals, append-only revocations,
+  one-run-per-bundle records, execution item links, a business commitment gate,
+  projection/effect evidence, and a bank-verification evidence record. New tables
+  use tenant RLS, FORCE RLS, scoped grants and immutable guards. New exact-bundle
+  guards bind prepared message ID, body, subject, channel, party/version,
+  recipient and term hash; verify required party acceptances at commit approval;
+  reject unbundle-linked P6 action transitions; and recheck approval expiry,
+  revocation, current T3 membership, session and financial freshness before
+  bundle-linked effects. Existing unbundled approvals and action drafts remain
+  accepted under their legacy checks.
+- The P5 message freeze now permits a prepared outbound message to move to
+  `sent` only with transaction-local execution run/item context matching an exact
+  bundle action. The P5 bank-change flag remains fail-closed; clearing it requires
+  a row tied to the exact bank-change reply, a verified account, matching
+  fingerprint and written evidence. No generic override was added; the
+  evidence-capture API remains unimplemented.
+- Added session-bound password re-authentication for one bundle and purpose at
+  `/api/v1/auth/step-up`. The grant is tied to the current user/session, exact
+  bundle hash/purpose and five-minute/earlier bundle expiry, and is consumed in
+  the approval insert trigger. Updated runtime schema validation to require
+  `0008_p6_execution` and updated forward-schema RLS/PK counts in the SQL suite.
+
+### Checks actually run
+
+- `uv --cache-dir 'D:\Kam 2\.uv-cache' run --frozen ruff check .`: passed.
+- `uv ... run --frozen python -m orderfit.contracts.export --check`: passed,
+  108 operations.
+- `uv ... run --frozen python -m alembic heads`: sole head
+  `0008_p6_execution`.
+- `tests/contracts tests/test_p5_pure.py tests/test_architecture.py` with
+  explicit workspace `--basetemp`: **90 passed**. An earlier run using pytest's
+  inaccessible default temp root stopped at 83 passed with `PermissionError`; the
+  workspace-temp rerun passed.
+- `tests/db/test_p5_preparation.py` on the harness's verified, labeled, loopback
+  disposable PostgreSQL 17 container: **12 passed**. This exercised clean and
+  populated migration upgrades, the existing 296/296 SQL assertions on both
+  schema versions, runtime login validation and P5 integration. Intermediate
+  migration attempts exposed and fixed invalid composite references, PL/pgSQL
+  syntax, legacy guard compatibility and P6 test-inventory counts. No
+  configured/shared Neon URL was used.
+- Full backend pytest command was started on a separate verified disposable PG17
+  harness, but its process did not yield a final result before this handoff. Do
+  not count its partial progress output as a pass.
+
+### Remaining P6 gaps and gate
+
+Not implemented: server-owned bundle preparation/get, approval/rejection/revoke
+API operations, durable execute admission and worker handler, operation/run
+recovery/fencing, local outbox/ledger/lender effects, partial outcome read model,
+negotiation round advancement, transactionally serialized commitment admission
+and deduplicated baseline projection, and separately approved compensation with
+inverse provenance/reconciliation. Although their tables/guards are present,
+there is no service path that proves these workflows end to end. There are no P6
+crash-boundary, concurrent-worker, concurrent-deal, role-revocation-after-approval,
+compensation or browser acceptance tests yet. No real external adapter was added.
+The narrow bank-resolution table/guard also has no user-facing evidence-capture
+workflow and therefore remains unavailable in practice.
+
+**P6 gate: NOT PASSED.** Exact-bundle approval, execution/recovery and commitment
+requirements cannot be claimed from schema plus step-up issuance. P7 has not
+started. Before P7, finish the P6 services/routes/worker and acceptance matrix
+from plan V11–V13, including injected failures at each effect boundary and a
+second deal rejected on an obsolete baseline. P4's independent final review and
+all hosted/provider/browser/deployment claims remain separate and unverified.

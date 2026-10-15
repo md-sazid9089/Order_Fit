@@ -198,6 +198,12 @@ class ConstraintWrite(DTO):
     scenarios: Scenarios
     make_default: StrictBool
 
+    @model_validator(mode="after")
+    def selection_is_deal_scoped(self):
+        if self.strategy_space.financing_selection is not None:
+            raise ValueError("use a reviewed deal fork for a financing selection")
+        return self
+
 
 class ConstraintsView(DTO):
     id: UUID

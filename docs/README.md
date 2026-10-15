@@ -2,6 +2,10 @@
 
 For the project overview, setup and configuration, see the [main README](../README.md).
 
+Agents continuing development should start with the maintained
+[OrderFit development context skill](../.agents/skills/orderfit-development-context/SKILL.md),
+then follow its pointers to scoped instructions, the phase plan and current evidence.
+
 | Document | Contents |
 |---|---|
 | [engine.md](engine.md) | Algorithms, money rules, ranking, adding test cases |

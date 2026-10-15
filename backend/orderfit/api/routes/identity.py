@@ -15,6 +15,8 @@ from orderfit.contracts.resources import (
     SessionView,
     SignIn,
     SignUp,
+    StepUp,
+    StepUpView,
 )
 from orderfit.contracts.workflow import CancelOperation, Operation
 
@@ -26,6 +28,7 @@ IMPLEMENTED = {
     "signout",
     "session",
     "password_change",
+    "step_up",
     "capabilities",
     "operation_get",
     "operation_cancel",
@@ -81,6 +84,10 @@ IMPLEMENTED = {
     "audit_export",
     "decision_export",
     "export_download",
+    "whatif_create", "whatif_get", "whatif_apply", "draft_create", "messages",
+    "message_get", "draft_edit", "reply_create", "reply_review", "reply_get",
+    "acceptances", "acceptance_create", "evaluation_catalogue", "evaluation_explanation",
+    "preparation_state", "preparation_review", "preparation_settings_reset",
 }
 
 
@@ -157,6 +164,12 @@ def password_change(data: PasswordChange, request: Request, response: Response):
     response.delete_cookie("orderfit_session", path="/")
     response.delete_cookie("orderfit_csrf", path="/")
     return Acknowledgement(request_id=str(uuid4()), completed=True)
+
+
+@router.post("/auth/step-up", response_model=StepUpView, status_code=201, operation_id="step_up")
+def step_up(data: StepUp, request: Request):
+    service, _, _ = mutation(request)
+    return service.step_up(session_token(request), data)
 
 
 @router.get(

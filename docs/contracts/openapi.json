@@ -1,38 +1,119 @@
 {
   "components": {
     "schemas": {
-      "AcceptanceRequest": {
+      "AcceptanceEvidence": {
         "additionalProperties": false,
         "properties": {
-          "acceptance": {
-            "$ref": "#/components/schemas/PartyAcceptance"
+          "attestation": {
+            "title": "Attestation",
+            "type": "string"
           },
-          "expected_financial_revision": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Financial Revision",
-            "type": "integer"
+          "attested_not_independently_verified": {
+            "const": true,
+            "default": true,
+            "title": "Attested Not Independently Verified",
+            "type": "boolean"
           },
-          "expected_input_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Input Version",
-            "type": "integer"
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
           },
-          "expected_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Version",
-            "type": "integer"
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "message_id": {
+            "format": "uuid",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "party_id": {
+            "format": "uuid",
+            "title": "Party Id",
+            "type": "string"
+          },
+          "party_role": {
+            "enum": [
+              "customer",
+              "supplier",
+              "lender"
+            ],
+            "title": "Party Role",
+            "type": "string"
+          },
+          "preparation_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Preparation Hash",
+            "type": "string"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "recorded_by": {
+            "format": "uuid",
+            "title": "Recorded By",
+            "type": "string"
+          },
+          "reply_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply Id"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "terms_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Terms Hash",
+            "type": "string"
+          },
+          "valid_until": {
+            "format": "date-time",
+            "title": "Valid Until",
+            "type": "string"
           }
         },
         "required": [
-          "expected_version",
-          "expected_input_version",
-          "expected_financial_revision",
-          "acceptance"
+          "id",
+          "deal_id",
+          "message_id",
+          "party_id",
+          "party_role",
+          "terms_hash",
+          "preparation_hash",
+          "reply_id",
+          "attestation",
+          "recorded_by",
+          "recorded_at",
+          "valid_until",
+          "supersedes_id",
+          "is_stale"
         ],
-        "title": "AcceptanceRequest",
+        "title": "AcceptanceEvidence",
         "type": "object"
       },
       "AcceptanceRequirement": {
@@ -77,57 +158,6 @@
           "acceptance_id"
         ],
         "title": "AcceptanceRequirement",
-        "type": "object"
-      },
-      "AcceptanceView": {
-        "additionalProperties": false,
-        "properties": {
-          "attested_not_independently_verified": {
-            "const": true,
-            "title": "Attested Not Independently Verified",
-            "type": "boolean"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "party_id": {
-            "format": "uuid",
-            "title": "Party Id",
-            "type": "string"
-          },
-          "recorded_at": {
-            "format": "date-time",
-            "title": "Recorded At",
-            "type": "string"
-          },
-          "recorded_by": {
-            "format": "uuid",
-            "title": "Recorded By",
-            "type": "string"
-          },
-          "terms_hash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "title": "Terms Hash",
-            "type": "string"
-          },
-          "valid_until": {
-            "format": "date-time",
-            "title": "Valid Until",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "party_id",
-          "terms_hash",
-          "recorded_by",
-          "recorded_at",
-          "valid_until",
-          "attested_not_independently_verified"
-        ],
-        "title": "AcceptanceView",
         "type": "object"
       },
       "AccountCreate": {
@@ -1972,6 +2002,57 @@
         "title": "CashEventWrite",
         "type": "object"
       },
+      "ComparisonOption": {
+        "additionalProperties": false,
+        "properties": {
+          "base_incremental_profit_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Base Incremental Profit Minor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_incremental_profit_minor"
+        ],
+        "title": "ComparisonOption",
+        "type": "object"
+      },
+      "ComparisonResult": {
+        "additionalProperties": false,
+        "properties": {
+          "as_is": {
+            "$ref": "#/components/schemas/ComparisonOption"
+          },
+          "decision": {
+            "enum": [
+              "accept_as_is",
+              "accept_with_changes",
+              "decline_or_renegotiate"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "recommended_option_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Option Key"
+          }
+        },
+        "required": [
+          "decision",
+          "recommended_option_key",
+          "as_is"
+        ],
+        "title": "ComparisonResult",
+        "type": "object"
+      },
       "CompensationRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3232,74 +3313,6 @@
         "title": "DocumentView",
         "type": "object"
       },
-      "DraftEdit": {
-        "additionalProperties": false,
-        "properties": {
-          "body": {
-            "maxLength": 100000,
-            "minLength": 1,
-            "title": "Body",
-            "type": "string"
-          },
-          "channel": {
-            "enum": [
-              "email",
-              "whatsapp",
-              "sms",
-              "portal",
-              "other"
-            ],
-            "title": "Channel",
-            "type": "string"
-          },
-          "expected_financial_revision": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Financial Revision",
-            "type": "integer"
-          },
-          "expected_input_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Input Version",
-            "type": "integer"
-          },
-          "expected_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Version",
-            "type": "integer"
-          },
-          "party_id": {
-            "format": "uuid",
-            "title": "Party Id",
-            "type": "string"
-          },
-          "subject": {
-            "anyOf": [
-              {
-                "maxLength": 500,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Subject"
-          }
-        },
-        "required": [
-          "expected_version",
-          "expected_input_version",
-          "expected_financial_revision",
-          "subject",
-          "body",
-          "party_id",
-          "channel"
-        ],
-        "title": "DraftEdit",
-        "type": "object"
-      },
       "DraftInputs": {
         "additionalProperties": false,
         "properties": {
@@ -3449,9 +3462,15 @@
         "title": "DraftInputs",
         "type": "object"
       },
-      "DraftRequest": {
+      "DraftPreparationRequest": {
         "additionalProperties": false,
         "properties": {
+          "channel": {
+            "const": "email",
+            "default": "email",
+            "title": "Channel",
+            "type": "string"
+          },
           "evaluation_id": {
             "format": "uuid",
             "title": "Evaluation Id",
@@ -3475,27 +3494,32 @@
             "title": "Expected Version",
             "type": "integer"
           },
-          "language": {
-            "enum": [
-              "en",
-              "bn"
-            ],
-            "title": "Language",
-            "type": "string"
-          },
           "option_key": {
+            "maxLength": 80,
+            "minLength": 1,
             "title": "Option Key",
             "type": "string"
           },
-          "party_ids": {
-            "items": {
-              "format": "uuid",
-              "type": "string"
-            },
-            "maxItems": 20,
-            "minItems": 1,
-            "title": "Party Ids",
-            "type": "array"
+          "party_id": {
+            "format": "uuid",
+            "title": "Party Id",
+            "type": "string"
+          },
+          "party_role": {
+            "enum": [
+              "customer",
+              "supplier",
+              "lender"
+            ],
+            "title": "Party Role",
+            "type": "string"
+          },
+          "recipient": {
+            "maxLength": 254,
+            "minLength": 3,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "title": "Recipient",
+            "type": "string"
           }
         },
         "required": [
@@ -3504,10 +3528,104 @@
           "expected_financial_revision",
           "evaluation_id",
           "option_key",
-          "party_ids",
-          "language"
+          "party_id",
+          "party_role",
+          "recipient"
         ],
-        "title": "DraftRequest",
+        "title": "DraftPreparationRequest",
+        "type": "object"
+      },
+      "DraftRevisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "channel": {
+            "const": "email",
+            "default": "email",
+            "title": "Channel",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_preparation_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Preparation Hash",
+            "type": "string"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "option_key": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Option Key",
+            "type": "string"
+          },
+          "party_id": {
+            "format": "uuid",
+            "title": "Party Id",
+            "type": "string"
+          },
+          "party_role": {
+            "enum": [
+              "customer",
+              "supplier",
+              "lender"
+            ],
+            "title": "Party Role",
+            "type": "string"
+          },
+          "recipient": {
+            "maxLength": 254,
+            "minLength": 3,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "title": "Recipient",
+            "type": "string"
+          },
+          "subject": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "evaluation_id",
+          "option_key",
+          "party_id",
+          "party_role",
+          "recipient",
+          "expected_preparation_hash",
+          "subject",
+          "body"
+        ],
+        "title": "DraftRevisionRequest",
         "type": "object"
       },
       "ErrorDetail": {
@@ -3751,6 +3869,13 @@
           "is_stale": {
             "title": "Is Stale",
             "type": "boolean"
+          },
+          "option_catalogue": {
+            "items": {
+              "$ref": "#/components/schemas/OptionResult"
+            },
+            "title": "Option Catalogue",
+            "type": "array"
           },
           "ranked_candidates": {
             "items": {
@@ -4143,6 +4268,53 @@
           "expected_financial_revision"
         ],
         "title": "ExpectedVersions",
+        "type": "object"
+      },
+      "Explanation": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fact Ids",
+            "type": "array"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "option_key": {
+            "title": "Option Key",
+            "type": "string"
+          },
+          "provenance": {
+            "const": "template",
+            "default": "template",
+            "title": "Provenance",
+            "type": "string"
+          },
+          "sentences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sentences",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "option_key",
+          "sentences",
+          "fact_ids",
+          "is_stale"
+        ],
+        "title": "Explanation",
         "type": "object"
       },
       "ExportView": {
@@ -4570,6 +4742,28 @@
         "title": "FinancingChange",
         "type": "object"
       },
+      "FinancingSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "offer_id": {
+            "format": "uuid",
+            "title": "Offer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer_id",
+          "amount_minor"
+        ],
+        "title": "FinancingSelection",
+        "type": "object"
+      },
       "Finding": {
         "additionalProperties": false,
         "properties": {
@@ -4665,6 +4859,375 @@
           "reason"
         ],
         "title": "FlagResolution",
+        "type": "object"
+      },
+      "ForkRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "ar_delay_days": "#/components/schemas/DelayChange",
+                  "cost_overrun_bps": "#/components/schemas/OverrunChange",
+                  "customer_delay_days": "#/components/schemas/DelayChange",
+                  "deposit_pct": "#/components/schemas/DepositChange",
+                  "financing": "#/components/schemas/FinancingChange",
+                  "supplier_extension": "#/components/schemas/ExtensionChange"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DelayChange"
+                },
+                {
+                  "$ref": "#/components/schemas/DepositChange"
+                },
+                {
+                  "$ref": "#/components/schemas/ExtensionChange"
+                },
+                {
+                  "$ref": "#/components/schemas/FinancingChange"
+                },
+                {
+                  "$ref": "#/components/schemas/OverrunChange"
+                }
+              ]
+            },
+            "maxItems": 10,
+            "title": "Changes",
+            "type": "array"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "instruction": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instruction"
+          },
+          "schema_version": {
+            "const": "whatif.v1",
+            "default": "whatif.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_snapshot_id": {
+            "format": "uuid",
+            "title": "Source Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "source_snapshot_id"
+        ],
+        "title": "ForkRequest",
+        "type": "object"
+      },
+      "ForkSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "ar_delay_days": "#/components/schemas/DelayChange",
+                  "cost_overrun_bps": "#/components/schemas/OverrunChange",
+                  "customer_delay_days": "#/components/schemas/DelayChange",
+                  "deposit_pct": "#/components/schemas/DepositChange",
+                  "financing": "#/components/schemas/FinancingChange",
+                  "supplier_extension": "#/components/schemas/ExtensionChange"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DelayChange"
+                },
+                {
+                  "$ref": "#/components/schemas/DepositChange"
+                },
+                {
+                  "$ref": "#/components/schemas/ExtensionChange"
+                },
+                {
+                  "$ref": "#/components/schemas/FinancingChange"
+                },
+                {
+                  "$ref": "#/components/schemas/OverrunChange"
+                }
+              ]
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Code"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonResult"
+              },
+              {
+                "$ref": "#/components/schemas/BlockedResult"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "provenance": {
+            "enum": [
+              "typed",
+              "template",
+              "recorded",
+              "live"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "source_result": {
+            "$ref": "#/components/schemas/ComparisonResult"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "changes",
+          "outcome",
+          "source_result",
+          "provenance",
+          "language_code",
+          "is_stale"
+        ],
+        "title": "ForkSummary",
+        "type": "object"
+      },
+      "ForkView": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_changed": {
+            "const": false,
+            "default": false,
+            "title": "Canonical Changed",
+            "type": "boolean"
+          },
+          "changes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "ar_delay_days": "#/components/schemas/DelayChange",
+                  "cost_overrun_bps": "#/components/schemas/OverrunChange",
+                  "customer_delay_days": "#/components/schemas/DelayChange",
+                  "deposit_pct": "#/components/schemas/DepositChange",
+                  "financing": "#/components/schemas/FinancingChange",
+                  "supplier_extension": "#/components/schemas/ExtensionChange"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DelayChange"
+                },
+                {
+                  "$ref": "#/components/schemas/DepositChange"
+                },
+                {
+                  "$ref": "#/components/schemas/ExtensionChange"
+                },
+                {
+                  "$ref": "#/components/schemas/FinancingChange"
+                },
+                {
+                  "$ref": "#/components/schemas/OverrunChange"
+                }
+              ]
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "fork_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfirmedInputV1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Code"
+          },
+          "language_input_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Input Hash"
+          },
+          "language_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Model"
+          },
+          "language_prompt_version": {
+            "const": "whatif.v1",
+            "default": "whatif.v1",
+            "title": "Language Prompt Version",
+            "type": "string"
+          },
+          "language_response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Response Id"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationResultV1"
+              },
+              {
+                "$ref": "#/components/schemas/BlockedResult"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "provenance": {
+            "enum": [
+              "typed",
+              "template",
+              "recorded",
+              "live"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ForkRequest"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/Series"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "source_evaluation_id": {
+            "format": "uuid",
+            "title": "Source Evaluation Id",
+            "type": "string"
+          },
+          "source_result": {
+            "$ref": "#/components/schemas/EvaluationResultV1"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "request",
+          "changes",
+          "fork_snapshot",
+          "outcome",
+          "source_evaluation_id",
+          "source_result",
+          "series",
+          "provenance",
+          "language_code",
+          "is_stale"
+        ],
+        "title": "ForkView",
         "type": "object"
       },
       "Health": {
@@ -5424,114 +5987,6 @@
         "title": "MessageItem",
         "type": "object"
       },
-      "MessageView": {
-        "additionalProperties": false,
-        "properties": {
-          "body": {
-            "title": "Body",
-            "type": "string"
-          },
-          "body_hash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "title": "Body Hash",
-            "type": "string"
-          },
-          "bundle_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Bundle Id"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "deal_id": {
-            "format": "uuid",
-            "title": "Deal Id",
-            "type": "string"
-          },
-          "direction": {
-            "enum": [
-              "inbound",
-              "outbound"
-            ],
-            "title": "Direction",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "party_id": {
-            "format": "uuid",
-            "title": "Party Id",
-            "type": "string"
-          },
-          "provenance": {
-            "enum": [
-              "manual",
-              "template",
-              "recorded",
-              "live"
-            ],
-            "title": "Provenance",
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "draft",
-              "approved",
-              "sent",
-              "received",
-              "discarded"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "subject": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Subject"
-          },
-          "version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "deal_id",
-          "version",
-          "direction",
-          "status",
-          "party_id",
-          "subject",
-          "body",
-          "body_hash",
-          "bundle_id",
-          "created_at",
-          "provenance"
-        ],
-        "title": "MessageView",
-        "type": "object"
-      },
       "Notification": {
         "additionalProperties": false,
         "properties": {
@@ -6049,6 +6504,34 @@
         "title": "OperationAccepted",
         "type": "object"
       },
+      "OptionCatalogue": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionResult"
+            },
+            "title": "Options",
+            "type": "array"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "options",
+          "is_stale"
+        ],
+        "title": "OptionCatalogue",
+        "type": "object"
+      },
       "OptionResult": {
         "additionalProperties": false,
         "properties": {
@@ -6535,12 +7018,12 @@
         "title": "OwnerSettings",
         "type": "object"
       },
-      "Page_AcceptanceView_": {
+      "Page_AcceptanceEvidence_": {
         "additionalProperties": false,
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/AcceptanceView"
+              "$ref": "#/components/schemas/AcceptanceEvidence"
             },
             "maxItems": 100,
             "title": "Items",
@@ -6562,7 +7045,7 @@
           "items",
           "next_cursor"
         ],
-        "title": "Page[AcceptanceView]",
+        "title": "Page[AcceptanceEvidence]",
         "type": "object"
       },
       "Page_AccountView_": {
@@ -6925,36 +7408,6 @@
         "title": "Page[Member]",
         "type": "object"
       },
-      "Page_MessageView_": {
-        "additionalProperties": false,
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MessageView"
-            },
-            "maxItems": 100,
-            "title": "Items",
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor"
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor"
-        ],
-        "title": "Page[MessageView]",
-        "type": "object"
-      },
       "Page_Notification_": {
         "additionalProperties": false,
         "properties": {
@@ -7043,6 +7496,36 @@
           "next_cursor"
         ],
         "title": "Page[PayeeView]",
+        "type": "object"
+      },
+      "Page_PreparedMessage_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PreparedMessage"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[PreparedMessage]",
         "type": "object"
       },
       "ParsedLanguage": {
@@ -7140,60 +7623,6 @@
           "guard_findings"
         ],
         "title": "ParsedLanguage",
-        "type": "object"
-      },
-      "PartyAcceptance": {
-        "additionalProperties": false,
-        "properties": {
-          "evidence": {
-            "$ref": "#/components/schemas/Evidence"
-          },
-          "party_id": {
-            "format": "uuid",
-            "title": "Party Id",
-            "type": "string"
-          },
-          "party_role": {
-            "enum": [
-              "customer",
-              "supplier",
-              "lender"
-            ],
-            "title": "Party Role",
-            "type": "string"
-          },
-          "supersedes_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Supersedes Id"
-          },
-          "terms_hash": {
-            "pattern": "^[a-f0-9]{64}$",
-            "title": "Terms Hash",
-            "type": "string"
-          },
-          "valid_until": {
-            "format": "date-time",
-            "title": "Valid Until",
-            "type": "string"
-          }
-        },
-        "required": [
-          "party_id",
-          "party_role",
-          "terms_hash",
-          "evidence",
-          "valid_until",
-          "supersedes_id"
-        ],
-        "title": "PartyAcceptance",
         "type": "object"
       },
       "PasswordChange": {
@@ -7456,6 +7885,273 @@
         "title": "Preferences",
         "type": "object"
       },
+      "PreparationIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "business_id": {
+            "format": "uuid",
+            "title": "Business Id",
+            "type": "string"
+          },
+          "channel": {
+            "const": "email",
+            "title": "Channel",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "format": "uuid",
+            "title": "Created By",
+            "type": "string"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Financial Revision",
+            "type": "integer"
+          },
+          "input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Input Version",
+            "type": "integer"
+          },
+          "message_id": {
+            "format": "uuid",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "option": {
+            "$ref": "#/components/schemas/OptionResult"
+          },
+          "party_id": {
+            "format": "uuid",
+            "title": "Party Id",
+            "type": "string"
+          },
+          "party_role": {
+            "enum": [
+              "customer",
+              "supplier",
+              "lender"
+            ],
+            "title": "Party Role",
+            "type": "string"
+          },
+          "party_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Party Version",
+            "type": "integer"
+          },
+          "previous_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Message Id"
+          },
+          "recipient": {
+            "title": "Recipient",
+            "type": "string"
+          },
+          "revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "sandbox": {
+            "const": true,
+            "default": true,
+            "title": "Sandbox",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "preparation.v1",
+            "default": "preparation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "format": "uuid",
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "terms_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Terms Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message_id",
+          "business_id",
+          "deal_id",
+          "evaluation_id",
+          "snapshot_id",
+          "snapshot_hash",
+          "input_version",
+          "financial_revision",
+          "option",
+          "party_id",
+          "party_role",
+          "party_version",
+          "recipient",
+          "channel",
+          "subject",
+          "body",
+          "terms_hash",
+          "previous_message_id",
+          "revision",
+          "created_by",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "PreparationIdentity",
+        "type": "object"
+      },
+      "PreparationReview": {
+        "additionalProperties": false,
+        "properties": {
+          "attestation": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "pattern": "\\S",
+            "title": "Attestation",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "preparation_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Preparation Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "preparation_hash",
+          "attestation"
+        ],
+        "title": "PreparationReview",
+        "type": "object"
+      },
+      "PreparationState": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptances": {
+            "items": {
+              "$ref": "#/components/schemas/AcceptanceEvidence"
+            },
+            "title": "Acceptances",
+            "type": "array"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "forks": {
+            "items": {
+              "$ref": "#/components/schemas/ForkSummary"
+            },
+            "title": "Forks",
+            "type": "array"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/PreparedMessage"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "replies": {
+            "items": {
+              "$ref": "#/components/schemas/ReplyView"
+            },
+            "title": "Replies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "deal_id",
+          "forks",
+          "messages",
+          "replies",
+          "acceptances",
+          "operations",
+          "has_more"
+        ],
+        "title": "PreparationState",
+        "type": "object"
+      },
       "PrepareBundle": {
         "additionalProperties": false,
         "properties": {
@@ -7517,6 +8213,69 @@
           "strategy"
         ],
         "title": "PrepareBundle",
+        "type": "object"
+      },
+      "PreparedMessage": {
+        "additionalProperties": false,
+        "properties": {
+          "blockers": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
+          "dispatch_eligible": {
+            "const": false,
+            "default": false,
+            "title": "Dispatch Eligible",
+            "type": "boolean"
+          },
+          "edit_sentences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Edit Sentences",
+            "type": "array"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/PreparationIdentity"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "preparation_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Preparation Hash",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "template",
+              "manual"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "reviewed": {
+            "title": "Reviewed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "identity",
+          "preparation_hash",
+          "provenance",
+          "reviewed",
+          "is_stale",
+          "blockers",
+          "edit_sentences"
+        ],
+        "title": "PreparedMessage",
         "type": "object"
       },
       "ProfileWrite": {
@@ -7687,7 +8446,146 @@
         "title": "ReasonCommand",
         "type": "object"
       },
-      "ReplyRequest": {
+      "RecordAcceptance": {
+        "additionalProperties": false,
+        "properties": {
+          "attestation": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "pattern": "\\S",
+            "title": "Attestation",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "message_id": {
+            "format": "uuid",
+            "title": "Message Id",
+            "type": "string"
+          },
+          "preparation_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Preparation Hash",
+            "type": "string"
+          },
+          "reply_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply Id"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "valid_until": {
+            "format": "date-time",
+            "title": "Valid Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "message_id",
+          "preparation_hash",
+          "reply_id",
+          "attestation",
+          "valid_until"
+        ],
+        "title": "RecordAcceptance",
+        "type": "object"
+      },
+      "ReplyDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Candidate Ids",
+            "type": "array"
+          },
+          "decision": {
+            "enum": [
+              "apply",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "pattern": "\\S",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "candidate_ids",
+          "decision",
+          "reason"
+        ],
+        "title": "ReplyDecision",
+        "type": "object"
+      },
+      "ReplyIntake": {
         "additionalProperties": false,
         "properties": {
           "ask_message_id": {
@@ -7695,9 +8593,10 @@
             "title": "Ask Message Id",
             "type": "string"
           },
-          "document_id": {
-            "format": "uuid",
-            "title": "Document Id",
+          "body": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Body",
             "type": "string"
           },
           "expected_financial_revision": {
@@ -7729,85 +8628,135 @@
           "expected_input_version",
           "expected_financial_revision",
           "ask_message_id",
-          "document_id",
-          "party_id"
+          "party_id",
+          "body"
         ],
-        "title": "ReplyRequest",
+        "title": "ReplyIntake",
         "type": "object"
       },
-      "ReplyReview": {
+      "ReplyTerm": {
         "additionalProperties": false,
         "properties": {
-          "candidate_id": {
-            "format": "uuid",
-            "title": "Candidate Id",
+          "field": {
+            "enum": [
+              "payment_days",
+              "order_value_minor",
+              "deposit_pct",
+              "supplier_extension_days",
+              "financing_draw_minor",
+              "acceptance"
+            ],
+            "title": "Field",
             "type": "string"
           },
-          "changes": {
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "ar_delay_days": "#/components/schemas/DelayChange",
-                  "cost_overrun_bps": "#/components/schemas/OverrunChange",
-                  "customer_delay_days": "#/components/schemas/DelayChange",
-                  "deposit_pct": "#/components/schemas/DepositChange",
-                  "financing": "#/components/schemas/FinancingChange",
-                  "supplier_extension": "#/components/schemas/ExtensionChange"
-                },
-                "propertyName": "kind"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/DelayChange"
-                },
-                {
-                  "$ref": "#/components/schemas/DepositChange"
-                },
-                {
-                  "$ref": "#/components/schemas/ExtensionChange"
-                },
-                {
-                  "$ref": "#/components/schemas/FinancingChange"
-                },
-                {
-                  "$ref": "#/components/schemas/OverrunChange"
-                }
-              ]
-            },
-            "title": "Changes",
-            "type": "array"
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
           },
-          "evidence": {
-            "$ref": "#/components/schemas/Evidence"
+          "quote": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
           },
-          "expected_financial_revision": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Financial Revision",
-            "type": "integer"
-          },
-          "expected_input_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Input Version",
-            "type": "integer"
-          },
-          "expected_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Version",
-            "type": "integer"
+          "value": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
           }
         },
         "required": [
-          "expected_version",
-          "expected_input_version",
-          "expected_financial_revision",
-          "candidate_id",
-          "evidence",
-          "changes"
+          "id",
+          "field",
+          "value",
+          "quote"
         ],
-        "title": "ReplyReview",
+        "title": "ReplyTerm",
+        "type": "object"
+      },
+      "ReplyView": {
+        "additionalProperties": false,
+        "properties": {
+          "ask_message_id": {
+            "format": "uuid",
+            "title": "Ask Message Id",
+            "type": "string"
+          },
+          "bank_change": {
+            "title": "Bank Change",
+            "type": "boolean"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ReplyTerm"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "injection_flagged": {
+            "title": "Injection Flagged",
+            "type": "boolean"
+          },
+          "language_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Code"
+          },
+          "party_id": {
+            "format": "uuid",
+            "title": "Party Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "template",
+              "recorded",
+              "live"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "reviewed": {
+            "title": "Reviewed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "ask_message_id",
+          "party_id",
+          "body",
+          "candidates",
+          "bank_change",
+          "injection_flagged",
+          "provenance",
+          "language_code",
+          "reviewed"
+        ],
+        "title": "ReplyView",
         "type": "object"
       },
       "Review": {
@@ -8721,6 +9670,17 @@
             "title": "Extensions",
             "type": "array"
           },
+          "financing_selection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinancingSelection"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "offer_ids": {
             "items": {
               "format": "uuid",
@@ -9294,115 +10254,6 @@
           "preferences"
         ],
         "title": "UserProfile",
-        "type": "object"
-      },
-      "WhatIfRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "changes": {
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "ar_delay_days": "#/components/schemas/DelayChange",
-                  "cost_overrun_bps": "#/components/schemas/OverrunChange",
-                  "customer_delay_days": "#/components/schemas/DelayChange",
-                  "deposit_pct": "#/components/schemas/DepositChange",
-                  "financing": "#/components/schemas/FinancingChange",
-                  "supplier_extension": "#/components/schemas/ExtensionChange"
-                },
-                "propertyName": "kind"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/DelayChange"
-                },
-                {
-                  "$ref": "#/components/schemas/DepositChange"
-                },
-                {
-                  "$ref": "#/components/schemas/ExtensionChange"
-                },
-                {
-                  "$ref": "#/components/schemas/FinancingChange"
-                },
-                {
-                  "$ref": "#/components/schemas/OverrunChange"
-                }
-              ]
-            },
-            "maxItems": 10,
-            "minItems": 1,
-            "title": "Changes",
-            "type": "array"
-          },
-          "expected_financial_revision": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Financial Revision",
-            "type": "integer"
-          },
-          "expected_input_version": {
-            "maximum": 2147483647,
-            "minimum": 1,
-            "title": "Expected Input Version",
-            "type": "integer"
-          },
-          "schema_version": {
-            "const": "whatif.v1",
-            "title": "Schema Version",
-            "type": "string"
-          },
-          "source_snapshot_id": {
-            "format": "uuid",
-            "title": "Source Snapshot Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "schema_version",
-          "source_snapshot_id",
-          "expected_input_version",
-          "expected_financial_revision",
-          "changes"
-        ],
-        "title": "WhatIfRequest",
-        "type": "object"
-      },
-      "WhatIfResult": {
-        "additionalProperties": false,
-        "properties": {
-          "canonical_changed": {
-            "const": false,
-            "title": "Canonical Changed",
-            "type": "boolean"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "outcome": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/EvaluationResultV1"
-              },
-              {
-                "$ref": "#/components/schemas/BlockedResult"
-              }
-            ],
-            "title": "Outcome"
-          },
-          "request": {
-            "$ref": "#/components/schemas/WhatIfRequest"
-          }
-        },
-        "required": [
-          "id",
-          "request",
-          "outcome",
-          "canonical_changed"
-        ],
-        "title": "WhatIfResult",
         "type": "object"
       }
     },
@@ -16386,11 +17237,12 @@
           },
           {
             "in": "query",
-            "name": "cursor",
+            "name": "offset",
             "required": false,
             "schema": {
-              "maxLength": 2048,
-              "type": "string"
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -16410,7 +17262,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page_AcceptanceView_"
+                  "$ref": "#/components/schemas/Page_AcceptanceEvidence_"
                 }
               }
             },
@@ -16577,7 +17429,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AcceptanceRequest"
+                "$ref": "#/components/schemas/RecordAcceptance"
               }
             }
           },
@@ -16588,7 +17440,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AcceptanceView"
+                  "$ref": "#/components/schemas/AcceptanceEvidence"
                 }
               }
             },
@@ -18722,7 +19574,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DraftRequest"
+                "$ref": "#/components/schemas/DraftPreparationRequest"
               }
             }
           },
@@ -19977,11 +20829,12 @@
           },
           {
             "in": "query",
-            "name": "cursor",
+            "name": "offset",
             "required": false,
             "schema": {
-              "maxLength": 2048,
-              "type": "string"
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -20001,7 +20854,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page_MessageView_"
+                  "$ref": "#/components/schemas/Page_PreparedMessage_"
                 }
               }
             },
@@ -20120,6 +20973,351 @@
         "x-service-owner": "negotiation.list",
         "x-storage-owner": [
           "negotiation_message"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/deals/{deal_id}/preparation": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "preparation_state",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationState"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "read",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "whatif_run",
+          "prepared_message",
+          "reply_candidate_set",
+          "party_acceptance"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/deals/{deal_id}/preparation-settings/reset": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "preparation_settings_reset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpectedVersions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation.reset_settings",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "prepare",
+        "x-service-owner": "preparation.reset_settings",
+        "x-storage-owner": [
+          "deal",
+          "operation_log"
         ]
       }
     },
@@ -20352,7 +21550,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReplyRequest"
+                "$ref": "#/components/schemas/ReplyIntake"
               }
             }
           },
@@ -20551,7 +21749,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReplyReview"
+                "$ref": "#/components/schemas/ReplyDecision"
               }
             }
           },
@@ -20886,7 +22084,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WhatIfRequest"
+                "$ref": "#/components/schemas/ForkRequest"
               }
             }
           },
@@ -21178,6 +22376,319 @@
         "x-storage-owner": [
           "evaluation",
           "evaluation_option"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/evaluations/{evaluation_id}/catalogue": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "evaluation_catalogue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evaluation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptionCatalogue"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "read",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "evaluation",
+          "evaluation_option"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/evaluations/{evaluation_id}/explanation": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "evaluation_explanation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evaluation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "option_key",
+            "required": true,
+            "schema": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Explanation"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "read",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "evaluation"
         ]
       }
     },
@@ -23257,7 +24768,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageView"
+                  "$ref": "#/components/schemas/PreparedMessage"
                 }
               }
             },
@@ -23424,7 +24935,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DraftEdit"
+                "$ref": "#/components/schemas/DraftRevisionRequest"
               }
             }
           },
@@ -23435,7 +24946,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageView"
+                  "$ref": "#/components/schemas/PreparedMessage"
                 }
               }
             },
@@ -23555,6 +25066,186 @@
         "x-storage-owner": [
           "negotiation_message",
           "action_bundle"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/messages/{message_id}/review": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "preparation_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationReview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparedMessage"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "prepare",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "preparation_review"
         ]
       }
     },
@@ -26131,6 +27822,157 @@
         ]
       }
     },
+    "/api/v1/businesses/{business_id}/replies/{reply_id}": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "reply_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reply_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyView"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "read",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "reply_candidate_set"
+        ]
+      }
+    },
     "/api/v1/businesses/{business_id}/whatifs/{whatif_id}": {
       "get": {
         "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
@@ -26160,7 +28002,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WhatIfResult"
+                  "$ref": "#/components/schemas/ForkView"
                 }
               }
             },

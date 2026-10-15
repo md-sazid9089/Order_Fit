@@ -137,6 +137,7 @@ def build_evaluation_dto(
         baseline=baseline_rows,
         as_is=as_is_result,
         ranked_candidates=options,
+        option_catalogue=[to_option_result(c, target, best_profit, result) for c in result.catalogue],
         recommended_option_key=recommended,
         summary_scope="recommended_base" if recommended else "as_is_base",
         assumptions=snapshot.assumptions,
