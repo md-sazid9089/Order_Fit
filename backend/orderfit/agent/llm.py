@@ -61,7 +61,8 @@ def render_prompt(name: str, request: LanguageRequest) -> str:
     """Document text goes inside <document> tags and is labelled untrusted data."""
     template = (PROMPTS / f"{name}.md").read_text(encoding="utf-8")
     documents = "\n".join(
-        f'<document id="{s.document_id}" page="{s.page}" role="{s.source_role}">\n{s.text}\n</document>'
+        f'<document id="{s.document_id}" page="{s.page}" role="{s.source_role}">\n'
+        f"{s.text.replace('<', '&lt;')}\n</document>"  # source text cannot close the data tag
         for s in request.sources
     )
     return f"{template}\n\n{documents}"
@@ -179,6 +180,12 @@ async def _live(request: LanguageRequest, settings: LLMSettings) -> LanguageResu
         if getattr(exc, "code", None) == "insufficient_quota":
             return _unavailable("QUOTA")
         return _unavailable("RATE_LIMIT", retryable=True)
+    except openai.LengthFinishReasonError:
+        return _unavailable("INCOMPLETE", "incomplete", True)
+    except openai.ContentFilterFinishReasonError:
+        return _unavailable("REFUSAL", "refused")
+    except ValidationError:
+        return _unavailable("INVALID_OUTPUT", "invalid_output")
     except (openai.APIConnectionError, openai.APIStatusError):
         return _unavailable("PROVIDER_UNAVAILABLE", retryable=True)
     finally:
