@@ -2,6 +2,14 @@
 
 _Status as of 15 Oct 2026, branch `database` (migration `0001_core_schema`)._
 
+Application examples below are historical guidance. For implementation, use the
+[backend plan](../initial_backend_implementation_plan.md) and
+[P0 contracts](../contracts/README.md), including the DB-01–DB-30 dispositions.
+In particular, do not adopt checkpoint setup, the filtered 540-day view as the
+complete input source, reply-driven round increments, bare approval-hash sends,
+unconditional unique-error replay or raw DB error messages from these examples.
+Reported database checks below have not been rerun by the P0 contract task.
+
 This document has two parts:
 
 - **Part A, audit:** what the database contains, how it was checked, what passed, and what is still open.

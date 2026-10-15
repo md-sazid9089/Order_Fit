@@ -1,8 +1,6 @@
-"""App factory: CORS, routers, startup.
+"""Liveness-only scaffold. P0 target contracts are offline, not mounted.
 
-On startup, resume any workflow thread whose last checkpoint is mid-run
-(not paused at confirm/approve and not closed). LangGraph does not resume
-interrupted runs by itself.
+P1 establishes identity and durable operations before business routes land.
 """
 
 from fastapi import FastAPI
