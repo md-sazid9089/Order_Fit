@@ -638,3 +638,52 @@ flow or frontend integration was implemented or enabled here.**
   and concurrent-resolve races were not exercised beyond the deal-row lock.
 - OCR, docx/xlsx and `reply` extraction (P5) are unsupported. Override of a field to a value
   not among the candidates is not supported (select another candidate with a reason).
+
+## P3 — independent verification and blocker remediation (15 October 2026)
+
+### Gate result
+
+**P3 acceptance gate passed locally.** Three independent audits covered the
+financial engine, backend persistence/security, and browser-facing workflow.
+The concurrent P4 branch remains integrated through merge-only migration
+`0005_p3_p4_integration`; it was not used as evidence that P3 is complete.
+
+### Material corrections made during the audit
+
+- Replaced fabricated tolerance values with bounded per-candidate scans and added
+  child-process memory enforcement. Evaluation responses now retain diagnostics,
+  uncertainty questions, ranked options, and the computed tolerance.
+- Preserved cost obligation/evidence identities across edits and confirmation;
+  retained lender/source provenance and persisted downside/severe policy terms.
+- Added tenant-authorized immutable decision exports and auditable partial-chain
+  exports, with tamper, expiry, role, and cross-tenant download checks.
+- Joined the P3 and P4 Alembic branches without rewriting either history, then
+  added `0006_p3_input_integrity` for the reviewed-cost persistence correction.
+- Fixed concurrent-tab CSRF invalidation by keeping a session challenge stable
+  within the authenticated session lifetime.
+- Fixed a browser-discovered admission failure: manual orders source opening cash
+  from the dated business baseline, and the repository now persists that reviewed
+  value before the database permits the order to enter `computing`. A regression
+  test confirms the snapshot and state transition.
+
+### Evidence
+
+| Check | Result |
+|---|---|
+| Backend full suite: `uv run --frozen python -m pytest -q --tb=short -x -p no:cacheprovider` | **222 passed** in 194.08s; one existing Starlette/TestClient deprecation warning |
+| Engine reference, independent, adapter, and architecture checks | **83 passed** |
+| Export and process-recovery checks, with real disposable API/worker processes | **4 passed** |
+| Alembic migration graph | `0006_p3_input_integrity` is the sole head |
+| Contracts export/check and backend Ruff | passed |
+| Frontend API tests/type check | **6 passed**; passed |
+| Frontend `npm run lint` and `npm run build` | build passed; lint has 183 pre-existing warnings and no errors |
+| Browser walkthrough | disposable signup, baseline, lender, supported offer, policy, cost evidence, save/review, confirmation and evaluation-admission path exercised; the baseline admission defect above was found and covered by regression tests |
+
+### Remaining scope
+
+- Hosted deployment, backup/restore, live OpenAI use, and production resource
+  calibration were not exercised locally.
+- P5 negotiation/reply and P6 action sandbox work remain outside P3. The live
+  navigation presents P5 routes as unavailable rather than implying support.
+- P4 document extraction remains a concurrent scope and needs its own final
+  acceptance review. The existing TestClient dependency deprecation remains.

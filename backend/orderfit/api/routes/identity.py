@@ -1,10 +1,8 @@
 """P1 HTTP identity and operation reads/commands; no future business routes mounted."""
 
-from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Request, Response
-from sqlalchemy import text
 
 from orderfit.api.deps import identity_service, mutation, session_token
 from orderfit.api.errors import ApplicationError
@@ -19,7 +17,6 @@ from orderfit.contracts.resources import (
     SignUp,
 )
 from orderfit.contracts.workflow import CancelOperation, Operation
-from orderfit.store.db import digest_token
 
 router = APIRouter(prefix="/api/v1")
 IMPLEMENTED = {
@@ -29,6 +26,9 @@ IMPLEMENTED = {
     "signout",
     "session",
     "password_change",
+    "capabilities",
+    "operation_get",
+    "operation_cancel",
     # P4 documents and extraction
     "document_upload",
     "documents",
@@ -40,9 +40,6 @@ IMPLEMENTED = {
     "csv_preview_create",
     "csv_preview_get",
     "csv_confirm",
-    "capabilities",
-    "operation_get",
-    "operation_cancel",
     # P3 operations
     "business_profile",
     "baseline_get",
@@ -81,6 +78,9 @@ IMPLEMENTED = {
     "evaluations",
     "evaluation_get",
     "evaluation_series",
+    "audit_export",
+    "decision_export",
+    "export_download",
 }
 
 
@@ -99,17 +99,10 @@ def challenge(request: Request, response: Response):
         and request.headers["Origin"] not in service.config.allowed_origins
     ):
         raise ApplicationError(403, "CSRF_REJECTED")
-    csrf = service.csrf()
-    token = request.cookies.get("orderfit_session")
-    if token:
-        with service.database.engine.begin() as c:
-            c.execute(
-                text("SELECT session_csrf(:digest,:csrf)"),
-                {"digest": digest_token(token), "csrf": digest_token(csrf)},
-            )
+    csrf, expires_at = service.challenge(request.cookies.get("orderfit_session"), request.cookies.get("orderfit_csrf"))
     cookies(response, service.config, None, csrf)
     response.headers["Cache-Control"] = "no-store"
-    return CSRFChallenge(csrf_token=csrf, expires_at=datetime.now(UTC) + timedelta(minutes=30))
+    return CSRFChallenge(csrf_token=csrf, expires_at=expires_at)
 
 
 def authenticate(request, response, data):

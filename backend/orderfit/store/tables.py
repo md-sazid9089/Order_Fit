@@ -78,6 +78,8 @@ owner_constraints = Table(
     Column("downside_ar_delay_days", Integer),
     Column("downside_cost_overrun_bps", Integer),
     Column("downside_deposit_follows_delay", Boolean),
+    Column("downside_order_receipt_haircut_bps", Integer),
+    Column("severe_order_receipt_haircut_bps", Integer),
     Column("severe_order_delay_days", Integer),
     Column("severe_ar_delay_days", Integer),
     Column("severe_cost_overrun_bps", Integer),
@@ -228,6 +230,8 @@ cash_event = Table(
     Column("version", Integer),
     Column("voided_at", DateTime(timezone=True)),
     Column("supersedes_id", BigInteger),
+    Column("cost_key", String),
+    Column("original_obligation_id", String),
 )
 
 evaluation = Table(

@@ -5,6 +5,7 @@ import hmac
 import json
 import secrets
 import time
+from datetime import UTC, datetime
 
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import InvalidHashError, VerificationError
@@ -30,6 +31,33 @@ class IdentityService:
     def csrf(self):
         payload = secrets.token_urlsafe(32) + "." + str(int(time.time()) + 1800)
         return payload + "." + hmac.new(self.secret, payload.encode(), hashlib.sha256).hexdigest()
+
+    def session_csrf(self, session_id, expires_at):
+        """Stable for one session; session revocation and idle expiry still apply."""
+        nonce = hmac.new(self.secret, ("csrf-session:" + str(session_id)).encode(), hashlib.sha256).hexdigest()
+        payload = nonce + "." + str(int(expires_at.timestamp()))
+        return payload + "." + hmac.new(self.secret, payload.encode(), hashlib.sha256).hexdigest()
+
+    def challenge(self, token, current_csrf):
+        if token:
+            try:
+                with self.database.identity(token) as (c, scope, session):
+                    csrf = self.session_csrf(scope.session_id, session["expires_at"])
+                    if not hmac.compare_digest(bytes(session["csrf_digest"]), digest_token(csrf)):
+                        c.execute(text("SELECT session_csrf(:digest,:csrf)"), {
+                            "digest": digest_token(token), "csrf": digest_token(csrf)})
+                    return csrf, datetime.fromtimestamp(int(session["expires_at"].timestamp()), UTC)
+            except ApplicationError as exc:
+                if exc.status != 401:
+                    raise
+        if current_csrf:
+            try:
+                self.validate_csrf(current_csrf, current_csrf, self.config.allowed_origins[0])
+                return current_csrf, datetime.fromtimestamp(int(current_csrf.split(".")[1]), UTC)
+            except ApplicationError:
+                pass
+        csrf = self.csrf()
+        return csrf, datetime.fromtimestamp(int(csrf.split(".")[1]), UTC)
 
     def validate_csrf(self, cookie, header, origin):
         if (
@@ -172,6 +200,9 @@ class IdentityService:
                 .one()
             )
             scope = Scope(row["user_id"], row["session_id"])
+            new_csrf = self.session_csrf(scope.session_id, row["expires_at"])
+            c.execute(text("SELECT session_csrf(:digest,:csrf)"), {
+                "digest": digest_token(token), "csrf": digest_token(new_csrf)})
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
             view = self.view_connection(c, scope, row, new_csrf)
             c.execute(

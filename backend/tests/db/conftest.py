@@ -20,7 +20,7 @@ from sqlalchemy import URL
 from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.contracts.resources import SignUp
 from orderfit.services.identity import IdentityService
-from orderfit.store.db import Database
+from orderfit.store.db import SCHEMA_REVISION, Database
 from orderfit.store.provision import provision_login
 
 BACKEND = Path(__file__).resolve().parents[2]
@@ -90,7 +90,9 @@ def postgres():
             raise RuntimeError("Disposable PostgreSQL did not start")
         print("\nDisposable PG17 target: " + name + " / " + dbname + " (loopback)")
 
-        def migrate(target="head", database_url=url):
+        # Accept the application's declared schema, independently of unfinished
+        # later-phase migration branches that may exist during development.
+        def migrate(target=SCHEMA_REVISION, database_url=url):
             cfg = Config(str(BACKEND / "alembic.ini"))
             cfg.set_main_option("script_location", str(BACKEND / "migrations"))
             with patch.dict(os.environ, {"DATABASE_URL_DIRECT": database_url}):

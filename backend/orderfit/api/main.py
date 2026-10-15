@@ -13,6 +13,7 @@ from orderfit.api.routes.business import router as business_router
 from orderfit.api.routes.deals import router as deals_router
 from orderfit.api.routes.documents import router as documents_router
 from orderfit.api.routes.evaluations import router as evaluations_router
+from orderfit.api.routes.exports import router as exports_router
 from orderfit.api.routes.identity import router
 from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.services.identity import IdentityService
@@ -30,9 +31,9 @@ class BodyLimit:
             return await self.app(scope, receive, send)
         chunks = []
         size = 0
-        while True:
         upload = scope["method"] == "POST" and scope["path"].endswith("/documents")
         limit = 27262976 if upload else 1048576  # 26 MiB file + multipart overhead
+        while True:
             message = await receive()
             if message["type"] == "http.disconnect":
                 return
@@ -105,8 +106,9 @@ def create_app(config=None, database=None):
     app.include_router(router)
     app.include_router(business_router)
     app.include_router(deals_router)
-    app.include_router(evaluations_router)
     app.include_router(documents_router)
+    app.include_router(evaluations_router)
+    app.include_router(exports_router)
 
     @app.get("/health")
     def health():

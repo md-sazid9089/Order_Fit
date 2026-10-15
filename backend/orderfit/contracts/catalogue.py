@@ -1228,7 +1228,7 @@ add(
     "audit",
     "audit.export",
     "operation_log,operation_log_canonical",
-    "P7",
+    "P3",
     "V14",
 )
 add(
@@ -1239,8 +1239,8 @@ add(
     r.ExportView,
     "audit",
     "exports.decision",
-    "input_snapshot,evaluation,approval,execution_action,operation_log",
-    "P7",
+    "decision_export,input_snapshot,evaluation,operation_log",
+    "P3",
     "V14",
     status=201,
 )
@@ -1250,10 +1250,10 @@ add(
     "export_download",
     None,
     DTO,
-    "read",
+    "audit",
     "exports.download",
-    "private_files",
-    "P7",
+    "decision_export",
+    "P3",
     "V03",
 )
 add(
