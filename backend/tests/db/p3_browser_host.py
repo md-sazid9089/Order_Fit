@@ -20,6 +20,7 @@ from tests.db.test_p3_process_recovery import running_api, runtime_environment
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stop-file", type=Path, required=True)
+    parser.add_argument("--restart-file", type=Path)
     args = parser.parse_args()
     if args.stop_file.exists():
         parser.error("Choose an absent stop file")
@@ -28,23 +29,43 @@ def main():
     try:
         with TemporaryDirectory(prefix="orderfit-p3-browser-") as documents:
             config = RuntimeConfiguration(
-                database_url=database["url"], session_secret=secrets.token_hex(32),
-                account_fingerprint_key=secrets.token_hex(32), account_fingerprint_key_version=1,
-                document_dir=documents, allowed_origins=["http://localhost:3127"],
-                cookie_secure=False, llm_mode="off")
-            with running_api(runtime_environment(database, config), 8127):
-                worker = subprocess.Popen([sys.executable, "-m", "orderfit.workflow.worker"],
-                    env=runtime_environment(database, config, worker=True),
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                try:
-                    print("P3_BROWSER_READY api=http://localhost:8127 web=http://localhost:3127", flush=True)
-                    while not args.stop_file.exists():
-                        if worker.poll() is not None:
-                            raise RuntimeError("Disposable browser worker exited")
-                        time.sleep(1)
-                finally:
-                    worker.terminate()
-                    worker.wait(timeout=5)
+                database_url=database["url"],
+                session_secret=secrets.token_hex(32),
+                account_fingerprint_key=secrets.token_hex(32),
+                account_fingerprint_key_version=1,
+                document_dir=documents,
+                allowed_origins=["http://localhost:3127"],
+                cookie_secure=False,
+                llm_mode="off",
+            )
+            while not args.stop_file.exists():
+                with running_api(runtime_environment(database, config), 8127):
+                    worker = subprocess.Popen(
+                        [sys.executable, "-m", "orderfit.workflow.worker"],
+                        env=runtime_environment(database, config, worker=True),
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    try:
+                        print(
+                            "P3_BROWSER_READY api=http://localhost:8127 web=http://localhost:3127",
+                            flush=True,
+                        )
+                        while not args.stop_file.exists() and not (
+                            args.restart_file and args.restart_file.exists()
+                        ):
+                            if worker.poll() is not None:
+                                raise RuntimeError("Disposable browser worker exited")
+                            time.sleep(1)
+                    finally:
+                        worker.terminate()
+                        worker.wait(timeout=5)
+                if args.restart_file and args.restart_file.exists():
+                    args.restart_file.unlink()
+                    print(
+                        "BROWSER_PROCESS_RESTART preserved database, documents and sessions",
+                        flush=True,
+                    )
     finally:
         fixture.close()
 

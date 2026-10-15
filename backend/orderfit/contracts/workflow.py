@@ -198,6 +198,7 @@ class EvaluationResultV1(DTO):
     baseline: list[ScenarioSummary] = Field(min_length=3, max_length=3)
     as_is: OptionResult
     ranked_candidates: list[OptionResult]
+    option_catalogue: list[OptionResult] = Field(default_factory=list)
     recommended_option_key: str | None
     summary_scope: Literal["recommended_base", "as_is_base"]
     assumptions: list[Text]

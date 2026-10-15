@@ -15,6 +15,7 @@ from orderfit.api.routes.documents import router as documents_router
 from orderfit.api.routes.evaluations import router as evaluations_router
 from orderfit.api.routes.exports import router as exports_router
 from orderfit.api.routes.identity import router
+from orderfit.api.routes.preparation import router as preparation_router
 from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.services.identity import IdentityService
 from orderfit.store.db import Database
@@ -109,6 +110,7 @@ def create_app(config=None, database=None):
     app.include_router(documents_router)
     app.include_router(evaluations_router)
     app.include_router(exports_router)
+    app.include_router(preparation_router)
 
     @app.get("/health")
     def health():

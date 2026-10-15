@@ -2,6 +2,15 @@
 
 These instructions apply throughout the repository. Read additional `AGENTS.md` files in the directories you change: `backend/AGENTS.md` supplements this file for backend work; `web/AGENTS.md` contains the frontend's version-specific instructions. Follow the user's current request over repository guidance when they conflict.
 
+## Development context and maintenance
+
+For development or continuation work, read the concise
+[development context skill](.agents/skills/orderfit-development-context/SKILL.md).
+Reconcile its snapshot with the checkout. Update it when phase status, material
+decisions, schema/paths or verified blockers change; put detailed evidence in
+`docs/backend_implementation_progress.md`. Avoid duplicating these instructions
+or updating the handoff for routine edits.
+
 ## Purpose and working style
 
 OrderFit helps a small business assess whether it can afford an order, compare revised terms and financing, and record human-approved sandbox actions. AI proposes extracted facts and language; a deterministic engine owns financial calculations; an authorized person approves outgoing actions.

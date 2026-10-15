@@ -106,3 +106,9 @@ All business operations are planned, not deployed. Test column is the required p
 | baseline_update | `PATCH /api/v1/businesses/{business_id}/baseline` | manage_finance | `baseline.update_balance` | business,operation_log | P3 | V09 |
 | health | `GET /health` | public | `health.liveness` | none | P0 | V16 |
 | ready | `GET /ready` | public | `health.readiness` | schema,private_files,operation | P8 | V16 |
+| evaluation_catalogue | `GET /api/v1/businesses/{business_id}/evaluations/{evaluation_id}/catalogue` | read | `preparation` | evaluation,evaluation_option | P5 | V09 |
+| evaluation_explanation | `GET /api/v1/businesses/{business_id}/evaluations/{evaluation_id}/explanation` | read | `preparation` | evaluation | P5 | V09 |
+| preparation_state | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/preparation` | read | `preparation` | whatif_run,prepared_message,reply_candidate_set,party_acceptance | P5 | V09 |
+| preparation_review | `POST /api/v1/businesses/{business_id}/messages/{message_id}/review` | prepare | `preparation` | preparation_review | P5 | V09 |
+| reply_get | `GET /api/v1/businesses/{business_id}/replies/{reply_id}` | read | `preparation` | reply_candidate_set | P5 | V09 |
+| preparation_settings_reset | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/preparation-settings/reset` | prepare | `preparation.reset_settings` | deal,operation_log | P5 | V09 |
