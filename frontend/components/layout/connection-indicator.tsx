@@ -5,14 +5,13 @@ import { Wifi, WifiOff, RefreshCw, X, ChevronUp, ChevronDown, Server } from "luc
 
 export function ConnectionIndicator() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [lastChecked, setLastChecked] = useState<string>("");
   const [backendUrl, setBackendUrl] = useState("http://localhost:8000");
   const [isMinimized, setIsMinimized] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   const checkConnection = useCallback(async () => {
-    setIsChecking(true);
     try {
       const res = await fetch("/api/health", { cache: "no-store" });
       if (res.ok) {
@@ -30,8 +29,13 @@ export function ConnectionIndicator() {
     }
   }, []);
 
+  const refresh = useCallback(() => {
+    setIsChecking(true);
+    void checkConnection();
+  }, [checkConnection]);
+
   useEffect(() => {
-    checkConnection();
+    void checkConnection();
     // Re-check periodically every 10 seconds
     const interval = setInterval(checkConnection, 10000);
     return () => clearInterval(interval);
@@ -102,7 +106,7 @@ export function ConnectionIndicator() {
           <div className="flex items-center gap-1 shrink-0 text-[#737373]">
             <button
               type="button"
-              onClick={checkConnection}
+              onClick={refresh}
               disabled={isChecking}
               className="p-1 rounded-lg hover:bg-black/5 hover:text-[#1E2021] transition-colors cursor-pointer"
               title="Ping server now"
@@ -149,7 +153,7 @@ export function ConnectionIndicator() {
 
             <div className="flex items-center justify-between text-[10px] text-[#A3A3A3] pt-1">
               <span>Last ping: {lastChecked || "Pending"}</span>
-              <span className="hover:underline cursor-pointer" onClick={checkConnection}>
+              <span className="hover:underline cursor-pointer" onClick={refresh}>
                 Click to re-ping
               </span>
             </div>
