@@ -1,69 +1,98 @@
-import Image from "next/image";
+import { AnnouncementBanner } from "@/components/landing/announcement-banner";
+import { Navbar } from "@/components/landing/navbar";
+import { HeroSection } from "@/components/landing/hero-section";
+import { SectorsMarquee } from "@/components/landing/sectors-marquee";
+import { FeaturePillars } from "@/components/landing/feature-pillars";
+import { ResultsSection } from "@/components/landing/results-section";
+import { MetricsSection } from "@/components/landing/metrics-section";
+import { OldVsNewWay } from "@/components/landing/old-vs-new-way";
+import { IntegrationsSection } from "@/components/landing/integrations-section";
+import { CustomerStories } from "@/components/landing/customer-stories";
+import { OrderSimulator } from "@/components/landing/order-simulator";
+import { SupportTiers } from "@/components/landing/support-tiers";
+import { FaqSection } from "@/components/landing/faq-section";
+import { InsightsSection } from "@/components/landing/insights-section";
+import { CtaSection } from "@/components/landing/cta-section";
+import { Footer } from "@/components/landing/footer";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] antialiased selection:bg-[#B5F2C6] selection:text-[#004D3B]">
+      {/* Top Announcement Bar */}
+      <AnnouncementBanner />
+
+      {/* Navigation */}
+      <Navbar />
+
+      {/* Main Landing Page matching Settle.com 1-to-1 */}
+      <main id="main-content">
+        {/* Section 1: Hero Section */}
+        <HeroSection />
+
+        {/* Section 2: Press ticker and Brand Logos Marquee */}
+        <ScrollReveal direction="up" distance={24} duration={0.6}>
+          <SectorsMarquee />
+        </ScrollReveal>
+
+        {/* Section 3: The back office built for growing brands (3 pillars + 4 capabilities) */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <FeaturePillars />
+        </ScrollReveal>
+
+        {/* Section 4: Let the results speak for themselves */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <ResultsSection />
+        </ScrollReveal>
+
+        {/* Section 5: OrderFit by the numbers (Settle lavender container) */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <MetricsSection />
+        </ScrollReveal>
+
+        {/* Section 6: Less Busywork. More Breakthroughs. (The old way vs The OrderFit way) */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <OldVsNewWay />
+        </ScrollReveal>
+
+        {/* Section 7: All the integrations you need */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <IntegrationsSection />
+        </ScrollReveal>
+
+        {/* Section 8: Customer Stories */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <CustomerStories />
+        </ScrollReveal>
+
+        {/* Section 9 & 10: Take an interactive product tour (Live browser container) */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <OrderSimulator />
+        </ScrollReveal>
+
+        {/* Section 11: Dedicated support from real humans — not AI */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <SupportTiers />
+        </ScrollReveal>
+
+        {/* Section 12: Frequently asked questions */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <FaqSection />
+        </ScrollReveal>
+
+        {/* Section 13: Latest news & insights */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <InsightsSection />
+        </ScrollReveal>
+
+        {/* Section 14: Insights in your inbox (Newsletter CTA) */}
+        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
+          <CtaSection />
+        </ScrollReveal>
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
