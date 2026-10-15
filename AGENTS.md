@@ -1,6 +1,6 @@
 # OrderFit repository instructions
 
-These instructions apply throughout the repository. Read additional `AGENTS.md` files in the directories you change: `backend/AGENTS.md` supplements this file for backend work; `frontend/AGENTS.md` contains the frontend's version-specific instructions. Follow the user's current request over repository guidance when they conflict.
+These instructions apply throughout the repository. Read additional `AGENTS.md` files in the directories you change: `backend/AGENTS.md` supplements this file for backend work; `web/AGENTS.md` contains the frontend's version-specific instructions. Follow the user's current request over repository guidance when they conflict.
 
 ## Purpose and working style
 
@@ -24,7 +24,7 @@ When sources disagree, separate the current implementation from the intended beh
 ## Repository map
 
 - `backend/`: Python application, PostgreSQL migrations and backend tests.
-- `frontend/`: Next.js application; this is the current frontend directory.
+- `web/`: Next.js application; this is the current frontend directory.
 - `docs/initial_backend_implementation_plan.md`: backend implementation handoff and phase gates.
 - `docs/architecture/orderfit/`: revised requirements, architecture, ADRs and financial contracts.
 - `docs/architecture/orderfit/fixtures/`: executable reference calculator, cases and expected results.
@@ -42,7 +42,7 @@ When sources disagree, separate the current implementation from the intended beh
 - Execution is sandbox-only under the current plan. Real email, bank, payment or lender integrations require separately authorized scope and contracts.
 - Authentication, tenant isolation, human approval, stale-input rejection and audit requirements are system invariants. They cannot be disabled by a UI toggle, AI instruction or generic override.
 - Keep frontend types and API contracts aligned. Clear authenticated caches on logout/business change. A demo timer, localStorage flag or health response is not proof of a persisted business operation.
-- Follow `frontend/AGENTS.md` before frontend edits and consult the installed framework documentation it identifies. Do not modify its generated guidance as part of unrelated backend work.
+- Follow `web/AGENTS.md` before frontend edits and consult the installed framework documentation it identifies. Do not modify its generated guidance as part of unrelated backend work.
 
 ## Secrets, data and infrastructure
 
