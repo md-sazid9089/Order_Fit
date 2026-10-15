@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DealNegotiateClient } from "@/components/deals/deal-negotiate-client";
 
 interface DealNegotiatePageProps {
   params: Promise<{ id: string }>;
@@ -6,16 +7,12 @@ interface DealNegotiatePageProps {
 
 async function NegotiateContent({ params }: DealNegotiatePageProps) {
   const { id } = await params;
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-2xl font-semibold">Negotiate & Approve: Deal {id}</h1>
-    </main>
-  );
+  return <DealNegotiateClient id={id} />;
 }
 
 export default function DealNegotiatePage({ params }: DealNegotiatePageProps) {
   return (
-    <Suspense fallback={<div className="p-8">Loading negotiation...</div>}>
+    <Suspense fallback={<div className="p-8 font-mono text-xs">Loading negotiation plan...</div>}>
       <NegotiateContent params={params} />
     </Suspense>
   );

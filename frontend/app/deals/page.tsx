@@ -173,9 +173,6 @@ export default function DealsPage() {
                 <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">
                   Deals & Orders Pipeline
                 </h1>
-                <p className="text-[11px] text-[#737373] leading-tight hidden sm:block">
-                  Real-time purchase order feasibility, delay tolerance scan, and commercial term planning
-                </p>
               </div>
             </div>
 

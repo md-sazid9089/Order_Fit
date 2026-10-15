@@ -185,14 +185,17 @@ export function AppSidebar({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-[#E8E6E1]">
-          {isExpanded ? (
-            <div className="space-y-3 pb-2">
-              <div
-                className={`p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed transition-opacity duration-200 ${
-                  isExpanded ? "opacity-100 delay-75" : "opacity-0"
-                }`}
-              >
+        <div className="p-3 border-t border-[#E8E6E1] overflow-hidden">
+          <div className="relative min-h-[96px] flex flex-col justify-end">
+            {/* Expanded Card View with smooth fade animation */}
+            <div
+              className={`w-[230px] space-y-3 pb-1 transition-opacity duration-200 ease-in-out ${
+                isExpanded
+                  ? "opacity-100 delay-75"
+                  : "opacity-0 pointer-events-none absolute left-0 bottom-0"
+              }`}
+            >
+              <div className="p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed">
                 <div className="font-semibold text-[#1E2021] mb-1 flex items-center gap-1.5 whitespace-nowrap">
                   <CheckCircle2 className="size-3.5 text-[#1E2021] shrink-0" />
                   <span>Pure Decision Engine</span>
@@ -200,11 +203,7 @@ export function AppSidebar({
                 <p className="line-clamp-2">Integer minor cents, zero hallucinations.</p>
               </div>
 
-              <div
-                className={`flex items-center justify-between text-xs text-[#737373] px-1 transition-opacity duration-200 ${
-                  isExpanded ? "opacity-100 delay-75" : "opacity-0"
-                }`}
-              >
+              <div className="flex items-center justify-between text-xs text-[#737373] px-1">
                 <span className="whitespace-nowrap font-mono text-[11px]">v0.1.0</span>
                 <Link
                   href="/sandbox"
@@ -214,8 +213,15 @@ export function AppSidebar({
                 </Link>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-1 pb-3">
+
+            {/* Collapsed Icon View with smooth fade animation */}
+            <div
+              className={`flex flex-col items-center justify-center gap-1 pb-1 transition-opacity duration-200 ease-in-out ${
+                isExpanded
+                  ? "opacity-0 pointer-events-none absolute inset-x-0 bottom-1"
+                  : "opacity-100 delay-75"
+              }`}
+            >
               <Link
                 href="/sandbox"
                 className="size-10 rounded-xl text-[#737373] hover:text-[#1E2021] hover:bg-[#F4F2ED] flex items-center justify-center transition-colors"
@@ -225,7 +231,7 @@ export function AppSidebar({
               </Link>
               <span className="font-mono text-[9px] text-neutral-400">v0.1.0</span>
             </div>
-          )}
+          </div>
         </div>
       </aside>
     </>

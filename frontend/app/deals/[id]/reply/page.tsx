@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DealReplyClient } from "@/components/deals/deal-reply-client";
 
 interface DealReplyPageProps {
   params: Promise<{ id: string }>;
@@ -6,16 +7,12 @@ interface DealReplyPageProps {
 
 async function ReplyContent({ params }: DealReplyPageProps) {
   const { id } = await params;
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-2xl font-semibold">Counterparty Reply: Deal {id}</h1>
-    </main>
-  );
+  return <DealReplyClient id={id} />;
 }
 
 export default function DealReplyPage({ params }: DealReplyPageProps) {
   return (
-    <Suspense fallback={<div className="p-8">Loading reply...</div>}>
+    <Suspense fallback={<div className="p-8 font-mono text-xs">Loading reply re-planning...</div>}>
       <ReplyContent params={params} />
     </Suspense>
   );

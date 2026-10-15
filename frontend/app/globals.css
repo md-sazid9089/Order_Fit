@@ -146,4 +146,34 @@
   .animate-marquee:hover {
     animation-play-state: paused;
   }
+
+  /* OrderFit Unified Page Layout System: Matches /deals page width (1560px) and responsive margins */
+  .orderfit-page-main {
+    width: 100%;
+    flex: 1 1 0%;
+    min-width: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  @media (min-width: 640px) {
+    .orderfit-page-main {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .orderfit-page-main {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  .orderfit-page-container {
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
 }
