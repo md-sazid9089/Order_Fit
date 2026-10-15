@@ -95,10 +95,15 @@ def upload_document(
         )
         if bytes.fromhex(stored_hash) != digest:
             raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE")
-        return DocumentRepository.create(
-            c, scope, deal_id, meta, doc_id=doc_id, filename=_safe_name(file.filename),
-            mime=mime, storage_key=key, digest=digest, size=size, parse=parsed,
-        )
+        try:
+            return DocumentRepository.create(
+                c, scope, deal_id, meta, doc_id=doc_id, filename=_safe_name(file.filename),
+                mime=mime, storage_key=key, digest=digest, size=size, parse=parsed,
+            )
+        except Exception:
+            # A rejected upload (stale versions, role, constraint) leaves no orphaned bytes.
+            request.app.state.documents.discard(business_id, deal_id, doc_id)
+            raise
 
 
 @router.get("/deals/{deal_id}/documents", response_model=Page[DocumentView], operation_id="documents")
