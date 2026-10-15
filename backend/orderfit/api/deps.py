@@ -1,10 +1,33 @@
-"""Request dependencies.
+"""Verified session dependencies. There is no demo or posted-actor identity path."""
 
-current_business_id: MVP uses one seeded demo business; the pilot replaces
-this with real authentication. Every route takes it so tenancy scoping is
-in place from day one.
-"""
+from fastapi import Request
+
+from orderfit.api.errors import ApplicationError
 
 
-def current_business_id() -> str:
-    return "demo-rina"
+def identity_service(request: Request):
+    service = getattr(request.app.state, "identity", None)
+    if service is None:
+        raise ApplicationError(503, "SERVICE_NOT_STARTED")
+    return service
+
+
+def session_token(request: Request):
+    token = request.cookies.get("orderfit_session")
+    if not token:
+        raise ApplicationError(401, "INVALID_SESSION")
+    return token
+
+
+def mutation(request: Request, *, authenticated=True):
+    service = identity_service(request)
+    if request.url.query:
+        raise ApplicationError(400, "MUTATION_QUERY_UNSUPPORTED")
+    key = request.headers.get("Idempotency-Key", "")
+    if not key.strip() or len(key) > 200:
+        raise ApplicationError(422, "INVALID_IDEMPOTENCY_KEY")
+    csrf = request.cookies.get("orderfit_csrf")
+    service.validate_csrf(csrf, request.headers.get("X-CSRF-Token"), request.headers.get("Origin"))
+    if authenticated:
+        service.mutation_session(session_token(request), csrf)
+    return service, key, csrf

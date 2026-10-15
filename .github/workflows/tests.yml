@@ -10,34 +10,35 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: orderfit
-          POSTGRES_PASSWORD: orderfit
-          POSTGRES_DB: orderfit
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U orderfit" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      DATABASE_URL: postgresql+psycopg://orderfit:orderfit@localhost:5432/orderfit
+      LLM_MODE: off
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: alembic upgrade head   # every migration applies to a clean database
-      # Architecture + engine + agent (fake AI). e2e needs a real key and runs manually.
-      - run: pytest tests/test_architecture.py tests/engine tests/agent -q
+      - run: pip install uv==0.11.24
+      - run: uv sync --frozen --extra dev
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen python -m orderfit.contracts.export --check
+      # DB fixture creates a uniquely named, labeled, disposable PG17 container and
+      # real restricted LOGINs; it never consumes application database URLs.
+      - run: uv run --frozen pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: web
+      - run: npx --no-install tsc --strict --noEmit ../docs/contracts/frontend-api.d.ts ../docs/contracts/typecheck.ts
+        working-directory: web
+      - run: uv run --frozen python ../docs/architecture/orderfit/fixtures/reference_engine.py --check
+      - run: uv run --frozen python ../docs/architecture/orderfit/fixtures/selftest.py
 
   web:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,4 +54,4 @@ jobs:
     needs: [backend, web]
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build
+      - run: docker compose --env-file .env.example build

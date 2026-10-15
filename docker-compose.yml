@@ -7,15 +7,15 @@
 
 name: orderfit
 
-# DATABASE_URL in the root .env (e.g. Neon) overrides the local db service.
-x-db-url: &db-url ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-orderfit}:${POSTGRES_PASSWORD:-orderfit}@db:5432/${POSTGRES_DB:-orderfit}}
+# Run the setup-profile provision job once after migration, before API/worker startup.
+# Credentials are injected separately; runtime startup rejects privileged logins.
 
 services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-orderfit}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderfit}   # local default only; set a real one when deployed
+      POSTGRES_USER: ${POSTGRES_USER:-orderfit_migrator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a local bootstrap password}
       POSTGRES_DB: ${POSTGRES_DB:-orderfit}
     ports:
       - "127.0.0.1:${DB_PORT:-5432}:5432"
@@ -35,29 +35,72 @@ services:
     healthcheck:
       disable: true       # one-shot job; the image's HTTP healthcheck doesn't apply
     environment:
-      DATABASE_URL: *db-url
-      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:-}   # Neon direct endpoint for DDL
+      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:?Set the migration-only direct URL}
     depends_on:
       db:
         condition: service_healthy
     restart: "no"
 
+  provision:
+    profiles: ["setup"]
+    image: orderfit-api:local
+    pull_policy: never
+    command: ["python", "-m", "orderfit.store.provision"]
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:?Set the migration-only direct URL}
+      RUNTIME_LOGIN: ${RUNTIME_LOGIN:-orderfit_runtime}
+      RUNTIME_PASSWORD: ${RUNTIME_PASSWORD:-}
+      WORKER_LOGIN: ${WORKER_LOGIN:-orderfit_worker_login}
+      WORKER_PASSWORD: ${WORKER_PASSWORD:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   api:
     build: ./backend
     image: orderfit-api:local
-    env_file:
-      - path: ./backend/.env
-        required: false   # AI_API_KEY and friends; runs without it until the agent lands
     environment:
-      DATABASE_URL: *db-url
+      DATABASE_URL: ${DATABASE_URL:?Set the restricted runtime URL}
       DOCUMENT_DIR: /app/var/documents
-      DATABASE_URL_DIRECT: ${DATABASE_URL_DIRECT:-}
-      CORS_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      LLM_MODE: ${LLM_MODE:-off}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      ACCOUNT_FINGERPRINT_KEY: ${ACCOUNT_FINGERPRINT_KEY:-}
+      ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    image: orderfit-api:local
+    pull_policy: never
+    command: ["python", "-m", "orderfit.workflow.worker"]
+    mem_limit: 768m
+    healthcheck:
+      disable: true
+    environment:
+      DATABASE_URL: ${WORKER_DATABASE_URL:?Set the restricted worker URL}
+      DOCUMENT_DIR: /app/var/documents
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      ACCOUNT_FINGERPRINT_KEY: ${ACCOUNT_FINGERPRINT_KEY:-}
+      ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      LLM_MODE: off
+    volumes:
+      - documents:/app/var
     depends_on:
       migrate:
         condition: service_completed_successfully

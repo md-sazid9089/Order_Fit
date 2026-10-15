@@ -4,17 +4,19 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
 # Dependencies first, in their own layer: source edits don't reinstall them.
-COPY pyproject.toml ./
-RUN python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']))" > /tmp/requirements.txt \
- && pip install -r /tmp/requirements.txt
+COPY pyproject.toml uv.lock .python-version ./
+RUN pip install uv==0.11.24 \
+ && uv sync --frozen --no-dev --no-install-project
 
 COPY orderfit ./orderfit
-RUN pip install --no-deps .
+RUN uv sync --frozen --no-dev --no-editable
 COPY alembic.ini ./
 COPY migrations ./migrations
 

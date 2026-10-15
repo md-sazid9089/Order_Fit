@@ -1,14 +1,5 @@
-"""Append-only audit log. Only append() and read functions exist here.
-Enforced in the database, not by convention: the migration that creates the
-table adds a trigger that raises on UPDATE, DELETE and TRUNCATE.
-Names and bank numbers are masked before writing."""
+"""Append with PostgreSQL sequencing/canonicalization, never a competing Python chain."""
 
-from orderfit.domain import AuditEntry
+from orderfit.store.repositories import append_audit
 
-
-def append(entry: AuditEntry) -> None:
-    raise NotImplementedError
-
-
-def export_json(business_id: str, deal_id: str | None = None) -> list[dict]:
-    raise NotImplementedError
+__all__ = ["append_audit"]
