@@ -3,20 +3,19 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { RefreshCw, X, ChevronUp, ChevronDown } from "lucide-react";
 
-import { API_URL } from "@/lib/api";
-
 export function ConnectionIndicator() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [lastChecked, setLastChecked] = useState<string>("");
-  const backendUrl = API_URL;
   const [isMinimized, setIsMinimized] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   const checkConnection = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL.replace(/\/$/, "")}/health`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-      setIsConnected(res.ok);
+      // Same-origin probe (app/api/health) so it works behind the Vercel proxy without CORS.
+      const res = await fetch("/api/health", { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      const body = (await res.json().catch(() => ({}))) as { connected?: boolean };
+      setIsConnected(res.ok && body.connected === true);
     } catch {
       setIsConnected(false);
     } finally {
@@ -135,8 +134,8 @@ export function ConnectionIndicator() {
           <div className="mt-2.5 pt-2.5 border-t border-black/5 text-[11px] space-y-1.5 text-[#525252]">
             <div className="flex items-center justify-between font-mono">
               <span className="text-[#737373]">Target:</span>
-              <span className="font-semibold text-[#1E2021] truncate max-w-[170px]" title={backendUrl}>
-                {backendUrl}
+              <span className="font-semibold text-[#1E2021] truncate max-w-[170px]">
+                OrderFit API
               </span>
             </div>
 
