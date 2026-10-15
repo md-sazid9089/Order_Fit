@@ -19,7 +19,7 @@ The browser only ever talks to the Vercel origin, which is deliberate. The API's
 |---|---|
 | Git repository | this repo, branch `deployment` (or `main` once merged) |
 | **Root Directory** | `web` |
-| Framework preset | Next.js (auto-detected) |
+| Framework preset | Next.js, pinned by `web/vercel.json`. A project created with `vercel project add` defaults to "Other" and then serves 404 for every page |
 | Install / Build command | defaults (`npm ci` from `package-lock.json`, `next build`) |
 | Node.js version | 22.x |
 
