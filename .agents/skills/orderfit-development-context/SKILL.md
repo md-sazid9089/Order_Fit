@@ -5,7 +5,7 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, P5 implementation based on `main` at `184324e`. Check today's branch/diff
+Snapshot: **16 October 2026**, P6 partial implementation based on `main` at `f01d197`. Check today's branch/diff
 before relying on this snapshot. Repository root relative to this file: `../../..`.
 
 ## Read only what the task needs
@@ -30,7 +30,8 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 | P3 | Latest remediation records **local gate passed**, superseding partial commit `c03b2eb`. Per-option scans, provenance, exports, process recovery and persisted UI were added afterward. |
 | P4 | Documents, guarded extraction, field review and CSV import are integrated. Its own final acceptance review remains pending; live OpenAI/model evaluation is unverified. |
 | P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. All outgoing effects remain disabled. |
-| P6–P8 | Approval/execution and operational/deployment gates remain unimplemented. Do not advance beyond the requested phase. |
+| P6 | **Incomplete; gate not passed.** Forward schema/guard migration and exact session-bound step-up issuance landed; bundle/approval/execution routes and worker, commitment projection, compensation and P6 acceptance matrix remain outstanding. See the latest P6 entry in the progress file. |
+| P7–P8 | Not started. Do not advance before P6 passes. |
 
 Latest P5 report records **244 backend tests**, additional party-reply integration checks,
 frontend build/type checks and actual disposable-stack browser/restart evidence.
@@ -49,7 +50,7 @@ browser coverage and limitations live in the progress file.
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0007_p5_preparation`. Two `0004` branches join through
+- Code requires `0008_p6_execution`. Two `0004` branches join through
   `0005_p3_p4_integration`; preserve that migration history.
 - [Neon setup evidence](../../../docs/neon_connection_review.md) establishes P1
   setup only, not today's hosted schema. Verify before another hosted migration.
@@ -62,9 +63,12 @@ browser coverage and limitations live in the progress file.
   evidence is immutable. `deal.analysis_changes` contains only reviewed exploration
   settings and participates in existing input-revision invalidation. Loan selection
   narrows a grid without changing stored offer terms. Fork history loads summaries.
-- Preparation hashes/reviews are not action bundles or outgoing approvals. P6 must
-  migrate batch approval/execution guards, replace the P5 message freeze for exact
-  authorized transitions, and implement narrow bank verification before clearing holds.
+- Preparation hashes/reviews are not action bundles or outgoing approvals. P6 has
+  started: revision `0008_p6_execution` adds bundle/approval/run/effect evidence and
+  SQL guards; `/auth/step-up` issues an exact session-bound grant. These schema
+  objects do not yet have bundle preparation/approval/execution services. Keep the
+  P5 freeze and bank-change hold fail-closed until their exact P6 workflows and
+  acceptance tests are complete.
 
 ## Find the relevant implementation
 

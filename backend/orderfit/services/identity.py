@@ -14,7 +14,7 @@ from sqlalchemy import text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.configuration import PASSWORD_HASH_PARAMETERS
 from orderfit.contracts.protocol import request_body_digest
-from orderfit.contracts.resources import SessionView, SignUp
+from orderfit.contracts.resources import SessionView, SignUp, StepUp, StepUpView
 from orderfit.store.db import Scope, digest_token, set_context
 from orderfit.store.repositories import IdentityRepository
 
@@ -264,3 +264,33 @@ class IdentityService:
                 text("SELECT security_record(:digest,'PASSWORD_CHANGED')"),
                 {"digest": digest_token(token)},
             )
+
+    def step_up(self, token, data: StepUp) -> StepUpView:
+        """Re-authenticate this session for one live, immutable action bundle."""
+        with self.database.tenant(token, data.business_id, "execute") as (c, scope):
+            bundle = c.execute(
+                text("SELECT action,bundle_hash,expires_at FROM action_bundle "
+                     "WHERE business_id=:b AND deal_id IS NOT NULL AND id=:id "
+                     "AND expires_at>clock_timestamp() FOR SHARE"),
+                {"b": data.business_id, "id": data.bundle_id},
+            ).mappings().one_or_none()
+            if bundle is None or bundle["action"] != data.purpose:
+                raise ApplicationError(409, "BUNDLE_UNAVAILABLE")
+            if not hmac.compare_digest(bytes(bundle["bundle_hash"]).hex(), data.bundle_hash):
+                raise ApplicationError(409, "BUNDLE_HASH_MISMATCH")
+            user = IdentityRepository.lookup(
+                c, c.execute(text("SELECT email FROM app_user WHERE id=:u"), {"u": scope.user_id}).scalar_one()
+            )
+            if user is None or user["status"] != "active" or user["mfa_enforced"]:
+                raise ApplicationError(403, "STEP_UP_UNAVAILABLE")
+            if not self.verify(user["password_hash"], data.password.get_secret_value()):
+                raise ApplicationError(401, "INVALID_CREDENTIALS")
+            row = c.execute(
+                text("INSERT INTO step_up_grant(business_id,user_id,session_id,bundle_id,purpose,bundle_hash,expires_at) "
+                     "VALUES(:b,:u,:s,:id,:p,:h,LEAST(clock_timestamp()+interval '5 minutes',:expiry)) "
+                     "RETURNING id,expires_at"),
+                {"b": data.business_id, "u": scope.user_id, "s": scope.session_id,
+                 "id": data.bundle_id, "p": data.purpose, "h": bytes.fromhex(data.bundle_hash),
+                 "expiry": bundle["expires_at"]},
+            ).mappings().one()
+            return StepUpView(grant_id=row["id"], expires_at=row["expires_at"], bundle_hash=data.bundle_hash)
