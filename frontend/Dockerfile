@@ -1,4 +1,4 @@
-# OrderFit web (Next.js standalone output)
+# OrderFit frontend (Next.js standalone output)
 
 FROM node:22-alpine AS deps
 WORKDIR /app
@@ -25,8 +25,7 @@ ENV NODE_ENV=production \
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
-# Uncomment when web/public/ exists:
-# COPY --from=build --chown=app:app /app/public ./public
+COPY --from=build --chown=app:app /app/public ./public
 USER app
 
 EXPOSE 3000

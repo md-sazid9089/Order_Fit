@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { SERVER_API_URL } from "@/lib/api";
+
 export async function GET() {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  const backendUrl = SERVER_API_URL;
 
   try {
     const controller = new AbortController();
@@ -32,12 +34,12 @@ export async function GET() {
       status: res.status,
       timestamp: new Date().toISOString(),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({
       connected: false,
       backendUrl,
       mode: "offline",
-      error: err?.message || "Failed to reach backend",
+      error: err instanceof Error ? err.message : "Failed to reach backend",
       timestamp: new Date().toISOString(),
     });
   }

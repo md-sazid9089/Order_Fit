@@ -18,7 +18,7 @@ _Last updated 14 Oct 2026. Fill in the fields marked `TODO`._
 | Agent workflow and prompts | `backend/orderfit/agent/` | TODO | TODO |
 | Guards (security) | `backend/orderfit/agent/guards/` | TODO | TODO |
 | API and storage | `backend/orderfit/api/`, `backend/orderfit/store/` | TODO | TODO |
-| Web | `web/` | TODO | TODO |
+| Frontend | `frontend/` | TODO | TODO |
 | Infrastructure and CI | `docker-compose.yml`, `.github/` | TODO | TODO |
 | Docs and evaluation | `docs/` | TODO | TODO |
 
