@@ -1,1 +1,1 @@
-"""LangGraph workflow. Calls the AI only through agent.llm and the engine only through nodes.compute."""
+"""Durable runner boundary (P1+); language uses llm, engine uses nodes.compute."""

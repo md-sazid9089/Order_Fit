@@ -1,2 +1,5 @@
-"""Request/response shapes only. Domain and engine models are imported, never
-redefined. Money crosses this boundary as Decimal strings."""
+"""Runtime route DTO imports land with P1/P3 consumers.
+
+P0 target shapes live in orderfit.contracts; money is integer minor-unit strings.
+The old domain/engine scaffolds are not the target HTTP contracts.
+"""

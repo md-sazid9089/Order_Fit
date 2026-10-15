@@ -1,9 +1,9 @@
 """The ONLY place that calls the AI model.
 
-Responsibilities: fixed model version, low temperature, structured output
-parsed into Pydantic, retries (1 s then 4 s, then fall back to manual entry),
-one re-ask on schema failure, and an audit entry per call (tokens, latency,
-cost). Document text is always wrapped and labelled as data, never instructions.
+P4 implements OpenAI Responses with typed output and off/recorded/live modes,
+a configured evaluated model, bounded requests and coordinated job retries.
+No live fallback from unknown recordings. Record provenance and safe errors;
+source text remains untrusted data. P0 pins the SDK without making API calls.
 """
 
 from pydantic import BaseModel
