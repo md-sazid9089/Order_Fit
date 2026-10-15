@@ -663,16 +663,19 @@ SELECT of_test.eq('R2 Rina accept-as-offered lowest 2,000 on day 30', '200000@30
 SELECT of_test.eq('H1 public functions without a pinned search_path', '0',
   (SELECT count(*)::text FROM pg_proc WHERE pronamespace = 'public'::regnamespace
      AND NOT coalesce(array_to_string(proconfig, ',') LIKE '%search_path=%', false)));
-SELECT of_test.eq('H2 SECURITY DEFINER functions', 'auth_lookup,user_businesses',
+-- Exact inventories for both supported revisions; behavior checks above are unchanged.
+SELECT of_test.eq('H2 SECURITY DEFINER functions', CASE WHEN to_regclass('public.operation') IS NULL
+  THEN 'auth_lookup,user_businesses'
+  ELSE 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses' END,
   (SELECT string_agg(proname, ',' ORDER BY proname) FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND prosecdef));
 SELECT of_test.eq('H3 tables without a primary key', '0',
   (SELECT count(*)::text FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
      AND c.relname <> 'alembic_version' AND NOT EXISTS (SELECT 1 FROM pg_constraint k WHERE k.conrelid = c.oid AND k.contype = 'p')));
 SELECT of_test.eq('H4 timestamp without time zone columns', '0',
   (SELECT count(*)::text FROM information_schema.columns WHERE table_schema = 'public' AND data_type = 'timestamp without time zone'));
-SELECT of_test.eq('H5 tenant tables with RLS forced', '22',
+SELECT of_test.eq('H5 tenant tables with RLS forced', CASE WHEN to_regclass('public.operation') IS NULL THEN '22' ELSE '29' END,
   (SELECT count(*)::text FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' AND relrowsecurity AND relforcerowsecurity));
-SELECT of_test.eq('H6 tenant policies that are a plain equality', '22',
+SELECT of_test.eq('H6 tenant policies that are a plain equality', CASE WHEN to_regclass('public.operation') IS NULL THEN '22' ELSE '25' END,
   (SELECT count(*)::text FROM pg_policies WHERE policyname = 'tenant_isolation' AND qual LIKE '%= ( SELECT app_business_id()%' AND qual NOT LIKE '% OR %'));
 
 -- ======================================================================= report

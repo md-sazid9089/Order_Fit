@@ -24,8 +24,9 @@ a deterministic engine does every calculation, and the owner approves every outg
 ---
 
 > [!NOTE]
-> P0 freezes target contracts; business endpoints, authentication and the application
-> engine remain unimplemented. See [P0 progress](docs/backend_implementation_progress.md),
+> P1 supplies password sessions, tenant-scoped transactions, durable operations and private
+> storage. Financial business workflows and the application engine remain unimplemented.
+> See [implementation progress](docs/backend_implementation_progress.md),
 > [contract guide](docs/contracts/README.md) and [implementation plan](docs/initial_backend_implementation_plan.md).
 > The feature list below describes intended behavior, not completed capabilities.
 
@@ -149,6 +150,8 @@ AI calls go only through `agent/llm.py`, and engine calls go only through `agent
 git clone https://github.com/md-sazid9089/Order_Fit.git
 cd Order_Fit
 cp .env.example .env    # configure separate local runtime/migrator credentials
+docker compose build api
+docker compose --profile setup run --rm provision  # first setup only; refuses existing roles
 docker compose up --build
 ```
 
@@ -160,11 +163,17 @@ docker compose up --build
 | API docs (OpenAPI) | http://localhost:8000/docs |
 | Health check | http://localhost:8000/health |
 
-P1 must provision and verify the restricted runtime role before starting business
-services. P0 does not claim a running Compose deployment. Never point migration
-regression tests at a shared/configured database. Planned startup order:
+Use independently generated passwords (at least 32 characters) for the API and
+worker logins, and distinct session/fingerprint secrets (at least 32 characters).
+Keep provisioning passwords consistent with the URL-encoded runtime URLs. The
+setup command migrates first, then creates only non-owner, non-admin logins; it
+deliberately refuses implicit password rotation or reuse of an existing role.
+On later starts, omit the setup command. Startup validates the actual role and
+schema and fails closed if either is wrong. Never point migration regression
+tests at a shared/configured database. Startup order:
 `db` becomes healthy → `migrate` runs `alembic upgrade head` and exits →
-`api` → `web`.
+`api` and separate `worker` → `web`. Full-stack/browser deployment acceptance
+remains P8; local P1 acceptance uses disposable PostgreSQL and real runtime logins.
 
 To stop the services, run `docker compose down`. Data is kept; add `-v` to also delete the
 `pg-data` and `documents` volumes.
@@ -173,7 +182,7 @@ If a port is already taken on your machine, copy `.env.example` to `.env` at the
 change `WEB_PORT`, `API_PORT` or `DB_PORT`.
 
 > [!TIP]
-> Planned deals, durable jobs and audit history live in Postgres (`pg-data` volume). Uploaded
+> Deals, durable jobs and audit history live in Postgres (`pg-data` volume). Uploaded
 > documents live in the `documents` volume. `data/` is mounted read-only at `/app/data`.
 > `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so rebuild `web` after
 > changing it. The image is built from `frontend/`.
@@ -187,7 +196,13 @@ cd backend
 uv sync --frozen --extra dev     # uses Python 3.12 and committed uv.lock
 uv run --frozen python -m orderfit.contracts.export --check
 uv run --frozen pytest tests/contracts tests/test_architecture.py -q
-uv run --frozen uvicorn orderfit.api.main:app --reload  # liveness scaffold only
+# Inject explicit runtime settings from backend/.env.example into this process.
+# Run migrations/provisioning in separate processes with DATABASE_URL_DIRECT only.
+uv run --frozen uvicorn orderfit.api.main:app --reload
+# Separate terminal with WORKER_DATABASE_URL supplied as DATABASE_URL:
+uv run --frozen python -m orderfit.workflow.worker
+# Disposable PG17 acceptance (requires local Docker; never reads application DB URLs):
+uv run --frozen pytest tests/db tests/test_private_documents.py -q
 ```
 
 **Frontend** (in a second terminal)
@@ -204,10 +219,12 @@ npm run dev
 ### Database (Neon)
 
 Local PostgreSQL 17 is the initial target. Hosted PostgreSQL/Neon requires separate
-role, SSL, pooling, migration, worker and restore acceptance; it is not verified by P0.
+role, SSL, pooling, migration, worker and restore acceptance; it is not verified by local P1.
 
 - `DATABASE_URL`: the **pooled** endpoint (host contains `-pooler`), with the scheme changed to
-  `postgresql+psycopg://`. API/worker must use a restricted non-owner login.
+  `postgresql+psycopg://`. API uses a restricted non-owner `orderfit_app` member login.
+- `WORKER_DATABASE_URL`: a distinct restricted `orderfit_worker` member login;
+  inject it as `DATABASE_URL` in the worker process only.
 - `DATABASE_URL_DIRECT`: the same URL without `-pooler`. Alembic uses it, because schema
   changes should not go through the transaction-mode pooler.
 - Keep `?sslmode=require&channel_binding=require`.
@@ -218,8 +235,8 @@ passes direct credentials into API. Never use a shared database for destructive 
 
 
 Backend settings read explicit process environment, not developer `.env` automatically.
-See [backend/.env.example](backend/.env.example) and the tested P0 RuntimeConfiguration;
-P1 wires this strict contract into runtime startup. Missing DB/auth settings then fail closed.
+See [backend/.env.example](backend/.env.example) and RuntimeConfiguration;
+P1 wires this strict contract into runtime startup. Missing DB/auth settings fail closed.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -230,7 +247,7 @@ P1 wires this strict contract into runtime startup. Missing DB/auth settings the
 | `SESSION_SECRET` | *(required P1)* | At least 32 characters, server-only |
 | `ACCOUNT_FINGERPRINT_KEY`, `ACCOUNT_FINGERPRINT_KEY_VERSION` | *(required P1)* | Distinct versioned HMAC secret |
 | `DOCUMENT_DIR` | `./var/documents` | Where uploaded documents are stored |
-| `ALLOWED_ORIGINS`, `COOKIE_SECURE` | *(explicit P1)* | Exact allowed origins and HTTPS cookie security; legacy liveness uses CORS_ORIGINS |
+| `ALLOWED_ORIGINS`, `COOKIE_SECURE` | *(explicit P1)* | Exact permitted origins and HTTPS cookie security |
 
 Frontend settings are read from `frontend/.env.local`. See [frontend/.env.example](frontend/.env.example).
 

@@ -1,5 +1,9 @@
 # Backend implementation progress
 
+Current phase status: **P1 acceptance passed locally** (15 October 2026).
+The P0 entry below is historical; the P1 entry records the resumed implementation
+and current evidence. P2 has not started.
+
 ## P0 — contract freeze (15 October 2026)
 
 Scope: P0 only. No P1 migration, auth/session service, repository, worker, document
@@ -150,3 +154,149 @@ validate deployment artifacts if bit-for-bit deployment reproducibility is claim
 5. On an explicitly disposable PostgreSQL 17 target, pass clean and populated-0001
    upgrades, original SQL/concurrency suites, actual-runtime two-user/two-business,
    no-context/pool, membership revocation, idempotency and worker recovery gates.
+
+## P1 — identity, persistence and durable operations (15 October 2026)
+
+### Reconciliation and interruption
+
+Started from `backend/initial`, P0 commit `f968c35`. Read applicable instructions,
+the implementation plan and progress, and inspected the interrupted changes.
+The previous P1 turn is recorded as failed due to the usage limit, with no final
+completion report. Its code had never executed a P1 migration; only one DB smoke
+test existed, and the progress file still described P0. File existence was not
+accepted as completion evidence. Reused and completed that work rather than
+replacing the checkout. P0's 84 tests, generated contracts/types and reference
+fixtures were verified again against the actual code.
+
+The interrupted attempt's automatic approval review could not complete because
+of the usage limit. On resume, approved Docker access succeeded. Initial checks
+then found a stopped daemon, Windows text encoding/newline issues in the harness,
+an overbroad PO-reference freeze, SQL variable ambiguity in the revised claim
+function, and a preservation assertion that initially failed to account for the
+one deliberate transition addition. These were fixed and rerun; none was counted
+as a passing gate. A non-elevated storage check also encountered Windows temp/cache
+permissions; rerunning with an explicit workspace temporary directory passed.
+
+An unrelated `.gitignore` edit appeared during this turn (ignoring `.github/`).
+It was preserved and excluded from the P1 commit. Tracked workflow changes remain
+part of P1. No existing environment-file contents were read, replaced or printed.
+
+### Actual changes and decisions
+
+- Manual revision `0002_backend_foundation` executes only new
+  `migrations/sql/0005_backend_foundation.sql`. Revision 0001 and its four applied
+  SQL components are unchanged. Existing users, memberships, businesses, deals,
+  cash events, evaluations/options, idempotency and PostgreSQL audit objects remain
+  authoritative; no parallel financial/identity tables replace them.
+- Added private global hashed sessions, auth request replay, rate counters and
+  denial/security events; tenant snapshots, future step-up storage and durable
+  operations. New tenant objects have composite scope references, FORCE RLS,
+  indexes, explicit grants and appropriate immutable evidence guards. Step-up
+  remains disabled until P6 adds exact bundle admission/consumption.
+- Added business financial revision, deal input revision and child row versions,
+  membership revocation/last-owner protection, cash void/supersession metadata,
+  explicit document source role, six priorities, tolerance status/cap and snapshot
+  references. Added `computing -> awaiting_confirm` without replacing eight states.
+  Legacy immutable results/options are not rewritten; NULL tolerance status must
+  be presented as unclassified/legacy_unknown by future readers.
+- Child/source/baseline/offer/payee/account/history changes invalidate coarse
+  business revisions; deal children also invalidate input revisions. This
+  intentionally favors conservative refresh over premature dependency tracking.
+  Preserved editable PO references and OLD-state frozen-input rules. Snapshots
+  verify actual canonical bytes/hash, metadata, current revisions and confirmer.
+- `store/db.py` verifies actual restricted API/worker LOGIN roles and schema at
+  startup. Verified sessions and current memberships establish transaction-local
+  scope; pool commit/rollback clears it. No demo actor or privileged fallback.
+  API rejects worker credentials and migration URL injection. Migrator-only
+  provisioning creates fresh restricted logins and refuses implicit role/password
+  replacement. Raw GUCs are scope enforcement for a trusted application login,
+  not an authentication system for arbitrary end-user SQL.
+- Added partial Core mappings matched against real SQL, repositories, existing
+  audit-chain append adapter, durable tenant-global idempotency and safe central
+  errors. Denials persist separately after rollback; responses omit SQL, driver
+  text, credentials and validation input. Security-event writes use the thread
+  pool instead of blocking the API event loop.
+- Enabled nine P1 routes: CSRF, signup/signin/signout/me/password, capabilities,
+  operation get/cancel. Passwords use Argon2id; sessions enforce 8h absolute/30m
+  idle expiry, revocation and current active/non-MFA status. Origin and signed,
+  session-bound CSRF checks protect mutations. Cookies are HttpOnly/SameSite=Lax,
+  Secure by default. Signup provisions a new owner/business/default constraint
+  through a narrow helper, never accepting actor/role/admin IDs.
+- Auth replay stores only IDs and keyed request digests. Lost bearer-cookie
+  responses require explicit sign-in recovery; tokens/passwords are not replay
+  cache payloads. Logout/password changes revoke sessions; a revoked cookie gets
+  401 rather than authorizing response recovery. Current memberships supplied by
+  `/auth/me` are the available business selections.
+- Operation admission/idempotency/audit commit together. Separate workers use
+  leases, heartbeat, fresh fences, bounded retries, cooperative cancellation,
+  membership/session rechecks and stale revision rejection. Claims/publication
+  obey business -> deal -> related-row lock order. Blocked/stale evaluation work
+  returns to confirmation; technical failures cannot become numerical verdicts.
+  Future handlers are absent and fail visibly as `CAPABILITY_UNAVAILABLE`.
+- Private filesystem storage uses generated UUID scope, actual-byte SHA256,
+  bounded writes, fsync/atomic publication, no replacement and restart reads.
+  Upload/parsing/download services remain P4. The root must be private and owned
+  by the application; no claim of a hostile local-filesystem sandbox is made.
+- Compose now separates migration, one-time setup provisioning, API and worker
+  credentials/processes. CI invokes the disposable DB acceptance harness rather
+  than only migrating with a privileged service login. README and
+  `docs/p1_backend_foundation.md` explain operation and phase boundaries.
+
+### Checks actually executed
+
+Final full DB run used a verified disposable PG17 target
+`orderfit-p1-test-155089f080d7` / `orderfit_p1_test_155089f080d7`, loopback only,
+plus its empty upgrade database. Random secrets were not printed. Separate real
+`p1_runtime` and `p1_worker` LOGIN credentials exercised runtime behavior.
+The fixture removed its verified, labeled container afterwards.
+
+| Check | Actual result |
+|---|---|
+| `uv run --frozen pytest -q -s --tb=short -x` | **106 passed**, 19.46s; 84 preserved P0 tests, 19 DB acceptance cases and 3 private-storage cases |
+| Original schema regression on 0001 | **296 passed / 0 failed** |
+| Same schema suite on 0002 | **296 passed / 0 failed**; only three exact structural inventory expectations are revision-aware; behavior assertions unchanged |
+| Original concurrency script on both revisions | Both passed: 8 writers/400 chained audit rows, exact sequence/hash verification and optimistic loser updates zero rows |
+| Empty and populated forward upgrades | Passed; every original column/row compared exactly, including immutable legacy evaluations/options and audit chain; only the exact new transition row was added |
+| Actual LOGIN isolation and permissions | Passed: non-owner/no-admin startup, privileged/worker-as-API rejection, two tenants/users, no context, commit/rollback pool reuse, forged session/actor, cross-deal/cross-tenant source references, no direct auth-secret or API queue-helper access |
+| Auth HTTP/service checks | Passed: persisted cookie across new API engine, CSRF/Origin, unknown actor fields, generic bad login, expiry/idle/revoke/logout/password rotation, unsupported MFA/suspended fail closed, safe unique-conflict/validation/404/413 errors and durable denial recording |
+| Concurrency and operation recovery | Passed: concurrent same-key admission produces one operation/audit, changed-request conflict, membership revocation serialization, role downgrade, last owner, racing claims, expired lease/new fence, stale heartbeat/publication, bounded retries, cancellation and stale financial revisions |
+| Real worker process recovery | Passed: claimed operation persisted, child process terminated before publication, lease explicitly expired, restarted CLI recovered the same operation at attempt 2; no future financial handler was enabled |
+| Evidence and revisions | Passed: immutable snapshots, forged confirmer denial, direct child/source revision increments, same-deal constraints, frozen combined-edit rejection and stale evaluation state recovery |
+| Core mappings vs PostgreSQL catalog | Passed for every mapped column/type affinity |
+| Private storage | Passed actual-byte hash, generated scope, same-ID overwrite refusal, persistent restart read, empty/oversize cleanup and invalid path rejection |
+| `uv run --frozen ruff check .` | Passed |
+| Contract export `--check` | Passed, 101 target operations unchanged |
+| Strict generated TypeScript compile | Passed with TypeScript 5.9.3, offline cache |
+| Reference calculator and independent selftest | 22 cases / 0 problems; selftest 0 failures; reference/production engine sources unchanged |
+| Compose example config, including setup profile | Passed using sanitized `.env.example` only |
+| Backend image build and non-root import smoke | Passed final image `812b05f546c9`, tag `orderfit-api:p1-foundation-check`; API/worker/provisioning imports as UID 10001 with network disabled; no DB/deployment claim from this smoke |
+| `git diff --check` | Passed |
+
+The test suite reports one dependency deprecation warning: Starlette's TestClient
+httpx integration recommends httpx2. Tests pass with the committed P0 lockfile;
+no unreviewed dependency migration was introduced to suppress it.
+
+### Acceptance and remaining scope
+
+**P1 acceptance gate passed on local PostgreSQL 17.** The required migration,
+preservation, original SQL, actual runtime isolation, concurrent idempotency and
+revocation, claim/restart/fencing and safe-error evidence is above. The earlier
+interruption is resolved. This does not claim full backend or deployment readiness.
+
+Outstanding external security action: rotate/revoke credentials historically
+committed before P0. Rotation remains unverified; preserving/untracking local
+files does not revoke them.
+
+Not run/claimed: hosted PostgreSQL/Neon and transaction-pool compatibility, browser
+auth integration/full user journey, a full running Compose stack, remote CI,
+backup/restore, live OpenAI calls/quality, upload/parser/download acceptance or
+financial end-to-end operations. These are later gates. Body limits/download
+authorization/parser provenance must be extended in P4. Rate-counter retention,
+production metrics and deployment retention/cleanup remain operational work.
+
+P2 requires the pure deterministic engine port and independent reference parity,
+rounding/calendar/daily-trough/baseline/profit/loan/scenario/ranking/tolerance/VOI
+and complete-horizon/limit regressions. P3 will build reviewed confirmation and
+atomic fenced evaluation/option publication on this foundation. P2 and P3 were
+not started; no financial formula, engine code, provider SDK boundary or frontend
+workflow was changed in P1.
