@@ -65,7 +65,7 @@ services:
 
   web:
     build:
-      context: ./frontend
+      context: ./web
       args:
         # Browser-facing URL, baked in at build time.
         NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
