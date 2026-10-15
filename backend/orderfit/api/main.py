@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from orderfit.api.errors import install_errors
+from orderfit.api.routes.business import router as business_router
+from orderfit.api.routes.deals import router as deals_router
+from orderfit.api.routes.evaluations import router as evaluations_router
 from orderfit.api.routes.identity import router
 from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.services.identity import IdentityService
@@ -91,12 +94,15 @@ def create_app(config=None, database=None):
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token"],
     )
     app.add_middleware(BodyLimit)
     install_errors(app)
     app.include_router(router)
+    app.include_router(business_router)
+    app.include_router(deals_router)
+    app.include_router(evaluations_router)
 
     @app.get("/health")
     def health():

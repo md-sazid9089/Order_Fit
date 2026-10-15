@@ -408,9 +408,11 @@ def test_no_target_business_route_exposes_fake_success():
             transport=httpx.ASGITransport(app=create_app()), base_url="http://test"
         ) as client:
             assert (await client.get("/health")).json() == {"status": "ok"}
-            assert (
-                await client.post("/api/v1/businesses/" + uid("business") + "/deals", json={})
-            ).status_code == 404
+            response = await client.post(
+                "/api/v1/businesses/" + uid("business") + "/deals", json={}
+            )
+            assert response.status_code == 422
+            assert response.json()["error"]["code"] == "INVALID_INPUT"
 
     asyncio.run(exercise())
 

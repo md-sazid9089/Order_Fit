@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0002_backend_foundation"
+SCHEMA_REVISION = "0003_p3_results"
 
 
 def digest_token(token: str | None) -> bytes:

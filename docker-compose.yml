@@ -87,6 +87,7 @@ services:
     image: orderfit-api:local
     pull_policy: never
     command: ["python", "-m", "orderfit.workflow.worker"]
+    mem_limit: 768m
     healthcheck:
       disable: true
     environment:
