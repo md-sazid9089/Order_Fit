@@ -323,6 +323,7 @@ automatically.
 | [docs/evaluation.md](docs/evaluation.md) | Evaluation against a plain-AI baseline |
 | [docs/checkpoint.md](docs/checkpoint.md) | Progress report, next targets and risks |
 | [docs/team-assessment.md](docs/team-assessment.md) | Team, ownership, skills and working agreements |
+| [docs/deployment/vercel.md](docs/deployment/vercel.md) | Deploying `web/` to Vercel behind the same-origin `/api/v1` proxy |
 
 ## Contributing
 
