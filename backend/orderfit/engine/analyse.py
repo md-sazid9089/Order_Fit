@@ -44,7 +44,7 @@ from orderfit.engine.validation import (
     validate_case,
 )
 
-ENGINE_VERSION = "engine-0.2.0"
+ENGINE_VERSION = "engine-0.2.1"
 
 
 def calculate(case: dict, check_bruteforce: bool = True) -> dict:
@@ -328,6 +328,20 @@ def analyse(engine_input: EngineInput) -> Result:
         catalogue = []
         for row in originals:
             ok, why = hard_ok(row, payload)
+            scan = (
+                raw["delay_scan_top"]
+                if row["strategy"].id == raw.get("recommended") and "delay_scan_top" in raw
+                else delay_scan(payload, row["strategy"], engine_input.scan_days, {})
+            )
+            first_failure = scan["first_failing_delay_days"]
+            tolerance = Tolerance(
+                status="capped_scan"
+                if first_failure is None
+                else ("fails_on_time" if first_failure == 0 else "first_failure"),
+                observed_safe_days=scan["tolerance_days"],
+                first_failure_days=first_failure,
+                scan_cap_days=engine_input.scan_days,
+            )
             scenarios = {}
             series = {}
             for name, metric in row["scen"].items():
@@ -377,6 +391,7 @@ def analyse(engine_input: EngineInput) -> Result:
                         if c["incremental"] and c["deferrable"] and row["strategy"].ext_days
                     ],
                     events={name: metric["_events"] for name, metric in row["scen"].items()},
+                    tolerance=tolerance,
                 )
             )
         if "delay_scan_top" in raw:

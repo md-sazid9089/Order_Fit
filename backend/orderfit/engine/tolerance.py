@@ -32,14 +32,18 @@ def ranking_by_delay(case: dict, shortlist: list[Strategy], max_delay: int):
     scanned linearly d=0..max_delay. Reports every change of the top choice, and the first delay at which
     no shortlisted strategy satisfies the hard constraint."""
     base_keys = {}
+    base_cache = {}
     for st in shortlist:
-        base_keys[st.id] = priority_key(evaluate(case, st, {}), case, True)
+        base_keys[st.id] = priority_key(evaluate(case, st, base_cache), case, True)
     seq, last, first_none = [], object(), None
     for dd in range(0, max_delay + 1):
         sc = {"order_receipt_delay_days": dd, "ar_delay_days": 0, "order_receipt_haircut_bps": 0}
         best = None
+        # The counterfactual depends on the scenario, not the strategy. Retain
+        # only this delay's baseline so memory stays bounded by one horizon.
+        baseline_cache = {}
         for st in shortlist:
-            m = scenario_metrics(case, st, sc, {}, f"flip{dd}")
+            m = scenario_metrics(case, st, sc, baseline_cache, f"flip{dd}")
             if m is not None and m["feasible"] and (best is None or base_keys[st.id] < best[0]):
                 best = (base_keys[st.id], st.id)
         top = best[1] if best else None

@@ -126,6 +126,7 @@ def admit(case):
         + candidates * 3
         + min(candidates, 40) * (case.get("scan_days", 0) + 1)
         + (case.get("scan_days", 0) + 1)
+        + candidates * (case.get("scan_days", 0) + 1)
         + 303
     )
     estimated = evaluations * (days + len(case["baseline_events"]) + len(order["costs"])) * variants
