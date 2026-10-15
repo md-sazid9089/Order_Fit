@@ -969,3 +969,85 @@ No P6 implementation was started.
   blocker remained in place. Screenshot was refreshed to show that actual result.
 - No test was skipped or assertion weakened to obtain acceptance. The sole backend
   warning remains the existing Starlette/TestClient httpx deprecation.
+
+## P6 — approval, sandbox execution and recovery (16 October 2026)
+
+### Reconciliation and implementation status
+
+Started from clean `main` at `f01d197` (P5 commit `dd81b32`). The recorded P5
+acceptance is supported by the P5 code shape: preparation stores immutable
+`prepared_message` rows and acceptance evidence; `p5_message_frozen` blocks edits;
+the P5 API has no approval/send/commit routes, and `DEFAULT_HANDLERS` has no
+execution handler. Real effects were disabled. P4 remains implemented but its
+independent final acceptance review is still pending. No prerequisite defect
+directly blocking P6 was found. The P5 database integration suite was rerun after
+the P6 schema upgrade and passed.
+
+P6 is **incomplete; acceptance gate not passed**. The scoped changes so far are:
+
+- New Alembic revision `0008_p6_execution` and additive SQL component
+  `0009_p6_execution.sql`. It adds immutable `action_bundle` / items, optional
+  bundle and step-up references on legacy approvals, append-only revocations,
+  one-run-per-bundle records, execution item links, a business commitment gate,
+  projection/effect evidence, and a bank-verification evidence record. New tables
+  use tenant RLS, FORCE RLS, scoped grants and immutable guards. New exact-bundle
+  guards bind prepared message ID, body, subject, channel, party/version,
+  recipient and term hash; verify required party acceptances at commit approval;
+  reject unbundle-linked P6 action transitions; and recheck approval expiry,
+  revocation, current T3 membership, session and financial freshness before
+  bundle-linked effects. Existing unbundled approvals and action drafts remain
+  accepted under their legacy checks.
+- The P5 message freeze now permits a prepared outbound message to move to
+  `sent` only with transaction-local execution run/item context matching an exact
+  bundle action. The P5 bank-change flag remains fail-closed; clearing it requires
+  a row tied to the exact bank-change reply, a verified account, matching
+  fingerprint and written evidence. No generic override was added; the
+  evidence-capture API remains unimplemented.
+- Added session-bound password re-authentication for one bundle and purpose at
+  `/api/v1/auth/step-up`. The grant is tied to the current user/session, exact
+  bundle hash/purpose and five-minute/earlier bundle expiry, and is consumed in
+  the approval insert trigger. Updated runtime schema validation to require
+  `0008_p6_execution` and updated forward-schema RLS/PK counts in the SQL suite.
+
+### Checks actually run
+
+- `uv --cache-dir 'D:\Kam 2\.uv-cache' run --frozen ruff check .`: passed.
+- `uv ... run --frozen python -m orderfit.contracts.export --check`: passed,
+  108 operations.
+- `uv ... run --frozen python -m alembic heads`: sole head
+  `0008_p6_execution`.
+- `tests/contracts tests/test_p5_pure.py tests/test_architecture.py` with
+  explicit workspace `--basetemp`: **90 passed**. An earlier run using pytest's
+  inaccessible default temp root stopped at 83 passed with `PermissionError`; the
+  workspace-temp rerun passed.
+- `tests/db/test_p5_preparation.py` on the harness's verified, labeled, loopback
+  disposable PostgreSQL 17 container: **12 passed**. This exercised clean and
+  populated migration upgrades, the existing 296/296 SQL assertions on both
+  schema versions, runtime login validation and P5 integration. Intermediate
+  migration attempts exposed and fixed invalid composite references, PL/pgSQL
+  syntax, legacy guard compatibility and P6 test-inventory counts. No
+  configured/shared Neon URL was used.
+- Full backend pytest command was started on a separate verified disposable PG17
+  harness, but its process did not yield a final result before this handoff. Do
+  not count its partial progress output as a pass.
+
+### Remaining P6 gaps and gate
+
+Not implemented: server-owned bundle preparation/get, approval/rejection/revoke
+API operations, durable execute admission and worker handler, operation/run
+recovery/fencing, local outbox/ledger/lender effects, partial outcome read model,
+negotiation round advancement, transactionally serialized commitment admission
+and deduplicated baseline projection, and separately approved compensation with
+inverse provenance/reconciliation. Although their tables/guards are present,
+there is no service path that proves these workflows end to end. There are no P6
+crash-boundary, concurrent-worker, concurrent-deal, role-revocation-after-approval,
+compensation or browser acceptance tests yet. No real external adapter was added.
+The narrow bank-resolution table/guard also has no user-facing evidence-capture
+workflow and therefore remains unavailable in practice.
+
+**P6 gate: NOT PASSED.** Exact-bundle approval, execution/recovery and commitment
+requirements cannot be claimed from schema plus step-up issuance. P7 has not
+started. Before P7, finish the P6 services/routes/worker and acceptance matrix
+from plan V11–V13, including injected failures at each effect boundary and a
+second deal rejected on an obsolete baseline. P4's independent final review and
+all hosted/provider/browser/deployment claims remain separate and unverified.
