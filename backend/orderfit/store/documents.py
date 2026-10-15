@@ -57,6 +57,10 @@ class PrivateDocuments:
         finally:
             temporary.unlink(missing_ok=True)
 
+    def discard(self, business_id, deal_id, document_id):
+        """Remove a file whose database row was never committed (generated IDs only)."""
+        self._path(business_id, deal_id, document_id).unlink(missing_ok=True)
+
     def read(self, business_id, deal_id, document_id):
         # Service authorizes scope before calling this generated-ID-only interface.
         return self._path(business_id, deal_id, document_id).read_bytes()
