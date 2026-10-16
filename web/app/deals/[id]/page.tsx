@@ -7,6 +7,41 @@ import { ApiError, get, mutate, type DraftInputs, type Session, type Constraints
 import { useScope } from "@/components/layout/auth-shell";
 import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs";
 import { createDecisionExport, downloadExport } from "@/lib/p7-api";
+import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
+
+function DealDetailSkeleton() {
+  return (
+    <div className="space-y-5" role="status" aria-busy="true">
+      <span className="sr-only">Loading saved order…</span>
+      <header className="rounded-2xl border border-[#E8E6E1] bg-white p-5 flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <SkeletonButton size="md" />
+      </header>
+      <div className="flex gap-3">
+        <Skeleton className="h-9 w-32 rounded-lg" />
+        <Skeleton className="h-9 w-44 rounded-lg" />
+      </div>
+      <section className="rounded-2xl border border-[#E8E6E1] bg-white p-5 space-y-3">
+        <Skeleton className="h-5 w-32" />
+        <SkeletonList items={3} hasAvatar={false} />
+      </section>
+      <section className="rounded-2xl border border-[#E8E6E1] bg-white p-5 space-y-4">
+        <div className="space-y-1">
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 type Snapshot = { snapshot_id: string; snapshot_hash: string; version: number; input_version: number; financial_revision: number };
 export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> }) {
   const { businessId: selectedBusiness } = useScope();
@@ -60,14 +95,23 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     window.history.replaceState(null, "", `/deals/${dealId}?businessId=${businessId}&operationId=${op.operation_id}`); setRoute({ dealId, businessId, operationId: op.operation_id });
     await refresh();
   } catch (e) { setError(e instanceof Error ? e.message : "Could not evaluate this order."); await refresh(); } finally { setBusy(false); } }
-  if (!route) return <main className="p-8">Loading order scope...</main>;
+  if (!route) {
+    return (
+      <main className="min-h-screen bg-[#f7f6f5] p-6">
+        <div className="mx-auto max-w-4xl space-y-5">
+          <Skeleton className="h-4 w-28 mb-3" />
+          <DealDetailSkeleton />
+        </div>
+      </main>
+    );
+  }
   if (!businessId) return <main className="p-8">This order link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
-  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5"><Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}<button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>{!deal && !error && <p>Loading saved order…</p>}{deal && <><header className="rounded-2xl border bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">{deal.public_ref}</h1><p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>{deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}</div><button disabled={!canPrepare || !(deal.allowed_actions.includes("confirm") || deal.status === "ingesting") || deal.status === "computing" || busy || !review?.snapshot_hash || review.findings.some(f => f.blocking)} onClick={evaluate} className="rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40">{busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}</button></div></header>
+  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5"><Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}<button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>{!deal && !error && <DealDetailSkeleton />}{deal && <><header className="rounded-2xl border bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">{deal.public_ref}</h1><p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>{deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}</div><button disabled={!canPrepare || !(deal.allowed_actions.includes("confirm") || deal.status === "ingesting") || deal.status === "computing" || busy || !review?.snapshot_hash || review.findings.some(f => f.blocking)} onClick={evaluate} className="rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40">{busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}</button></div></header>
     {operation && <p role="status">Saved evaluation operation: {operation.status}. Reloading this link recovers the operation from the server.</p>}
     <div className="flex flex-wrap gap-3">{canPrepare && deal.allowed_actions.includes("edit") && <button className="rounded-lg border px-3 py-2" disabled={busy} onClick={() => setEditing(deal.inputs)}>Edit saved inputs</button>}{["owner", "risk_officer", "auditor"].includes(role) && <button className="underline" disabled={busy || !evaluation} onClick={exportDecision}>Download decision and audit evidence</button>}<Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Business cash and financing sources</Link></div>
     {editing && <form onSubmit={save} className="space-y-4 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Edit order inputs</h2><label className="block text-sm">Policy and financing configuration<select className={fieldClass} value={editing.constraints_id} onChange={e => { const p = policies.find(p => p.id === e.target.value); if (p) setEditing({ ...editing, constraints_id: p.id, reserve_minor: p.reserve_minor }); }}>{!policies.some(p => p.id === editing.constraints_id) && <option value={editing.constraints_id}>Current saved policy (load more to inspect)</option>}{policies.map(p => <option key={p.id} value={p.id}>{p.is_default ? "Default" : "Saved"} policy · {p.strategy_space.offer_ids.length} offers · {p.id.slice(0, 8)}</option>)}</select></label><CollectionPages query={policyPages} noun="policies" /><ManualOrderInputs value={editing} onChange={setEditing} /><button className="rounded-lg bg-neutral-900 px-4 py-2 text-white" disabled={busy}>Save revised inputs</button><button type="button" className="ml-3 underline" onClick={() => setEditing(null)}>Cancel edit</button></form>}
     {canPrepare && ["close", "hold", "reopen_for_review"].some(action => deal.allowed_actions.includes(action)) && <section className="space-y-3 rounded-2xl border bg-white p-5"><label className="block text-sm">Reason for workflow change<input className={fieldClass} value={reason} onChange={e => setReason(e.target.value)} /></label>{["reopen_for_review", "hold", "close"].filter(action => deal.allowed_actions.includes(action)).map(action => <button key={action} className="mr-3 rounded-lg border px-3 py-2 disabled:opacity-40" disabled={busy || !reason.trim()} onClick={() => { void command(action.replaceAll("_", "-")); }}>{action.replaceAll("_", " ")}</button>)}</section>}
-    <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : <p className="mt-2 text-sm text-neutral-600">{review?.snapshot_hash ? "Inputs and source versions are ready for confirmation." : "Loading review…"}</p>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
+    <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : review?.snapshot_hash ? <p className="mt-2 text-sm text-neutral-600">Inputs and source versions are ready for confirmation.</p> : <div role="status" aria-busy="true" className="mt-3 space-y-2"><span className="sr-only">Loading review…</span><Skeleton className="h-4 w-64" /><Skeleton className="h-4 w-48" /></div>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
     <Link className="inline-block rounded-lg border bg-white px-4 py-2 underline" href={`/deals/${dealId}/negotiate?businessId=${businessId}`}>What-if and negotiation preparation</Link>{evaluation && <section className="space-y-4 rounded-2xl border bg-white p-5"><div><h2 className="text-xl font-semibold">Persisted evaluation</h2><p className="text-sm text-neutral-600">{evaluation.decision.replaceAll("_", " ")} · calculator {evaluation.calculator_version}{evaluation.is_stale ? " · stale" : ""}</p></div><div className="grid gap-3 sm:grid-cols-2"><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">As offered · base lowest balance</p><strong>{evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_balance_minor ?? "Unavailable"} minor units</strong><p className="text-sm">Headroom: {evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_headroom_minor ?? "Unavailable"}</p></article><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">Recommended option</p><strong>{evaluation.recommended_option_key ?? "No recommendation"}</strong><p className="text-sm">{evaluation.ranked_candidates.length} ranked candidates</p></article></div><details><summary className="cursor-pointer text-sm underline">Inspect all exact financial results and warnings</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(evaluation, null, 2)}</pre></details><details><summary className="cursor-pointer text-sm underline">View saved cash series</summary><CashSeries key={evaluation.id} businessId={businessId} evaluationId={evaluation.id} options={[evaluation.as_is.option_key, ...evaluation.ranked_candidates.map(x => x.option_key)].filter((x, i, all) => all.indexOf(x) === i)} initialOption={evaluation.recommended_option_key ?? evaluation.as_is.option_key} /></details></section>}
     </>}</div></main>;
 }

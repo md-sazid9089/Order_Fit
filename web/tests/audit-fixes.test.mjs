@@ -71,10 +71,10 @@ test("a client-side exception is not reported as a lost connection", () => {
 
 // ----- one session reset -----
 test("the shared session reset clears pending commands and the query cache together", () => {
-  let pending = 0; let cache = 0;
-  const reset = load("session-reset.ts", { "./orderfit-api": { clearPendingCommands: () => { pending++; } } }).resetSessionState;
+  let pending = 0; let cache = 0; let tokenCleared = 0;
+  const reset = load("session-reset.ts", { "./orderfit-api": { clearPendingCommands: () => { pending++; }, clearStoredToken: () => { tokenCleared++; } } }).resetSessionState;
   reset({ clear: () => { cache++; } });
-  assert.deepEqual([pending, cache], [1, 1]);
+  assert.deepEqual([pending, cache, tokenCleared], [1, 1, 1]);
 });
 
 // ----- invitation recheck -----

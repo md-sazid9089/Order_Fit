@@ -13,6 +13,14 @@ are repaired. See the [current remediation report](../../../docs/backend_stress_
 for exact final results, source manifest, measured capacity and external blockers.
 Check branch/diff before relying on this snapshot. Repository root: `../../..`.
 
+Merge integration (16 October): incoming UI from `origin/main` at `392c7fb`
+is retained with compatibility fixes for the backend committed at `b5e7aab`.
+The backend and exported contracts stay unchanged: cookie sessions, business
+roles and sole migration head `0016_worker_presence`. Incoming platform-admin
+views are unavailable because that server authority is absent. Retain supporting
+list continuation controls alongside the remote skeletons/layouts. See the merge
+integration entry in the progress file for current verification.
+
 ## Read only what the task needs
 
 - Follow [root instructions](../../../AGENTS.md) and the applicable

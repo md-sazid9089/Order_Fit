@@ -116,3 +116,8 @@ export function apiPath(path: string) { return `${ROOT}${path}`; }
 export function manualEvidence(sourceRole: "baseline" | "supplier_cost_quote" | "financing", attestation: string) {
   return { document_id: null, content_hash: null, candidate_id: null, confirmed_field_id: null, source_role: sourceRole, page: null, quote: null, manual_attestation: attestation, override_reason: null };
 }
+
+/** Remove credentials left by the remote JWT client; this backend uses HttpOnly cookies. */
+export function clearStoredToken() {
+  try { localStorage.removeItem("orderfit.token"); sessionStorage.removeItem("orderfit.token"); } catch { /* Storage may be disabled. */ }
+}

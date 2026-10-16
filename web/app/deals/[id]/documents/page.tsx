@@ -8,6 +8,7 @@ import { ApiError, get, type Deal, type Operation } from "@/lib/orderfit-api";
 import { describeP7Error, csvAsOf } from "@/lib/p7-model";
 import { versionsOf } from "@/lib/approval-model";
 import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listFields, previewCsv, resolveField, uploadDocument, type CsvPreview, type DocumentView, type ExtractedField } from "@/lib/documents-api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ROLES: Record<string, string[]> = { po: ["customer_order"], quote: ["customer_sales_quote", "supplier_cost_quote"], bills: ["baseline", "supplier_cost_quote"], financing: ["financing"], csv: ["baseline"], other: ["other"] };
 
@@ -71,7 +72,27 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
   });
   const csvConfirm = () => scope && preview && void run(async () => { await confirmCsv(scope.businessId, { preview_id: preview.id, preview_hash: preview.preview_hash, expected_financial_revision: versions().expected_financial_revision }); setPreview(null); setMessage("Baseline events imported."); });
   const download = (doc: DocumentView) => scope && void run(async () => { await downloadDocument(scope.businessId, doc); setMessage(`Downloaded ${doc.original_filename} as a file. It is untrusted source material and is not opened here.`); });
-  if (!scope) return <main className="p-8">Loading order scope...</main>;
+  if (!scope) {
+    return (
+      <main className="min-h-screen bg-[#f7f6f5] p-6" role="status" aria-busy="true">
+        <span className="sr-only">Loading order scope…</span>
+        <div className="mx-auto max-w-4xl space-y-5">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-7 w-48" />
+          <div className="space-y-4 rounded-2xl border border-[#ECEAE4] bg-white p-5 shadow-sm">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="space-y-4 rounded-2xl border border-[#ECEAE4] bg-white p-5 shadow-sm">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        </div>
+      </main>
+    );
+  }
   if (!scope.businessId) return <main className="p-8">This link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
   const docById = new Map(docs.map(d => [d.id, d]));
   return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5">

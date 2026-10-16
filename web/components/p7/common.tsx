@@ -21,8 +21,8 @@ export function useScoped() {
   return { session, businessId, membership, role: membership?.role, businessName: membership?.business_name ?? "", key, roleText: roleLabel(membership?.role) };
 }
 
-export function PageFrame({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
-  return <main className="mx-auto max-w-5xl space-y-5 p-6"><header className="space-y-1"><h1 className="text-2xl font-semibold">{title}</h1>{intro && <p className="text-sm text-neutral-700">{intro}</p>}</header>{children}</main>;
+export function PageFrame({ title, intro: _intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+  return <main className="mx-auto max-w-5xl space-y-5 p-6"><header className="space-y-1"><h1 className="text-2xl font-semibold">{title}</h1></header>{children}</main>;
 }
 
 export function Alert({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "ok" | "info" | "warn" }) {
@@ -30,7 +30,51 @@ export function Alert({ children, tone = "error" }: { children: ReactNode; tone?
   return <p role={tone === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${style}`}>{children}</p>;
 }
 
-export function Loading({ what }: { what: string }) { return <p className="text-sm text-neutral-600" role="status">Loading {what}…</p>; }
+import { Skeleton, SkeletonText, SkeletonTable, SkeletonList } from "@/components/ui/skeleton";
+
+export function Loading({
+  what,
+  variant,
+}: {
+  what: string;
+  variant?: "auto" | "text" | "table" | "list" | "form";
+}) {
+  const chosenVariant = variant ?? (
+    what.includes("table") || what.includes("cash flow") || what.includes("events")
+      ? "table"
+      : what.includes("log") || what.includes("members") || what.includes("payees") || what.includes("accounts") || what.includes("notifications")
+      ? "list"
+      : what.includes("profile") || what.includes("policy") || what.includes("history")
+      ? "form"
+      : "list"
+  );
+
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label={`Loading ${what}`}
+      className="space-y-3 py-2 w-full"
+    >
+      <span className="sr-only">Loading {what}…</span>
+      {chosenVariant === "table" ? (
+        <SkeletonTable rows={4} columns={4} />
+      ) : chosenVariant === "form" ? (
+        <div className="space-y-3">
+          <SkeletonText lines={2} />
+          <div className="grid gap-2 sm:grid-cols-2 pt-1">
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
+        </div>
+      ) : chosenVariant === "text" ? (
+        <SkeletonText lines={2} />
+      ) : (
+        <SkeletonList items={3} hasAvatar={false} />
+      )}
+    </div>
+  );
+}
 
 /** A failed read with a retry. The message comes from the API's curated error, never from raw exception text. */
 export function QueryError({ error, retry, retrying }: { error: unknown; retry: () => void; retrying?: boolean }) {

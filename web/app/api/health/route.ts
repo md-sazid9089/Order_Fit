@@ -15,7 +15,28 @@ async function status(path: string): Promise<number | null> {
   }
 }
 
+async function checkReady(): Promise<{ status: number | null; database: boolean | null }> {
+  try {
+    const res = await fetch(`${SERVER_API_URL.replace(/\/$/, "")}/ready`, { signal: AbortSignal.timeout(3000), cache: "no-store" });
+    let database: boolean | null = null;
+    try {
+      const data = (await res.json()) as { database?: unknown } | null;
+      if (data && typeof data.database === "boolean") {
+        database = data.database;
+      }
+    } catch {
+      // ignore json parse error
+    }
+    return { status: res.status, database };
+  } catch {
+    return { status: null, database: null };
+  }
+}
+
 export async function GET() {
-  const [live, ready] = await Promise.all([status("/health"), status("/ready")]);
-  return NextResponse.json({ ...probeFrom(live, ready), timestamp: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
+  const [live, readyResult] = await Promise.all([status("/health"), checkReady()]);
+  return NextResponse.json(
+    { ...probeFrom(live, readyResult.status, readyResult.database), timestamp: new Date().toISOString() },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

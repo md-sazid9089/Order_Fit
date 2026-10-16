@@ -39,11 +39,11 @@ export function FeaturePillars() {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#1E2021]">
+                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">
                   <Layers className="size-5" />
                 </div>
                 <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-white text-xs">
-                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-[#1E2021]/90 backdrop-blur-sm font-sans">
+                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2.5 py-0.5 rounded-full bg-[#004D3B] backdrop-blur-sm font-sans text-[#FFFAEC]">
                     Deterministic Engine
                   </span>
                   <span className="font-mono text-[11px] text-white/90">Day 0 → Day 60</span>
@@ -87,7 +87,7 @@ export function FeaturePillars() {
             <div className="pt-4">
               <a
                 href="#simulator"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#1E2021] hover:text-[#121314] group-hover:translate-x-1 transition-all font-sans"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#004D3B] hover:text-[#00382B] group-hover:translate-x-1 transition-all font-sans"
               >
                 <span>Learn more</span>
                 <ArrowRight className="size-4" />
@@ -110,11 +110,11 @@ export function FeaturePillars() {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#1E2021]">
+                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">
                   <FileCheck className="size-5" />
                 </div>
                 <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-white text-xs">
-                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-[#1E2021]/90 backdrop-blur-sm font-sans">
+                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2.5 py-0.5 rounded-full bg-[#004D3B] backdrop-blur-sm font-sans text-[#FFFAEC]">
                     2-Way Matching
                   </span>
                   <span className="font-mono text-[11px] text-white/90">Landed Margin 37.5%</span>
@@ -144,9 +144,9 @@ export function FeaturePillars() {
                   <span className="text-[#526975] font-sans">Supplier Quote SQ-102:</span>
                   <span className="font-semibold text-[#1A1A1A] font-sans">$75,000 · Net 15</span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-[#EBE3FD]/50 border border-[#D5C4FD]/50">
-                  <span className="text-[#1E2021] font-semibold font-sans">True Landed Margin:</span>
-                  <span className="font-bold text-[#1E2021] font-sans">37.5% ($45,000)</span>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-[#EAF7EE] border border-[#B5F2C6]/60">
+                  <span className="text-[#004D3B] font-semibold font-sans">True Landed Margin:</span>
+                  <span className="font-bold text-[#004D3B] font-sans">37.5% ($45,000)</span>
                 </div>
               </div>
             </div>
@@ -154,7 +154,7 @@ export function FeaturePillars() {
             <div className="pt-4">
               <a
                 href="#simulator"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#1E2021] hover:text-[#121314] group-hover:translate-x-1 transition-all font-sans"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#004D3B] hover:text-[#00382B] group-hover:translate-x-1 transition-all font-sans"
               >
                 <span>Learn more</span>
                 <ArrowRight className="size-4" />
@@ -177,11 +177,11 @@ export function FeaturePillars() {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#1E2021]">
+                <div className="absolute top-4 left-4 size-10 rounded-xl bg-white/95 backdrop-blur-sm shadow-xs flex items-center justify-center text-[#004D3B]">
                   <DollarSign className="size-5" />
                 </div>
                 <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-white text-xs">
-                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-full bg-[#1E2021]/90 backdrop-blur-sm font-sans">
+                  <span className="font-semibold uppercase tracking-wider text-[10px] px-2.5 py-0.5 rounded-full bg-[#004D3B] backdrop-blur-sm font-sans text-[#FFFAEC]">
                     Zero Dilution
                   </span>
                   <span className="font-mono text-[11px] text-white/90">Buffer: +$32,000</span>
@@ -200,7 +200,7 @@ export function FeaturePillars() {
             <div className="rounded-2xl bg-[#F7F6F5] p-4 border border-[#ECEAE4] my-2">
               <div className="flex items-center justify-between text-xs font-semibold mb-2 font-sans">
                 <span className="text-[#1A1A1A]">Ranked Mitigation Options</span>
-                <span className="text-[#1E2021] font-bold">Target: $20K Floor</span>
+                <span className="text-[#004D3B] font-bold">Target: $20K Floor</span>
               </div>
               <div className="space-y-1.5 text-xs">
                 <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
@@ -221,7 +221,7 @@ export function FeaturePillars() {
             <div className="pt-4">
               <a
                 href="#simulator"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#1E2021] hover:text-[#121314] group-hover:translate-x-1 transition-all font-sans"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#004D3B] hover:text-[#00382B] group-hover:translate-x-1 transition-all font-sans"
               >
                 <span>Learn more</span>
                 <ArrowRight className="size-4" />
@@ -239,7 +239,7 @@ export function FeaturePillars() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="rounded-3xl bg-white p-6 border border-[#ECEAE4]">
-              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#1E2021] flex items-center justify-center mb-4">
+              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#004D3B] flex items-center justify-center mb-4">
                 <Calculator className="size-5" />
               </div>
               <h4 className="font-heading font-semibold text-lg text-[#1A1A1A] mb-2">
@@ -251,7 +251,7 @@ export function FeaturePillars() {
             </div>
 
             <div className="rounded-3xl bg-white p-6 border border-[#ECEAE4]">
-              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#1E2021] flex items-center justify-center mb-4">
+              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#004D3B] flex items-center justify-center mb-4">
                 <ShieldAlert className="size-5" />
               </div>
               <h4 className="font-heading font-semibold text-lg text-[#1A1A1A] mb-2">
@@ -263,7 +263,7 @@ export function FeaturePillars() {
             </div>
 
             <div className="rounded-3xl bg-white p-6 border border-[#ECEAE4]">
-              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#1E2021] flex items-center justify-center mb-4">
+              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#004D3B] flex items-center justify-center mb-4">
                 <Users className="size-5" />
               </div>
               <h4 className="font-heading font-semibold text-lg text-[#1A1A1A] mb-2">
@@ -275,7 +275,7 @@ export function FeaturePillars() {
             </div>
 
             <div className="rounded-3xl bg-white p-6 border border-[#ECEAE4]">
-              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#1E2021] flex items-center justify-center mb-4">
+              <div className="size-10 rounded-xl bg-[#F7F6F5] text-[#004D3B] flex items-center justify-center mb-4">
                 <TrendingUp className="size-5" />
               </div>
               <h4 className="font-heading font-semibold text-lg text-[#1A1A1A] mb-2">
