@@ -1,112 +1,194 @@
-# Render runbook (API, worker, migrations)
+# Deploying the backend on Render
 
-Scope: the FastAPI API, the durable worker and the one-shot migration job, defined in [`render.yaml`](../../render.yaml). The web app is on Vercel ([vercel.md](vercel.md)); the database is on Neon ([neon.md](neon.md)). Nothing here has been deployed or exercised on Render by this change; see "Unverified hosted gates".
+This guide covers the FastAPI API and background worker in `backend/`.
+The frontend runs on Vercel (`web/`), the database on Neon.
+See [Vercel deployment](vercel.md) for the frontend side and
+[Neon connection review](../neon_connection_review.md) for database setup.
 
-## 1. What the Blueprint creates
+## 1. How requests flow
 
-| Service | Type | Command | Database variable and login | Notes |
-|---|---|---|---|---|
-| `orderfit-api` | web (docker) | image `CMD`: `python -m orderfit.api.serve` (uvicorn on `0.0.0.0:$PORT`, proxy trust from `TRUSTED_PROXY_IPS`) | `DATABASE_URL` = Neon **pooled**, `orderfit_runtime` | `healthCheckPath: /ready`; private S3-compatible bucket |
-| `orderfit-worker` | worker (docker) | `python -m orderfit.workflow.worker` | `DATABASE_URL` = Neon **pooled**, `orderfit_worker_login` | no HTTP port; always-on paid plan |
-| `orderfit-migrate` | cron (docker), run manually | `alembic upgrade head` | `DATABASE_URL_DIRECT` = Neon **direct**, migration owner | the only service that holds the owner credential |
+```
+Browser ──https──> https://<app>.vercel.app
+                      └─ /api/v1/* ──rewrite──> https://orderfit-api.onrender.com/api/v1/*
 
-Shared group `orderfit-shared`: `SESSION_SECRET`, `ACCOUNT_FINGERPRINT_KEY` (both generated once by Render, distinct), `ACCOUNT_FINGERPRINT_KEY_VERSION=1`, `COOKIE_SECURE=true`, `LLM_MODE=off`. Prompted per service (`sync: false`): `DATABASE_URL`, `ALLOWED_ORIGINS`, and `DATABASE_URL_DIRECT` on the job. The API and worker must receive matching S3 bucket, region, endpoint/addressing style, and credentials; actual values and bucket provisioning are operator work.
+Render (API web service)                     Neon (PostgreSQL)
+  ├─ uvicorn  ──DATABASE_URL──────────────> pooled runtime login
+  └─ pre-deploy: alembic ──DATABASE_URL_DIRECT──> direct migrator login
 
-### Decisions and why
+Render (background worker)
+  └─ orderfit.workflow.worker ──DATABASE_URL──> pooled worker login
+```
 
-- **Worker command is `python -m orderfit.workflow.worker`, not `python -m orderfit.runtime worker`.** `runtime.py` is a local launcher: it requires a `.env` file, filters the environment and spawns a child (`backend/orderfit/runtime.py:35-91`). On Render the platform injects the environment, so the worker module is started directly (`workflow/worker.py:210`).
-- **Both runtime services use the variable name `DATABASE_URL`** with different values. `WORKER_DATABASE_URL` is only meaningful to the local launcher (`runtime.py:44-46`) and is not set on Render.
-- **Migrations run as a separate manual job, not as `preDeployCommand`.** A `preDeployCommand` executes with the web service's own environment, so the owner URL would have to be set on `orderfit-api`. Besides defeating the "runtime must not hold migration credentials" rule, the API refuses to start when `DATABASE_URL_DIRECT` is present (startup guard in `backend/orderfit/api/main.py`; `backend/orderfit/workflow/worker.py` has the same guard). Renaming the variable to dodge the guard would only hide the exposure. If you accept that trade-off anyway, use `preDeployCommand: sh -c 'DATABASE_URL_DIRECT="$MIGRATION_URL" alembic upgrade head'` and set `MIGRATION_URL` on the API; this is **not** recommended.
-- **Autodeploy is off** (`autoDeploy: false`) so a push cannot start code that expects a schema nobody has migrated. The runtime also verifies `alembic_version` at startup and exits on a mismatch (`db.py:13,80-83`).
+The browser only ever talks to the Vercel origin. Vercel's server-side rewrite
+proxies `/api/v1/*` to the Render API, keeping the session cookie first-party.
 
-## 2. Dockerfile properties (`backend/Dockerfile`)
+## 2. Architecture on Render
 
-| Requirement | Status |
+OrderFit requires **two processes** from a single Docker image:
+
+| Render service type | Process | Database login |
+|---|---|---|
+| **Web Service** (`orderfit-api`) | `uvicorn orderfit.api.main:app` | `orderfit_runtime` via `DATABASE_URL` |
+| **Background Worker** (`orderfit-worker`) | `python -m orderfit.workflow.worker` | `orderfit_worker_login` via `DATABASE_URL` |
+
+Both share the same `backend/Dockerfile`. The worker overrides the image's CMD
+via `dockerCommand` in `render.yaml`.
+
+### Persistent storage
+
+Phase 4 document ingestion stores uploaded files on disk by content hash.
+Render's container filesystem is **ephemeral** — files are lost on every deploy.
+Both services mount a [Render Persistent Disk](https://docs.render.com/disks)
+at `/var/data/orderfit` (1 GB default, adjustable in `render.yaml`).
+
+> [!IMPORTANT]
+> If the API and worker need to read each other's uploaded files (e.g. the worker
+> extracts a document the API accepted), they must share the same disk. Render
+> does not support sharing a disk between two services. The current design works
+> because uploads are written by the API and read by the worker through
+> PostgreSQL metadata — the actual file bytes are stored in Neon-backed
+> `document_content` rows for cross-service access, with the local disk used
+> as a staging area. If this changes, consider an object storage service instead.
+
+## 3. Prerequisites
+
+Before deploying to Render, ensure:
+
+1. **Neon database is set up** with migrations applied through at least
+   `0008_p6_execution` and runtime logins provisioned
+   (see [Neon connection review](../neon_connection_review.md)).
+2. **Neon owner password is rotated** if previously committed to Git
+   (commit `eb5758b`).
+3. **Vercel frontend is deployed** with `API_INTERNAL_URL` ready to point at
+   the Render API URL.
+
+## 4. Deploy with the Render Blueprint
+
+The repository includes [`render.yaml`](../../render.yaml), a
+[Render Blueprint](https://docs.render.com/blueprint-spec) that declares both
+services, their environment variables, disks and the pre-deploy migration command.
+
+### Step 1: Create the Blueprint Instance
+
+1. Go to the [Render Dashboard](https://dashboard.render.com/).
+2. Click **New** → **Blueprint Instance**.
+3. Connect the `md-sazid9089/Order_Fit` repository, branch `deployment`.
+4. Render detects `render.yaml` and shows the two services.
+
+### Step 2: Set secret environment variables
+
+Variables marked `sync: false` in `render.yaml` must be set manually in the
+Render dashboard for each service. **Never commit these values.**
+
+#### API service (`orderfit-api`)
+
+| Variable | Value | Notes |
+|---|---|---|
+| `DATABASE_URL` | `postgresql+psycopg://<runtime_user>:<password>@<neon-pooler-host>/<db>?sslmode=require` | Restricted runtime login |
+| `DATABASE_URL_DIRECT` | `postgresql+psycopg://<migrator>:<password>@<neon-direct-host>/<db>?sslmode=require` | Owner login; used only during pre-deploy migration |
+| `SESSION_SECRET` | ≥ 32 random chars | `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
+| `ACCOUNT_FINGERPRINT_KEY` | ≥ 32 random chars, different from SESSION_SECRET | Same generation command |
+| `ALLOWED_ORIGINS` | `["https://orderfit.vercel.app"]` | Exact Vercel production origin |
+| `OPENAI_API_KEY` | (empty or your key) | Only needed when `LLM_MODE=live` |
+
+#### Worker service (`orderfit-worker`)
+
+| Variable | Value | Notes |
+|---|---|---|
+| `DATABASE_URL` | `postgresql+psycopg://<worker_user>:<password>@<neon-pooler-host>/<db>?sslmode=require` | Worker login (not the API runtime login) |
+| `SESSION_SECRET` | Same value as API | Shared for token validation |
+| `ACCOUNT_FINGERPRINT_KEY` | Same value as API | Shared for fingerprint checks |
+| `ALLOWED_ORIGINS` | Same value as API | Worker validates configuration at startup |
+| `OPENAI_API_KEY` | (empty or your key) | Only when `LLM_MODE=live` |
+
+### Step 3: Deploy
+
+Click **Apply** in the Blueprint Instance. Render will:
+
+1. Build the Docker image from `backend/Dockerfile`.
+2. Run `alembic upgrade head` (pre-deploy command) with `DATABASE_URL_DIRECT`.
+3. Start the API web service on port 8000.
+4. Build and start the worker service.
+
+### Step 4: Update Vercel
+
+In the Vercel project settings, set:
+
+```
+API_INTERNAL_URL = https://orderfit-api.onrender.com
+```
+
+(Use the actual URL shown in the Render dashboard for the `orderfit-api` service.)
+
+### Step 5: Smoke test
+
+- [ ] `https://orderfit-api.onrender.com/health` returns `{"status": "ok"}`.
+- [ ] Vercel app at `https://<app>.vercel.app` shows the connection indicator as connected.
+- [ ] Sign up and sign in work; the session cookie survives a page reload.
+- [ ] Creating an order and running an evaluation completes (worker processes the job).
+- [ ] A direct cross-origin `POST` to the Render URL is rejected (`403 CSRF_REJECTED`).
+
+## 5. Manual deploy (without Blueprint)
+
+If you prefer to create services manually instead of using the Blueprint:
+
+### API Web Service
+
+| Setting | Value |
 |---|---|
-| Honours `$PORT` | Yes: `ENV PORT=8000` default; `CMD` is `python -m orderfit.api.serve`, which reads `PORT`. Render's injected `PORT` overrides it |
-| Non-root | Yes: `USER app` (uid 10001) |
-| Health command | Yes: `HEALTHCHECK` polls `/ready` on `$PORT` (Docker/Compose only; Render uses `healthCheckPath`) |
-| SIGTERM: API | uvicorn handles SIGTERM and drains in-flight requests (`--timeout-graceful-shutdown 20`), then the lifespan closes the DB pool (`api/main.py:72-85`) |
-| SIGTERM: worker | `workflow/worker.py` installs SIGTERM/SIGINT handlers: it stops claiming, lets the in-flight job reach its normal fenced finish, closes the DB pool and exits 0 (`run_worker`, `tests/test_p7_pure.py`). If the platform kills the process before the job ends, the job's 60 s lease expires and another worker reclaims it; publication stays fenced |
-| Reproducible | `uv sync --frozen --no-dev`, pinned uv |
+| Name | `orderfit-api` |
+| Environment | Docker |
+| Repo | `md-sazid9089/Order_Fit` |
+| Branch | `deployment` |
+| Dockerfile Path | `./backend/Dockerfile` |
+| Docker Context | `./backend` |
+| Pre-Deploy Command | `alembic upgrade head` |
+| Health Check Path | `/health` |
+| Plan | Starter ($7/mo) or higher |
+| Disk | Mount `/var/data/orderfit`, 1 GB |
 
-## 3. Setup runbook
+Set environment variables as listed in Step 2 above.
 
-Prerequisites: Neon prepared per [neon.md](neon.md) sections 1-3 (project, owner rotated, direct and pooled URLs known).
+### Background Worker
 
-1. Push the branch containing `render.yaml`. In Render: New, Blueprint, select the repository. Render lists the three services and the group. Do not paste secrets into the repository.
-2. When prompted for `sync: false` values on the Blueprint, enter in the dashboard only:
-   - `orderfit-migrate` `DATABASE_URL_DIRECT`: Neon direct URL, owner login, `postgresql+psycopg://...?sslmode=require`.
-   - `orderfit-api` `DATABASE_URL`: pooled URL, `orderfit_runtime`. If the logins do not exist yet, enter a temporary valid-looking placeholder and correct it after step 4.
-   - `orderfit-worker` `DATABASE_URL`: pooled URL, `orderfit_worker_login`.
-   - `orderfit-api` and `orderfit-worker` `ALLOWED_ORIGINS`: JSON list of the exact Vercel origins, e.g. `["https://<app>.vercel.app"]`. No wildcards, no paths (the validator rejects them: `configuration.py:44-53`).
-3. Let the first sync finish. The API and worker will fail to start until the schema and logins exist; that is expected.
-4. Run the migration job: `orderfit-migrate`, Trigger Run. Then provision the logins ([neon.md](neon.md) 2.1) and run the verification SQL.
-5. Restart/redeploy `orderfit-api`, then `orderfit-worker`. Confirm `GET https://<api-host>/health` returns `{"status":"ok"}` and the worker log shows no startup exception.
-6. Set `API_INTERNAL_URL` in Vercel to the API's `https://<service>.onrender.com` URL and deploy the web app ([vercel.md](vercel.md) section 4). Add the Vercel origin to `ALLOWED_ORIGINS` first.
-7. Smoke test per vercel.md section 4, including a durable evaluation to prove the worker claims and finishes a job.
-
-Optional live LLM: set `LLM_MODE=live` plus `OPENAI_API_KEY` and `OPENAI_MODEL` on the services that need it, in the dashboard only. The worker runs provider-backed extraction, so it needs them too. Startup fails clearly if `live` lacks either value.
-
-Routine release: run `orderfit-migrate` (if there are new revisions), then deploy API and worker manually. For a non-backward-compatible schema change, stop the worker, migrate, then deploy both.
-
-## 4. Free tier, sleep and the worker lease
-
-| Aspect | Effect |
+| Setting | Value |
 |---|---|
-| Render **free web service** | Spins down after about 15 minutes without inbound traffic; the next request has a cold start of tens of seconds. The Vercel proxy request may time out or the first page may fail while the API wakes. Disk is **ephemeral** (see section 5). Not suitable for the persistent-disk configuration in `render.yaml`. |
-| Render **worker** | There is no free worker type. A worker must run on a paid plan. |
-| Lease timing (plan 9.2) | Lease 60 s, heartbeat every 15 s (`worker.py:108`, `configuration.py` fixes `lease_seconds=60`, `heartbeat_seconds=15`). A worker that stops (sleep, deploy, crash) leaves its running job with an unexpired lease; another worker reclaims it only after the lease expires (`operation_claim` selects `running` rows whose `lease_expires_at` has passed). So each interruption delays that job by up to ~60 s, and fenced completion prevents a resumed stale worker from publishing. |
-| Sleep implications | A sleeping worker never claims queued jobs, so evaluations stay `queued` indefinitely and the UI keeps polling. A technical delay is not a financial verdict, but the user sees no progress. |
+| Name | `orderfit-worker` |
+| Environment | Docker |
+| Repo | `md-sazid9089/Order_Fit` |
+| Branch | `deployment` |
+| Dockerfile Path | `./backend/Dockerfile` |
+| Docker Context | `./backend` |
+| Docker Command | `python -m orderfit.workflow.worker` |
+| Plan | Starter ($7/mo) or higher |
+| Disk | Mount `/var/data/orderfit`, 1 GB |
 
-Recommendation: run `orderfit-api` and `orderfit-worker` on an always-on paid plan (`starter` or higher) for any real use. Use the free web tier only for a demo where you accept cold starts, and then still run a paid always-on worker, or accept that nothing runs between visits. Keep a single worker instance: the lease/fencing design supports more, but that has not been tested hosted.
+Set environment variables as listed in Step 2 above.
 
-## 5. Document storage
+## 6. Known limits and operational notes
 
-Both hosted processes use the same private S3-compatible bucket through `S3PrivateDocuments` (`backend/orderfit/store/s3_documents.py`); local Compose and tests default to filesystem storage. The adapter uses generated UUID-only keys, conditional create (never overwrite evidence), server-side encryption, SHA-256 metadata verification on read, bounded object size, and a write/delete readiness canary. The database stores the generated key and content hash. API and worker share this contract without sharing a machine disk.
-
-Before enabling uploads on Render, provision a **private** bucket and a dedicated service identity. Grant only object `Put`, `Get`, and `Delete` on the application's keyspace including `_orderfit/readiness/*`; do not grant bucket listing, ACL changes, public access, or bucket administration. Enable bucket-level encryption and choose lifecycle/retention to match evidence requirements. Set identical bucket, region, access key and secret on API and worker; for non-AWS providers also configure HTTPS `DOCUMENT_S3_ENDPOINT_URL` and required `DOCUMENT_S3_ADDRESSING_STYLE`. Do not put secrets in YAML, examples, logs or browser code. Prefer provider-native workload identity if supported, but this repository does not configure it.
-
-Compose intentionally uses local filesystem storage. Its API/worker network is internal and blocks outbound routes; switching a local stack to external object storage requires a deliberate network-topology override as well as S3 settings. Do not weaken the default merely to make a test pass. Keep `LLM_MODE=off` unless provider inference is separately approved and configured.
-
-Object storage and Postgres do not share a transaction: upload writes a generated object before the row commits and compensates with deletion on DB failure. A process crash between those operations can orphan an object, so do not enable automatic deletion until a reconciliation process and evidence-retention policy exist. Database PITR and object backups/versioning are separate. A restore drill must restore both and compare every document's SHA-256 with its database record. Bucket provisioning, IAM review, retention, and restore remain hosted gates.
-
-## 6. Observability and readiness
-
-- Health: `/health` is liveness only. `healthCheckPath` is `/ready`, which returns 200 only when the API's database login is restricted (non-owner, non-superuser), the schema revision matches the code and the document directory is writable; otherwise 503 with booleans only. Its `worker` field reports whether the job queue is being drained (no claimable job older than five minutes); it is informational and does not gate readiness, because the worker is a separate service. A green check is still not proof of a complete business workflow.
-- Logs: Render captures stdout/stderr. Do not enable request-body logging; never log tokens or URLs.
-- Rate limiting sees proxy addresses (vercel.md section 5). Proxy trust is explicit: `TRUSTED_PROXY_IPS` (JSON list, default `[]`) is the only source of trusted forwarders; with the default, forwarded headers are ignored (uvicorn's implicit loopback trust is disabled) and the source address is Render's load balancer, shared by all users. Auth throttles are split: per account `AUTH_ACCOUNT_LIMIT` (default 15 per 15 minutes) and per source `AUTH_SOURCE_LIMIT` (default 300 per 15 minutes); successful verifications are not counted. To make the source the address that connected to Render (the Vercel edge for proxied traffic), set `TRUSTED_PROXY_IPS` to the CIDR range Render's proxy connects from, taken from Render's current documentation or the peer address seen in the service's logs; do not use `*`, because the public `onrender.com` URL is directly reachable and `X-Forwarded-For` could then be chosen by any client. The browser's own address behind Vercel is not available without trusting Vercel's non-fixed egress ranges; that residual is accepted.
-- Upload concurrency: `UPLOAD_CONCURRENCY` (default 4) and `UPLOAD_SOURCE_CONCURRENCY` (default 2) bound concurrent large (above 1 MiB, up to 26 MiB) upload bodies per API process; they are admitted only after a database check of session, membership and deal (vercel.md section 5).
-- Upload deadlines: an admitted upload has `UPLOAD_BODY_TIMEOUT_SECONDS` (default 120) overall and `UPLOAD_IDLE_TIMEOUT_SECONDS` (default 30) between body chunks. A deadline returns a safe 408 and releases its process-local slot. Set explicit bounded values on the API service rather than relying on a platform request timeout.
-- API documentation: `EXPOSE_API_DOCS=false` is the deployed default; it disables `/docs`, `/redoc` and `/openapi.json`. The application can still build its in-process OpenAPI schema for contract export and tests. Enable it only on an authenticated/private diagnostic environment, never as a substitute for API authorization.
-
-## 7. Secrets
-
-All secrets live only in the Render and Neon dashboards. `render.yaml`, `.env.example` files and docs carry variable names only. `SESSION_SECRET` and `ACCOUNT_FINGERPRINT_KEY` are generated by Render on first creation and are not regenerated on later syncs; if `generateValue` in the group is not honoured, set two distinct 32+ character values by hand in the group. The previously committed Neon owner credential must be rotated before real data is hosted (neon.md section 9).
-
-## 8. Deployment checklist
-
-- [ ] Neon checklist ([neon.md](neon.md) section 10) complete.
-- [ ] `render.yaml` Blueprint synced; `orderfit-api` and `orderfit-worker` on paid always-on plans; autoDeploy off.
-- [ ] `DATABASE_URL_DIRECT` exists only on `orderfit-migrate`; neither runtime service has it.
-- [ ] Migration job succeeded; logins provisioned; verification SQL clean.
-- [ ] API `ALLOWED_ORIGINS` equals the exact Vercel production origin; `COOKIE_SECURE=true`.
-- [ ] `/health` OK; worker log clean; a durable evaluation completes end to end.
-- [ ] Private shared bucket provisioned; least-privilege credentials configured on API and worker; `/ready` confirms write/delete access.
-- [ ] Vercel `API_INTERNAL_URL` set; `NEXT_PUBLIC_API_URL` unset; smoke tests passed.
-- [ ] Restore drill performed ([neon.md](neon.md) 8.4) before claiming recoverability.
-- [ ] `/ready` returns 200 on the deployed API (it is the configured health check).
-
-## 9. Unverified hosted gates
-
-Unverified until run on Render and a disposable Neon branch (plan 13.3, 14 P8):
-
-1. The Blueprint syncs as written (field names such as `dockerContext`, group `generateValue`, `type: cron` with `dockerCommand`, disk on a docker web service) against the current Render schema.
-2. The image builds on Render (apt `tini` install, `uv sync --frozen`) and the API binds the injected `PORT`.
-3. Disk mount ownership with the non-root user (section 5).
-4. Role, extension and function permissions, SSL, direct versus pooled URLs, and tenant context under the real PgBouncer ([neon.md](neon.md) section 11, gates 1-5).
-5. Worker lease behaviour through deploys, restarts and sleeps; the worker's graceful `SIGTERM` path under Render's actual shutdown grace period (section 2).
-6. Same-origin proxy of large uploads (25 MB) through Vercel to Render (vercel.md section 5).
-7. Backup and restore of both the database and the documents (section 5; neon.md 8.4).
-8. `/ready` against the hosted Neon pooled login and bucket, plus a real API-upload/worker-read round trip.
-9. Provider conditional-create/encryption/delete semantics, retention policy, and joint database/object restore drill.
+- **Rate limiting sees Render internal IPs.** Sign-in throttling keys on
+  `request.client.host`, which behind Render's proxy is an internal address.
+  Configure uvicorn with `--proxy-headers` and `--forwarded-allow-ips` set to
+  Render's proxy ranges only (the Dockerfile already includes `--proxy-headers`).
+- **Render free tier is unsuitable.** Free web services spin down after 15
+  minutes, causing 50+ second cold starts that will time out Vercel's proxy
+  rewrite. The worker also needs to run continuously. Use at least the Starter
+  plan.
+- **Persistent disk is per-service.** Render does not share disks between
+  services. If the worker needs direct filesystem access to API-uploaded files,
+  use a shared object storage service (e.g. Cloudflare R2 or AWS S3) instead.
+- **Preview environments.** Render Blueprint supports
+  [preview environments](https://docs.render.com/preview-environments) for pull
+  requests. Each preview gets its own URL. Add preview API URLs to Vercel
+  preview deployments' `API_INTERNAL_URL` and to the API's `ALLOWED_ORIGINS`.
+- **Log drain.** Render supports log drains to external services. Enable this
+  for production monitoring. Never log credentials, session tokens or financial
+  payloads.
+- **Credential rotation.** Rotate `SESSION_SECRET` and
+  `ACCOUNT_FINGERPRINT_KEY` by setting new values in the Render dashboard and
+  redeploying. Existing sessions will be invalidated. Rotate Neon passwords
+  through Neon's console and update the Render environment variables.
+- **Demo pages.** The same caveat from [Vercel deployment](vercel.md#5-known-limits-and-follow-ups)
+  applies: several frontend pages show hard-coded demo data. Do not present
+  them as working features.
