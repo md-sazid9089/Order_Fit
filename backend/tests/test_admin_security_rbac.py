@@ -18,7 +18,6 @@ from fastapi import Request
 from orderfit.api.deps import require_admin, session_token
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.configuration import RuntimeConfiguration
-from orderfit.contracts.resources import SessionView
 from orderfit.services.identity import IdentityService
 
 
@@ -157,6 +156,8 @@ def test_view_connection_tenant_admin_not_platform_admin(tmp_path):
 
         # Crucial security assertion: must be False
         assert view.is_platform_admin is False
+        # HttpOnly credentials must never become JSON readable by browser scripts.
+        assert "token" not in view.model_dump()
 
 
 def test_session_token_extraction_and_failure():

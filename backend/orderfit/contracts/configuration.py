@@ -12,6 +12,8 @@ class RuntimeConfiguration(BaseSettings):
     model_config = SettingsConfigDict(env_file=None, extra="forbid", hide_input_in_errors=True)
     database_url: SecretStr
     session_secret: SecretStr = Field(min_length=32)
+    webauthn_rp_id: str | None = None
+    webauthn_origin: str | None = None
     account_fingerprint_key: SecretStr = Field(min_length=32)
     account_fingerprint_key_version: Annotated[int, Field(ge=1)]
     document_dir: str
@@ -60,6 +62,17 @@ class RuntimeConfiguration(BaseSettings):
 
     @model_validator(mode="after")
     def coherent(self):
+        if bool(self.webauthn_rp_id) != bool(self.webauthn_origin):
+            raise ValueError("WebAuthn RP and origin must be configured together")
+        if self.webauthn_origin:
+            origin = urlsplit(self.webauthn_origin)
+            if (self.webauthn_origin not in self.allowed_origins
+                or origin.hostname != self.webauthn_rp_id
+                or origin.username or origin.password or origin.query or origin.fragment
+                or origin.path not in ("", "/")
+                or (origin.scheme != "https" and not
+                    (origin.scheme == "http" and origin.hostname == "localhost"))):
+                raise ValueError("WebAuthn requires an exact trusted HTTPS origin and RP")
         if not self.database_url.get_secret_value().startswith("postgresql+psycopg://"):
             raise ValueError("SQLAlchemy psycopg runtime URL required")
         access_key = (

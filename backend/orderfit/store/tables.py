@@ -42,6 +42,8 @@ app_user = Table(
     Column("id", Uuid, primary_key=True),
     Column("email", String),
     Column("full_name", String),
+    Column("is_platform_admin", Boolean),
+    Column("passkey_required", Boolean),
     Column("preferences", JSONB),
     Column("version", Integer),
 )

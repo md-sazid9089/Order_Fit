@@ -1,26 +1,25 @@
 """Administrative API routes protected by authoritative server-side RBAC."""
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy import func, select, text
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy import func, select
 
-from orderfit.api.deps import require_admin
-from orderfit.store.db import set_context
+from orderfit.api.deps import require_admin, session_token
+from orderfit.api.errors import ApplicationError
+from orderfit.services.admin import admin_connection
 from orderfit.store.tables import app_user, business, deal
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+router = APIRouter(prefix="/api/v1/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 
 @router.get("/overview", operation_id="admin_overview")
-def admin_overview(request: Request, admin_auth=Depends(require_admin)):
+def admin_overview(request: Request):
     """Cross-tenant telemetry for verified platform administrators."""
-    user, scope = admin_auth
     db = request.app.state.database
     storage = getattr(request.app.state, "documents", None)
     storage_ok = bool(storage.writable()) if storage else False
     status = db.readiness() if db else {"database": False, "schema_current": False, "worker": False}
 
-    with db.engine.begin() as conn:
-        set_context(conn, user_id=scope.user_id, session_id=scope.session_id)
+    with admin_connection(request.app.state.database, session_token(request)) as conn:
         total_users = conn.execute(select(func.count(app_user.c.id))).scalar_one() or 0
         active_tenants = (
             conn.execute(
@@ -48,12 +47,10 @@ def admin_overview(request: Request, admin_auth=Depends(require_admin)):
 
 
 @router.get("/users", operation_id="admin_users")
-def admin_users(request: Request, admin_auth=Depends(require_admin)):
+def admin_users(request: Request,
+                limit: int = Query(default=50, ge=1, le=100)):
     """List all platform users accessible to verified platform administrators."""
-    user, scope = admin_auth
-    db = request.app.state.database
-    with db.engine.begin() as conn:
-        set_context(conn, user_id=scope.user_id, session_id=scope.session_id)
+    with admin_connection(request.app.state.database, session_token(request)) as conn:
         rows = conn.execute(
             select(
                 app_user.c.id,
@@ -61,7 +58,7 @@ def admin_users(request: Request, admin_auth=Depends(require_admin)):
                 app_user.c.full_name,
                 app_user.c.is_platform_admin,
                 app_user.c.version,
-            ).order_by(app_user.c.email.asc())
+            ).order_by(app_user.c.email.asc(), app_user.c.id.asc()).limit(limit)
         ).mappings().all()
 
         return [
@@ -77,12 +74,10 @@ def admin_users(request: Request, admin_auth=Depends(require_admin)):
 
 
 @router.get("/tenants", operation_id="admin_tenants")
-def admin_tenants(request: Request, admin_auth=Depends(require_admin)):
+def admin_tenants(request: Request,
+                  limit: int = Query(default=50, ge=1, le=100)):
     """List all tenant namespaces for verified platform administrators."""
-    user, scope = admin_auth
-    db = request.app.state.database
-    with db.engine.begin() as conn:
-        set_context(conn, user_id=scope.user_id, session_id=scope.session_id)
+    with admin_connection(request.app.state.database, session_token(request)) as conn:
         rows = conn.execute(
             select(
                 business.c.id,
@@ -91,7 +86,7 @@ def admin_tenants(request: Request, admin_auth=Depends(require_admin)):
                 business.c.timezone,
                 business.c.status,
                 business.c.created_at,
-            ).order_by(business.c.name.asc())
+            ).order_by(business.c.name.asc(), business.c.id.asc()).limit(limit)
         ).mappings().all()
 
         return [
@@ -108,12 +103,10 @@ def admin_tenants(request: Request, admin_auth=Depends(require_admin)):
 
 
 @router.get("/orders", operation_id="admin_orders")
-def admin_orders(request: Request, admin_auth=Depends(require_admin)):
+def admin_orders(request: Request,
+                 limit: int = Query(default=50, ge=1, le=100)):
     """List purchase orders for verified platform administrators."""
-    user, scope = admin_auth
-    db = request.app.state.database
-    with db.engine.begin() as conn:
-        set_context(conn, user_id=scope.user_id, session_id=scope.session_id)
+    with admin_connection(request.app.state.database, session_token(request)) as conn:
         rows = conn.execute(
             select(
                 deal.c.id,
@@ -122,7 +115,7 @@ def admin_orders(request: Request, admin_auth=Depends(require_admin)):
                 deal.c.currency,
                 deal.c.order_value_minor,
                 deal.c.created_at,
-            ).order_by(deal.c.created_at.desc())
+            ).order_by(deal.c.created_at.desc(), deal.c.id.desc()).limit(limit)
         ).mappings().all()
 
         return [
@@ -139,32 +132,16 @@ def admin_orders(request: Request, admin_auth=Depends(require_admin)):
 
 
 @router.get("/logs", operation_id="admin_logs")
-def admin_logs(request: Request, admin_auth=Depends(require_admin)):
-    """List cluster security records for verified platform administrators."""
-    user, scope = admin_auth
-    db = request.app.state.database
-    with db.engine.begin() as conn:
-        set_context(conn, user_id=scope.user_id, session_id=scope.session_id)
-        rows = conn.execute(
-            text(
-                "SELECT id, user_id, code, created_at FROM security_event "
-                "ORDER BY id DESC LIMIT 100"
-            )
-        ).mappings().all()
-
-        return [
-            {
-                "id": r["id"],
-                "userId": str(r["user_id"]) if r["user_id"] else None,
-                "code": r["code"],
-                "createdAt": r["created_at"].isoformat() if r["created_at"] else None,
-            }
-            for r in rows
-        ]
+def admin_logs(request: Request):
+    """Global auth-event reads need a separately reviewed privileged interface."""
+    # Runtime credentials intentionally cannot SELECT the global auth-event table.
+    # Never resolve this by granting a tenant runtime role global auth access.
+    raise ApplicationError(503, "ADMIN_TELEMETRY_UNAVAILABLE",
+                           "Global security-event access is not configured.")
 
 
 @router.get("/system", operation_id="admin_system")
-def admin_system(request: Request, admin_auth=Depends(require_admin)):
+def admin_system(request: Request):
     """System health and invariant status for verified platform administrators."""
     db = request.app.state.database
     status = db.readiness() if db else {"database": False, "schema_current": False, "worker": False}

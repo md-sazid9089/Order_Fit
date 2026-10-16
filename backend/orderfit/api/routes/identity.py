@@ -24,6 +24,7 @@ from orderfit.contracts.workflow import CancelOperation, Operation
 
 router = APIRouter(prefix="/api/v1")
 IMPLEMENTED = {
+    "passkey_enroll_options", "passkey_enroll_verify", "passkey_login_options", "passkey_login_verify",
     "csrf_challenge",
     "signup",
     "signin",
