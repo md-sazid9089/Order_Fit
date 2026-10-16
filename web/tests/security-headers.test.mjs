@@ -5,13 +5,18 @@ import vm from "node:vm";
 import ts from "typescript";
 
 test("CI pins external actions to immutable commits", () => {
-  const workflow = readFileSync(new URL("../../.github/workflows/tests.yml", import.meta.url), "utf8");
+  const workflow = ["tests.yml", "security.yml"].map(name =>
+    readFileSync(new URL(`../../.github/workflows/${name}`, import.meta.url), "utf8")).join("\n");
   const actions = [...workflow.matchAll(/uses:\s*(\S+)/g)].map(m => m[1]);
   assert.ok(actions.length >= 3);
-  for (const action of actions) assert.match(action, /^[\w-]+\/[\w-]+@[a-f0-9]{40}$/);
+  for (const action of actions) assert.match(action, /^[\w-]+\/[\w-]+(?:\/[\w-]+)*@[a-f0-9]{40}$/);
   assert.match(workflow, /contents: read/);
   assert.match(workflow, /uv sync --frozen/);
   assert.match(workflow, /npm ci/);
+  assert.match(workflow, /--require-hashes --disable-pip --strict/);
+  assert.match(workflow, /path: \$\{\{ runner.temp \}\}\/orderfit-runtime\.cdx\.json/);
+  assert.match(workflow, /retention-days: 14/);
+  assert.doesNotMatch(workflow, /pull_request_target|secrets: inherit|persist-credentials: true/);
 });
 
 test("Git and container contexts exclude local secrets and diagnostics", () => {
@@ -26,6 +31,8 @@ test("Git and container contexts exclude local secrets and diagnostics", () => {
       assert.ok(rules.includes(rule));
     }
   }
+  const webRules = readFileSync(new URL("../.dockerignore", import.meta.url), "utf8").split(/\r?\n/);
+  for (const rule of ["test-results", "playwright-report", "acceptance-results"]) assert.ok(webRules.includes(rule));
 });
 
 test("web responses deny framing, object embeds, device access and HTTPS downgrade", async () => {

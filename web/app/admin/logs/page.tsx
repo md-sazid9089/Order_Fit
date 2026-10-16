@@ -66,7 +66,8 @@ export default function AdminLogsPage() {
   }, [router, selectedTenantId]);
 
   useEffect(() => {
-    void loadAuditLogs();
+    const initial = setTimeout(() => { void loadAuditLogs(); }, 0);
+    return () => clearTimeout(initial);
   }, [loadAuditLogs]);
 
   const filteredLogs = logs.filter((log) => {

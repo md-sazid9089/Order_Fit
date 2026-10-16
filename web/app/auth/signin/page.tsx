@@ -9,6 +9,7 @@ import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { safeNext, signInNotice } from "@/lib/session-expiry";
 import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
+import { signInWithPasskey } from "@/lib/passkeys";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -31,7 +32,14 @@ export default function SignInPage() {
     setBusy(true);
     try {
       resetSessionState(queryClient);
-      const session = await mutate<Session>("/auth/signin", "POST", { email: email.trim().toLowerCase(), password });
+      const normalizedEmail = email.trim().toLowerCase();
+      let session: Session;
+      try {
+        session = await mutate<Session>("/auth/signin", "POST", { email: normalizedEmail, password });
+      } catch (cause) {
+        if (!(cause instanceof ApiError) || cause.code !== "MFA_REQUIRED") throw cause;
+        session = await signInWithPasskey(normalizedEmail, password);
+      }
       setCachedSession(session);
       router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/deals");
     } catch (cause) {
@@ -46,7 +54,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1E2021] text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-700 selection:text-white font-sans">
+    <div className="min-h-screen bg-[#1E2021] text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-700 selection:text-white font-sans [&_:focus-visible]:outline-solid! [&_:focus-visible]:outline-2! [&_:focus-visible]:outline-white [&_:focus-visible]:outline-offset-2">
       {/* Top Navigation Bar */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group outline-none">
@@ -97,7 +105,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
               />
             </div>
 
@@ -113,7 +121,7 @@ export default function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password*"
-                  className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors pr-11"
+                  className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors pr-11"
                 />
                 <button
                   type="button"
@@ -144,7 +152,7 @@ export default function SignInPage() {
             </div>
 
             {/* Disclaimer */}
-            <div className="pt-2 text-center text-[11px] text-neutral-500 leading-relaxed">
+            <div className="pt-2 text-center text-[11px] text-neutral-400 leading-relaxed">
               Your account uses a password session. Financial assessments use reviewed manual inputs; outgoing actions are sandbox-only.
             </div>
           </form>
@@ -152,7 +160,7 @@ export default function SignInPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 text-center text-xs text-neutral-500">
+      <footer className="w-full py-6 text-center text-xs text-neutral-400">
         <div className="flex items-center justify-center gap-4">
           <span>OrderFit © 2026</span>
         </div>

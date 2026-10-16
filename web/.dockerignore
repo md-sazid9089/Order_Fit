@@ -1,5 +1,8 @@
 node_modules
 .next
+test-results
+playwright-report
+acceptance-results
 out
 *.tsbuildinfo
 .env

@@ -10,6 +10,7 @@ import { isNetworkFailure } from "@/lib/approval-model";
 import { buildBusinessProfileWrite, buildPasswordChange, buildProfileWrite, can, describeP7Error, passwordChangeErrors, PASSWORD_MIN, companyDraftOf, companyDraftValid, roleLabel, timezoneOptions, timezoneValid, type CompanyDraft, type ProfileDraft } from "@/lib/p7-model";
 import type { BusinessView, SessionView } from "@/lib/generated-api";
 import { useScope } from "@/components/layout/scope";
+import { PasskeyPanel } from "@/components/settings/passkey-panel";
 import { Alert, Loading, PageFrame, QueryError, field, panel, primary, useCommand, useScoped, when } from "@/components/p7/common";
 
 type Tab = "user" | "company";
@@ -33,7 +34,7 @@ function UserProfile() {
   const { session, replaceSession } = useScope();
   const queryClient = useQueryClient();
   // The form is keyed by the saved profile version, so a successful save re-initializes it from the server's answer.
-  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><PasswordPanel /></div>;
+  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><PasswordPanel /><PasskeyPanel /></div>;
 }
 
 function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (session: SessionView) => void }) {

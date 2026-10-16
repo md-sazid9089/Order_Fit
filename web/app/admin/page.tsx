@@ -129,7 +129,8 @@ export default function AdminOverviewPage() {
   };
 
   useEffect(() => {
-    void loadData();
+    const initial = setTimeout(() => { void loadData(); }, 0);
+    return () => clearTimeout(initial);
   }, [router]);
 
   const handleRunHealthCheck = async () => {

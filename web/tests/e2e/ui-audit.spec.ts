@@ -5,10 +5,30 @@ test("authentication fields have persistent accessible names and visible keyboar
   await page.goto("/auth/signin");
   const email = page.getByRole("textbox", { name: "Email", exact: true });
   await expect(email).toBeVisible();
+  const contrast = await email.evaluate(element => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d")!;
+    function luminance(color: string) {
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      const rgb = [...context.getImageData(0, 0, 1, 1).data].slice(0, 3).map(value => {
+        const channel = value / 255;
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+      });
+      return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+    }
+    const background = luminance(getComputedStyle(element).backgroundColor);
+    const foreground = luminance(getComputedStyle(element, "::placeholder").color);
+    return (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
+  });
+  console.log("sign-in placeholder contrast", contrast);
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
   await email.focus();
   const indicator = await email.evaluate(element => {
     const style = getComputedStyle(element);
-    return style.outlineStyle !== "none" || style.boxShadow !== "none";
+    // A ring-0 shadow is non-"none" but invisible; it must not pass this check.
+    return style.outlineStyle !== "none" && parseFloat(style.outlineWidth) >= 2;
   });
   expect(indicator).toBe(true);
   await expect(page.getByLabel("Password", { exact: true })).toBeVisible();

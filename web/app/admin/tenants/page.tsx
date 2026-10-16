@@ -95,7 +95,8 @@ export default function AdminTenantsPage() {
   }, [router]);
 
   useEffect(() => {
-    void loadTenants();
+    const initial = setTimeout(() => { void loadTenants(); }, 0);
+    return () => clearTimeout(initial);
   }, [loadTenants]);
 
   const filteredTenants = tenants.filter(

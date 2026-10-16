@@ -104,7 +104,8 @@ export default function AdminOrdersPage() {
   }, [router]);
 
   useEffect(() => {
-    void loadDatabaseOrders();
+    const initial = setTimeout(() => { void loadDatabaseOrders(); }, 0);
+    return () => clearTimeout(initial);
   }, [loadDatabaseOrders]);
 
   const tenantsList = useMemo(() => {
