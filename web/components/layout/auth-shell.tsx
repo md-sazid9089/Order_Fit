@@ -7,8 +7,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, get, mutate, type Session } from "@/lib/orderfit-api";
 import { resetBusinessState, resetSessionState } from "@/lib/session-reset";
 import { pathForBusiness, resolveBusinessId } from "@/lib/business-scope";
-import { activeHref, navFor, roleLabel } from "@/lib/p7-model";
+import { activeHref, can, navFor, roleLabel } from "@/lib/p7-model";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { Plus } from "lucide-react";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ScopeContext, useScope, type Scope } from "@/components/layout/scope";
 
 export { useScope };
@@ -80,27 +82,31 @@ export function AuthShell({ children }: { children: ReactNode }) {
   // Navigation is role-aware for convenience only; the API authorizes every request itself.
   const links = navFor(scope.membership?.role);
   const current = activeHref(pathname, links);
+  const canPrepare = can(scope.membership?.role, "prepare");
+  const title = links.find(l => l.href === current)?.label ?? "OrderFit";
+  const initial = (scope.session.memberships.find(m => m.business_id === businessId)?.business_name ?? "O").trim().charAt(0).toUpperCase();
   return <ScopeContext.Provider value={scope}>
-    <div className="min-h-screen bg-[#f7f6f5] text-neutral-900">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 p-4">
-          <Link href={`/deals${query}`} className="text-lg font-bold">OrderFit</Link>
-          <nav aria-label="Primary" className="flex flex-wrap gap-3 text-sm">
-            {links.map(l => <Link key={l.href} href={`${l.href}${query}`} aria-current={current === l.href ? "page" : undefined} className={current === l.href ? "font-semibold underline" : "text-neutral-600 hover:underline"}>{l.label}</Link>)}
-          </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
-            {businessId && <NotificationBell />}
-            <label className="sr-only" htmlFor="business-switcher">Business</label>
-            <select id="business-switcher" className="rounded-lg border px-3 py-1.5" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
-              {scope.session.memberships.length === 0 && <option value="">No business</option>}
-              {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
-            </select>
-            <button type="button" disabled={busy} className="rounded-lg border px-3 py-1.5 disabled:opacity-50" onClick={() => { void signOut(); }}>Sign out</button>
+    <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
+      <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
+            <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">{title === "Orders" ? "Deals & Orders Pipeline" : title}</h1>
+            <div className="flex items-center gap-3 text-sm">
+              {businessId && <NotificationBell />}
+              <label className="sr-only" htmlFor="business-switcher">Business</label>
+              <select id="business-switcher" className="rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+                {scope.session.memberships.length === 0 && <option value="">No business</option>}
+                {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
+              </select>
+              {canPrepare && businessId && <Link href={`/deals/new${query}`} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span>Evaluate New Order</span></Link>}
+              <button type="button" disabled={busy} title="Sign out" aria-label="Sign out" className="size-9 rounded-full bg-[#1E2021] text-white text-xs font-semibold disabled:opacity-50" onClick={() => { void signOut(); }}>{initial}</button>
+            </div>
           </div>
-        </div>
-      </header>
-      {error && <p role="alert" className="mx-auto mt-3 max-w-5xl rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
-      {businessId ? <div key={businessId}>{children}</div> : <main className="mx-auto max-w-5xl p-6"><p className="rounded-xl bg-white p-5">Your account has no business membership, so there is nothing to show yet.</p></main>}
+        </header>
+        {error && <p role="alert" className="mx-4 mt-3 rounded-lg bg-red-50 p-3 text-red-800 sm:mx-6 lg:mx-8">{error}</p>}
+        {businessId ? <div key={businessId} className="flex-1 min-w-0">{children}</div> : <main className="p-6"><p className="rounded-xl bg-white p-5">Your account has no business membership, so there is nothing to show yet.</p></main>}
+      </div>
     </div>
   </ScopeContext.Provider>;
 }
