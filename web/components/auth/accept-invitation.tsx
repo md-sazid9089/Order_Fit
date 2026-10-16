@@ -65,7 +65,12 @@ export function AcceptInvitation() {
     </div>
     : spent ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>
     : !token ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">This page needs the full invitation link, including the part after the # sign. Open the link you were given again.</p>
-    : session.isPending ? <p role="status" className="text-sm">Checking your session…</p>
+    : session.isPending ? (
+      <div className="flex items-center gap-2 text-neutral-500 py-2" role="status">
+        <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
+        <span className="text-xs font-medium">Verifying invitation…</span>
+      </div>
+    )
     : signedOut ? <div className="space-y-3 text-sm"><p>You need to be signed in to accept an invitation. <Link className="underline" href="/auth/signin?next=/auth/invitations/accept">Sign in</Link> or <Link className="underline" href="/auth/signup">create an account</Link>. After signing in, open the invitation link from your email again.</p><p className="text-neutral-600">The one-time token is not stored or carried through sign-in, for your safety.</p></div>
     : session.isError ? <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-3 text-sm text-red-800"><p>{describeP7Error(session.error).message}</p><button type="button" className="underline" onClick={() => void session.refetch()}>Retry</button></div>
     : <div className="space-y-3 text-sm">

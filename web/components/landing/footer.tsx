@@ -171,10 +171,10 @@ export function Footer() {
               }}
               className="flex items-center gap-2 group cursor-pointer"
             >
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#FEF3C7] transition-colors">
+              <span className="font-heading text-2xl font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors">
                 orderfit
               </span>
-              <span className="size-2 rounded-full bg-[#FEF3C7] group-hover:scale-125 transition-transform" />
+              <span className="size-2 rounded-full bg-[#B5F2C6] group-hover:scale-125 transition-transform" />
             </Link>
             <span className="text-xs text-[#E6F4F1]/60 border-l border-white/20 pl-3 font-sans">
               Purchase, Plan, and Protect Cash Flow
@@ -182,17 +182,17 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-xs text-[#E6F4F1]/70">
-            <span className="font-sans font-semibold uppercase tracking-wider text-[11px] text-[#FEF3C7]">
-              Backed by the very best in commercial fintech
+            <span className="font-sans font-semibold uppercase tracking-wider text-[11px] text-[#B5F2C6]">
+              Architected for Small &amp; Mid-Market Enterprises
             </span>
             <div className="flex items-center gap-4 text-xs font-semibold text-white/90">
-              <span>Y Combinator</span>
+              <span>Deterministic Engine</span>
               <span>·</span>
-              <span>Kleiner Perkins</span>
+              <span>6 Core ADRs</span>
               <span>·</span>
-              <span>Founders Fund</span>
+              <span>SHA-256 Audit Trail</span>
               <span>·</span>
-              <span>Fintech Index</span>
+              <span>HITL Governance</span>
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function Footer() {
             }}
             className="inline-block group cursor-pointer"
           >
-            <span className="font-radio-grotesk text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#FEF3C7] transition-colors duration-300 select-none leading-none">
+            <span className="font-radio-grotesk text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors duration-300 select-none leading-none">
               Orderfit
             </span>
           </Link>

@@ -108,7 +108,8 @@ def install_errors(app):
             )
         # Denials persist after the failed business transaction has rolled back.
         database = getattr(request.app.state, "database", None)
-        token = request.cookies.get("orderfit_session")
+        auth = request.headers.get("Authorization")
+        token = auth[7:].strip() if auth and auth.startswith("Bearer ") else request.cookies.get("orderfit_session")
         if database is not None and is_security_relevant(exc, status, code, bool(token)):
             await run_in_threadpool(
                 database.record_security, token, code)

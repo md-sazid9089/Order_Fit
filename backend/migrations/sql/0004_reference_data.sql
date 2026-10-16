@@ -9,9 +9,11 @@ INSERT INTO currency (code, exponent) VALUES
 INSERT INTO app_role (code, tier, description) VALUES
   ('viewer',          'T0', 'Read-only'),
   ('auditor',         'T0', 'Read-only, audit log and exports'),
+  ('user',            'T0', 'Standard user'),
   ('commercial_lead', 'T2', 'Prepares orders, confirms figures and drafts; cannot approve sends'),
   ('risk_officer',    'T3', 'Approves plans and sends'),
   ('owner',           'T3', 'Business owner; approves plans and sends'),
+  ('admin',           'T4', 'Administrator'),
   ('superadmin',      'T4', 'Platform administrator (assigned by the platform, never by the application)');
 
 -- Cash event kinds: spec 04 section 10.2 (16 kinds) + fixtures + UI.
