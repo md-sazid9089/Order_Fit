@@ -5,7 +5,7 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, P0–P8 implemented locally on top of `main` at `ba51194`; round-3/4 audit repairs are uncommitted. Check today's branch/diff
+Snapshot: **16 October 2026**, P0–P8 implementation is on `main` at `8e7d0ed`; round-3/4 audit repairs and shared-storage/E2E remediation remain uncommitted. Check today's branch/diff
 before relying on this snapshot. Repository root relative to this file: `../../..`.
 
 ## Read only what the task needs
@@ -28,16 +28,16 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 |---|---|
 | P0–P2 | Contracts, foundation and deterministic engine gates passed locally. |
 | P3 | Latest remediation records **local gate passed**, superseding partial commit `c03b2eb`. Per-option scans, provenance, exports, process recovery and persisted UI were added afterward. |
-| P4 | Documents, guarded extraction, field review and CSV import are integrated. Its own final acceptance review remains pending; live OpenAI/model evaluation is unverified. |
+| P4 | Documents, guarded extraction, field review and CSV import are integrated. A shared S3 adapter now supports split API/worker storage; only provider-stub tests ran. Independent final acceptance and live OpenAI/model evaluation remain pending. |
 | P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. All outgoing effects remain disabled. |
 | P6 | Local gate passed: exact-bundle approval, session-bound step-up, fenced durable execution, sandbox effects, serialized commitment gate with engine-derived baseline projection, rounds, compensation. Real adapters do not exist. |
 | P7 | Members/invitations (hashed single-use tokens), payee verification evidence, per-user notifications, audit/cash exports, as-of history; web screens wired. Older lists still use offset paging with null `next_cursor`. |
-| P8 | `/ready`, graceful worker shutdown, Vercel (same-origin rewrite) + Render Blueprint + Neon runbooks. **Hosted acceptance, live OpenAI, restore drill and PgBouncer-under-Neon are unverified.** |
+| P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, live OpenAI, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
 
-Latest P5 report records **244 backend tests**, additional party-reply integration checks,
-frontend build/type checks and actual disposable-stack browser/restart evidence.
-These are historical results, not checks rerun by reading this file. Exact checks,
-browser coverage and limitations live in the progress file.
+Current local verification: **471 backend tests passed**, then 23 focused storage/readiness
+tests; 75 frontend tests and a browser signup→baseline→order→evaluation→reload journey passed.
+The full checks and explicit hosted limitations are recorded in the progress file; results do
+not establish external provider or deployment acceptance.
 
 ## Decisions easy to miss
 
@@ -71,9 +71,10 @@ browser coverage and limitations live in the progress file.
 - Commit settlement projects engine events (`agent/nodes/compute.py` mapping, stored per
   option) once and bumps the revision once; the per-business commitment gate stays held until
   settlement or full compensation. Sandbox only: no real adapter exists.
-- Deployment: web uses a same-origin Next rewrite; migrations run as a separate manual Render job
-  (the API/worker refuse to start with `DATABASE_URL_DIRECT`); documents live on the API's disk, so
-  the split Render worker cannot read them yet. See `docs/deployment/`.
+- Deployment: Compose keeps API/worker/database internal and only web host-facing; browser API
+  calls use a same-origin Next rewrite. Render API/worker use a shared S3-compatible store once the
+  bucket and matching secrets are provisioned. Migrations remain a separate manual Render job;
+  API/worker refuse `DATABASE_URL_DIRECT`. See `docs/deployment/`.
 - Audit repairs: execution retries transient PostgreSQL conflicts under its existing lease;
   late cancellation after all effects may settle; live idempotency keys cannot be deleted by
   the runtime role; uploads are authorized before slot admission and have overall/idle limits;

@@ -48,6 +48,7 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test
@@ -59,3 +60,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose --env-file .env.example build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Browser end-to-end journey
+        shell: pwsh
+        run: ./scripts/run-e2e.ps1 -SkipBuild

@@ -10,7 +10,9 @@ WORKDIR /app
 # NEXT_PUBLIC_* values are inlined into the browser bundle at build time,
 # so the API URL must be the address the BROWSER uses, not the compose service name.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG API_INTERNAL_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    API_INTERNAL_URL=$API_INTERNAL_URL \
     NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

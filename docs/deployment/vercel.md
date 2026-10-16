@@ -82,4 +82,4 @@ Never use a wildcard origin.
 ## 6. Local development is unchanged
 
 - **Default:** with `web/.env.local` unset or `API_INTERNAL_URL=http://localhost:8000`, `npm run dev` proxies `/api/v1` to the local API. Add `http://localhost:3000` to the API's `ALLOWED_ORIGINS`.
-- **Docker Compose:** it still builds `web/` with `NEXT_PUBLIC_API_URL=http://localhost:8000`. That is direct mode, which works because both run on `localhost` (same site).
+- **Docker Compose:** `NEXT_PUBLIC_API_URL` is empty and `API_INTERNAL_URL=http://api:8000` is baked into the Next rewrite. The browser uses the host-facing web origin, while the web proxy reaches the API over the internal Compose network. API, worker and database are not published to the host and have no outbound route by default.

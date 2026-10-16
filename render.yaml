@@ -19,7 +19,7 @@ services:
     runtime: docker
     # Pick the same region as the Neon project to keep DB round trips short.
     # region: oregon
-    plan: starter            # `free` sleeps after 15 min idle and has an ephemeral disk: see render.md
+    plan: starter            # `free` sleeps after 15 min idle; private object storage survives service disks
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     # /ready: restricted DB login + current schema + writable document storage (503 otherwise).
@@ -35,6 +35,20 @@ services:
         sync: false
       - key: DOCUMENT_DIR
         value: /app/var/documents
+      - key: DOCUMENT_STORAGE_BACKEND
+        value: s3
+      - key: DOCUMENT_S3_BUCKET
+        sync: false
+      - key: DOCUMENT_S3_REGION
+        sync: false
+      - key: DOCUMENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: DOCUMENT_S3_ENDPOINT_URL
+        sync: false
+      - key: DOCUMENT_S3_ADDRESSING_STYLE
+        value: auto
       # Explicit proxy trust (JSON list of proxy IPs/CIDRs). [] = ignore X-Forwarded-* headers.
       # Widen only if the API is reachable exclusively through the listed proxies.
       - key: TRUSTED_PROXY_IPS
@@ -49,12 +63,6 @@ services:
       - key: UPLOAD_SOURCE_CONCURRENCY
         value: "2"
       # Optional, only when LLM_MODE=live (set in the dashboard, never here): OPENAI_API_KEY, OPENAI_MODEL.
-    # Uploaded documents are private files on local disk. A persistent disk needs a paid plan and
-    # cannot be shared with the worker. See docs/deployment/render.md section "Document storage".
-    disk:
-      name: orderfit-documents
-      mountPath: /app/var
-      sizeGB: 1
 
   # ---------------------------------------------------------------- Worker
   - type: worker
@@ -74,8 +82,20 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS # required by RuntimeConfiguration validation; same value as the API
         sync: false
-      # Separate from the API: a Render disk attaches to one service only, so the worker cannot read
-      # API uploads. Document-reading jobs (extract, csv_preview) need shared storage first.
+      - key: DOCUMENT_STORAGE_BACKEND
+        value: s3
+      - key: DOCUMENT_S3_BUCKET
+        sync: false
+      - key: DOCUMENT_S3_REGION
+        sync: false
+      - key: DOCUMENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: DOCUMENT_S3_ENDPOINT_URL
+        sync: false
+      - key: DOCUMENT_S3_ADDRESSING_STYLE
+        value: auto
       - key: DOCUMENT_DIR
         value: /app/var/documents
 
