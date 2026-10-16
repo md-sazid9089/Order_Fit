@@ -35,7 +35,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    get<Session>("/auth/me").then(s => {
+    // The CSRF cookie lives 30 minutes but the session lasts hours, so a returning tab can hold a valid session with no
+    // CSRF cookie: /auth/me then answers CSRF_REJECTED. A fresh challenge re-issues it for the live session; retry once.
+    get<Session>("/auth/me").catch(async e => {
+      if (e instanceof ApiError && e.status === 403 && e.code === "CSRF_REJECTED") { await get("/auth/csrf"); return get<Session>("/auth/me"); }
+      throw e;
+    }).then(s => {
       if (!active) return;
       const id = resolveBusinessId(s.memberships, new URLSearchParams(window.location.search).get("businessId"), remembered());
       if (id) {
