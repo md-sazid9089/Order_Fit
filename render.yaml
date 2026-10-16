@@ -1,131 +1,116 @@
-# Render Blueprint for the OrderFit backend. Web (Next.js) is on Vercel; Postgres is on Neon.
-# Runbook: docs/deployment/render.md and docs/deployment/neon.md.
+# Render Blueprint — OrderFit Backend
+# https://docs.render.com/blueprint-spec
 #
-# Names only: no secret value is stored here. `sync: false` makes Render prompt for the value
-# in the dashboard on first Blueprint sync. Values are never committed.
+# The frontend is deployed separately on Vercel (see docs/deployment/vercel.md).
+# The database is hosted on Neon (see docs/neon_connection_review.md).
 #
-# Role/URL mapping (all Neon URLs MUST use the scheme `postgresql+psycopg://` and `sslmode=require`):
-#   orderfit-api      DATABASE_URL         -> restricted login `orderfit_runtime`       (member of orderfit_app),    Neon POOLED host (-pooler)
-#   orderfit-worker   DATABASE_URL         -> restricted login `orderfit_worker_login`  (member of orderfit_worker), Neon POOLED host (-pooler)
-#   orderfit-migrate  DATABASE_URL_DIRECT  -> migration owner login,                                              Neon DIRECT (unpooled) host
-# The API and worker refuse to start if DATABASE_URL_DIRECT is present in their environment
-# (backend/orderfit/api/main.py:73, workflow/worker.py:214), so the migrator credential lives only
-# on the one-shot `orderfit-migrate` service, never on a runtime service.
+# Usage:
+#   1. Push this file to the repository.
+#   2. In the Render dashboard, create a new Blueprint Instance pointing at this repo.
+#   3. Set all environment variables marked sync: false in the Render dashboard.
+#   4. Deploy. The pre-deploy command runs migrations before the API starts.
+#
+# Both services share one Docker image built from backend/Dockerfile.
 
 services:
-  # ---------------------------------------------------------------- API
+  # ── API (Web Service) ──────────────────────────────────────────────────
   - type: web
     name: orderfit-api
     runtime: docker
-    # Pick the same region as the Neon project to keep DB round trips short.
-    # region: oregon
-    plan: starter            # `free` sleeps after 15 min idle; private object storage survives service disks
+    repo: https://github.com/md-sazid9089/Order_Fit
+    branch: deployment
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    # /ready: restricted DB login + current schema + writable document storage (503 otherwise).
-    # /health remains liveness only.
-    healthCheckPath: /ready
-    autoDeploy: false        # deploy deliberately, after the migration job has run
-    envVars:
-      - fromGroup: orderfit-shared
-      # PORT is injected by Render (default 10000); the image binds 0.0.0.0:$PORT.
-      - key: DATABASE_URL    # pooled Neon URL, restricted API login
-        sync: false
-      - key: ALLOWED_ORIGINS # JSON list of exact browser origins, e.g. ["https://<app>.vercel.app"]
-        sync: false
-      - key: DOCUMENT_DIR
-        value: /app/var/documents
-      - key: DOCUMENT_STORAGE_BACKEND
-        value: s3
-      - key: DOCUMENT_S3_BUCKET
-        sync: false
-      - key: DOCUMENT_S3_REGION
-        sync: false
-      - key: DOCUMENT_S3_ACCESS_KEY_ID
-        sync: false
-      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
-        sync: false
-      - key: DOCUMENT_S3_ENDPOINT_URL
-        sync: false
-      - key: DOCUMENT_S3_ADDRESSING_STYLE
-        value: auto
-      # Explicit proxy trust (JSON list of proxy IPs/CIDRs). [] = ignore X-Forwarded-* headers.
-      # Widen only if the API is reachable exclusively through the listed proxies.
-      - key: TRUSTED_PROXY_IPS
-        value: "[]"
-      # Auth/upload limits (defaults shown; see docs/deployment/render.md).
-      - key: AUTH_ACCOUNT_LIMIT
-        value: "15"
-      - key: AUTH_SOURCE_LIMIT
-        value: "300"
-      - key: UPLOAD_CONCURRENCY
-        value: "4"
-      - key: UPLOAD_SOURCE_CONCURRENCY
-        value: "2"
-      # Optional, only when LLM_MODE=live (set in the dashboard, never here): OPENAI_API_KEY, OPENAI_MODEL.
+    plan: starter            # $7/mo; free tier cold-starts break Vercel proxy
+    region: oregon           # us-west, close to Neon's default US region
+    healthCheckPath: /health
 
-  # ---------------------------------------------------------------- Worker
+    # Runs inside the built image before each deploy. Uses the migrator URL
+    # (DATABASE_URL_DIRECT) which is only available during this phase.
+    preDeployCommand: alembic upgrade head
+
+    envVars:
+      # ── Neon database (runtime restricted login) ──
+      - key: DATABASE_URL
+        sync: false          # set manually in dashboard — secret
+      # ── Migrator-only credential (used only in preDeployCommand) ──
+      - key: DATABASE_URL_DIRECT
+        sync: false
+      # ── Application secrets ──
+      - key: SESSION_SECRET
+        sync: false          # ≥32 chars, generate with: python -c "import secrets; print(secrets.token_urlsafe(48))"
+      - key: ACCOUNT_FINGERPRINT_KEY
+        sync: false          # ≥32 chars, must differ from SESSION_SECRET
+      - key: ACCOUNT_FINGERPRINT_KEY_VERSION
+        value: "1"
+      # ── Document storage (Render Persistent Disk) ──
+      - key: DOCUMENT_DIR
+        value: /var/data/orderfit/documents
+      # ── OpenAI / LLM ──
+      - key: LLM_MODE
+        value: "off"         # change to "live" after model evaluation
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: ""
+      # ── Cookie and CORS ──
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        sync: false          # JSON list, e.g. ["https://orderfit.vercel.app"]
+      # ── Python performance ──
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+    disk:
+      name: orderfit-documents
+      mountPath: /var/data/orderfit
+      sizeGB: 1              # uploaded documents; increase as needed
+
+  # ── Background Worker ──────────────────────────────────────────────────
   - type: worker
     name: orderfit-worker
     runtime: docker
-    plan: starter            # no free worker tier exists; keep it always-on (60 s lease, 15 s heartbeat)
+    repo: https://github.com/md-sazid9089/Order_Fit
+    branch: deployment
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    # Not `python -m orderfit.runtime worker`: that is a local launcher that reads a .env file and
-    # spawns a child (runtime.py). On Render the platform injects the environment, so run the
-    # worker module directly (workflow/worker.py main).
-    dockerCommand: python -m orderfit.workflow.worker
-    autoDeploy: false
-    envVars:
-      - fromGroup: orderfit-shared
-      - key: DATABASE_URL    # pooled Neon URL, restricted WORKER login (not the API login)
-        sync: false
-      - key: ALLOWED_ORIGINS # required by RuntimeConfiguration validation; same value as the API
-        sync: false
-      - key: DOCUMENT_STORAGE_BACKEND
-        value: s3
-      - key: DOCUMENT_S3_BUCKET
-        sync: false
-      - key: DOCUMENT_S3_REGION
-        sync: false
-      - key: DOCUMENT_S3_ACCESS_KEY_ID
-        sync: false
-      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
-        sync: false
-      - key: DOCUMENT_S3_ENDPOINT_URL
-        sync: false
-      - key: DOCUMENT_S3_ADDRESSING_STYLE
-        value: auto
-      - key: DOCUMENT_DIR
-        value: /app/var/documents
-
-  # ---------------------------------------------------------------- Migrations (manual run)
-  # One-shot, migrator-only. Trigger "Run job" in the dashboard before each backend deploy.
-  # Chosen over preDeployCommand because a preDeployCommand runs with the web service's own
-  # environment, which would put the owner credential into the API process environment.
-  - type: cron
-    name: orderfit-migrate
-    runtime: docker
     plan: starter
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: alembic upgrade head
-    schedule: "0 0 29 2 *"   # placeholder schedule (29 February only): this job is run MANUALLY via "Trigger Run" before each deploy; `alembic upgrade head` is idempotent.
-    envVars:
-      - key: DATABASE_URL_DIRECT   # Neon DIRECT (unpooled) host, migration owner login
-        sync: false
+    region: oregon
 
-envVarGroups:
-  - name: orderfit-shared
+    # Override the Dockerfile CMD to run the worker instead of uvicorn.
+    dockerCommand: python -m orderfit.workflow.worker
+
     envVars:
-      # Generated once by Render (256-bit random). Distinct values are required (configuration.py).
+      # Worker uses its own restricted database login.
+      - key: DATABASE_URL
+        sync: false          # set to the WORKER_DATABASE_URL value (worker login)
+      - key: DOCUMENT_DIR
+        value: /var/data/orderfit/documents
+      - key: LLM_MODE
+        value: "off"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: ""
       - key: SESSION_SECRET
-        generateValue: true
+        sync: false
       - key: ACCOUNT_FINGERPRINT_KEY
-        generateValue: true
+        sync: false
       - key: ACCOUNT_FINGERPRINT_KEY_VERSION
         value: "1"
       - key: COOKIE_SECURE
         value: "true"
-      - key: LLM_MODE
-        value: "off"
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+    disk:
+      name: orderfit-worker-documents
+      mountPath: /var/data/orderfit
+      sizeGB: 1
