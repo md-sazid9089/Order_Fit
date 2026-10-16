@@ -196,7 +196,7 @@ Set environment variables as listed in Step 2 above.
 
 ## Stress remediation reconciliation — 16 October 2026
 
-Current required sole revision is `0016_worker_presence`. `/ready` requires an
+Current required sole revision is `0018_passkey_mfa`. `/ready` requires an
 unexpired global worker heartbeat as well as restricted DB/schema/storage checks;
 `backlog_seconds` is separate. Keep process liveness `/health` for service restart
 monitoring so a worker outage does not restart a healthy API. Reserve one extra

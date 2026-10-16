@@ -112,3 +112,7 @@ All business operations are planned, not deployed. Test column is the required p
 | preparation_review | `POST /api/v1/businesses/{business_id}/messages/{message_id}/review` | prepare | `preparation` | preparation_review | P5 | V09 |
 | reply_get | `GET /api/v1/businesses/{business_id}/replies/{reply_id}` | read | `preparation` | reply_candidate_set | P5 | V09 |
 | preparation_settings_reset | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/preparation-settings/reset` | prepare | `preparation.reset_settings` | deal,operation_log | P5 | V09 |
+| passkey_enroll_options | `POST /api/v1/auth/passkeys/enroll/options` | self | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
+| passkey_enroll_verify | `POST /api/v1/auth/passkeys/enroll/verify` | self | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
+| passkey_login_options | `POST /api/v1/auth/passkeys/login/options` | public | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
+| passkey_login_verify | `POST /api/v1/auth/passkeys/login/verify` | public | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |

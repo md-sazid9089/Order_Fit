@@ -1,11 +1,11 @@
 # Backend implementation progress
 
-> Latest independent stress review, 16 October 2026, `61aaff8`: existing backend
-> suite **492 passed / 2 failed**; added probes **5 passed / 2 strict xfails**;
-> built browser/HTTP suite **4 passed / 1 failed**. Current head is
-> `0015_session_authority`. See [the stress report](backend_stress_test_report_2026-10-16.md)
-> for reproductions, classification and unresolved acceptance gates. Historical
-> local completion labels below do not establish that today's complete gate is green.
+> Current reconciliation, 17 October 2026: see the
+> [resumed audit matrix](orderfit_audit_2026-10-17.md). The old stress failures below
+> were subsequently repaired (reported final 507 backend passes); neither that
+> result nor the old migration-head statement certifies the newer admin/RBAC work.
+> Backend/admin remediation is separately owned and in progress. Fresh frontend
+> and isolated-stack evidence is recorded in the latest continuation entry.
 
 Current phase status (16 October 2026): P0–P3/P5–P7 have local implementation and
 gate evidence, with additional acceptance/scale gaps listed in the
@@ -1538,3 +1538,150 @@ matrix before treating any phase or competition deliverable as fully accepted.
   frontend merge; the backend tree remains identical to its tested commit.
 - Hosted/provider acceptance and the previously recorded external blockers remain
   unverified. This merge establishes local integration, not production readiness.
+
+## 17 October 2026 — resumed frontend/integration audit
+
+- Reconciled `main` at `eca00c9` with prior audit/stress/merge records instead of
+  resuming the interrupted verification against an old image. Earlier fixes are
+  committed; new admin/RBAC changes arrived afterward. Graph-first discovery did
+  not cover the new admin symbols; direct source reads filled that gap. Updated
+  [the current matrix](orderfit_audit_2026-10-17.md), preserving historical reports.
+- The user explicitly assigned concurrent backend/admin remediation to the other
+  task and frontend/integration checks here. No competing backend patch, shared DB
+  mutation, real credential change or Git-history operation was performed. Initial
+  backend lint/export issues and the `.env`-loading/live-write RBAC test were
+  identified but left with that owner. Its new `0017_platform_authority` needs its
+  own final migration/restricted-role acceptance; historical 507 passes are not
+  a fresh pass of those changes.
+- Reproduced and repaired server admin verification ignoring `API_INTERNAL_URL`;
+  bounded its fetch to 10 seconds, retained no-store and strict boolean authority,
+  and distinguished technical unavailability from an invalid-session 401. A
+  recoverable server notice does not render protected child content. Raw fetch
+  errors are no longer logged. Three new unit regressions passed after failing
+  address/deadline and 503 checks before the repair.
+- Restored the existing disabled-console capability at the common admin layout,
+  after authoritative authentication and role checks. Existing views include
+  local-only maintenance controls and unsupported schema/export success claims;
+  they are preserved but not exposed as operational platform controls. Backend
+  authority is not broadened to make those screens appear functional.
+- Repaired five incoming frontend effect/lint errors with cancellable initial
+  loads. No lint rule/assertion was disabled. Preserved teammates' dark auth design
+  while repairing placeholder contrast **3.2877→6.0338:1** and explicit solid
+  2-pixel keyboard outlines. The previous focus assertion accepted invisible ring-0
+  shadows; the strengthened browser assertion now rejects that false positive.
+- Fresh frontend verification: **95 unit tests passed**, typecheck passed, lint
+  **0 errors / 68 retained warnings**. Production Next build and current API/web
+  Docker builds passed. Initial fresh stack: six existing browser/HTTP tests
+  passed; then the new contrast check independently reproduced the real failure.
+  One focused attempt ran after its disposable stack cleanup and returned connection
+  refused; this harness-lifetime failure is not an application pass.
+- Final complete rebuilt disposable stack: **6 browser/HTTP tests passed in 1.5
+  minutes**, with the strengthened contrast/focus check, persisted manual
+  order/evaluation/reload/negotiation route, actual owner denial at `/admin` without
+  false sign-out, continuation/retry, mobile 390/390 viewport, CSRF recovery and
+  strict CSP. Browser preview visually inspected the dark sign-in page as well.
+- Final HTTP p95: mixed-tenant reads **420.80 ms**, same-key writes **442.25 ms**,
+  malformed writes **78.64 ms**. Sustained concurrency eight: **4,398 requests /
+  60.04 s**, 3,298 expected 200s, 550 tenant-denial 404s and 550 validation 422s,
+  **0 5xx**, p95 **241.49 ms**. Same-key writes retained one identity/row. These
+  finite local figures are not production capacity or gains attributed to UI edits.
+- Docker Desktop was initially stopped; started it with its supported CLI. Test
+  runners generated independent secrets/databases and removed only their synthetic
+  containers/volumes. No configured application `.env` or hosted DB/provider was used.
+- P4/P8 live/hosted/independent quality, rotation and joint restore remain unverified.
+  Full browser send/reply/accept/commit/compensation and all-route accessibility/
+  layout-shift acceptance were not newly completed. See the current matrix for
+  severity-ranked remaining gaps and the backend owner's separate report for its
+  current admin acceptance. No claim that all phases or submission work is complete.
+
+
+## 17 October 2026 — resumed security reconciliation and admin hardening
+
+Reconciled tracked-clean HEAD `eca00c9` with teammate admin commits `e303ebd`,
+`fb6d66f` and the earlier CSP/session/worker-remediation work. Graph admin discovery
+was stale; inspected current commit paths/source. Preserved concurrent frontend
+changes; did not switch/reset branches, load application environment files, run
+provision_admin against any configured DB, or rewrite history.
+
+- Removed undeclared JWT dependency/use and credential-bearing SessionView JSON.
+  Retained authoritative server-derived platform flag and opaque HttpOnly sessions.
+  Regenerated offline OpenAPI/TS artifacts (108 catalogued operations; six new admin
+  routes are separately recorded in the source route inventory).
+- Corrected missing app_user.is_platform_admin mapping. Admin data reads now use
+  services/admin.py: current session plus locked current flag in one bounded
+  transaction, preserving runtime RLS. Lists cap at 100/default50. Global private
+  auth-event reads return explicit unavailable503; global cross-tenant admin data
+  capability remains unfinished, with no runtime owner/admin-role grant added.
+- Forward revision `0017_platform_authority` / SQL0018 revokes all sessions on actual
+  platform-flag changes and records the event atomically. Provisioner relies on that
+  trigger instead of swallowing audit errors. Required runtime head and current
+  deployment checklists updated; historical remediation evidence retained.
+- Replaced unsafe default live RBAC tests (dotenv/configured DB + committed privilege
+  update + embedded account credentials) with synthetic disposable DB regressions.
+  Rotation conditional on actual provisioning/reuse
+  of those embedded credentials; prior historical remote DB rotation still pending.
+- Retained runtime CycloneDX inventory in CI for14days via verified immutable
+  upload-artifact v4 SHA; extended workflow security assertions to both workflows.
+
+Executed now: backend non-DB pytest359passed (before final mapping addition), final
+focused auth/network15passed; Ruff clean, generated contracts current, sole head
+0017_platform_authority. Five new DB regression functions passed against an isolated
+marked loopback PostgreSQL16.11 cluster, migrated from empty, using real separately
+provisioned restricted runtime credentials and fresh synthetic users. Functions used
+the repository config/accounts fixtures directly; this was not the PG17 pytest fixture.
+Initial native process-output capture stalled; corrected launcher output handling,
+reran failing positive test to expose/fix missing mapping, then all five passed.
+Disposable server stopped and temporary cluster removed. Docker daemon unavailable;
+full PG17/schema/concurrency/browser/container gates not freshly run here.
+
+Frontend95unit tests and typecheck passed (including concurrent teammate work);
+focused CI assertion rerun recorded with final handoff. Runtime hashed pip-audit
+exit0:50SBOM components/0known vulnerabilities. npm production0; full graph9high
+(dev dependency paths). No hosted CodeQL/CI execution, deployed TLS/RLS/at-rest,
+retention/restore, provider or production security acceptance claimed. See
+`docs/security/security_audit_2026-10-17.md` for findings, evidence, limitations and
+rotation handoff. MFA/passkeys, global admin query contracts, distributed edge quotas
+and the previously recorded external acceptance gates remain open. Next step: run
+PG17/Docker acceptance when available, then separately authorized hosted gates.
+
+Final focused checks: admin provisioner + RBAC6passed; workflow/header assertions3passed. The provisioner refuses databases without the enabled platform-authority guard before issuing any write. Ruff/contracts and diff whitespace checks pass.
+
+## 17 October 2026 — remaining-phase integration continuation
+
+See [phase closure evidence](phase_closure_2026-10-17.md) for the reconciled phase
+disposition, exact checks, five-round browser cap and limitations. Backend/MFA
+changes remain with the security task; integration work preserves that ownership.
+
+Extended the real browser journey through exact draft review, password-bound send,
+incoming reply evidence, rejected non-exact acceptance, explicit exact acceptance,
+separate commit approval, persisted settlement after reload and approved inverse
+compensation. Six browser/HTTP tests passed in round 3 (2.2 minutes). Added a final
+lost-execution-response recovery assertion. Reproduced concurrent image-tag and
+Playwright artifact races; the E2E runner now pins private per-run images and
+retains browser evidence in a unique temporary output directory. No financial
+formula, expected golden or approval rule was weakened.
+
+Fresh checks: engine/agent/architecture133passed; reference22cases/0problems;
+independent selftest0failures; frontend97unit tests and typecheck passed;
+Ruff clean; generated contracts112operations checked. Broad backend516passed /
+2failed /3warnings on a moving 0017-to-0018 snapshot: global admin route boundary
+and real-worker subprocess startup. Fresh current-head targeted checks and final
+private-runner browser results are appended to the linked report when complete.
+
+Main port3000 preview: synthetic signup500, API explicitly refuses stale schema.
+No main account creation or main-database migration claimed. Per user request,
+temporary credential-free freellmpool0.13.0 probes used only synthetic source text
+through the existing LLM boundary: pollinations/openai four cases gave1timeout /
+3provider-unavailable; llm7/default single compatibility probe timed out. No live
+quality acceptance or production provider switch claimed; gateway removed.
+P4/P8 remain partial, with hosted/restore/provider/rotation gates explicitly open.
+
+Final integration evidence: round5 **7browser/HTTP tests passed in2.5minutes**,
+including full sandbox lifecycle, lost-response single-effect recovery and the
+other task's verified passkey enrollment/login journey. Fresh current-head targeted
+PG17 checks **18passed /1deprecation warning in144.64seconds**, covering both broad-run
+failures, admin security and signed passkey cases. No fresh full-current-head suite
+claim is made by summing overlapping runs. Final production API/web image builds
+passed; private-runner cleanup completed; browser evidence retained in the unique
+temporary directory recorded in the closure report. Final sustained HTTP run:
+2820requests/60.20s, no5xx, p95371.87ms at concurrency8 under concurrent test load.

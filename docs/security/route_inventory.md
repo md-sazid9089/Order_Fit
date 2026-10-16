@@ -1,6 +1,6 @@
 # Audited HTTP route inventory
 
-16 October 2026; handlers at current working tree. Source inventory is not a claim that every route has an independent dynamic attack test. Tenant authorization flows through `Database.tenant`, `api.commands`, or `Operations`; identity endpoints deliberately precede tenant selection. `/health` and `/ready` in `api/main.py` are public probes. Interactive docs are disabled by default.
+17 October 2026; original inventory plus the six admin handlers added during reconciliation. Source inventory is not a claim that every route has an independent dynamic attack test. Tenant authorization flows through `Database.tenant`, `api.commands`, or `Operations`; identity endpoints deliberately precede tenant selection. `/health` and `/ready` in `api/main.py` are public probes. Interactive docs are disabled by default.
 
 | Method | Path | Handler evidence |
 |---|---|---|
@@ -110,3 +110,16 @@
 | POST | `/api/v1/businesses/{business_id}/deals/{deal_id}/acceptances` | `backend/orderfit/api/routes/preparation.py:279` |
 | GET | `/api/v1/businesses/{business_id}/deals/{deal_id}/acceptances` | `backend/orderfit/api/routes/preparation.py:295` |
 | GET | `/api/v1/businesses/{business_id}/deals/{deal_id}/preparation` | `backend/orderfit/api/routes/preparation.py:333` |
+
+## Platform-admin additions
+
+Runtime RLS remains active. Global security-event access explicitly returns 503 pending a reviewed privileged interface.
+
+| Method | Path | Handler evidence |
+|---|---|---|
+| GET | `/api/v1/admin/overview` | `backend/orderfit/api/routes/admin.py:15` |
+| GET | `/api/v1/admin/users` | `backend/orderfit/api/routes/admin.py:50` |
+| GET | `/api/v1/admin/tenants` | `backend/orderfit/api/routes/admin.py:77` |
+| GET | `/api/v1/admin/orders` | `backend/orderfit/api/routes/admin.py:106` |
+| GET | `/api/v1/admin/logs` | `backend/orderfit/api/routes/admin.py:135` |
+| GET | `/api/v1/admin/system` | `backend/orderfit/api/routes/admin.py:144` |

@@ -77,6 +77,8 @@ services:
       ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      WEBAUTHN_RP_ID: localhost
+      WEBAUTHN_ORIGIN: http://localhost:${WEB_PORT:-3000}
       # Explicit proxy trust; [] ignores X-Forwarded-* (the browser reaches the API directly).
       TRUSTED_PROXY_IPS: '${TRUSTED_PROXY_IPS:-[]}'
     volumes:

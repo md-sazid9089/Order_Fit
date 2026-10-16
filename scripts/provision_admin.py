@@ -47,6 +47,14 @@ def set_admin_role(email: str, is_admin: bool):
     clean_email = email.strip().lower()
     engine = get_engine()
     with engine.begin() as conn:
+        guarded = conn.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM pg_trigger "
+            "WHERE tgrelid='public.app_user'::regclass "
+            "AND tgname='platform_authority_changed' "
+            "AND tgenabled IN ('O','A') AND NOT tgisinternal)"
+        )).scalar_one()
+        if not guarded:
+            raise RuntimeError("Apply the platform-authority migration before provisioning.")
         user = conn.execute(
             text("SELECT id, email, full_name, is_platform_admin FROM app_user WHERE LOWER(email) = :e"),
             {"e": clean_email},
@@ -60,15 +68,8 @@ def set_admin_role(email: str, is_admin: bool):
             text("UPDATE app_user SET is_platform_admin = :a WHERE id = :id"),
             {"a": is_admin, "id": user["id"]},
         )
-        # Log to security_event if table exists
-        try:
-            code = "ADMIN_PROMOTED" if is_admin else "ADMIN_DEMOTED"
-            conn.execute(
-                text("INSERT INTO security_event(user_id, code, created_at) VALUES (:u, :c, clock_timestamp())"),
-                {"u": user["id"], "c": code},
-            )
-        except Exception:
-            pass
+        # The database authority-change trigger revokes sessions and records audit
+        # evidence atomically; a failure must roll back the privilege change.
 
         action = "promoted to platform admin" if is_admin else "demoted from platform admin"
         print(f"SUCCESS: User '{clean_email}' ({user['id']}) has been {action}.")

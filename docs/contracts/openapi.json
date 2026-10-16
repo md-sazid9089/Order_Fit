@@ -5844,6 +5844,7 @@
         "title": "InvoiceView",
         "type": "object"
       },
+      "JsonValue": {},
       "LanguageRequest": {
         "additionalProperties": false,
         "properties": {
@@ -7952,6 +7953,70 @@
         "title": "ParsedLanguage",
         "type": "object"
       },
+      "PasskeyOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "public_key": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Public Key",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "public_key"
+        ],
+        "title": "PasskeyOptions",
+        "type": "object"
+      },
+      "PasskeyPassword": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "format": "password",
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "PasskeyPassword",
+        "type": "object"
+      },
+      "PasskeyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "credential": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Credential",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "credential"
+        ],
+        "title": "PasskeyResponse",
+        "type": "object"
+      },
       "PasswordChange": {
         "additionalProperties": false,
         "properties": {
@@ -9728,6 +9793,11 @@
             "title": "Expires At",
             "type": "string"
           },
+          "is_platform_admin": {
+            "default": false,
+            "title": "Is Platform Admin",
+            "type": "boolean"
+          },
           "memberships": {
             "items": {
               "$ref": "#/components/schemas/MembershipView"
@@ -9735,8 +9805,12 @@
             "title": "Memberships",
             "type": "array"
           },
+          "mfa_enabled": {
+            "default": false,
+            "title": "Mfa Enabled",
+            "type": "boolean"
+          },
           "mfa_supported": {
-            "const": false,
             "title": "Mfa Supported",
             "type": "boolean"
           },
@@ -11230,6 +11304,654 @@
         "x-storage-owner": [
           "auth_session",
           "membership"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/enroll/options": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "passkey_enroll_options",
+        "parameters": [
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyPassword"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P1"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "identity.passkeys",
+        "x-acceptance-test": "V04",
+        "x-implementation-phase": "P1",
+        "x-permission": "self",
+        "x-service-owner": "identity.passkeys",
+        "x-storage-owner": [
+          "auth_passkey",
+          "auth_passkey_challenge",
+          "auth_session"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/enroll/verify": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "passkey_enroll_verify",
+        "parameters": [
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyResponse"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Acknowledgement"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P1"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "identity.passkeys",
+        "x-acceptance-test": "V04",
+        "x-implementation-phase": "P1",
+        "x-permission": "self",
+        "x-service-owner": "identity.passkeys",
+        "x-storage-owner": [
+          "auth_passkey",
+          "auth_passkey_challenge",
+          "auth_session"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/login/options": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "passkey_login_options",
+        "parameters": [
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P1"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [],
+        "summary": "identity.passkeys",
+        "x-acceptance-test": "V04",
+        "x-implementation-phase": "P1",
+        "x-permission": "public",
+        "x-service-owner": "identity.passkeys",
+        "x-storage-owner": [
+          "auth_passkey",
+          "auth_passkey_challenge",
+          "auth_session"
+        ]
+      }
+    },
+    "/api/v1/auth/passkeys/login/verify": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "passkey_login_verify",
+        "parameters": [
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyResponse"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P1"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [],
+        "summary": "identity.passkeys",
+        "x-acceptance-test": "V04",
+        "x-implementation-phase": "P1",
+        "x-permission": "public",
+        "x-service-owner": "identity.passkeys",
+        "x-storage-owner": [
+          "auth_passkey",
+          "auth_passkey_challenge",
+          "auth_session"
         ]
       }
     },
