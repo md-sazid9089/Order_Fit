@@ -196,7 +196,8 @@ These stay **unverified** until someone runs them against a disposable Neon bran
 
 ## Stress remediation reconciliation — 16 October 2026
 
-Current required sole revision is `0018_passkey_mfa`. `/ready` requires an
+Current required sole revision is `0019_merge_passkey_roles`, which joins
+`0018_passkey_mfa` and `0017_merge_heads` (the Neon role branch). `/ready` requires an
 unexpired global worker heartbeat as well as restricted DB/schema/storage checks;
 `backlog_seconds` is separate. Keep process liveness `/health` for service restart
 monitoring so a worker outage does not restart a healthy API. Reserve one extra
