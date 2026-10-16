@@ -1,5 +1,9 @@
 # OrderFit security audit and hardening — 16 October 2026
 
+> Historical snapshot. The [17 October continuation](security_audit_2026-10-17.md)
+> reconciles teammate changes, supersedes open CSP/session/pagination status, and
+> records new admin findings, fixes, migration and current verification limits.
+
 Scope: working tree on `main`, starting HEAD `6ca0ec3`. Existing preparation and frontend
 changes were preserved. Review assumes hostile tenants, hostile uploaded documents and hostile
 networks. Execution used synthetic data, local processes and labeled, uniquely named disposable

@@ -1,5 +1,10 @@
 # OrderFit implementation audit — 16 October 2026
 
+> Historical audit baseline. The [17 October reconciliation](orderfit_audit_2026-10-17.md)
+> accounts for subsequent worker/pagination/session-authority repairs, teammate
+> frontend merges and the separately owned platform-admin changes. Open items and
+> test counts below describe this audit's original snapshot, not today's checkout.
+
 ## Scope and evidence rules
 
 Reviewed against root/backend/web instructions, the implementation plan (including

@@ -91,7 +91,7 @@ uv run --frozen python -m orderfit.store.provision --help
 ```
 
 Use the provisioning CLI as documented in [neon.md](neon.md), not a guessed role
-command. Verify sole revision `0016_worker_presence`, FORCE RLS, definer
+command. Verify sole revision `0018_passkey_mfa`, FORCE RLS, definer
 owners/search paths, no PUBLIC helper execution, runtime table grants, no
 superuser/admin/owner inheritance. Start isolated API/worker against this branch.
 Invite a synthetic viewer, produce one authorized workflow notification, verify
@@ -160,7 +160,13 @@ an authorized upload transport change; do not silently increase body limits.
 3. Restore both into **new disposable targets**, using [the reviewed dump/restore
    commands and role-order caveats](neon.md#8-backup-and-restore). Never restore over
    the running application or run Alembic over an existing restored schema blindly.
-4. Provision/check restored restricted roles, start API against the restored
+4. Keep the restored target quarantined. Before exposing it, atomically revoke
+   restored `auth_session` rows, discard all `auth_passkey_challenge` rows and record
+   a curated security event. A snapshot must not resurrect sessions or MFA
+   assertions consumed/revoked after its cut. Require fresh sign-in. Do not resume
+   outgoing work from restored authority without reviewing the cut and any lost
+   revocations; immutable approval evidence must not be rewritten.
+   Provision/check restored restricted roles, start API against the restored
    branch and object bucket, sign in afresh, and set acceptance session/target
    variables for the restored synthetic tenant. Run:
 

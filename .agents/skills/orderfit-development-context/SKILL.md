@@ -5,8 +5,27 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, stress remediation on `main` atop `61aaff8`.
-Final local backend **507 passed**; built browser/HTTP **6 passed**; frontend **86 passed**.
+17 October reconciliation: resumed from `main` at `eca00c9`; subsequent backend/admin
+repairs are being made by a separate task. See the
+[current matrix](../../../docs/orderfit_audit_2026-10-17.md) before using the older
+snapshot below. Frontend verification now honors `API_INTERNAL_URL`, distinguishes
+server outages from invalid sessions, and enforces the existing disabled console
+capability after server-side RBAC. Simulated admin controls remain unavailable.
+The backend owner has advanced to `0018_passkey_mfa`. Docker is available now;
+the final seven-test browser suite passes sandbox send/reply/accept/commit/reload/
+compensation, lost-response recovery and passkey enrollment/login. Fresh targeted
+PG17 checks18passed; engine/agent/architecture133passed; frontend97unit tests pass.
+See [phase closure evidence](../../../docs/phase_closure_2026-10-17.md) for current
+checks, mixed-snapshot failures and remaining gates. The runner now isolates image
+tags and browser artifacts across concurrent tasks. Main port 3000 refuses its
+stale database schema; free-provider probes returned unavailable/timeouts. Do not
+migrate the main database merely because a test account was authorized.
+
+Earlier snapshot: **17 October 2026**, security continuation atop `eca00c9`.
+Current checks: **359 non-DB backend tests**, **5 admin DB regression functions
+on isolated PG16**, **95 frontend unit tests**, typecheck/Ruff/contracts passed.
+Docker is unavailable; earlier **507 backend / 6 browser** results are historical.
+See [security continuation](../../../docs/security/security_audit_2026-10-17.md).
 Durable worker readiness, scoped supporting-list continuation and their enabled UI
 consumers are implemented; role/CSP expectations and disposable queue ownership
 are repaired. See the [current remediation report](../../../docs/backend_stress_remediation_2026-10-16.md)
@@ -15,9 +34,10 @@ Check branch/diff before relying on this snapshot. Repository root: `../../..`.
 
 Merge integration (16 October): incoming UI from `origin/main` at `392c7fb`
 is retained with compatibility fixes for the backend committed at `b5e7aab`.
-The backend and exported contracts stay unchanged: cookie sessions, business
-roles and sole migration head `0016_worker_presence`. Incoming platform-admin
-views are unavailable because that server authority is absent. Retain supporting
+Subsequent admin work adds a server-derived platform flag, but global tenant/order
+telemetry remains unavailable under runtime RLS. Sessions remain opaque HttpOnly
+cookies with no credential in JSON. Sole head is `0017_platform_authority`, which
+revokes sessions and audits actual platform-role changes. Retain supporting
 list continuation controls alongside the remote skeletons/layouts. See the merge
 integration entry in the progress file for current verification.
 
@@ -71,7 +91,9 @@ providers. P4 and P8 remain partial; engineering completion is not submission ev
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0016_worker_presence` (sole head). It follows 0015, which
+- Code requires `0017_platform_authority` (sole head), following 0016 worker presence.
+  Platform flag changes revoke all existing sessions and record an atomic audit event.
+  Revision 0015
   requires new authentication after membership role changes and fences old
   worker/approval authority. New global worker evidence has FORCE RLS and only
   narrow worker-publish/API-boolean helpers; no direct runtime table grants.

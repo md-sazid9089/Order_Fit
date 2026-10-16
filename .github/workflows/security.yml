@@ -55,3 +55,11 @@ jobs:
           --progress-spinner off --format cyclonedx-json
           --output "$RUNNER_TEMP/orderfit-runtime.cdx.json"
           --requirement "$RUNNER_TEMP/orderfit-runtime.txt"
+      - name: Retain dependency inventory for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: python-runtime-sbom
+          path: ${{ runner.temp }}/orderfit-runtime.cdx.json
+          if-no-files-found: warn
+          retention-days: 14
