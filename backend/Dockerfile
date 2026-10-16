@@ -20,11 +20,13 @@ RUN uv sync --frozen --no-dev --no-editable
 COPY alembic.ini ./
 COPY migrations ./migrations
 
-# Non-root user. /app/var holds uploaded documents; the named volume mounted
-# there inherits this ownership on first use. Everything else is in Postgres.
+# Non-root user. Document storage directory is configurable via DOCUMENT_DIR:
+#   - Local/Compose: /app/var/documents (named volume inherits ownership)
+#   - Render:        /var/data/orderfit/documents (persistent disk)
+# Both paths are created so the same image works in either environment.
 RUN useradd --system --uid 10001 --no-create-home app \
- && mkdir -p /app/var/documents \
- && chown -R app:app /app/var
+ && mkdir -p /app/var/documents /var/data/orderfit/documents \
+ && chown -R app:app /app/var /var/data/orderfit
 USER app
 
 EXPOSE 8000
