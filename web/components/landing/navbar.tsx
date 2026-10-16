@@ -177,15 +177,15 @@ export function Navbar() {
               {openDropdown === "solutions" && (
                 <div className="absolute top-full left-0 w-72 pt-2 z-50">
                   <div className="bg-white rounded-2xl p-4 shadow-xl border border-neutral-200/80 text-[#1A1A1A] animate-in fade-in-50 zoom-in-95 duration-150">
-                    <a href="#support" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
+                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
                       <div className="text-sm font-semibold">For Startups</div>
                       <div className="text-xs text-neutral-500">Protect early cash flow on first major orders</div>
                     </a>
-                    <a href="#support" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
+                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
                       <div className="text-sm font-semibold">For Scaling Brands</div>
                       <div className="text-xs text-neutral-500">Automate high-volume vendor quote audits</div>
                     </a>
-                    <a href="#support" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
+                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
                       <div className="text-sm font-semibold">For Accountants & CFOs</div>
                       <div className="text-xs text-neutral-500">Landed margin certainty and audit logs</div>
                     </a>
@@ -207,7 +207,7 @@ export function Navbar() {
               Customers
             </a>
             <a
-              href="#support"
+              href="#simulator"
               className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
               Pricing
@@ -261,7 +261,7 @@ export function Navbar() {
               Products
             </a>
             <a
-              href="#support"
+              href="#simulator"
               onClick={() => setMobileMenuOpen(false)}
               className="text-base font-medium text-white/90 py-2 border-b border-white/5"
             >

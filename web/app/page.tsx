@@ -9,7 +9,6 @@ import { OldVsNewWay } from "@/components/landing/old-vs-new-way";
 import { IntegrationsSection } from "@/components/landing/integrations-section";
 import { CustomerStories } from "@/components/landing/customer-stories";
 import { OrderSimulator } from "@/components/landing/order-simulator";
-import { SupportTiers } from "@/components/landing/support-tiers";
 import { FaqSection } from "@/components/landing/faq-section";
 import { InsightsSection } from "@/components/landing/insights-section";
 import { CtaSection } from "@/components/landing/cta-section";
@@ -70,10 +69,6 @@ export default function Home() {
           <OrderSimulator />
         </ScrollReveal>
 
-        {/* Section 11: Dedicated support from real humans — not AI */}
-        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <SupportTiers />
-        </ScrollReveal>
 
         {/* Section 12: Frequently asked questions */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import { ArrowUpRight, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Play, ExternalLink } from "lucide-react";
 
 export function OrderSimulator() {
@@ -127,12 +128,12 @@ export function OrderSimulator() {
           </h2>
           <p className="font-sans text-base sm:text-lg text-[#526975]">
             Illustration only. Not an assessment: real results come from the saved, confirmed-input evaluation. Every number here is made up.{" "}
-            <a
-              href="#support"
+            <Link
+              href="/auth/signup"
               className="font-medium text-[#1E2021] underline underline-offset-4 hover:text-[#121314]"
             >
               Request a live demo
-            </a>
+            </Link>
           </p>
         </div>
 
