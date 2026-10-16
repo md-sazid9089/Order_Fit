@@ -33,3 +33,11 @@ test("the proxy response is parsed defensively", () => {
   assert.equal(healthState(parseProbe(500, { connected: true, ready: true })), "unreachable");
   assert.equal(healthState(parseProbe(200, null)), "unreachable");
 });
+
+test("database status is reported when provided", () => {
+  assert.equal(probeFrom(200, 200, true).database, true);
+  assert.equal(probeFrom(200, 503, false).database, false);
+  assert.equal(probeFrom(null, null, true).database, false);
+  assert.equal(parseProbe(200, { connected: true, ready: true, database: true }).database, true);
+  assert.equal(parseProbe(200, { connected: true, ready: false, database: false }).database, false);
+});

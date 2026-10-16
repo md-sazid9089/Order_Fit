@@ -8,6 +8,7 @@ import type { BusinessView } from "@/lib/generated-api";
 import { formatMinor } from "@/lib/approval-model";
 import { PIPELINE_TABS, tabOf, verdictOf, worstTrough, type PipelineTab, type Tone } from "@/lib/pipeline-model";
 import { useScope } from "@/components/layout/scope";
+import { SkeletonDashboard } from "@/components/ui/skeleton";
 
 type Page<T> = { items: T[]; next_cursor: string | null };
 type Data = { more: boolean; deals: Deal[]; evaluations: Record<string, Evaluation>; customers: Record<string, string>; baseline: BaselineView | null; reserve: string | null; currency: string };
@@ -82,7 +83,15 @@ export default function DealsPage() {
     (!search.trim() || `${r.deal.public_ref} ${data?.customers[r.deal.inputs.customer_id ?? ""] ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())));
 
   if (error) return <main className="p-6"><p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p><button type="button" className="mt-3 underline" onClick={() => reload()}>Retry loading saved orders</button></main>;
-  if (!data) return <main className="p-6 text-sm text-[#737373]">Loading the pipeline…</main>;
+  if (!data) {
+    return (
+      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+        <div className="max-w-[1560px] mx-auto w-full">
+          <SkeletonDashboard />
+        </div>
+      </main>
+    );
+  }
 
   const money = (minor: string | null | undefined) => formatMinor(minor, data.currency);
   // This is the business policy default, not a substitute for each order's pinned engine inputs.

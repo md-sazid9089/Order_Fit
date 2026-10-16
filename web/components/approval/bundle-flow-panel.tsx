@@ -7,6 +7,7 @@ import { BundleReview } from "./bundle-review";
 import { ExecutionStatus } from "./execution-status";
 import type { useBundleFlow } from "./use-bundle-flow";
 import { button, panel } from "./ui";
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 /** Shared body of the send, commit and compensation panels: prepare area, immutable review, decision, execution. */
 export function BundleFlowPanel({ title, intro, flow, currency, children }: { title: string; intro: string; flow: ReturnType<typeof useBundleFlow>; currency: string; children?: ReactNode }) {
@@ -15,7 +16,12 @@ export function BundleFlowPanel({ title, intro, flow, currency, children }: { ti
     <h2 className="text-lg font-semibold">{title}</h2><p className="text-sm">{intro}</p>
     {error && <p role="alert" className="rounded bg-red-50 p-3 text-sm">{error}</p>}
     {children}
-    {loading && !view && <p role="status" className="text-sm">Loading the saved bundle…</p>}
+    {loading && !view && (
+      <div role="status" aria-busy="true" className="space-y-3 pt-2">
+        <span className="sr-only">Loading the saved bundle…</span>
+        <SkeletonCard />
+      </div>
+    )}
     {flow.bundleId && !view && !loading && <button className={button} onClick={() => void flow.reload()}>Retry loading the saved bundle</button>}
     {view && <>
       <p role="status" className="font-medium">{STAGE_TEXT[stage]}{flow.polling ? " Refreshing from the server…" : ""}</p>

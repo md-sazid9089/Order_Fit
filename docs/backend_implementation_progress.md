@@ -1502,3 +1502,39 @@ matrix before treating any phase or competition deliverable as fully accepted.
   [remediation report](backend_stress_remediation_2026-10-16.md),
   [integration contract](contracts/stress-remediation.md),
   [external runbook](deployment/external-acceptance.md). Original audit evidence is intact.
+
+
+## 16 October 2026 — remote frontend merge integration
+
+- Integrated `origin/main` at `392c7fbb85c7caa84cad5240d630d61abeb57b4c`
+  with local backend/stress-remediation commit
+  `b5e7aab2c807869ab7681ab37a85ccb520ff5cba`, following the user's direction
+  to retain the remote frontend and their committed backend. Local safety refs:
+  `codex/merge-local-b5e7aab` and `codex/merge-remote-392c7fb`.
+- Restored the complete backend and exported contract documents from the local
+  commit; no incoming JWT/admin-role backend or divergent migration was retained.
+  `git diff b5e7aab -- backend docs/contracts` is empty. Contract check reports
+  108 operations and Alembic has sole head `0016_worker_presence`.
+- Preserved incoming layouts, skeletons, landing session presentation and user
+  management navigation. Resolved order/document conflicts while retaining local
+  supporting-list pagination, retries and selected-default-policy handling.
+  Generated frontend types match the retained backend. The API client keeps
+  HttpOnly cookie sessions and clears legacy token storage. Platform-admin views
+  are unavailable at the common admin layout because this backend provides no
+  platform-admin authority; business ownership does not grant that authority.
+- Repaired six incoming lint errors in initial admin loading effects by scheduling
+  cancellable initial loads; removed incoming trailing whitespace. No financial
+  engine, backend migration or golden fixture changed.
+- Fresh verification: frontend typecheck, production build and **92 unit tests**
+  pass; lint **0 errors / 71 warnings** (warnings retained). Contract export check
+  and sole migration-head check pass. Fresh disposable Docker build/stack through
+  `scripts/run-e2e.ps1`: **6 browser/HTTP tests passed**, covering persisted order
+  creation/evaluation, pagination recovery, mobile navigation/viewport, CSRF
+  recovery, accessible sign-in and strict nonce CSP. The HTTP test completed
+  9,230 sustained requests at concurrency eight in 60.023 seconds, with exact
+  200/404/422 outcomes and no 5xx. Disposable containers/volumes were removed.
+  Raw local logs: `D:/Kam 2/merge-web-tests.txt`, `merge-web-lint.txt`,
+  `merge-e2e.txt`. The historical 507-backend-test result was not rerun for this
+  frontend merge; the backend tree remains identical to its tested commit.
+- Hosted/provider acceptance and the previously recorded external blockers remain
+  unverified. This merge establishes local integration, not production readiness.

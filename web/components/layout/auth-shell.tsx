@@ -1,10 +1,12 @@
 "use client";
 
+import { platformAdminEnabled } from "@/lib/platform-admin";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApiError, get, mutate, type Session } from "@/lib/orderfit-api";
+import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { resetBusinessState, resetSessionState } from "@/lib/session-reset";
 import { pathForBusiness, resolveBusinessId } from "@/lib/business-scope";
 import { activeHref, can, navFor, roleLabel } from "@/lib/p7-model";
@@ -13,11 +15,19 @@ import { Plus } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ScopeContext, useScope, type Scope } from "@/components/layout/scope";
 
+import { fetchSession, getCachedSession, setCachedSession } from "@/lib/session-store";
+
 export { useScope };
 const STORAGE_KEY = "orderfit.business";
 
 function remembered() { try { return sessionStorage.getItem(STORAGE_KEY); } catch { return null; } }
 function remember(id: string) { try { sessionStorage.setItem(STORAGE_KEY, id); } catch { /* Storage may be disabled. */ } }
+
+function getInitialBusinessId(sess: Session | null): string {
+  if (!sess) return "";
+  const param = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("businessId") : null;
+  return resolveBusinessId(sess.memberships, param, remembered());
+}
 
 /**
  * Client-side session guard for every authenticated route. The session cookie is HttpOnly and issued by the
@@ -28,34 +38,52 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const [session, setSession] = useState<Session | null>(null);
-  const [businessId, setBusinessId] = useState("");
+  const [session, setSession] = useState<Session | null>(getCachedSession);
+  const [businessId, setBusinessId] = useState<string>(() => getInitialBusinessId(getCachedSession()));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
-    // The CSRF cookie lives 30 minutes but the session lasts hours, so a returning tab can hold a valid session with no
-    // CSRF cookie: /auth/me then answers CSRF_REJECTED. A fresh challenge re-issues it for the live session; retry once.
-    get<Session>("/auth/me").catch(async e => {
-      if (e instanceof ApiError && e.status === 403 && e.code === "CSRF_REJECTED") { await get("/auth/csrf"); return get<Session>("/auth/me"); }
-      throw e;
-    }).then(s => {
-      if (!active) return;
-      const id = resolveBusinessId(s.memberships, new URLSearchParams(window.location.search).get("businessId"), remembered());
-      if (id) {
+    const current = getCachedSession();
+
+    if (!current) {
+      fetchSession()
+        .then(s => {
+          if (!active) return;
+          const id = resolveBusinessId(s.memberships, new URLSearchParams(window.location.search).get("businessId"), remembered());
+          if (id) {
+            remember(id);
+            const url = new URL(window.location.href);
+            if (url.searchParams.get("businessId") !== id) {
+              url.searchParams.set("businessId", id);
+              window.history.replaceState(null, "", url.pathname + url.search);
+            }
+          }
+          setBusinessId(id);
+          setSession(s);
+        })
+        .catch(e => {
+          if (!active) return;
+          // A 401 is handled once for every request by the shared handler in components/providers.tsx.
+          if (!(e instanceof ApiError && e.status === 401)) setError(e instanceof Error ? e.message : "Could not verify your session.");
+        });
+    } else {
+      const id = resolveBusinessId(current.memberships, new URLSearchParams(window.location.search).get("businessId"), remembered());
+      if (id && id !== businessId) {
         remember(id);
         const url = new URL(window.location.href);
-        if (url.searchParams.get("businessId") !== id) { url.searchParams.set("businessId", id); window.history.replaceState(null, "", url.pathname + url.search); }
+        if (url.searchParams.get("businessId") !== id) {
+          url.searchParams.set("businessId", id);
+          window.history.replaceState(null, "", url.pathname + url.search);
+        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBusinessId(id);
       }
-      setBusinessId(id); setSession(s);
-    }).catch(e => {
-      if (!active) return;
-      // A 401 is handled once for every request by the shared handler in components/providers.tsx.
-      if (!(e instanceof ApiError && e.status === 401)) setError(e instanceof Error ? e.message : "Could not verify your session.");
-    });
+    }
+
     return () => { active = false; };
-  }, []);
+  }, [pathname, businessId]);
 
   const changeBusiness = useCallback((id: string) => {
     if (!session || id === businessId) return;
@@ -70,6 +98,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
     setBusy(true); setError("");
     try {
       await mutate("/auth/signout", "POST", {});
+      setCachedSession(null);
       resetSessionState(queryClient);
       try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       setSession(null); setBusinessId("");
@@ -77,11 +106,30 @@ export function AuthShell({ children }: { children: ReactNode }) {
     } catch (e) { setError(e instanceof Error ? e.message : "Sign out failed."); setBusy(false); }
   }
 
-  const replaceSession = useCallback((next: Session) => setSession(next), []);
+  const replaceSession = useCallback((next: Session) => {
+    setCachedSession(next);
+    setSession(next);
+  }, []);
   const scope = useMemo<Scope | null>(() => session ? { session, businessId, membership: session.memberships.find(m => m.business_id === businessId), replaceSession } : null, [session, businessId, replaceSession]);
 
   if (!scope) {
-    return <main className="min-h-screen bg-[#f7f6f5] p-8 text-neutral-700">{error ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error} <button className="underline" onClick={() => window.location.reload()}>Retry</button></p> : <p>Checking your session…</p>}</main>;
+    return (
+      <main className="min-h-screen bg-[#f7f6f5] flex items-center justify-center p-8 text-neutral-700">
+        {error ? (
+          <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">
+            {error}{" "}
+            <button className="underline" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </p>
+        ) : (
+          <div className="flex items-center gap-2.5 text-neutral-400">
+            <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
+            <span className="text-xs font-medium tracking-wide">Loading…</span>
+          </div>
+        )}
+      </main>
+    );
   }
   const query = businessId ? `?businessId=${businessId}` : "";
   // Navigation is role-aware for convenience only; the API authorizes every request itself.
@@ -89,9 +137,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const current = activeHref(pathname, links);
   const canPrepare = can(scope.membership?.role, "prepare");
   const title = links.find(l => l.href === current)?.label ?? "OrderFit";
+  const isAdmin = platformAdminEnabled();
   return <ScopeContext.Provider value={scope}>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
-      <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} />
+      <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} isAdmin={isAdmin} />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
@@ -99,7 +148,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
-              <select id="business-switcher" className="min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
                 {scope.session.memberships.length === 0 && <option value="">No business</option>}
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>
