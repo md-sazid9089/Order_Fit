@@ -4,8 +4,9 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApiError, mutate } from "@/lib/orderfit-api";
+import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
+import { setCachedSession } from "@/lib/session-store";
 import { Eye, EyeOff } from "lucide-react";
 
 const COMMON_TIMEZONES = [
@@ -65,7 +66,8 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     try {
-      await mutate("/auth/signup", "POST", {
+      resetSessionState(queryClient);
+      const session = await mutate<Session>("/auth/signup", "POST", {
         full_name: fullName.trim(),
         business_name: businessName.trim(),
         email: email.trim().toLowerCase(),
@@ -73,7 +75,7 @@ export default function SignUpPage() {
         currency,
         timezone: timezone.trim(),
       });
-      resetSessionState(queryClient);
+      setCachedSession(session);
       router.replace("/deals");
     } catch (cause) {
       if (cause instanceof ApiError) {
