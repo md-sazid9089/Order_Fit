@@ -84,10 +84,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const current = activeHref(pathname, links);
   const canPrepare = can(scope.membership?.role, "prepare");
   const title = links.find(l => l.href === current)?.label ?? "OrderFit";
-  const initial = (scope.session.memberships.find(m => m.business_id === businessId)?.business_name ?? "O").trim().charAt(0).toUpperCase();
   return <ScopeContext.Provider value={scope}>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
-      <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} />
+      <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
@@ -100,7 +99,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>
               {canPrepare && businessId && <Link href={`/deals/new${query}`} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span>Evaluate New Order</span></Link>}
-              <button type="button" disabled={busy} title="Sign out" aria-label="Sign out" className="size-9 rounded-full bg-[#1E2021] text-white text-xs font-semibold disabled:opacity-50" onClick={() => { void signOut(); }}>{initial}</button>
             </div>
           </div>
         </header>

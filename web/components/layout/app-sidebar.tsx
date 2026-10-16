@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   Layers, LineChart, CreditCard, Users, ShieldCheck, ShieldAlert, Settings, CheckCircle2, Building2,
-  PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet,
+  PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet, LogOut,
 } from "lucide-react";
 import type { NavItem } from "@/lib/p7-model";
 
@@ -37,10 +37,12 @@ type Props = {
   companyName: string;
   currency?: string;
   roleLabel: string;
+  onSignOut?: () => void;
+  busy?: boolean;
 };
 
 /** Collapsible left rail. Links come from the role-aware nav so it never offers a route the role cannot open. */
-export function AppSidebar({ links, current, query, companyName, currency, roleLabel }: Props) {
+export function AppSidebar({ links, current, query, companyName, currency, roleLabel, onSignOut, busy }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = !isCollapsed || isHovered;
@@ -117,7 +119,24 @@ export function AppSidebar({ links, current, query, companyName, currency, roleL
           </nav>
         </div>
 
-        <div className="p-3 border-t border-[#E8E6E1] overflow-hidden">
+        <div className="p-3 border-t border-[#E8E6E1] overflow-hidden space-y-2">
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              disabled={busy}
+              title="Sign out"
+              aria-label="Sign out"
+              className={`flex items-center h-9 rounded-xl text-xs font-medium text-[#737373] hover:text-[#991B1B] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 ${
+                isExpanded ? "w-full px-3 gap-2.5" : "w-9 mx-auto justify-center px-0"
+              }`}
+            >
+              <div className="size-4 flex items-center justify-center shrink-0">
+                <LogOut className="size-3.5" />
+              </div>
+              {isExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
+            </button>
+          )}
           {isExpanded ? (
             <div className="p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed">
               <div className="font-semibold text-[#1E2021] mb-1 flex items-center gap-1.5 whitespace-nowrap">
