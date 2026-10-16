@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, get, mutate, manualEvidence, type Session, type Business, type BaselineView, type ConstraintsView, type Customer, type Deal, type DraftInputs } from "@/lib/orderfit-api";
+import { ApiError, get, mutate, manualEvidence, type Business, type BaselineView, type ConstraintsView, type Customer, type Deal, type DraftInputs } from "@/lib/orderfit-api";
+import { useScope } from "@/components/layout/auth-shell";
+import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
 
 type Page<T> = { items: T[] };
 export default function NewDealPage() {
   const router = useRouter();
+  const { session, businessId: scoped } = useScope();
   const [businessId, setBusinessId] = useState(""); const [business, setBusiness] = useState<Business | null>(null); const [baseline, setBaseline] = useState<BaselineView | null>(null); const [constraints, setConstraints] = useState<ConstraintsView[]>([]); const [customers, setCustomers] = useState<Customer[]>([]);
   const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(true);
   const [openingDate, setOpeningDate] = useState(""); const [openingCash, setOpeningCash] = useState(""); const [coverage, setCoverage] = useState(""); const [attestation, setAttestation] = useState("");
@@ -22,7 +25,8 @@ export default function NewDealPage() {
     try { const balance = await get<BaselineView>(`/businesses/${id}/baseline`); setBaseline(balance); setInputs(value => ({ ...value, opening_cash_minor: null })); }
     catch (e) { if (!(e instanceof ApiError) || e.code !== "BASELINE_NOT_CONFIGURED") throw e; }
   }
-  useEffect(() => { let active = true; void get<Session>("/auth/me").then(async session => { const requested = new URLSearchParams(window.location.search).get("businessId"); const id = requested ?? session.memberships[0]?.business_id; if (!id || !session.memberships.some(m => m.business_id === id)) throw new Error("No authorized business membership is available for this link."); if (active) { setBusinessId(id); await load(id); } }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, []);
+  useEffect(() => { let active = true; const id = resolveBusinessId(session.memberships, new URLSearchParams(window.location.search).get("businessId"), scoped); void Promise.resolve().then(async () => { if (!id) throw new Error("No authorized business membership is available for this link."); if (active) { setBusinessId(id); await load(id); } }).catch(e => { if (active) setError(e instanceof Error ? e.message : "Could not load your business."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   async function saveBaseline(e: FormEvent) { e.preventDefault(); if (!business) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/baseline`, "PATCH", { expected_version: business.version, expected_financial_revision: business.financial_revision, balance: { opening_date: openingDate, opening_cash_minor: openingCash, coverage_through: coverage, evidence: manualEvidence("baseline", attestation) } }); await load(businessId); } catch (e) { setError(e instanceof Error ? e.message : "Could not save baseline."); } finally { setBusy(false); } }
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!baseline || !business) return; setBusy(true); setError("");

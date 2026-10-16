@@ -10,7 +10,9 @@ export function OrderSimulator() {
   const [customerDelayDays, setCustomerDelayDays] = useState<number>(0);
   const [loanAmount, setLoanAmount] = useState<number>(0);
 
-  // Constants based on international commercial manufacturing order
+  // ILLUSTRATION ONLY: made-up example numbers and simplified arithmetic. This is not the OrderFit engine; real results come
+  // only from the backend's deterministic evaluation of saved, confirmed inputs. Do not extend this into a calculator.
+  // Example constants
   const STARTING_CASH = 45000;
   const RESERVE = 20000;
   const ORDER_REVENUE = 120000;
@@ -121,10 +123,10 @@ export function OrderSimulator() {
         {/* Settle Section 9 Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-3">
-            Take an interactive product tour.
+            Illustration: how terms can move cash.
           </h2>
           <p className="font-sans text-base sm:text-lg text-[#526975]">
-            Explore on your own or{" "}
+            Illustration only. Not an assessment: real results come from the saved, confirmed-input evaluation. Every number here is made up.{" "}
             <a
               href="#support"
               className="font-medium text-[#1E2021] underline underline-offset-4 hover:text-[#121314]"
@@ -147,7 +149,7 @@ export function OrderSimulator() {
 
             <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-white border border-[#ECEAE4] text-xs text-[#526975] font-mono">
               <span className="size-1.5 rounded-full bg-emerald-500" />
-              <span>app.orderfit.io/simulate</span>
+              <span>Illustration (made-up numbers)</span>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-[#526975]">
@@ -173,10 +175,10 @@ export function OrderSimulator() {
                 />
                 <div>
                   <span className="text-xs font-bold text-[#1E2021] uppercase tracking-wider font-sans block mb-0.5">
-                    Interactive PO Evaluation
+                    Illustration only
                   </span>
                   <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
-                    Simulate Order: $120,000 Custom Components
+                    Example order: $120,000 (made-up)
                   </h3>
                 </div>
               </div>
@@ -347,18 +349,18 @@ export function OrderSimulator() {
                     )}
                     <span className="font-bold text-sm sm:text-base">
                       {simulation.isSafe
-                        ? "Feasible: Cash Reserve Floor Protected"
-                        : "Warning: Cash Balance Breaches Operating Floor"}
+                        ? "Example: stays above the example reserve"
+                        : "Example: falls below the example reserve"}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm leading-relaxed text-[#526975]">
                     {simulation.isSafe
                       ? `Lowest cash point is ${formatUSD(simulation.lowestBalance)} on Day ${
                           simulation.lowestDay
-                        }. You remain ${formatUSD(simulation.headroom)} above the owner's $20,000 safety floor.`
+                        }. This is ${formatUSD(simulation.headroom)} above the example $20,000 reserve. Illustration only, not a verdict.`
                       : `Cash drops to ${formatUSD(simulation.lowestBalance)} on Day ${
                           simulation.lowestDay
-                        }. Without mitigation, you cannot cover upcoming payroll or vendor bills.`}
+                        }. Illustration only, not a verdict or advice.`}
                   </p>
                 </div>
 
@@ -383,7 +385,7 @@ export function OrderSimulator() {
 
                   <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center">
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
-                      Safety Headroom
+                      Example Headroom
                     </span>
                     <span
                       className={`text-lg sm:text-xl font-bold font-neue-machina ${
@@ -396,7 +398,7 @@ export function OrderSimulator() {
 
                   <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center">
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
-                      Net Profit
+                      Example Profit
                     </span>
                     <span className="text-lg sm:text-xl font-bold font-neue-machina text-[#1E2021]">
                       {formatUSD(simulation.netProfit)}

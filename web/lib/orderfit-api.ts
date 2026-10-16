@@ -7,10 +7,25 @@ export type { DraftInputs, CostInput, Evidence, BaselineView, ConstraintsView, O
 export type Envelope = { error?: { code?: string; message?: string; details?: { current_version?: number } } };
 export class ApiError extends Error { constructor(message: string, readonly code: string, readonly status: number) { super(message); this.name = "ApiError"; } }
 
+/** The request never produced an HTTP answer (offline, DNS, reset, abort). The outcome of a write is unknown. */
+export class NetworkError extends Error { constructor(message = "The network request did not complete.") { super(message); this.name = "NetworkError"; } }
+
+/** Fired once per rejected request when the session is gone. components/providers.tsx turns it into the shared reset and sign-in redirect. */
+export const SESSION_EXPIRED_EVENT = "orderfit:session-expired";
+
+/** 401 with any code except a wrong password: the sign-in form itself must keep showing "wrong password". */
+export function isSessionExpired(status: number, code: string): boolean { return status === 401 && code !== "INVALID_CREDENTIALS"; }
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } });
+  let response: Response;
+  try { response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
+  catch (cause) { const name = (cause as { name?: string } | null)?.name; throw name === "AbortError" || name === "TimeoutError" ? cause : new NetworkError(); }
   const body = await response.json().catch(() => ({})) as T & Envelope;
-  if (!response.ok) throw new ApiError(body.error?.message ?? `Request failed (${response.status})`, body.error?.code ?? "REQUEST_FAILED", response.status);
+  if (!response.ok) {
+    const code = body.error?.code ?? "REQUEST_FAILED";
+    if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    throw new ApiError(body.error?.message ?? `Request failed (${response.status})`, code, response.status);
+  }
   return body;
 }
 
@@ -24,10 +39,18 @@ export function clearPendingCommands() {
   try { for (let index = sessionStorage.length - 1; index >= 0; index--) { const key = sessionStorage.key(index); if (key?.startsWith(PREFIX)) sessionStorage.removeItem(key); } } catch { /* Storage may be disabled; the memory fallback remains scoped to this tab. */ }
 }
 
-async function write<T>(path: string, method: "POST" | "PATCH", body: unknown): Promise<T> {
-  const serialized = JSON.stringify(body);
-  // Only a salted digest and random command key are saved, never financial input or credentials.
-  const auth = path.startsWith("/auth/");
+const PERSISTED_AUTH_PATHS = new Set(["/auth/invitations/accept"]);
+
+type Payload = { digest: string; body: BodyInit; json: boolean };
+
+async function write<T>(path: string, method: "POST" | "PATCH", payload: Payload): Promise<T> {
+  const serialized = payload.digest;
+  // Only a digest and a random command key are saved, never the request body or credentials. The digest covers a
+  // per-tab random scope, method, path and body; the scope is itself kept in sessionStorage, so this is a name that
+  // avoids plain-text bodies in storage, not secrecy: script running in this tab can read the scope and test guesses.
+  // Auth commands carry passwords or one-time tokens, so they are not persisted, except invitation acceptance: its
+  // body is only a one-time token, so the saved name is that digest and the value is a random key.
+  const auth = path.startsWith("/auth/") && !PERSISTED_AUTH_PATHS.has(path);
   let storageKey = "";
   if (!auth) {
     let scope = pending.get("scope");
@@ -45,7 +68,7 @@ async function write<T>(path: string, method: "POST" | "PATCH", body: unknown): 
   function resolved() { if (storageKey) { pending.delete(storageKey); try { sessionStorage.removeItem(storageKey); } catch { /* Use memory fallback. */ } } }
   try {
     const csrf = await request<{ csrf_token: string }>("/auth/csrf");
-    const result = await request<T>(path, { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf.csrf_token, "Idempotency-Key": key }, body: serialized });
+    const result = await request<T>(path, { method, headers: { ...(payload.json ? { "Content-Type": "application/json" } : {}), "X-CSRF-Token": csrf.csrf_token, "Idempotency-Key": key }, body: payload.body });
     resolved();
     if (auth && ["/auth/signup", "/auth/signin", "/auth/signout"].includes(path)) clearPendingCommands();
     return result;
@@ -56,11 +79,33 @@ async function write<T>(path: string, method: "POST" | "PATCH", body: unknown): 
   }
 }
 
-export function mutate<T>(path: string, method: "POST" | "PATCH", body: unknown): Promise<T> {
+function enqueue<T>(path: string, method: "POST" | "PATCH", payload: () => Promise<Payload>): Promise<T> {
   // The challenge currently rotates session CSRF. Keep each challenge/write pair together.
-  const next = writes.then(() => write<T>(path, method, body));
+  const next = writes.then(async () => write<T>(path, method, await payload()));
   writes = next.catch(() => undefined);
   return next;
+}
+
+export function mutate<T>(path: string, method: "POST" | "PATCH", body: unknown): Promise<T> {
+  const serialized = JSON.stringify(body);
+  return enqueue<T>(path, method, async () => ({ digest: serialized, body: serialized, json: true }));
+}
+
+/**
+ * Multipart upload through the same serialized, idempotent write path. The pending-command key is derived from
+ * the metadata and a SHA-256 of the file bytes, so retrying the same upload after a lost response reuses its
+ * idempotency key. File bytes are never placed in a URL or stored.
+ */
+export function mutateUpload<T>(path: string, metadata: unknown, file: File): Promise<T> {
+  return enqueue<T>(path, "POST", async () => {
+    const bytes = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+    const fileDigest = Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, "0")).join("");
+    const meta = JSON.stringify(metadata);
+    const form = new FormData();
+    form.set("metadata", meta);
+    form.set("file", file);
+    return { digest: [meta, file.name, file.size, fileDigest].join("|"), body: form, json: false };
+  });
 }
 
 export function businessPath(businessId: string, suffix: string) { return `/businesses/${businessId}/${suffix}`; }

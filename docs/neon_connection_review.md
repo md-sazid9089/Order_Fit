@@ -3,6 +3,9 @@
 Current status: **approved P1 setup completed on the existing Neon database**.
 Both restricted runtime connections and real API startup have been verified.
 The initial inspection below is historical; the completion record follows it.
+For the hosted Vercel + Render + Neon runbooks and the still-unverified hosted gates, see
+`docs/deployment/neon.md` and `docs/deployment/render.md`. A credential scan of this file
+found no secret values.
 
 Inspection date: 15 October 2026. Scope: authorized read-only inspection of the
 teammate-supplied connections in the ignored root/backend environment files.

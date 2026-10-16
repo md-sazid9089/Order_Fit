@@ -8,6 +8,7 @@ proposes candidates and never authoritative figures.
 
 import asyncio
 import json
+import weakref
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -124,6 +125,8 @@ def _recorded(request: LanguageRequest, settings: LLMSettings) -> LanguageResult
         return _unavailable("RECORDING_NOT_FOUND")
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):  # a JSON list/scalar is an invalid recording
+            return _unavailable("INVALID_OUTPUT", "invalid_output")
         if data.get("refusal"):
             return _unavailable("REFUSAL", "refused")
         if data.get("incomplete"):
@@ -138,11 +141,27 @@ def _recorded(request: LanguageRequest, settings: LLMSettings) -> LanguageResult
             None,
             None,
         )
-    except (ValueError, KeyError, ValidationError):
+    except (ValueError, KeyError, TypeError, AttributeError, ValidationError):
         return _unavailable("INVALID_OUTPUT", "invalid_output")
 
 
-_semaphores: dict[int, asyncio.Semaphore] = {}
+# asyncio primitives bind to the loop that first contends on them, and workers call
+# asyncio.run() repeatedly, so semaphores are scoped to the running loop (weakly held).
+_semaphores: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, dict[int, asyncio.Semaphore]]" = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _semaphore(concurrency: int) -> asyncio.Semaphore:
+    per_loop = _semaphores.setdefault(asyncio.get_running_loop(), {})
+    return per_loop.setdefault(concurrency, asyncio.Semaphore(concurrency))
+
+
+def _status_unavailable(exc) -> LanguageResult:
+    """Only server-side/transient statuses are retryable; 4xx caller errors are not."""
+    status = getattr(exc, "status_code", None)
+    retryable = isinstance(status, int) and (status >= 500 or status in {408, 409})
+    return _unavailable("PROVIDER_UNAVAILABLE", retryable=retryable)
 
 
 async def _live(request: LanguageRequest, settings: LLMSettings) -> LanguageResult:
@@ -150,9 +169,7 @@ async def _live(request: LanguageRequest, settings: LLMSettings) -> LanguageResu
         return _unavailable("PROVIDER_UNAVAILABLE")
     import openai  # sole provider import
 
-    semaphore = _semaphores.setdefault(
-        settings.concurrency, asyncio.Semaphore(settings.concurrency)
-    )
+    semaphore = _semaphore(settings.concurrency)
     client = openai.AsyncOpenAI(
         api_key=settings.api_key, max_retries=0, timeout=settings.timeout_seconds
     )
@@ -186,8 +203,10 @@ async def _live(request: LanguageRequest, settings: LLMSettings) -> LanguageResu
         return _unavailable("REFUSAL", "refused")
     except ValidationError:
         return _unavailable("INVALID_OUTPUT", "invalid_output")
-    except (openai.APIConnectionError, openai.APIStatusError):
+    except openai.APIConnectionError:
         return _unavailable("PROVIDER_UNAVAILABLE", retryable=True)
+    except openai.APIStatusError as exc:
+        return _status_unavailable(exc)
     finally:
         await client.close()
     if response.status == "incomplete":
@@ -242,14 +261,14 @@ async def propose_intent(instruction: str, input_hash: str, settings: LLMSetting
             output = ModelIntent.model_validate(record["intent"])
             return IntentResult(changes=output.changes, provenance="recorded", code=None,
                                 model=record.get("model"), response_id=record.get("response_id"))
-        except (ValueError, KeyError, ValidationError):
+        except (ValueError, KeyError, TypeError, AttributeError, ValidationError):
             return fallback("INVALID_OUTPUT")
     if not settings.api_key or not settings.model:
         return fallback("PROVIDER_UNAVAILABLE")
     import openai
 
     client = openai.AsyncOpenAI(api_key=settings.api_key, max_retries=0, timeout=settings.timeout_seconds)
-    semaphore = _semaphores.setdefault(settings.concurrency, asyncio.Semaphore(settings.concurrency))
+    semaphore = _semaphore(settings.concurrency)
     try:
         async with semaphore:
             response = await asyncio.wait_for(client.responses.parse(

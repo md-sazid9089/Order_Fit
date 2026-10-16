@@ -40,7 +40,7 @@ These are set on the API (and worker) host, not on Vercel:
 |---|---|---|
 | `ALLOWED_ORIGINS` | JSON list of the **exact** browser origins, e.g. `["https://orderfit.vercel.app"]` | The API checks `Origin` and the CSRF token on every write and on `/auth/csrf`. Any origin not listed gets `403 CSRF_REJECTED` |
 | `COOKIE_SECURE` | `true` | Cookies over HTTPS only |
-| `DATABASE_URL` / `WORKER_DATABASE_URL` | runtime logins (never the migration owner) | See `docs/neon_connection_review.md` |
+| `DATABASE_URL` | restricted runtime login (never the migration owner). On Render, the API and the worker each set their own `DATABASE_URL`; `WORKER_DATABASE_URL` is only read by the local `orderfit.runtime` launcher | See `docs/deployment/render.md` and `docs/neon_connection_review.md` |
 
 **Preview deployments.** Every preview gets its own URL. A preview can only sign in if its origin is in `ALLOWED_ORIGINS`. Options:
 - assign a stable preview domain and list it; or
@@ -50,7 +50,7 @@ Never use a wildcard origin.
 
 ## 4. Deploy steps
 
-1. Deploy and migrate the backend first: `alembic upgrade head` as the migrator. Then start the API and the worker with runtime credentials, and confirm `https://<api-host>/health` responds.
+1. Deploy and migrate the backend first, following [render.md](render.md) and [neon.md](neon.md) (Render Blueprint `render.yaml`; manual `orderfit-migrate` job runs `alembic upgrade head` as the migrator). Then start the API and the worker with runtime credentials, and confirm `https://<api-host>/health` responds.
 2. Set `ALLOWED_ORIGINS` to include the production Vercel domain, and set `COOKIE_SECURE=true`.
 3. In Vercel, import the repository, set Root Directory `web`, add `API_INTERNAL_URL`, and deploy.
 4. Smoke test on the Vercel URL:
@@ -62,17 +62,24 @@ Never use a wildcard origin.
 
 ## 5. Known limits and follow-ups
 
-- **Sign-in rate limiting sees proxy IPs.** The API keys sign-in throttling on email plus `request.client.host`. Behind the Vercel proxy that host is a Vercel edge address, so the per-source part of the limit is shared by many users. Fixing this is a backend change. Run uvicorn with `--proxy-headers` and `--forwarded-allow-ips` set to trusted proxy addresses only, and only if the API cannot be reached except through trusted proxies. Otherwise `X-Forwarded-For` can be spoofed.
+- **Sign-in rate limiting and proxy addresses.** Authentication throttles (`backend/orderfit/services/identity.py`) use separate keys, each per 15 minutes and counted before the password is verified: the account (`AUTH_ACCOUNT_LIMIT`, default and maximum 15), the step-up session (same limit) and the source address (`AUTH_SOURCE_LIMIT`, default 300, range 15-100000). A verified sign-in, password change or step-up is refunded, so only failed guesses (and sign-ups) count. The account key stops password guessing for one account from any number of addresses; the source key is only a coarse ceiling. The source is uvicorn's client address, which honours `X-Forwarded-For` only from proxies listed in `TRUSTED_PROXY_IPS` (JSON list of IPs/CIDRs, default `[]`; uvicorn uses the right-most address that is not a listed proxy).
+  - With the default `[]` the source is the direct peer: behind the Vercel rewrite (and the hosting platform's own load balancer) that is a small set of shared addresses. One client making `AUTH_SOURCE_LIMIT` failed attempts within 15 minutes therefore blocks sign-in for everyone arriving through the same address until the window ends; it cannot lock out other accounts below that ceiling. Raise `AUTH_SOURCE_LIMIT` if legitimate traffic approaches it.
+  - To key on a more specific address, list the platform proxies that connect to the API, for example the API host's own load-balancer range (see render.md section 6). The source then becomes the address that connected to that load balancer: the Vercel edge egress address for proxied requests, or the real client for direct requests. Getting the browser's address through Vercel would also require trusting Vercel's egress addresses, which are not a fixed published list; do not list `*` or broad ranges, because anyone who can reach the API directly could then choose their source key by sending `X-Forwarded-For` (that weakens only the coarse source ceiling, not the account limit).
+  - Residual: behind Vercel, per-source throttling stays per edge address rather than per browser. Verify the platform's current proxy addresses in its documentation and request logs before setting `TRUSTED_PROXY_IPS`; this guide does not assert specific ranges.
 - **Upload size.** Documents can be up to 25 MB, and they pass through the Vercel rewrite. Verify a large upload on the deployed app before relying on it. If the platform's proxy body limit is lower, route uploads to the API on a same-site subdomain (e.g. `api.<your-domain>` with the app on `<your-domain>`) instead.
-- **Demo pages are still in the build.** Only the `/deals` workflow, sign-in/sign-up, `/deals/sources` and `/deals/[id]/documents` use the real API. These pages show hard-coded data and simulated results:
-  - `/audit-log`, `/admin/*`, `/orders`, `/users`, `/settings`, `/risk-constraints`, `/financing`, `/payees` and `/cash-flow` show hard-coded data. `/audit-log` and `/admin/*` also show simulated "verified" security results.
-  - `/sandbox` and the landing-page simulator compute figures in the browser.
-  - `/ui-showcase` is a component demo.
+- **Upload admission.** The API receives an upload body above 1 MiB only after its body-limit middleware has verified the session, the caller's current `prepare` membership of that business and the deal from the database, and obtained an upload slot: at most `UPLOAD_CONCURRENCY` (default 4) large uploads per API process and `UPLOAD_SOURCE_CONCURRENCY` (default 2) per source address; excess requests get `429 UPLOAD_CAPACITY` (retryable) before any body is read. Unauthenticated or non-member requests keep the 1 MiB limit. Residual: FastAPI still spools an authorized member's multipart body before the route's CSRF and version checks, and behind a shared proxy address the per-source slot count is shared by everyone using that address.
+- **Screens and what backs them.** Signed-in screens read and write the real API through the same-origin proxy and need a session:
+  - Persisted workflow: `/deals`, `/deals/new`, `/deals/[id]` (review, confirm, evaluate, decision export), `/deals/[id]/documents` (upload, extraction, field resolution, baseline CSV import), `/deals/[id]/negotiate` and `/deals/[id]/reply` (negotiation preparation, approval bundles and sandbox execution), `/deals/customers`, `/deals/sources` and the legacy redirects `/deals/[id]/confirm` and `/deals/new/validate`.
+  - Business administration: `/cash-flow`, `/financing`, `/risk-constraints`, `/payees`, `/audit-log`, `/users`, `/settings` and `/admin` (a tenant-scoped capabilities and runtime view; there is no cross-tenant administration). Their availability depends on the signed-in member's role, which the API enforces.
+  - Public: `/` (landing page, which includes a browser-only order simulator whose figures are illustrative and are not produced by the OrderFit engine), `/auth/signin`, `/auth/signup`, `/auth/invitations/accept` and `/api/health`.
+  - Not available: `/orders` and `/sandbox` are signed-in placeholders that state the feature is not available in this release and link to saved orders. The former demo routes (`/admin/*` sub-pages and `/ui-showcase`) are removed.
 
-  Do not present them as working features. The negotiate and reply routes now always show "requires P5": their demo clients faked a step-up approval and were removed in this branch.
+  Execution is sandbox-only: no email, bank, payment or lender is contacted.
+- **Session expiry.** Any API response of 401 (other than a wrong password at sign-in) clears cached data and pending commands and sends the user to `/auth/signin` with a "session expired" notice. Switching business clears cached data but keeps pending retry keys, which are bound to the business through the request path.
+- **Security headers.** Every response carries `Content-Security-Policy: frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` (`web/next.config.ts`). There is deliberately no script CSP: Next.js inline bootstrap scripts need per-request nonces, which has not been verified for this build.
 - **Credentials.** A Neon owner URL was committed in Git history (commit `eb5758b`; files removed later). Rotate the owner password before any hosted deployment uses that database. See `docs/neon_connection_review.md`.
 
 ## 6. Local development is unchanged
 
 - **Default:** with `web/.env.local` unset or `API_INTERNAL_URL=http://localhost:8000`, `npm run dev` proxies `/api/v1` to the local API. Add `http://localhost:3000` to the API's `ALLOWED_ORIGINS`.
-- **Docker Compose:** it still builds `web/` with `NEXT_PUBLIC_API_URL=http://localhost:8000`. That is direct mode, which works because both run on `localhost` (same site).
+- **Docker Compose:** `NEXT_PUBLIC_API_URL` is empty and `API_INTERNAL_URL=http://api:8000` is baked into the Next rewrite. The browser uses the host-facing web origin, while the web proxy reaches the API over the internal Compose network. API, worker and database are not published to the host and have no outbound route by default.

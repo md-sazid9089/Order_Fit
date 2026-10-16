@@ -9,4 +9,9 @@
 - Any change that can alter a Result bumps `ENGINE_VERSION`.
 
 ## Adding a test case
-Add it to `data/test_cases.json`; `tests/engine/test_catalogue.py` picks it up.
+The maintained financial oracle and executable cases are in
+[`architecture/orderfit/fixtures/`](architecture/orderfit/fixtures/README.md).
+Run `python docs/architecture/orderfit/fixtures/reference_engine.py --check` and
+`python docs/architecture/orderfit/fixtures/selftest.py` from the repository root.
+The backend engine has its own focused unit and PostgreSQL acceptance tests; it
+does not load `data/test_cases.json` or `backend/tests/engine/test_catalogue.py`.

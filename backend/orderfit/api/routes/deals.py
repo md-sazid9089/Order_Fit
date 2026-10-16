@@ -191,7 +191,9 @@ def resolve_flag(
 @router.get("/{deal_id}/review", response_model=Review, operation_id="review")
 def get_review(business_id: UUID, deal_id: UUID, request: Request):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "prepare") as (c, _):
+    with service.database.tenant(
+        session_token(request), business_id, "prepare", readonly=True
+    ) as (c, _):
         return DealRepository.build_review(c, business_id, deal_id)
 
 

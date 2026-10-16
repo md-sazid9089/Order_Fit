@@ -1,8 +1,9 @@
 # Backend implementation progress
 
-Current phase status: **P2 acceptance passed locally** (15 October 2026).
-Earlier entries are historical. The P2 entry below records verification of P1,
-the completed pure engine, final test evidence and limits. P3 has not started.
+Current phase status (16 October 2026): P0–P8 implemented locally; see the
+**P0–P8 verification matrix** at the end of this file for per-gate evidence and the
+unverified hosted/provider gates. Earlier entries are historical and are superseded
+by later remediation.
 
 ## P0 — contract freeze (15 October 2026)
 
@@ -1051,3 +1052,190 @@ started. Before P7, finish the P6 services/routes/worker and acceptance matrix
 from plan V11–V13, including injected failures at each effect boundary and a
 second deal rejected on an obsolete baseline. P4's independent final review and
 all hosted/provider/browser/deployment claims remain separate and unverified.
+
+
+## P0–P8 verification matrix, P6–P8 completion and audit loop (16 October 2026)
+
+### Starting point (verified, not trusted)
+
+`main` was already at `origin/main` (`ba51194`), tree clean. The development-context
+skill and the P6 entry above recorded P6 as **partial** (schema/guards and step-up only)
+and P7/P8 as not started, so the task premise "P1–P6 done" was not accurate: P6 services,
+worker, projection and compensation did not exist. Baseline before any change: full
+backend suite **244 passed** (disposable PG17 container).
+
+### Matrix
+
+Status key: Verified = gate evidence executed in this checkout (local environment).
+Hosted gates need a disposable Neon branch and are **Unverified**.
+
+| Phase | Gate (plan §14) | V-IDs | Evidence | Status |
+|---|---|---|---|---|
+| P0 | contracts/OpenAPI/TS sync; capability ownership | V01 | `contracts.export --check` (108 ops), tsc contract check, `tests/contracts` | Verified |
+| P1 | migrate empty + from 0001, runtime-login isolation, idempotency, fencing, audit | V02–V04, V10, V12, V14 | `tests/db/test_foundation.py`, SQL suite 296/296 on 0001 and forward schema, concurrency script | Verified (PgBouncer pooling Unverified; see P8) |
+| P2 | engine parity, 22 goldens, anchors, purity | V05, V06 | `tests/engine` (+ new edge/money tests), reference `--check`, selftest | Verified |
+| P3 | persisted manual slice | V09 | `tests/db/test_p3_*` + live browser create→confirm→evaluate (hand-checked lowest balance 24,000,000) | Verified |
+| P4 | documents + bounded extraction | V07, V08 | `test_p4_pure.py`, `tests/db/test_p4_documents.py`; live OpenAI not run | Partial (live provider and independent final review Unverified) |
+| P5 | what-if, drafts, replies, acceptances | V08, V09, V11 | `test_p5_pure.py`, `tests/db/test_p5_preparation.py`, live browser what-if/draft/reply/acceptance | Verified (local) |
+| P6 | exact-bundle approval, execution, commitment gate, compensation | V11–V13 | `tests/db/test_p6_approval.py`, `test_p6_execution.py` (crash at six boundaries, concurrent workers, revoked actor, second deal, compensation), live browser send→commit | Verified (local) |
+| P7 | members, invitations, payee verification, notifications, exports, as-of history | V04, V14 | `tests/db/test_p7_*`, screens wired to real operations | Verified (local) |
+| P8 | readiness, shutdown, deployment config, restart evidence | V16 | `/ready`, SIGTERM test + live container shutdown log, compose stack restart, `render.yaml`/runbooks | Partial: hosted gates Unverified |
+
+### What was built (this round)
+
+- **P6**: migrations `0009_p6_approval`, `0010_p6_execution_runtime`; bundle prepare/get, approval
+  create/get/revoke, execute (202 + durable job), fenced worker handler, sandbox effects,
+  commitment gate and engine-derived baseline projection (one revision bump), rounds,
+  compensation. Defects in the earlier P6 SQL (actor check reading an unreadable table, run
+  rows that could never leave `queued`, ambiguous plpgsql variable, per-row revision bumps)
+  were fixed forward.
+- **P7**: migration `0011_p7_operations`; 20 operations (membership, invitations with hashed
+  single-use tokens, accounts + verification evidence, per-user notifications, audit list, cash
+  export, customer history, invoices, profile). Keyset cursors for new lists only; older lists
+  still page by offset with `next_cursor: null` (documented in `docs/contracts/README.md`).
+- **P8 (code)**: `/ready`, graceful worker shutdown, request-id logging, explicit proxy trust
+  (`TRUSTED_PROXY_IPS`, default none), Render Blueprint, Neon/Render runbooks, env examples.
+- **Web**: demo screens removed or replaced by honest notices or real wiring; session guard,
+  business switcher, shared session reset; approval/execution UI; P7 screens.
+- Migration `0012_notification_writer` (audit follow-up). Alembic head: `0012_notification_writer`.
+
+### Checks executed now (local)
+
+| Environment | Command | Result |
+|---|---|---|
+| root | `reference_engine.py --check`, `selftest.py` | 22 cases, 0 problems; 0 failures |
+| backend | `ruff check .` | clean |
+| backend | `orderfit.contracts.export --check` | 108 operations, current |
+| backend | `pytest -q` (docker PG17 disposable harness; migrator + restricted runtime logins) | 437 passed (after audit round 1) |
+| web | `npm run typecheck` / `lint` / `test` / `build` | pass / 0 errors / 67 pass / pass |
+| docker | `compose --env-file .env.example build` | api + web images built |
+| running stack | separate compose project, generated local secrets, restricted non-superuser logins | `/ready` ok; API+worker restart recovers; worker logs graceful SIGTERM stop; no secrets/tracebacks in logs |
+| browser (built-in) | V15 journey: sign-up → baseline/event → order → confirm → evaluate → what-if → draft/review → send bundle (wrong password refused, then approved) → sandbox execute → reply → acceptance → commit bundle → execute | order `committed`, round 1, baseline projection without double counting, gate released; cross-tenant reads 404, no-session 401, bad Origin 403 |
+
+CI-reported results: none. Provider: no live OpenAI. Hosted: none.
+
+### Findings register
+
+Stage 1 independent audits (read-only) and repairs:
+
+| # | Finding | Sev | Disposition |
+|---|---|---|---|
+| S1-1 | P6 services/worker/projection/compensation absent (task premise wrong) | high | Implemented |
+| S1-2 | Unauthenticated errors wrote permanent `security_event` rows | med | Fixed (relevance filter) |
+| S1-3 | Non-member could take a tenant row lock; review GET locked | med | Fixed (membership first, read-only mode, timeouts) |
+| S1-4 | Revocation race published an evaluation under a failed operation | med | Fixed + test |
+| S1-5 | `quote_supports` substring bypass; nested JSON/CSV crashes; silent page truncation | med | Fixed + tests |
+| S1-6 | Number guard missed 13–19/60–90; loose whitelist; placeholder tests | med | Fixed + tests |
+| S1-7 | Bank-change heuristic narrow; negated acceptance candidate | med | Fixed + tests |
+| S1-8 | Engine: null anchor KeyError; baseline order-kind near horizon ValueError | med | Fixed + tests |
+| S1-9 | Architecture test bypassable | low | Hardened |
+| S1-10 | Provider errors all retryable; recording list crash; loop-global semaphores | low | Fixed |
+| S1-11 | Demo/global-tenant screens, fake saves, unsupported options in navigation | high | Replaced/removed |
+| S1-12 | Pagination contract (offset, `next_cursor` null) for P3–P6 lists | med | Open; documented |
+| S1-13 | PgBouncer not exercised by any test | med | Open (unverified) |
+| S1-14 | N+1 `get_prepared` per message (bounded) | low | Deferred |
+| P6-A | Runtime role could not lock bundles / insert step-up grants (42501) | high | Fixed (0009) |
+| P6-B | Execution SQL defects (see above) | high | Fixed (0010) |
+| UI-1 | Bank-change hold unclearable (no flag id); `{}` body 422 on 3 operations | med | Fixed + tests |
+| UI-2 | Raw code shown for non-exact acceptance reply | low | Fixed |
+
+Haiku round 1 (five auditors; each finding reproduced before acting). Rejected: unverified signup
+pre-claiming an email to hijack an invitation (acceptance also needs the 256-bit token stored only as
+a digest). Deferred: `auth_lookup` hash readable by the runtime role (needs a sign-in-only split);
+auth rate-limit bucket behind a proxy (conservative default, documented); compose direct proxy mode
+(local, intentional). Fixed: worker lock order, post-reclaim effect fencing, settlement error routing,
+notification write privilege (0012), unauthenticated body buffering, step-up rate limit,
+parse-before-authorize, cash-flow contract drift, documents-page stale versions, invitation-accept
+idempotency replay, cache reset consistency, deals-list truncation notice, what-if validation, error
+wording, UI for cash-event correction/void, archives, password change, document download, audit-export
+limits, stale docs.
+
+### Unverified / blocked
+
+- Hosted Neon acceptance (role/extension/function privileges, SSL, direct vs pooled URL, tenant
+  context behind real PgBouncer, worker leases under Render, restore drill). Local PG17 container and
+  compose runs are approximations, not Neon verification.
+- Live OpenAI extraction/explanation quality; OCR/DOCX/XLSX remain unsupported.
+- Render documents: the worker cannot read the API's disk (separate services); extraction jobs need
+  shared object storage or a single-service mode before document workflows work there.
+- Notification triggers/policy under a non-superuser migration owner (tests use a superuser).
+- Automated browser tests (the V15 journey was driven manually in the built-in browser).
+- Backup/restore rehearsal; Vercel upload size limits through the rewrite.
+
+### Audit rounds 3–4 remediation (16 October 2026)
+
+- Round 3 repairs are now reconciled with the working tree: fenced execution-item retries
+  transient PostgreSQL lock/timeout/deadlock/serialization SQLSTATEs under the same lease;
+  a cancellation after every item completed may settle, while earlier cancellation still stops
+  remaining effects; authorized uploads acquire a per-principal slot only after session,
+  membership and deal checks and release it on overall/idle body deadlines; API docs/OpenAPI
+  endpoints are off unless `EXPOSE_API_DOCS=true`; `0014_settlement_retention` protects live
+  idempotency rows from the runtime role and adds the settlement-only execute context.
+- Alembic's sole current head is `0014_settlement_retention`; `SCHEMA_REVISION` and the
+  forward-schema SECURITY DEFINER inventory were updated accordingly. Environment examples and
+  the Render runbook now document upload deadline and docs-exposure settings.
+- Independent round 4 static review found no new critical/high/medium issue. Its focused
+  pure suite passed 16 tests. The accepted split Render document-storage limitation remains
+  open (worker cannot read API-local disk).
+- Verification in this checkout: ruff clean; contract export checked 108 operations; targeted
+  round-3 DB suite 11 passed; lock-order regression rerun passed. The first full run found one
+  stale test expectation: the production fence now locks `operation` by `id`, while the test
+  expected the prior selected column. The assertion was corrected without weakening its
+  business → deal → operation lock-order check; the subsequent full backend suite passed
+  **465 tests**. Web typecheck, lint (0 errors), 75 tests and production build passed; root
+  reference fixtures, selftest, Docker Compose image build and `git diff --check` passed.
+
+## Shared document storage and browser E2E remediation (16 October 2026)
+
+- The user selected a shared private S3-compatible bucket for Render API/worker documents. Added
+  a common store factory and S3 adapter with generated UUID key scopes, create-only writes,
+  server-side encryption, SHA-256 validation, bounded reads/writes, safe provider errors, and a
+  readiness canary that verifies put/get/delete. API and worker consume the same interface.
+  Botocore Stubber tests cover this contract without provider network access or private data.
+- Render Blueprint now configures the same S3 bucket/region/credentials/endpoint for API and
+  worker and no longer attaches a single-service disk. The deployment guide covers least
+  privilege, privacy, object/DB transaction orphan risk, and joint restore requirements. Actual
+  bucket provisioning, credential validation and restore remain unverified hosted gates.
+- Compose keeps API, worker and Postgres on an internal network with no outbound route. Only the
+  web service has a host-facing edge network; browser API calls use the built same-origin Next
+  rewrite. API and DB are no longer published to the host. The browser test runner creates a
+  unique disposable Compose project, provisions restricted logins, waits for API readiness via
+  the web proxy, tests signup → baseline → order → evaluation → reload, then removes containers,
+  networks and volumes.
+- Verification in this checkout: full backend suite **471 passed** (one upstream Starlette/httpx
+  deprecation warning); subsequent S3 + readiness focused suite **24 passed**; Ruff clean;
+  contract export checked 108 operations; Alembic head `0014_settlement_retention`; reference
+  fixture check and selftest passed. Browser E2E **1 passed** against built API/web/PG17 images
+  with restricted runtime DB roles. Frontend typecheck and 75 unit tests passed; lint had 0
+  errors with existing warnings; Docker production build passed; `npm audit --omit=dev` found 0
+  vulnerabilities. Full `npm audit` still reports 9 high-severity development dependency paths
+  through the unpatched `braces` 3.x dependency of Next ESLint and the shadcn build-time package;
+  the offered fix requires a breaking package downgrade, so it was not forced.
+- Local E2E and S3 adapter tests do not establish live S3, Render, Neon/PgBouncer, OpenAI,
+  Vercel upload limits or database/object restore acceptance. Object creation plus DB row commit
+  is not atomic; a process crash can leave an orphan, so no automatic object-deletion lifecycle
+  should be enabled until reconciliation and retention policy are defined. P4 independent final
+  acceptance review and live OpenAI evaluation remain open; P8 hosted acceptance remains open.
+
+## Follow-up browser journey (16 October 2026)
+
+- Reproduced and fixed a stale detail-page load when returning from negotiation after the route's
+  `operationId` changed. The resolver now preserves loaded deal/evaluation state for the same
+  deal/business and the loader observes operation-id changes. The added Playwright regression and
+  disposable-stack E2E passed.
+- Manually completed the local disposable-demo journey in the browser: signup, baseline, order,
+  persisted evaluation, negotiation draft/review, password-bound sandbox send approval/execution,
+  synthetic reply evidence, synthetic exact-term acceptance, and password-bound sandbox commit.
+  Both execution runs succeeded (one completed sandbox action each, zero failures); commit projected
+  one event and advanced financial revision 6→7. The UI states receipts remain expected, not
+  received. The reply and acceptance are explicitly marked synthetic and are not customer evidence.
+- Verification in this checkout: full backend suite 473 passed; targeted document extraction
+  fallback/persistence 2 passed; frontend typecheck passed, 75 unit tests passed, lint passed with
+  30 warnings and 0 errors; the rebuilt disposable-stack Playwright E2E passed; `git diff --check`
+  passed. This browser stack uses disposable local PostgreSQL and local document storage, not hosted
+  S3/Neon/Render services.
+- Remaining release gates are unchanged: provision and validate the shared private S3 bucket; live
+  Neon/PgBouncer, Render worker, restore, notification-owner and Vercel upload checks; live OpenAI
+  evaluation (not enabled in this demo). The automated browser spec currently covers the core
+  persisted order/negotiation route flow; the full send/reply/commit journey above is manual and
+  synthetic, not yet encoded as an automated browser scenario.

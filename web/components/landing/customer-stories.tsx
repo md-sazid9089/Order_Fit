@@ -42,7 +42,7 @@ export function CustomerStories() {
         
         {/* Section Heading */}
         <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-12">
-          Customer Stories
+          Illustrative Examples
         </h2>
 
         {/* Featured Story Container with Brand Tabs & Carousel */}
@@ -87,6 +87,7 @@ export function CustomerStories() {
                   </div>
                 </div>
 
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-[#526975]">Illustrative example (not a customer testimonial). Names, quotes and figures are invented.</p>
                 {/* Quote */}
                 <blockquote className="font-radio-grotesk font-normal text-xl sm:text-2xl text-[#1A1A1A] leading-snug tracking-tight mb-8">
                   &ldquo;{active.quote}&rdquo;
@@ -121,17 +122,12 @@ export function CustomerStories() {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-[#1A1A1A] font-sans">{active.author}</div>
-                    <div className="text-xs text-[#526975] font-sans">{active.role}</div>
+                    <div className="font-bold text-sm text-[#1A1A1A] font-sans">Fictional persona</div>
+                    <div className="text-xs text-[#526975] font-sans">Invented scenario, no real customer</div>
                   </div>
                 </div>
 
-                <a
-                  href="#case-studies"
-                  className="inline-flex items-center justify-center rounded-full tracking-wider font-sans font-semibold px-5 h-10 bg-[#1E2021] text-[#FFFAEC] hover:bg-[#121314] uppercase text-xs transition-all"
-                >
-                  Read story
-                </a>
+
               </div>
             </div>
 
@@ -139,7 +135,7 @@ export function CustomerStories() {
             <div className="lg:col-span-5 relative min-h-[280px] lg:min-h-full border-t lg:border-t-0 lg:border-l border-[#ECEAE4] overflow-hidden">
               <img
                 src={active.image}
-                alt={`${active.company} manufacturing facility`}
+                alt=""
                 className="w-full h-full object-cover"
                 loading="eager"
                 onError={(e) => {
@@ -148,7 +144,7 @@ export function CustomerStories() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 text-white text-xs font-sans">
-                <span className="font-semibold">{active.company}</span> · Operations &amp; Supply Chain Facility
+                <span className="font-semibold">Stock image</span> · illustrative only
               </div>
             </div>
 

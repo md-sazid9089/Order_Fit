@@ -11,7 +11,7 @@ export function MetricsSection() {
         <div className="rounded-4xl bg-[#D5C4FD] text-[#0D1B1E] px-6 py-12 sm:px-12 sm:py-16 text-center">
           
           <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-[#0D1B1E] mb-12">
-            OrderFit by the numbers
+            Design goals, not measured results
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 max-w-5xl mx-auto">
@@ -21,36 +21,36 @@ export function MetricsSection() {
                 100%
               </div>
               <p className="font-sans text-base sm:text-lg font-medium text-[#0D1B1E]/80 max-w-xs">
-                Deterministic Engine Precision*
+                Figures from the deterministic engine*
               </p>
               <span className="text-xs text-[#0D1B1E]/60 mt-1">
-                Zero AI hallucinations on figures (ADR 0003)
+                AI does not calculate figures (ADR 0003)
               </span>
             </article>
 
             {/* Stat 2 */}
             <article className="flex flex-col items-center">
               <div className="font-neue-machina text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#0D1B1E] mb-3">
-                $120M+
+                Example
               </div>
               <p className="font-sans text-base sm:text-lg font-medium text-[#0D1B1E]/80 max-w-xs">
-                Purchase orders evaluated
+                Illustrative figure, no usage claim
               </p>
               <span className="text-xs text-[#0D1B1E]/60 mt-1">
-                Across 8 manufacturing &amp; CPG sectors
+                No customer volume is claimed here
               </span>
             </article>
 
             {/* Stat 3 */}
             <article className="flex flex-col items-center">
               <div className="font-neue-machina text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#0D1B1E] mb-3">
-                18 Days
+                Example
               </div>
               <p className="font-sans text-base sm:text-lg font-medium text-[#0D1B1E]/80 max-w-xs">
-                Average runway protected
+                Illustrative figure, no outcome claim
               </p>
               <span className="text-xs text-[#0D1B1E]/60 mt-1">
-                Safe delay buffer added per order
+                Real results depend on your confirmed inputs
               </span>
             </article>
           </div>
@@ -58,7 +58,7 @@ export function MetricsSection() {
           {/* Settle Footnote */}
           <div className="mt-12 pt-6 border-t border-[#0D1B1E]/15 max-w-3xl mx-auto">
             <p className="text-xs text-[#0D1B1E]/70 leading-relaxed font-sans">
-              *Calculated based on 420+ analyzed production purchase orders. All figures and terms verified by deterministic Python engine (ADR 0001).
+              *A design goal: financial figures come from the deterministic Python engine (ADR 0001), not from AI. This section reports no customer or usage statistics.
             </p>
           </div>
 

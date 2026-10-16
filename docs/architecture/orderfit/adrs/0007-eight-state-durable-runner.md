@@ -29,6 +29,20 @@ or orchestration framework would add operational cost without resolving financia
 freshness or exact approval semantics. ADR 0006's optional framework experiment
 is not adopted. No learned decision layer is scheduled.
 
+Fencing as implemented (clarified 2026-10-16): the fence is the operation lease,
+`operation.lease_token` (rotated on every claim), rechecked under the operation row
+lock by `Database.fence` and by `operation_finish` before any effect or publication
+commits. `execution_run.fencing_token` (P6, 0009) is not a fence: it is an immutable
+identity marker of the run, fixed at admission and protected by the run-identity
+trigger, and no code compares it. It is kept (not dropped) because the column is part
+of immutable run evidence. Settlement lock/timeout/deadlock/serialization failures
+(55P03, 57014, 40P01, 40001) roll the settlement transaction back and are retried a
+bounded number of times under the same lease; only a guard refusal, another
+settlement error or exhausted retries hold the commitment gate and require
+reconciliation. The heartbeat thread stops only when `operation_heartbeat` reports
+the lease lost; transient heartbeat errors are retried, and the database fence still
+decides every publication.
+
 P1 acceptance: V02/V03/V04/V09/V10/V12, including competing claims, expired lease,
 stale fencing, restart, membership revocation and no pooled tenant-context leak.
 P0 tests establish the state/DTO contract only, not those runtime properties.

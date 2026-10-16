@@ -14,7 +14,13 @@ from orderfit.contracts.financial import ConfirmedInputV1
 from orderfit.contracts.protocol import canonical_hash
 from orderfit.contracts.workflow import DepositChange, ExtensionChange, FinancingChange
 from orderfit.services.evaluations import build_evaluation_dto
-from orderfit.services.preparation import draft_text, fork_snapshot, validate_message
+from orderfit.services.preparation import (
+    bank_change,
+    draft_text,
+    fork_snapshot,
+    reply_candidates,
+    validate_message,
+)
 from tests.contracts.examples import snapshot
 from tests.engine.reference_adapter import fixture_input, load
 
@@ -149,3 +155,52 @@ def test_provider_failures_keep_useful_fallback(monkeypatch, error_name, expecte
     assert result.code == expected and result.changes[0].value == 30
     assert result.provenance == "template"
     client.close.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "Please pay to our new IFSC HDFC0001234",
+        "Our SORT CODE has changed",
+        "Use wire instructions below",
+        "kindly remit to the attached details",
+        "New payment details attached",
+        "We have a new payee for you",
+        "use ACH going forward",
+        "Please use our new  account",
+        "pay to our new b a n k",
+        "update the b​a​n​k details",
+        "Bаnk transfer",  # Cyrillic a
+        "ＢＡＮＫ details",  # fullwidth BANK
+        "send to a/c 1234",
+    ],
+)
+def test_bank_change_signal_is_broad_and_normalized(body):
+    assert bank_change(body)
+
+
+@pytest.mark.parametrize(
+    "body",
+    ["Deposit of 20% and payment within 30 days.", "We accept the exact proposed terms.", "Regards"],
+)
+def test_bank_change_signal_ignores_plain_commercial_replies(body):
+    assert not bank_change(body)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "We do not accept the exact proposed terms.",
+        "We cannot accept the exact proposed terms",
+        "Thanks. We don't accept the exact proposed terms.",
+        "If approved internally we would accept the exact proposed terms.",
+        "We will never accept the exact proposed terms",
+    ],
+)
+def test_negated_or_conditional_acceptance_is_not_a_candidate(body):
+    assert [c for c in reply_candidates(body)[0] if c.field == "acceptance"] == []
+
+
+def test_plain_acceptance_and_later_sentence_after_negation_still_match():
+    found = reply_candidates("We do not like delays. We accept the exact proposed terms.")[0]
+    assert [c.field for c in found] == ["acceptance"]

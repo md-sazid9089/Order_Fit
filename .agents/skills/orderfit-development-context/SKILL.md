@@ -5,7 +5,7 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, P6 partial implementation based on `main` at `f01d197`. Check today's branch/diff
+Snapshot: **16 October 2026**, P0–P8 implementation is on `main` at `8e7d0ed`; round-3/4 audit repairs and shared-storage/E2E remediation remain uncommitted. Check today's branch/diff
 before relying on this snapshot. Repository root relative to this file: `../../..`.
 
 ## Read only what the task needs
@@ -28,15 +28,16 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 |---|---|
 | P0–P2 | Contracts, foundation and deterministic engine gates passed locally. |
 | P3 | Latest remediation records **local gate passed**, superseding partial commit `c03b2eb`. Per-option scans, provenance, exports, process recovery and persisted UI were added afterward. |
-| P4 | Documents, guarded extraction, field review and CSV import are integrated. Its own final acceptance review remains pending; live OpenAI/model evaluation is unverified. |
+| P4 | Documents, guarded extraction, field review and CSV import are integrated. A shared S3 adapter now supports split API/worker storage; only provider-stub tests ran. Independent final acceptance and live OpenAI/model evaluation remain pending. |
 | P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. All outgoing effects remain disabled. |
-| P6 | **Incomplete; gate not passed.** Forward schema/guard migration and exact session-bound step-up issuance landed; bundle/approval/execution routes and worker, commitment projection, compensation and P6 acceptance matrix remain outstanding. See the latest P6 entry in the progress file. |
-| P7–P8 | Not started. Do not advance before P6 passes. |
+| P6 | Local gate passed: exact-bundle approval, session-bound step-up, fenced durable execution, sandbox effects, serialized commitment gate with engine-derived baseline projection, rounds, compensation. Real adapters do not exist. |
+| P7 | Members/invitations (hashed single-use tokens), payee verification evidence, per-user notifications, audit/cash exports, as-of history; web screens wired. Older lists still use offset paging with null `next_cursor`. |
+| P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, live OpenAI, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
 
-Latest P5 report records **244 backend tests**, additional party-reply integration checks,
-frontend build/type checks and actual disposable-stack browser/restart evidence.
-These are historical results, not checks rerun by reading this file. Exact checks,
-browser coverage and limitations live in the progress file.
+Current local verification: **471 backend tests passed**, then 23 focused storage/readiness
+tests; 75 frontend tests and a browser signup→baseline→order→evaluation→reload journey passed.
+The full checks and explicit hosted limitations are recorded in the progress file; results do
+not establish external provider or deployment acceptance.
 
 ## Decisions easy to miss
 
@@ -50,7 +51,7 @@ browser coverage and limitations live in the progress file.
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0008_p6_execution`. Two `0004` branches join through
+- Code requires `0014_settlement_retention` (head). Two `0004` branches join through
   `0005_p3_p4_integration`; preserve that migration history.
 - [Neon setup evidence](../../../docs/neon_connection_review.md) establishes P1
   setup only, not today's hosted schema. Verify before another hosted migration.
@@ -63,12 +64,21 @@ browser coverage and limitations live in the progress file.
   evidence is immutable. `deal.analysis_changes` contains only reviewed exploration
   settings and participates in existing input-revision invalidation. Loan selection
   narrows a grid without changing stored offer terms. Fork history loads summaries.
-- Preparation hashes/reviews are not action bundles or outgoing approvals. P6 has
-  started: revision `0008_p6_execution` adds bundle/approval/run/effect evidence and
-  SQL guards; `/auth/step-up` issues an exact session-bound grant. These schema
-  objects do not yet have bundle preparation/approval/execution services. Keep the
-  P5 freeze and bank-change hold fail-closed until their exact P6 workflows and
-  acceptance tests are complete.
+- Preparation hashes/reviews are not action bundles or outgoing approvals. Only an exact,
+  step-up-approved bundle (`services/bundles.py`, `services/execution.py`,
+  `workflow/execution.py`) can produce sandbox effects; a P5 bank-change hold clears only
+  through `flag_resolve` with exact reply + verified account + evidence + current T3.
+- Commit settlement projects engine events (`agent/nodes/compute.py` mapping, stored per
+  option) once and bumps the revision once; the per-business commitment gate stays held until
+  settlement or full compensation. Sandbox only: no real adapter exists.
+- Deployment: Compose keeps API/worker/database internal and only web host-facing; browser API
+  calls use a same-origin Next rewrite. Render API/worker use a shared S3-compatible store once the
+  bucket and matching secrets are provisioned. Migrations remain a separate manual Render job;
+  API/worker refuse `DATABASE_URL_DIRECT`. See `docs/deployment/`.
+- Audit repairs: execution retries transient PostgreSQL conflicts under its existing lease;
+  late cancellation after all effects may settle; live idempotency keys cannot be deleted by
+  the runtime role; uploads are authorized before slot admission and have overall/idle limits;
+  `/docs`, `/redoc`, and `/openapi.json` require `EXPOSE_API_DOCS=true`.
 
 ## Find the relevant implementation
 
