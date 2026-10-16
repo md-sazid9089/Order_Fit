@@ -29,10 +29,11 @@ def list_deals(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return DealRepository.list_deals(c, business_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return DealRepository.list_deals(c, business_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)
 
 
 @router.post("", response_model=DealView, operation_id="deal_create", status_code=200)
@@ -244,7 +245,8 @@ def list_evaluations(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return EvaluationRepository.list_evaluations(c, business_id, deal_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return EvaluationRepository.list_evaluations(c, business_id, deal_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)

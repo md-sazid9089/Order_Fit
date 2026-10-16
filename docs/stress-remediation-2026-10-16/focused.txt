@@ -1,0 +1,18 @@
+..F..........................................                            [100%]
+================================== FAILURES ===================================
+___ test_last_owner_role_downgrade_and_revocation_take_effect_next_request ____
+tests\db\test_p7_operations.py:282: in test_last_owner_role_downgrade_and_revocation_take_effect_next_request
+    assert rejoined.get("/audit").status_code == 200
+E   AssertionError: assert 403 == 200
+E    +  where 403 = <Response [403 Forbidden]>.status_code
+E    +    where <Response [403 Forbidden]> = get('/audit')
+E    +      where get = <tests.db.test_p7_operations.User object at 0x0000020597DDD040>.get
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Kam 2\Order_Fit\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/db/test_p7_operations.py::test_last_owner_role_downgrade_and_revocation_take_effect_next_request
+1 failed, 44 passed, 1 warning in 161.70s (0:02:41)

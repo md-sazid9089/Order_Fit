@@ -1,0 +1,138 @@
+ Volume orderfit-e2e-0c4eab207e_pg-data Creating 
+ Volume orderfit-e2e-0c4eab207e_pg-data Creating 
+ Network orderfit-e2e-0c4eab207e_default Creating 
+ Network orderfit-e2e-0c4eab207e_default Creating 
+ Volume orderfit-e2e-0c4eab207e_pg-data Created 
+ Volume orderfit-e2e-0c4eab207e_pg-data Created 
+ Network orderfit-e2e-0c4eab207e_default Created 
+ Network orderfit-e2e-0c4eab207e_default Created 
+ Container orderfit-e2e-0c4eab207e-db-1 Creating 
+ Container orderfit-e2e-0c4eab207e-db-1 Created 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Creating 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Created 
+ Container orderfit-e2e-0c4eab207e-db-1 Starting 
+ Container orderfit-e2e-0c4eab207e-db-1 Started 
+ Container orderfit-e2e-0c4eab207e-db-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-db-1 Healthy 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Starting 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Started 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Exited 
+ Container orderfit-e2e-0c4eab207e-provision-run-f591fe5bd0bf Creating 
+ Container orderfit-e2e-0c4eab207e-provision-run-f591fe5bd0bf Created 
+Restricted runtime logins provisioned
+ Container orderfit-e2e-0c4eab207e-db-1 Recreate 
+ Network orderfit-e2e-0c4eab207e_edge Creating 
+ Volume orderfit-e2e-0c4eab207e_documents Creating 
+ Volume orderfit-e2e-0c4eab207e_documents Creating 
+ Network orderfit-e2e-0c4eab207e_edge Creating 
+ Volume orderfit-e2e-0c4eab207e_documents Created 
+ Volume orderfit-e2e-0c4eab207e_documents Created 
+ Network orderfit-e2e-0c4eab207e_edge Created 
+ Network orderfit-e2e-0c4eab207e_edge Created 
+ Container orderfit-e2e-0c4eab207e-db-1 Recreated 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Recreate 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Recreated 
+ Container orderfit-e2e-0c4eab207e-worker-1 Creating 
+ Container orderfit-e2e-0c4eab207e-api-1 Creating 
+ Container orderfit-e2e-0c4eab207e-worker-1 Created 
+ Container orderfit-e2e-0c4eab207e-api-1 Created 
+ Container orderfit-e2e-0c4eab207e-web-1 Creating 
+ Container orderfit-e2e-0c4eab207e-web-1 Created 
+ Container orderfit-e2e-0c4eab207e-db-1 Starting 
+ Container orderfit-e2e-0c4eab207e-db-1 Started 
+ Container orderfit-e2e-0c4eab207e-db-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-db-1 Healthy 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Starting 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Started 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Exited 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Exited 
+ Container orderfit-e2e-0c4eab207e-worker-1 Starting 
+ Container orderfit-e2e-0c4eab207e-api-1 Starting 
+ Container orderfit-e2e-0c4eab207e-worker-1 Started 
+ Container orderfit-e2e-0c4eab207e-api-1 Started 
+ Container orderfit-e2e-0c4eab207e-api-1 Waiting 
+ Container orderfit-e2e-0c4eab207e-api-1 Healthy 
+ Container orderfit-e2e-0c4eab207e-web-1 Starting 
+ Container orderfit-e2e-0c4eab207e-web-1 Started 
+
+> web@0.1.0 test:e2e
+> playwright test --workers=1
+
+
+Running 5 tests using 1 worker
+
+(node:15752) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+HTTP_STRESS_METRIC {"label":"mixed-tenant-profile-reads","count":200,"concurrency":16,"wall_ms":1421.16,"p50_ms":99.24,"p95_ms":229.79,"max_ms":302.72}
+HTTP_STRESS_METRIC {"label":"customer-write-same-key","count":32,"concurrency":16,"wall_ms":397.81,"p50_ms":148.16,"p95_ms":253.73,"max_ms":279.83}
+HTTP_STRESS_METRIC {"label":"malformed-customer-writes","count":32,"concurrency":8,"wall_ms":76.21,"p50_ms":18.54,"p95_ms":23.19,"max_ms":23.5}
+  ok 1 tests\e2e\backend-stress.spec.ts:5:5 › HTTP bursts preserve tenant isolation, exact replay and strict input rejection (2.4s)
+  ok 2 tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API (10.8s)
+  x  3 tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts (823ms)
+(node:7764) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus (690ms)
+mobile workspace width { content: 390, viewport: 390 }
+  ok 5 tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge (3.7s)
+
+
+  1) tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      22 |     return Boolean((window as unknown as { __csp_attack_executed?: boolean }).__csp_attack_executed);
+      23 |   });
+    > 24 |   expect(blocked).toBe(false);
+         |                   ^
+      25 |   // A correctly nonced script executes, proving the negative check is meaningful.
+      26 |   const trusted = await page.evaluate(() => {
+      27 |     const nonce = document.querySelector<HTMLScriptElement>("script[nonce]")?.nonce;
+        at D:\Kam 2\Order_Fit\web\tests\e2e\security-csp.spec.ts:24:19
+
+    Error Context: test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+  4 passed (20.1s)
+ Container orderfit-e2e-0c4eab207e-web-1 Stopping 
+ Container orderfit-e2e-0c4eab207e-worker-1 Stopping 
+ Container orderfit-e2e-0c4eab207e-worker-1 Stopped 
+ Container orderfit-e2e-0c4eab207e-worker-1 Removing 
+ Container orderfit-e2e-0c4eab207e-worker-1 Removed 
+ Container orderfit-e2e-0c4eab207e-web-1 Stopped 
+ Container orderfit-e2e-0c4eab207e-web-1 Removing 
+ Container orderfit-e2e-0c4eab207e-web-1 Removed 
+ Container orderfit-e2e-0c4eab207e-api-1 Stopping 
+ Container orderfit-e2e-0c4eab207e-api-1 Stopped 
+ Container orderfit-e2e-0c4eab207e-api-1 Removing 
+ Container orderfit-e2e-0c4eab207e-api-1 Removed 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Stopping 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Stopped 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Removing 
+ Container orderfit-e2e-0c4eab207e-migrate-1 Removed 
+ Container orderfit-e2e-0c4eab207e-db-1 Stopping 
+ Container orderfit-e2e-0c4eab207e-db-1 Stopped 
+ Container orderfit-e2e-0c4eab207e-db-1 Removing 
+ Container orderfit-e2e-0c4eab207e-db-1 Removed 
+ Network orderfit-e2e-0c4eab207e_default Removing 
+ Volume orderfit-e2e-0c4eab207e_pg-data Removing 
+ Network orderfit-e2e-0c4eab207e_edge Removing 
+ Volume orderfit-e2e-0c4eab207e_documents Removing 
+ Volume orderfit-e2e-0c4eab207e_pg-data Removed 
+ Volume orderfit-e2e-0c4eab207e_documents Removed 
+ Network orderfit-e2e-0c4eab207e_default Removed 
+ Network orderfit-e2e-0c4eab207e_edge Removed 

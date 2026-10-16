@@ -4,7 +4,7 @@ import { SERVER_API_URL } from "@/lib/api";
 import { probeFrom } from "@/lib/health-model";
 
 // Public probe for the connection indicator. It reports liveness (/health: the process answers) and readiness
-// (/ready: database, schema and storage usable) separately, and only booleans: the backend address and error
+// (/ready: database, schema, storage and live worker capacity) separately, and only booleans: the backend address and error
 // details stay server-side.
 async function status(path: string): Promise<number | null> {
   try {

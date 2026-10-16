@@ -1,0 +1,148 @@
+{
+  "pytest.xml": {
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "2",
+      "skipped": "0",
+      "tests": "494",
+      "time": "560.168",
+      "timestamp": "2026-10-16T22:19:44.958772+06:00",
+      "hostname": "Ligma"
+    },
+    "by_module": {
+      "tests.agent.test_injection": 6,
+      "tests.agent.test_number_guard": 16,
+      "tests.agent.test_terms_guard": 3,
+      "tests.contracts.test_contracts": 81,
+      "tests.db.test_audit_followups": 8,
+      "tests.db.test_audit_repairs": 3,
+      "tests.db.test_execution_recovery": 6,
+      "tests.db.test_foundation": 19,
+      "tests.db.test_idempotency_retention": 2,
+      "tests.db.test_p3_exports": 3,
+      "tests.db.test_p3_process_recovery": 1,
+      "tests.db.test_p3_review_regressions": 13,
+      "tests.db.test_p3_vertical_slice": 4,
+      "tests.db.test_p4_documents": 7,
+      "tests.db.test_p5_preparation": 13,
+      "tests.db.test_p6_approval": 9,
+      "tests.db.test_p6_execution": 17,
+      "tests.db.test_p7_events": 4,
+      "tests.db.test_p7_operations": 12,
+      "tests.db.test_runtime_hardening": 9,
+      "tests.db.test_security_hardening": 7,
+      "tests.db.test_session_authority": 3,
+      "tests.engine.test_compute_adapter": 3,
+      "tests.engine.test_edges": 7,
+      "tests.engine.test_independent": 30,
+      "tests.engine.test_money": 17,
+      "tests.engine.test_reference": 47,
+      "tests.test_architecture": 4,
+      "tests.test_audit_repairs_pure": 38,
+      "tests.test_body_limit_pure": 9,
+      "tests.test_hardening_pure": 7,
+      "tests.test_network_security": 10,
+      "tests.test_p4_pure": 10,
+      "tests.test_p5_pure": 28,
+      "tests.test_p6_pure": 9,
+      "tests.test_p7_pure": 16,
+      "tests.test_private_documents": 3,
+      "tests.test_runtime": 2,
+      "tests.test_s3_documents": 8
+    },
+    "failures": [
+      {
+        "test": "tests.db.test_p7_operations::test_last_owner_role_downgrade_and_revocation_take_effect_next_request",
+        "kind": "failure",
+        "message": "AssertionError: {\"error\":{\"code\":\"SESSION_REAUTH_REQUIRED\",\"message\":\"Your role changed. Sign in again to continue.\",\"request_id\":\"8759cb4f-3e78-414c-8caf-4e3e8bc0e1ae\",\"details\":{\"field\":null,\"reason\":null,\"expected_version\":null,\"current_version\":null,\"expected_input_version\":null,\"current_input_version\":null},\"retryable\":false}}\nassert 403 == 200\n +  where 403 = <Response [403 Forbidden]>.status_code",
+        "detail": "tests\\db\\test_p7_operations.py:256: in test_last_owner_role_downgrade_and_revocation_take_effect_next_request\n    r = risk.send(\"POST\", \"/payees\", dict(expected_financial_revision=risk.revision(),\n                                                                      ^^^^^^^^^^^^^^^\ntests\\db\\test_p7_operations.py:72: in revision\n    return self.read(\"/profile\", business=business)[\"financial_revision\"]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\db\\test_p7_operations.py:62: in read\n    assert r.status_code == 200, r.text\nE   AssertionError: {\"error\":{\"code\":\"SESSION_REAUTH_REQUIRED\",\"message\":\"Your role changed. Sign in again to continue.\",\"request_id\":\"8759cb4f-3e78-414c-8caf-4e3e8bc0e1ae\",\"details\":{\"field\":null,\"reason\":null,\"expected_version\":null,\"current_version\":null,\"expected_input_version\":null,\"current_input_version\":null},\"retryable\":false}}\nE   assert 403 == 200\nE    +  where 403 = <Response [403 Forbidden]>.status_code"
+      },
+      {
+        "test": "tests.db.test_session_authority::test_old_worker_context_cannot_read_publish_or_settle_after_role_change",
+        "kind": "failure",
+        "message": "AssertionError: assert UUID('3bf07075-69f3-4694-b3d6-1652d51023cb') == UUID('fd4c5845-1333-49aa-a577-3df8777e99f7')\n +  where UUID('fd4c5845-1333-49aa-a577-3df8777e99f7') = OperationAccepted(operation_id=UUID('fd4c5845-1333-49aa-a577-3df8777e99f7'), deal_id=None, status='queued', input_vers...i/v1/businesses/e5f4b748-68cb-4965-8a6c-e37356b85b0e/operations/fd4c5845-1333-49aa-a577-3df8777e99f7', result_url=None).operation_id",
+        "detail": "tests\\db\\test_session_authority.py:95: in test_old_worker_context_cannot_read_publish_or_settle_after_role_change\n    assert claim[\"id\"] == accepted.operation_id\nE   AssertionError: assert UUID('3bf07075-69f3-4694-b3d6-1652d51023cb') == UUID('fd4c5845-1333-49aa-a577-3df8777e99f7')\nE    +  where UUID('fd4c5845-1333-49aa-a577-3df8777e99f7') = OperationAccepted(operation_id=UUID('fd4c5845-1333-49aa-a577-3df8777e99f7'), deal_id=None, status='queued', input_vers...i/v1/businesses/e5f4b748-68cb-4965-8a6c-e37356b85b0e/operations/fd4c5845-1333-49aa-a577-3df8777e99f7', result_url=None).operation_id"
+      }
+    ]
+  },
+  "stress.xml": {
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "2",
+      "tests": "7",
+      "time": "17.928",
+      "timestamp": "2026-10-16T22:26:19.724207+06:00",
+      "hostname": "Ligma"
+    },
+    "by_module": {
+      "tests.db.test_phase_stress_audit": 7
+    },
+    "failures": []
+  },
+  "p7-isolated.xml": {
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "tests": "1",
+      "time": "10.102",
+      "timestamp": "2026-10-16T22:29:38.342293+06:00",
+      "hostname": "Ligma"
+    },
+    "by_module": {
+      "tests.db.test_p7_operations": 1
+    },
+    "failures": [
+      {
+        "test": "tests.db.test_p7_operations::test_last_owner_role_downgrade_and_revocation_take_effect_next_request",
+        "kind": "failure",
+        "message": "AssertionError: {\"error\":{\"code\":\"SESSION_REAUTH_REQUIRED\",\"message\":\"Your role changed. Sign in again to continue.\",\"request_id\":\"ed437956-d785-4915-961d-ae8a09ccd559\",\"details\":{\"field\":null,\"reason\":null,\"expected_version\":null,\"current_version\":null,\"expected_input_version\":null,\"current_input_version\":null},\"retryable\":false}}\nassert 403 == 200\n +  where 403 = <Response [403 Forbidden]>.status_code",
+        "detail": "tests\\db\\test_p7_operations.py:256: in test_last_owner_role_downgrade_and_revocation_take_effect_next_request\n    r = risk.send(\"POST\", \"/payees\", dict(expected_financial_revision=risk.revision(),\n                                                                      ^^^^^^^^^^^^^^^\ntests\\db\\test_p7_operations.py:72: in revision\n    return self.read(\"/profile\", business=business)[\"financial_revision\"]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\db\\test_p7_operations.py:62: in read\n    assert r.status_code == 200, r.text\nE   AssertionError: {\"error\":{\"code\":\"SESSION_REAUTH_REQUIRED\",\"message\":\"Your role changed. Sign in again to continue.\",\"request_id\":\"ed437956-d785-4915-961d-ae8a09ccd559\",\"details\":{\"field\":null,\"reason\":null,\"expected_version\":null,\"current_version\":null,\"expected_input_version\":null,\"current_input_version\":null},\"retryable\":false}}\nE   assert 403 == 200\nE    +  where 403 = <Response [403 Forbidden]>.status_code"
+      }
+    ]
+  },
+  "session-isolated.xml": {
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "3",
+      "time": "9.681",
+      "timestamp": "2026-10-16T22:29:51.006653+06:00",
+      "hostname": "Ligma"
+    },
+    "by_module": {
+      "tests.db.test_session_authority": 3
+    },
+    "failures": []
+  },
+  "queue-order.xml": {
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "0",
+      "tests": "2",
+      "time": "10.203",
+      "timestamp": "2026-10-16T22:30:37.632993+06:00",
+      "hostname": "Ligma"
+    },
+    "by_module": {
+      "tests.db.test_security_hardening": 1,
+      "tests.db.test_session_authority": 1
+    },
+    "failures": [
+      {
+        "test": "tests.db.test_session_authority::test_old_worker_context_cannot_read_publish_or_settle_after_role_change",
+        "kind": "failure",
+        "message": "AssertionError: assert UUID('e254a669-4f81-4a1a-8d3d-89633b29ddf2') == UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd')\n +  where UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd') = OperationAccepted(operation_id=UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd'), deal_id=None, status='queued', input_vers...i/v1/businesses/76e5f976-b68c-4307-9e99-376dafc8df93/operations/7513cbbd-3ffb-4c24-882f-5049e5b6edbd', result_url=None).operation_id",
+        "detail": "tests\\db\\test_session_authority.py:95: in test_old_worker_context_cannot_read_publish_or_settle_after_role_change\n    assert claim[\"id\"] == accepted.operation_id\nE   AssertionError: assert UUID('e254a669-4f81-4a1a-8d3d-89633b29ddf2') == UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd')\nE    +  where UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd') = OperationAccepted(operation_id=UUID('7513cbbd-3ffb-4c24-882f-5049e5b6edbd'), deal_id=None, status='queued', input_vers...i/v1/businesses/76e5f976-b68c-4307-9e99-376dafc8df93/operations/7513cbbd-3ffb-4c24-882f-5049e5b6edbd', result_url=None).operation_id"
+      }
+    ]
+  }
+}

@@ -5,10 +5,13 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, audited from `main` at `6ca0ec3`. Earlier round-3/4,
-shared-storage and E2E repairs are committed; the current spec/UI/performance audit
-fixes are uncommitted, alongside concurrent security/deployment work. Check today's
-branch/diff before relying on this snapshot. Repository root: `../../..`.
+Snapshot: **16 October 2026**, stress remediation on `main` atop `61aaff8`.
+Final local backend **507 passed**; built browser/HTTP **6 passed**; frontend **86 passed**.
+Durable worker readiness, scoped supporting-list continuation and their enabled UI
+consumers are implemented; role/CSP expectations and disposable queue ownership
+are repaired. See the [current remediation report](../../../docs/backend_stress_remediation_2026-10-16.md)
+for exact final results, source manifest, measured capacity and external blockers.
+Check branch/diff before relying on this snapshot. Repository root: `../../..`.
 
 ## Read only what the task needs
 
@@ -33,11 +36,16 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 | P4 | Documents, guarded extraction, field review and CSV import are integrated. A shared S3 adapter now supports split API/worker storage; only provider-stub tests ran. Independent final acceptance and live OpenAI/model evaluation remain pending. |
 | P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. Preparation alone cannot dispatch; P6 separately authorizes sandbox effects. Live language/dialogue-quality acceptance is unverified. |
 | P6 | Local gate passed: exact-bundle approval, session-bound step-up, fenced durable execution, sandbox effects, serialized commitment gate with engine-derived baseline projection, rounds, compensation. Real adapters do not exist. |
-| P7 | Members/invitations (hashed single-use tokens), payee verification evidence, per-user notifications, audit/cash exports, as-of history; web screens wired. Older lists still use offset paging with null `next_cursor`. |
+| P7 | Members/invitations, account evidence, notifications, exports/history implemented. Session reauthentication tests and supporting-list continuation repaired; current local verification is in the remediation report. |
 | P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, live OpenAI, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
 
-Current audit evidence and remaining gates are in the
-[spec matrix](../../../docs/orderfit_audit_2026-10-16.md) and latest progress entry.
+The [original stress report](../../../docs/backend_stress_test_report_2026-10-16.md)
+remains historical evidence. Its ST-01 through ST-06 and bounded local ST-09
+remediation are recorded in the [current report](../../../docs/backend_stress_remediation_2026-10-16.md).
+Old sessions require reauthentication after both demotion and reinstatement; do
+not restore authority to satisfy an old test. Disposable tests terminalize only
+their own newly created operation IDs, preserving history and production ordering.
+CSP negative controls use parser-inserted HTML under the real nonce policy.
 The current browser checks cover the persisted order/negotiation-route journey,
 mobile navigation, accessible sign-in, CSRF recovery and failed-read retry.
 They do not automate the full sandbox send/reply/commit path or certify hosted
@@ -55,16 +63,25 @@ providers. P4 and P8 remain partial; engineering completion is not submission ev
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0014_settlement_retention` (head). Two `0004` branches join through
+- Code requires `0016_worker_presence` (sole head). It follows 0015, which
+  requires new authentication after membership role changes and fences old
+  worker/approval authority. New global worker evidence has FORCE RLS and only
+  narrow worker-publish/API-boolean helpers; no direct runtime table grants.
+  Two `0004` branches join through
   `0005_p3_p4_integration`; preserve that migration history.
 - [Neon setup evidence](../../../docs/neon_connection_review.md) establishes P1
   setup only, not today's hosted schema. Verify before another hosted migration.
   Destructive tests use disposable PostgreSQL fixtures, never configured Neon URLs.
 - No live OpenAI, hosted deployment, restore or production resource-calibration
   acceptance is established. Historical owner-credential rotation remains unverified.
-- Readiness's worker flag measures queue age, not an independent heartbeat. Legacy
-  lists still have paging gaps; pipeline reads are now bounded to 20 orders/page,
-  but deal/evaluation fan-out remains. Message history is batched with list/single
+- `/ready` now gates on an unexpired global worker heartbeat; `backlog_seconds`
+  stays separate. Workers pulse every 10 s with DB-time expiry 60 s and one reserved
+  DB connection, independent of job work. See the [contract](../../../docs/contracts/stress-remediation.md).
+- Eight legacy lists now have scoped signed continuation; supporting selectors use
+  bounded load-more/retry controls. General lists retain explicit offset-start
+  compatibility; pipeline stays at 20 orders/page. Default policy reads use
+  `default_only=true`, never an arbitrary first-page policy. Pipeline/evaluation
+  fan-out remains; no unbounded fetch-all was added. Message history is batched with list/single
   parity, query-count, paging and tenant regressions. See the audit before scaling.
 - OCR and docx/xlsx remain unsupported. P5 parses bounded quoted reply terms;
   arbitrary supplier/lender offers and unsupported prose require manual source review.
@@ -88,7 +105,14 @@ providers. P4 and P8 remain partial; engineering completion is not submission ev
   the runtime role; uploads are authorized before slot admission and have overall/idle limits;
   `/docs`, `/redoc`, and `/openapi.json` require `EXPOSE_API_DOCS=true`.
 
-- Security hardening (16 October): see [audit findings](../../../docs/security/security_audit_2026-10-16.md). Remote runtime DB URLs now require `sslmode=verify-full`; HTTPS origins require Secure cookies. PDF parsing records p4.2 and runs in a 384-MiB/10-second child (two at once, no inherited application secrets); password work is capped at two operations per process; pending jobs at 25 per business. Historical DB credential rotation and hosted encryption/restore, strict script CSP, privilege-change session rotation and MFA remain open. Local tests do not close those release gates.
+- Security hardening (16 October): see [audit findings](../../../docs/security/security_audit_2026-10-16.md). Remote runtime DB URLs now require `sslmode=verify-full`; HTTPS origins require Secure cookies. PDF parsing records p4.2 and runs in a 384-MiB/10-second child (two at once, no inherited application secrets); password work is capped at two operations per process; pending jobs at 25 per business. Strict nonce CSP and privilege-change reauthentication are implemented and tested locally. Historical DB credential rotation, hosted encryption/restore and MFA remain open. Local tests do not close those release gates.
+
+- Sustained contention reproduced pool starvation: authenticated DB transactions now
+  reject checkout after 3 seconds with retryable `DATABASE_CAPACITY`/503; pool size
+  remains five, overflow zero. Preserve original idempotency keys on retry.
+- Live OpenAI, pooled/role/S3/Render/Vercel and joint restore gates remain unrun.
+  [External procedures](../../../docs/deployment/external-acceptance.md) include dry-run
+  probes with explicit target/budget opt-in; an available application URL is not consent.
 
 ## Find the relevant implementation
 

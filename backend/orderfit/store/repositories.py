@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime
 from uuid import UUID, uuid4
 
 from pydantic import ValidationError
-from sqlalchemy import desc, select, text
+from sqlalchemy import select, text
 
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.financial import (
@@ -64,6 +64,7 @@ from orderfit.contracts.workflow import (
     SnapshotConfirmed,
 )
 from orderfit.services.evaluations import extract_series
+from orderfit.store.collection_page import collection_page
 from orderfit.store.tables import (
     app_user,
     business,
@@ -364,7 +365,8 @@ def _row_to_constraints(row, default_id: UUID | None, fin_rev: int) -> Constrain
 class ConstraintsRepository:
     @staticmethod
     def list_constraints(
-        c, business_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None,
+        default_only=False
     ) -> Page[ConstraintsView]:
         b = (
             c.execute(
@@ -376,19 +378,14 @@ class ConstraintsRepository:
         )
         if not b:
             raise ApplicationError(404, "NOT_FOUND")
-        rows = (
-            c.execute(
-                select(owner_constraints)
-                .where(owner_constraints.c.business_id == business_id)
-                .order_by(desc(owner_constraints.c.version))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        query = select(owner_constraints).where(owner_constraints.c.business_id == business_id)
+        if default_only:
+            query = query.where(owner_constraints.c.id == b["default_constraints_id"])
+        rows, continuation = collection_page(
+            c, query, owner_constraints, business_id, owner_constraints.c.version, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters={"default_only": default_only})
         items = [_row_to_constraints(r, b["default_constraints_id"], b["financial_revision"]) for r in rows]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def get_constraints(c, business_id: UUID, constraints_id: UUID) -> ConstraintsView:
@@ -504,22 +501,14 @@ class ConstraintsRepository:
 class CustomerRepository:
     @staticmethod
     def list_customers(
-        c, business_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[CustomerView]:
         b = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
         ).scalar_one()
-        rows = (
-            c.execute(
-                select(customer)
-                .where(customer.c.business_id == business_id)
-                .order_by(desc(customer.c.created_at))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, select(customer).where(customer.c.business_id == business_id), customer, business_id, customer.c.created_at, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters=None)
         items = [
             CustomerView(
                 id=r["id"],
@@ -534,7 +523,7 @@ class CustomerRepository:
             )
             for r in rows
         ]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def create_customer(c, scope, req: CustomerCreate) -> CustomerView:
@@ -670,22 +659,14 @@ class CustomerRepository:
 class PayeeRepository:
     @staticmethod
     def list_payees(
-        c, business_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[PayeeView]:
         b = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
         ).scalar_one()
-        rows = (
-            c.execute(
-                select(payee)
-                .where(payee.c.business_id == business_id)
-                .order_by(desc(payee.c.created_at))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, select(payee).where(payee.c.business_id == business_id), payee, business_id, payee.c.created_at, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters=None)
         items = [
             PayeeView(
                 id=r["id"],
@@ -705,7 +686,7 @@ class PayeeRepository:
             )
             for r in rows
         ]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def create_payee(c, scope, req: PayeeCreate) -> PayeeView:
@@ -921,24 +902,16 @@ def _validate_offer_sources(c, business_id, terms):
 class OfferRepository:
     @staticmethod
     def list_offers(
-        c, business_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[OfferView]:
         b = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
         ).scalar_one()
-        rows = (
-            c.execute(
-                select(financing_offer)
-                .where(financing_offer.c.business_id == business_id)
-                .order_by(desc(financing_offer.c.created_at))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, select(financing_offer).where(financing_offer.c.business_id == business_id), financing_offer, business_id, financing_offer.c.created_at, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters=None)
         items = [_row_to_offer(r, b) for r in rows]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def create_offer(c, scope, req: OfferCreate) -> OfferView:
@@ -1145,7 +1118,7 @@ def _validate_manual_cash_event(event):
 class CashEventRepository:
     @staticmethod
     def list_events(
-        c, business_id: UUID, deal_id: UUID | None = None, limit: int = 50, offset: int = 0
+        c, business_id: UUID, deal_id: UUID | None = None, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[CashEventView]:
         b = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
@@ -1161,15 +1134,11 @@ class CashEventRepository:
             )
         else:
             query = query.where(cash_event.c.deal_id.is_(None))
-        rows = (
-            c.execute(
-                query.order_by(desc(cash_event.c.event_date)).limit(limit).offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, query, cash_event, business_id, cash_event.c.event_date, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters={"deal_id": deal_id})
         items = [_row_to_cash_event(r, b) for r in rows]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def create_event(c, scope, req: CashEventCreate) -> CashEventView:
@@ -1518,24 +1487,16 @@ def _row_to_deal(c, r, fin_rev: int) -> DealView:
 class DealRepository:
     @staticmethod
     def list_deals(
-        c, business_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[DealView]:
         b = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": business_id}
         ).scalar_one()
-        rows = (
-            c.execute(
-                select(deal)
-                .where(deal.c.business_id == business_id)
-                .order_by(desc(deal.c.created_at))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, select(deal).where(deal.c.business_id == business_id), deal, business_id, deal.c.created_at, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters=None)
         items = [_row_to_deal(c, r, b) for r in rows]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def create_deal(c, scope, req: CreateDeal) -> DealView:
@@ -2381,21 +2342,13 @@ class DealRepository:
 class EvaluationRepository:
     @staticmethod
     def list_evaluations(
-        c, business_id: UUID, deal_id: UUID, limit: int = 50, offset: int = 0
+        c, business_id: UUID, deal_id: UUID, limit: int = 50, offset: int = 0, *, cursor=None, cursors=None, scope=None
     ) -> Page[EvaluationResultV1]:
-        rows = (
-            c.execute(
-                select(evaluation)
-                .where(evaluation.c.business_id == business_id, evaluation.c.deal_id == deal_id)
-                .order_by(desc(evaluation.c.created_at))
-                .limit(limit)
-                .offset(offset),
-            )
-            .mappings()
-            .all()
-        )
+        rows, continuation = collection_page(
+            c, select(evaluation).where(evaluation.c.business_id == business_id, evaluation.c.deal_id == deal_id), evaluation, business_id, evaluation.c.created_at, limit, offset,
+            cursor=cursor, cursors=cursors, scope=scope, filters={"deal_id": deal_id})
         items = [EvaluationRepository._current_result(c, business_id, r) for r in rows]
-        return Page(items=items, next_cursor=None)
+        return Page(items=items, next_cursor=continuation)
 
     @staticmethod
     def get_evaluation(c, business_id: UUID, evaluation_id: UUID) -> EvaluationResultV1:

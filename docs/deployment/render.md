@@ -192,3 +192,16 @@ Set environment variables as listed in Step 2 above.
 - **Demo pages.** The same caveat from [Vercel deployment](vercel.md#5-known-limits-and-follow-ups)
   applies: several frontend pages show hard-coded demo data. Do not present
   them as working features.
+
+
+## Stress remediation reconciliation — 16 October 2026
+
+Current required sole revision is `0016_worker_presence`. `/ready` requires an
+unexpired global worker heartbeat as well as restricted DB/schema/storage checks;
+`backlog_seconds` is separate. Keep process liveness `/health` for service restart
+monitoring so a worker outage does not restart a healthy API. Reserve one extra
+restricted DB connection per worker for liveness; do not inject migration access.
+See the [integration contract](../contracts/stress-remediation.md),
+[current evidence](../backend_stress_remediation_2026-10-16.md) and
+[executable external acceptance procedures](external-acceptance.md).
+Hosted acceptance and historical credential rotation remain unverified.

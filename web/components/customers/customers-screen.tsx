@@ -1,8 +1,10 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
+
 import { useState, type FormEvent } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { archiveCustomer, getCustomerHistory, importInvoices, listCustomers, listInvoices } from "@/lib/p7-api";
+import { archiveCustomer, getCustomerHistory, importInvoices, listInvoices } from "@/lib/p7-api";
 import { INVOICE_COLUMNS, can, historyDateValid, parseInvoiceCsv } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import type { CustomerView } from "@/lib/generated-api";
@@ -11,15 +13,15 @@ import { Alert, Loading, PageFrame, QueryError, button, field, panel, primary, u
 
 /** Customers with as-of payment history and invoice import. History is context for a reviewer, never an automatic credit score. */
 export function CustomersScreen() {
-  const { businessId, key, businessName } = useScoped();
+  const { businessId, businessName } = useScoped();
   const [selected, setSelected] = useState("");
-  const customers = useQuery({ queryKey: key("customers"), queryFn: () => listCustomers(businessId), retry: false });
+  const customers = useCollection<CustomerView>(`/businesses/${businessId}/customers`);
   const chosen = customers.data?.items.find(c => c.id === selected);
   return <PageFrame title="Customers" intro={`${businessName}. Payment history is computed on the server from the invoices you import, as of the date you choose. It is context only: it does not score credit or change any evaluation.`}>
     {customers.isPending && <Loading what="customers" />}
     {customers.isError && <QueryError error={customers.error} retry={() => void customers.refetch()} retrying={customers.isFetching} />}
     {customers.isSuccess && !customers.data.items.length && <p className={panel}>No customers yet. A customer is created when you start an order.</p>}
-    {customers.isSuccess && customers.data.items.length >= 100 && <Alert tone="info">Showing the first 100 customers.</Alert>}
+    <CollectionPages query={customers} noun="customers" />
     {customers.isSuccess && !!customers.data.items.length && <section className={panel} aria-labelledby="pick-heading"><h2 id="pick-heading" className="text-lg font-semibold">Choose a customer</h2>
       <label className="block text-sm">Customer<select className={field} value={selected} onChange={e => setSelected(e.target.value)}><option value="">Select a customer</option>{customers.data.items.map(c => <option key={c.id} value={c.id}>{c.customer.name}{c.archived_at ? " (archived)" : ""}</option>)}</select></label></section>}
     {chosen && <CustomerDetail key={chosen.id} customer={chosen} />}
@@ -27,7 +29,7 @@ export function CustomersScreen() {
 }
 
 function CustomerDetail({ customer }: { customer: CustomerView }) {
-  const { businessId, key } = useScoped();
+  const { businessId } = useScoped();
   const queryClient = useQueryClient();
   const { revision } = useBusinessRevision();
   return <><section className={panel}><h2 className="text-lg font-semibold">{customer.customer.name}</h2>{customer.archived_at ? <p className="text-sm text-neutral-700">This customer is archived.</p> : null}<ArchiveAction noun="customer" permission="prepare" record={customer} financialRevision={revision} archive={body => archiveCustomer(businessId, customer.id, body)} onChanged={() => void queryClient.invalidateQueries()} consequence="An archived customer cannot be chosen for new orders or receive invoice imports." /></section><History customer={customer} /><Invoices customer={customer} /></>;

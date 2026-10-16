@@ -6,11 +6,12 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import TimeoutError as PoolTimeout
 
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0015_session_authority"
+SCHEMA_REVISION = "0016_worker_presence"
 
 
 def digest_token(token: str | None) -> bytes:
@@ -50,15 +51,16 @@ def apply_timeouts(connection):
 
 
 class Database:
-    def __init__(self, url: str, *, pool_size=5):
+    def __init__(self, url: str, *, pool_size=5, pool_timeout=3):
         self.engine = create_engine(
             url,
             pool_size=pool_size,
             max_overflow=0,
+            pool_timeout=pool_timeout,
             pool_pre_ping=True,
             pool_reset_on_return="rollback",
             hide_parameters=True,
-            connect_args={"prepare_threshold": None},
+            connect_args={"prepare_threshold": None, "connect_timeout": 5},
         )
 
     @staticmethod
@@ -104,9 +106,10 @@ class Database:
             if not current:
                 raise RuntimeError("Database schema is not current")
 
-    def readiness(self, *, backlog_limit_seconds=300) -> dict:
+    def readiness(self) -> dict:
         """Safe booleans only; never raises and never returns driver or URL text."""
-        status = {"database": False, "schema_current": False, "worker": False}
+        status = {"database": False, "schema_current": False, "worker": False,
+                  "backlog_seconds": None}
         try:
             with self.engine.begin() as c:
                 c.execute(text("SELECT set_config('statement_timeout','5s',true)"))
@@ -115,16 +118,34 @@ class Database:
                 status["schema_current"] = restricted and current
                 if status["schema_current"]:
                     backlog = c.execute(text("SELECT p7_queue_backlog_seconds()")).scalar_one()
-                    status["worker"] = backlog < backlog_limit_seconds
+                    status["backlog_seconds"] = max(0, backlog)
+                    status["worker"] = c.execute(text("SELECT worker_capacity_live()")).scalar_one()
         except Exception:  # noqa: BLE001 - readiness reports, it does not propagate
             import logging
 
             logging.getLogger("orderfit.readiness").warning("readiness_database_check_failed")
         return status
 
+    def publish_presence(self, worker_id, active=True):
+        """Worker-only helper, fixed DB-time expiry, no tenant context or job locks."""
+        with self.engine.begin() as c:
+            c.execute(text("SELECT set_config('statement_timeout','3s',true),"
+                           "set_config('lock_timeout','1s',true)"))
+            c.execute(text("SELECT worker_presence_publish(:id,:active)"),
+                      {"id": worker_id, "active": active})
+
+    @contextmanager
+    def presence_channel(self):
+        """One reserved connection so job-pool saturation cannot starve liveness."""
+        channel = Database(self.engine.url, pool_size=1, pool_timeout=3)
+        try:
+            yield channel
+        finally:
+            channel.close()
+
     @contextmanager
     def identity(self, token: str):
-        with self.engine.begin() as c:
+        with self.transaction() as c:
             # session_resolve updates/locks the session row: bound that first query too.
             apply_timeouts(c)
             row = (
@@ -139,6 +160,14 @@ class Database:
             scope = Scope(row["user_id"], row["session_id"])
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
             yield c, scope, row
+
+    @contextmanager
+    def transaction(self):
+        try:
+            with self.engine.begin() as c:
+                yield c
+        except PoolTimeout as exc:
+            raise ApplicationError(503, "DATABASE_CAPACITY", "The database is busy. Retry shortly.") from exc
 
     @contextmanager
     def tenant(self, token: str, business_id: UUID, permission="read", *, readonly=None):

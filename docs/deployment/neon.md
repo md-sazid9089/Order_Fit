@@ -192,3 +192,16 @@ These stay **unverified** until someone runs them against a disposable Neon bran
 6. Worker claim/heartbeat/finish through the pooler, lease expiry and recovery after a worker kill and after a Neon compute suspend/resume.
 7. Backup and restore: PITR restore to a branch, `pg_dump`/`pg_restore` into a disposable target, document-hash verification (8.4).
 8. Cold-start behaviour and compute-hour cost with the 1 s worker poll.
+
+
+## Stress remediation reconciliation — 16 October 2026
+
+Current required sole revision is `0016_worker_presence`. `/ready` requires an
+unexpired global worker heartbeat as well as restricted DB/schema/storage checks;
+`backlog_seconds` is separate. Keep process liveness `/health` for service restart
+monitoring so a worker outage does not restart a healthy API. Reserve one extra
+restricted DB connection per worker for liveness; do not inject migration access.
+See the [integration contract](../contracts/stress-remediation.md),
+[current evidence](../backend_stress_remediation_2026-10-16.md) and
+[executable external acceptance procedures](external-acceptance.md).
+Hosted acceptance and historical credential rotation remain unverified.

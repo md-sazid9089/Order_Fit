@@ -9,7 +9,7 @@ export type Accepted = { operation_id: string; status: string; poll_url: string 
 export type CsvPreview = { id: string; preview_hash: string; financial_revision: number; events: { event_date: string; amount_minor: string; direction: string; kind: string }[]; errors: { code: string; message: string }[]; duplicate_keys: string[] };
 export type Versions = { expected_version: number; expected_input_version: number; expected_financial_revision: number };
 
-export const listDocuments = (businessId: string, dealId: string) => get<{ items: DocumentView[] }>(`/businesses/${businessId}/deals/${dealId}/documents`);
+export const listDocuments = (businessId: string, dealId: string, cursor?: string | null) => get<{ items: DocumentView[]; next_cursor: string | null }>(`/businesses/${businessId}/deals/${dealId}/documents${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
 export const listFields = (businessId: string, dealId: string) => get<{ items: ExtractedField[] }>(`/businesses/${businessId}/deals/${dealId}/fields`);
 export const extractDocument = (businessId: string, dealId: string, documentId: string, versions: Versions) => mutate<Accepted>(`/businesses/${businessId}/deals/${dealId}/documents/${documentId}/extract`, "POST", versions);
 export const resolveField = (businessId: string, dealId: string, body: unknown) => mutate(`/businesses/${businessId}/deals/${dealId}/fields/resolve`, "POST", body);

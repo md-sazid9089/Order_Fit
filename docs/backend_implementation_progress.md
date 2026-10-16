@@ -1,5 +1,12 @@
 # Backend implementation progress
 
+> Latest independent stress review, 16 October 2026, `61aaff8`: existing backend
+> suite **492 passed / 2 failed**; added probes **5 passed / 2 strict xfails**;
+> built browser/HTTP suite **4 passed / 1 failed**. Current head is
+> `0015_session_authority`. See [the stress report](backend_stress_test_report_2026-10-16.md)
+> for reproductions, classification and unresolved acceptance gates. Historical
+> local completion labels below do not establish that today's complete gate is green.
+
 Current phase status (16 October 2026): P0–P3/P5–P7 have local implementation and
 gate evidence, with additional acceptance/scale gaps listed in the
 [current spec audit matrix](orderfit_audit_2026-10-16.md). **P4 and P8 remain partial**:
@@ -1382,3 +1389,116 @@ matrix before treating any phase or competition deliverable as fully accepted.
   adversarial acceptance. No hosted infrastructure, private source documents, real actions
   or live OpenAI calls were exercised. P4/P8 hosted gates remain open; sandbox-only scope
   is unchanged. See the security report before accepting sensitive-data deployment.
+
+## Independent backend phase stress review — 16 October 2026
+
+- Reviewed the implementation plan and progress first, reconciled actual code at
+  clean `main` / `61aaff8a1a6f8abd06ca4c0eed7f5fddc07fd663`, and exercised all
+  available phase suites. No application behavior, migrations, financial fixtures,
+  provider configuration or real outgoing actions were changed.
+- Existing full backend suite: **492 passed / 2 failed / 0 skipped**, 560.20 s.
+  Current required/sole head is **`0015_session_authority`**, with 108 generated
+  operations current. Original/forward SQL suites each passed **296/296**; clean
+  upgrade, populated preservation and original/forward concurrency ran through
+  the disposable PG17 fixture using actual restricted API/worker logins.
+- Classified both failures independently: the P7 role-change test still expects
+  the old session to read a profile, contrary to 0015; it fails alone. The three
+  session-authority tests pass alone, but queue-cap followed by its worker-context
+  test reproduces a different queued UUID being claimed. This is shared test-queue
+  contamination, not evidence that the production worker should change ordering.
+- Added seven reproducible DB/service probes: **5 passed / 2 strict xfails**.
+  Covered 64 same-key requests, 64 distinct admissions (25 accepted, 39 capacity
+  rejections), 128 alternating tenant reads, 24 editors (one save), 24 execute
+  submissions and 8 workers (one sandbox effect/round). Strict xfails reproduce
+  worker readiness without a worker and null customer continuation with 51 rows.
+- Engine benchmark wall times: **18.804 / 15.890 / 52.851 s** for OF-02,
+  10,000-combination and near-estimated-admission-ceiling cases; process lifetime
+  peak working set **342,999,040 bytes**. This direct-engine Windows measurement
+  does not establish hosted parent/child combined memory or sustained capacity.
+- Ruff, contract export, strict TypeScript contract examples, reference 22-case
+  check and independent selftest pass. Frontend **86 unit tests** pass; typecheck
+  passes after regenerating stale ignored local Next route types; lint has zero
+  errors / 10 existing warnings. No config include or assertion was relaxed.
+- Current images built and an isolated Compose stack became ready. Initial full
+  browser run: **3 passed / 1 failed**, 20.2 s. The CSP test expects a dynamically
+  created script to be blocked under `strict-dynamic`; independent Chromium and
+  the current W3C algorithm confirm that expectation is incorrect. Parser-inserted
+  wrong/missing-nonce scripts were blocked; no XSS exploit was established.
+- Final Playwright stack run after adding the HTTP case: **4 passed / 1 failed**,
+  20.1 s; the same existing CSP expectation fails. Actual HTTP bursts passed:
+  200 mixed-tenant profile reads at concurrency 16 (p95 229.79 ms), 32 same-key
+  customer writes at concurrency 16 (one saved row, p95 253.73 ms), and 32 invalid
+  writes at concurrency 8 (all 422, p95 23.19 ms). Changed-body replay returns 409.
+  These are finite local measurements, not a sustained production capacity claim.
+- Detailed per-phase/V01–V16 matrix, severity-ranked findings, exact reproductions,
+  later HTTP-burst evidence, repair acceptance and unrun gates are in
+  [the stress report](backend_stress_test_report_2026-10-16.md); raw JUnit/console
+  evidence is in `docs/stress-test-2026-10-16/`. The development-context handoff
+  was reconciled. No local/hosted phase is newly declared complete from file presence.
+- Live OpenAI/model quality, actual S3/Neon/PgBouncer/Render/Vercel acceptance,
+  non-superuser hosted migrator behavior, joint DB/object restore and sustained
+  deployment load remain unverified. Full browser send/reply/commit/compensate
+  automation was not added. Preserve sandbox-only scope during later remediation.
+
+
+## Backend stress remediation — 16 October 2026
+
+- Preserved the audited `main` HEAD `61aaff8a1a6f8abd06ca4c0eed7f5fddc07fd663`
+  and all uncommitted audit/progress/probe additions. No commit, reset, shared DB,
+  live provider call, hosted deployment, credential rotation or outgoing real effect.
+- Reproduced ST-03/ST-04 and both strict ST-01/ST-02 probes before behavior changes.
+  P7 now asserts old-session rejection and signs in via HTTP after demotion and
+  reinstatement; all later viewer/write/revocation/last-owner/self-escalation checks
+  remain. Per-test disposable operation ownership removes queue contamination even
+  after assertion failure, preserving history and production claim ordering.
+- ST-05 now uses parser-inserted response controls for missing/wrong nonce and
+  inline handlers, with a correctly authorized positive control. Fresh nonce,
+  private/no-store, hydration and navigation remain. No reachable XSS sink was found.
+- ST-01: new forward sole head `0016_worker_presence` / SQL
+  `0017_worker_presence.sql`; global FORCE-RLS process evidence, worker-only narrow
+  publisher, aggregate API boolean, DB-time expiry 60 seconds, pulse 10 seconds,
+  separate one-connection pool, startup/graceful shutdown/death/restart. `/ready`
+  requires live global worker capacity; `backlog_seconds` is independent.
+- ST-02: eight legacy collections now return accurate scoped signed keyset
+  continuation, unique tie-breakers and deliberate offset compatibility. Added
+  default-only policy lookup and updated contracts/generated declarations/clients.
+  Enabled selectors/screens have bounded load-more, partial/error/retry states;
+  pipeline labels resolve only its bounded page's missing customer IDs. No fetch-all
+  or limit increase. Original readiness/pagination strict xfails are ordinary tests.
+- ST-09 reproduced prolonged pool-checkout starvation during sustained load.
+  Kept pool size five/overflow zero, bounded checkout wait to three seconds, added
+  typed retryable DATABASE_CAPACITY/503 and an actual saturated-pool HTTP recovery
+  regression. Calculation/input/parser/password limits and financial goldens remain.
+- Focused recovery/load: **5 passed**, 170.00 s. Measured 7,588 service workload
+  cycles in 60.062 s, p95 110.418 ms; 935 queue-capacity and 57 DB-capacity rejects;
+  28 deliberate parser/password capacity refusals. Worker killed/restarted during
+  load; both pools returned to zero checkout and no owned child remained. Sampled
+  simultaneous parent/child peak 532,848,640 B; parent retained about 19 MiB after
+  recovery, which is an observation rather than a long-term no-leak claim.
+- Built disposable Compose browser suite **6 passed**, including a 60-second actual
+  HTTP run: 6,827 requests at concurrency eight, p95 139.369 ms, exact 5,119 200 /
+  854 404 / 854 422 responses, zero 5xx. Older saved customer retrieved/selected
+  through continuation after injected 503/retry; CSP controls pass. A preceding
+  HTTP-harness foreign-target mistake was corrected; failed evidence is preserved.
+- Supporting collection HTTP regression passed; session/stress/security order
+  variation **17 passed**. Original/forward SQL suites each **296/296**, clean and
+  populated upgrades and concurrent audit/optimistic-lock behavior passed. Ruff,
+  108 generated operations and sole head checks pass. Strict TS examples/typecheck,
+  **86 frontend tests**, production build and lint **0 errors / 10 existing warnings**
+  pass. Reference **22 cases / 0 problems**; independent selftest **0 failures**;
+  no engine/golden changes. Final complete non-fail-fast backend run: **507 passed,
+  0 failed, 0 skipped**, 610.34 s (one Starlette/httpx and two SQLAlchemy DOMAIN
+  deprecation warnings). Exact contamination pair **2 passed**. The provisional
+  **504-pass** run is retained separately and is not substituted for final acceptance.
+  Fresh standalone original stress probes: **7 passed / 0 xfails**, 15.58 s.
+  Final source manifest hashes match; 52 local documentation links resolve and
+  `git diff --check` passes. Remaining warnings are recorded rather than suppressed.
+- ST-07/ST-08 remain **external blocked**: executable opt-in target/budget probes
+  and full model/Neon/non-superuser/Render/S3/Vercel/joint-restore/rotation procedures
+  prepared, CLI/dry path checked; no approved paid budget or disposable hosted
+  target/restore pair/rotation evidence supplied. P4/P8 hosted acceptance remains open.
+- Detailed finding matrix, source SHA-256 manifest, exact commands, raw evidence,
+  thresholds, limitations and remaining prerequisites:
+  [remediation report](backend_stress_remediation_2026-10-16.md),
+  [integration contract](contracts/stress-remediation.md),
+  [external runbook](deployment/external-acceptance.md). Original audit evidence is intact.

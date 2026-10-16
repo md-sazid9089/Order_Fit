@@ -1,0 +1,11 @@
+{
+  "source": "Executed python -m tests.engine.benchmark_engine; tool output transcribed without rerunning",
+  "environment": "Windows host, locked Python 3.12; concurrent backend/Compose checks",
+  "cases": [
+    {"input": "OF-02", "seconds": 18.804, "cpu_seconds": 18.391, "work_units": 8385004, "candidates": 45, "series_points": 46440, "decision": "accept_with_changes"},
+    {"input": "10000-combination-boundary", "seconds": 15.890, "cpu_seconds": 15.688, "work_units": 7568833, "candidates": 51, "series_points": 111996, "decision": "decline_or_renegotiate"},
+    {"input": "near-work-admission-ceiling", "seconds": 52.851, "cpu_seconds": 52.172, "work_units": 16789876, "candidates": 51, "series_points": 111996, "decision": "decline_or_renegotiate"}
+  ],
+  "peak_process_rss_bytes": 342999040,
+  "limitations": "Direct engine benchmark, not worker subprocess or end-to-end latency; process-lifetime peak includes retained results. No production capacity claim."
+}

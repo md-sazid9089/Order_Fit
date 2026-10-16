@@ -1,0 +1,61 @@
+{
+  "backend-full": {
+    "tests": 507,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 610.305
+  },
+  "stress": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 15.526
+  },
+  "ordered-pair": {
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 10.386
+  },
+  "order-variations": {
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 27.437
+  },
+  "collections": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 11.281
+  },
+  "recovery-load": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 170.0
+  },
+  "manifest_sha256": "0b0348328ca22d8ddc14b0e5898eab8276b54eea65ba7cfbf7834f412465f8ba",
+  "source_hash_mismatches": [],
+  "http_sustained": {
+    "count": 6827,
+    "concurrency": 8,
+    "seconds": 60.038502699999995,
+    "statuses": {
+      "200": 5119,
+      "404": 854,
+      "422": 854
+    },
+    "p50_ms": 63.21059999999852,
+    "p95_ms": 139.3688000000002,
+    "max_ms": 277.8127000000004
+  },
+  "browser_result": "6 passed (1.5m)",
+  "environment": "Windows local / PostgreSQL17 disposable Docker / restricted API and worker roles; no hosted/provider acceptance"
+}

@@ -1,0 +1,55 @@
+
+> web@0.1.0 build
+> next build
+
+▲ Next.js 16.4.1 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 29ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1129ms
+  Running TypeScript ...
+  Finished TypeScript in 5.5s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/24) ...
+  Generating static pages using 11 workers (6/24) 
+  Generating static pages using 11 workers (12/24) 
+  Generating static pages using 11 workers (18/24) 
+✓ Generating static pages using 11 workers (24/24) in 515ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin
+├ ƒ /api/health
+├ ƒ /audit-log
+├ ƒ /auth/invitations/accept
+├ ƒ /auth/signin
+├ ƒ /auth/signup
+├ ƒ /cash-flow
+├ ƒ /deals
+├ ƒ /deals/[id]
+├ ƒ /deals/[id]/confirm
+├ ƒ /deals/[id]/documents
+├ ƒ /deals/[id]/negotiate
+├ ƒ /deals/[id]/reply
+├ ƒ /deals/customers
+├ ƒ /deals/new
+├ ƒ /deals/new/validate
+├ ƒ /deals/sources
+├ ƒ /financing
+├ ○ /icon.png
+├ ƒ /orders
+├ ƒ /payees
+├ ƒ /risk-constraints
+├ ƒ /sandbox
+├ ƒ /settings
+└ ƒ /users
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

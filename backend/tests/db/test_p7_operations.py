@@ -106,6 +106,13 @@ def join(world, owner, role, user=None):
     return User(user.client, user.token, user.csrf, user.user_id, user.email, owner.business_id)
 
 
+def signin(user):
+    signed = user.send("POST", "/api/v1/auth/signin", dict(email=user.email, password=PASSWORD), root=True)
+    assert signed.status_code == 200, signed.text
+    user.token, user.csrf = signed.cookies.get("orderfit_session"), signed.cookies.get("orderfit_csrf")
+    user.client.cookies.clear()
+
+
 def migrator(postgres, sql, params=()):
     with psycopg.connect(postgres["migrator"], autocommit=True) as c:
         return c.execute(sql, params).fetchall() if sql.lstrip().upper().startswith("SELECT") else c.execute(sql, params)
@@ -252,7 +259,11 @@ def test_last_owner_role_downgrade_and_revocation_take_effect_next_request(world
     downgraded = owner.ok("PATCH", f"/members/{risk.user_id}", dict(
         expected_version=member["version"], expected_financial_revision=owner.revision(), role="viewer"))
     assert downgraded["role"] == "viewer" and downgraded["version"] == member["version"] + 1
-    # Same session, next request: the new role applies.
+    # Role changes deliberately fence the old session, even for reads.
+    old = risk.get("/profile")
+    assert old.status_code == 403 and old.json()["error"]["code"] == "SESSION_REAUTH_REQUIRED"
+    signin(risk)
+    assert risk.get("/profile").status_code == 200
     r = risk.send("POST", "/payees", dict(expected_financial_revision=risk.revision(),
                                           payee=payee | {"name": "P7 payee 2"}))
     assert r.status_code == 403
@@ -271,6 +282,8 @@ def test_last_owner_role_downgrade_and_revocation_take_effect_next_request(world
             c.execute(text("UPDATE membership SET revoked_at=NULL WHERE business_id=:b AND user_id=:u"),
                       dict(b=owner.business_id, u=risk.user_id))
     rejoined = join(world, owner, "auditor", risk)
+    assert rejoined.get("/audit").json()["error"]["code"] == "SESSION_REAUTH_REQUIRED"
+    signin(rejoined)
     assert rejoined.get("/audit").status_code == 200
     # Pre-migration probe regression: a non-owner can no longer self-escalate through SQL.
     lead = join(world, owner, "commercial_lead")
@@ -561,9 +574,9 @@ def test_ready_reports_real_database_schema_and_role(world, config, monkeypatch,
     postgres = world["postgres"]
     client = world["client"]
     ready = client.get("/ready")
-    assert ready.status_code == 200, ready.text
-    assert ready.json() == {"status": "ready", "database": True, "schema_current": True, "storage": True,
-                            "worker": ready.json()["worker"]}
+    assert ready.status_code == 503, ready.text
+    assert ready.json() == {"status": "unavailable", "database": True, "schema_current": True, "storage": True,
+                            "worker": False, "backlog_seconds": ready.json()["backlog_seconds"]}
     # A privileged (owner/superuser) login is never reported as ready.
     privileged = Database(postgres["migrator_url"])
     try:
@@ -573,7 +586,7 @@ def test_ready_reports_real_database_schema_and_role(world, config, monkeypatch,
     # Unreachable database: safe booleans, no driver text.
     unreachable = Database("postgresql+psycopg://nobody:none@127.0.0.1:1/none")
     try:
-        assert unreachable.readiness() == {"database": False, "schema_current": False, "worker": False}
+        assert unreachable.readiness() == {"database": False, "schema_current": False, "worker": False, "backlog_seconds": None}
     finally:
         unreachable.close()
     import orderfit.store.db as db_module
@@ -581,7 +594,7 @@ def test_ready_reports_real_database_schema_and_role(world, config, monkeypatch,
     monkeypatch.setattr(db_module, "SCHEMA_REVISION", "9999_future")
     stale = client.get("/ready")
     assert stale.status_code == 503 and stale.json()["schema_current"] is False
-    assert set(stale.json()) == {"status", "database", "schema_current", "storage", "worker"}
+    assert set(stale.json()) == {"status", "database", "schema_current", "storage", "worker", "backlog_seconds"}
 
 
 def test_no_global_tenant_list_in_runtime_paths(world):

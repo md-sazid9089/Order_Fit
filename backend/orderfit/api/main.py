@@ -339,14 +339,14 @@ def create_app(config=None, database=None):
     def ready():
         """Ready only with the restricted runtime login, current schema and writable storage.
 
-        ``worker`` reports whether the durable queue is being drained (no claimable job older
-        than five minutes); it is informational and does not gate readiness.
+        ``worker`` gates readiness on global capacity: at least one unexpired worker
+        process heartbeat. Backlog age is separate and never proves liveness.
         """
         database = getattr(app.state, "database", None)
         status = (database.readiness() if database is not None
                   else {"database": False, "schema_current": False, "worker": False})
         storage = storage_writable(getattr(app.state, "documents", None))
-        ok = status["database"] and status["schema_current"] and storage
+        ok = status["database"] and status["schema_current"] and status["worker"] and storage
         body = Readiness(status="ready" if ok else "unavailable", storage=storage, **status)
         return JSONResponse(body.model_dump(mode="json"), status_code=200 if ok else 503,
                             headers={"Cache-Control": "no-store"})

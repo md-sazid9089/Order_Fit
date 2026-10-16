@@ -1,6 +1,16 @@
 // Compile-only consumer examples. Never runtime financial arithmetic.
 import type { ConfirmedInputV1, Operations, ForkRequest } from "./frontend-api";
 
+const customerContinuation: Operations["customers"]["query"] = { cursor: "opaque-signed-position", limit: 50 };
+const legacyStart: Operations["deals"]["query"] = { offset: 20, limit: 20 };
+const actualDefault: Operations["constraints_list"]["query"] = { default_only: true };
+// @ts-expect-error Page sizes remain integers rather than free-form text.
+const badPage: Operations["customers"]["query"] = { limit: "all" };
+declare const readiness: Operations["ready"]["response"];
+const capacity: boolean = readiness.worker;
+const queueAge: number | null | undefined = readiness.backlog_seconds;
+void [customerContinuation, legacyStart, actualDefault, badPage, capacity, queueAge];
+
 declare const snapshot: ConfirmedInputV1;
 const money: string = snapshot.order.order_value_minor;
 const eventId: string = snapshot.baseline_events[0].event_id;

@@ -25,7 +25,7 @@ export const revokeInvitation = (b: string, invitationId: string, body: Revision
 export const getCapabilities = (b: string) => get<Capabilities>(`${scope(b)}/capabilities`);
 
 // ----- payees and accounts -----
-export const listPayees = (b: string) => get<Page_PayeeView_>(`${scope(b)}/payees?limit=100`);
+export const listPayees = (b: string, cursor?: string | null) => get<Page_PayeeView_>(`${scope(b)}/payees${paged(cursor)}`);
 export const listAccounts = (b: string, payeeId: string, cursor?: string | null) => get<Page_AccountView_>(`${scope(b)}/payees/${payeeId}/accounts${paged(cursor, 100)}`);
 export const createAccount = (b: string, payeeId: string, body: AccountCreate) => mutate<AccountView>(`${scope(b)}/payees/${payeeId}/accounts`, "POST", body);
 export const verifyAccount = (b: string, payeeId: string, accountId: string, body: AccountVerification) => mutate<AccountView>(`${scope(b)}/payees/${payeeId}/accounts/${accountId}/verify`, "POST", body);
@@ -75,19 +75,19 @@ export async function downloadExport(businessId: string, exported: ExportView, f
 }
 
 // ----- cash flow, customers and invoices -----
-export const listBaselineEvents = (b: string) => get<Page_CashEventView_>(`${scope(b)}/cash-events?limit=100`);
+export const listBaselineEvents = (b: string, cursor?: string | null) => get<Page_CashEventView_>(`${scope(b)}/cash-events${paged(cursor)}`);
 export const correctCashEvent = (b: string, eventId: string, body: CashEventWrite) => mutate<CashEventView>(`${scope(b)}/cash-events/${eventId}`, "PATCH", body);
 export const voidCashEvent = (b: string, eventId: string, body: RevisionReason) => mutate<CashEventView>(`${scope(b)}/cash-events/${eventId}/void`, "POST", body);
 export const archiveCustomer = (b: string, customerId: string, body: RevisionReason) => mutate<CustomerView>(`${scope(b)}/customers/${customerId}/archive`, "POST", body);
 export const archivePayee = (b: string, payeeId: string, body: RevisionReason) => mutate<PayeeView>(`${scope(b)}/payees/${payeeId}/archive`, "POST", body);
 export const archiveOffer = (b: string, offerId: string, body: RevisionReason) => mutate<OfferView>(`${scope(b)}/financing-offers/${offerId}/archive`, "POST", body);
 export const getCashFlow = (b: string) => get<Series>(`${scope(b)}/cash-flow`);
-export const listCustomers = (b: string) => get<Page_CustomerView_>(`${scope(b)}/customers?limit=100`);
+export const listCustomers = (b: string, cursor?: string | null) => get<Page_CustomerView_>(`${scope(b)}/customers${paged(cursor)}`);
 export const getCustomerHistory = (b: string, customerId: string, asOf: string) => get<CustomerHistory>(`${scope(b)}/customers/${customerId}/history?as_of=${encodeURIComponent(asOf)}`);
 export const listInvoices = (b: string, customerId: string, cursor?: string | null) => get<Page_InvoiceView_>(`${scope(b)}/customers/${customerId}/invoices${paged(cursor, 100)}`);
 export const importInvoices = (b: string, customerId: string, body: InvoiceImport) => mutate<Page_InvoiceView_>(`${scope(b)}/customers/${customerId}/invoices/import`, "POST", body);
 export type { CustomerView };
 
 // ----- read-only policy and financing views -----
-export const listOffers = (b: string) => get<Page_OfferView_>(`${scope(b)}/financing-offers?limit=100`);
-export const listConstraints = (b: string) => get<Page_ConstraintsView_>(`${scope(b)}/constraints?limit=100`);
+export const listOffers = (b: string, cursor?: string | null) => get<Page_OfferView_>(`${scope(b)}/financing-offers${paged(cursor)}`);
+export const listConstraints = (b: string, cursor?: string | null) => get<Page_ConstraintsView_>(`${scope(b)}/constraints${paged(cursor)}`);

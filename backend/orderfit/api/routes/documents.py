@@ -132,11 +132,13 @@ def list_documents(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
         DealRepository.get_deal(c, business_id, deal_id)
-        return Page(items=DocumentRepository.list_documents(c, business_id, deal_id, limit, offset), next_cursor=None)
+        return DocumentRepository.list_documents(c, business_id, deal_id, limit, offset,
+                                                  cursors=service.cursors, scope=scope, cursor=cursor)
 
 
 @router.get(

@@ -1,9 +1,11 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
+
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { archivePayee, createAccount, getBusiness, listAccounts, listPayees, revokeAccount, verifyAccount } from "@/lib/p7-api";
+import { archivePayee, createAccount, getBusiness, listAccounts, revokeAccount, verifyAccount } from "@/lib/p7-api";
 import { accountActions, accountNumberValid, accountStatusText, buildAccountCreate, buildAccountVerification, buildRevocation, can, maskedAccount, reasonValid } from "@/lib/p7-model";
 import type { AccountView, PayeeView } from "@/lib/generated-api";
 import { ArchiveAction } from "@/components/p7/archive-action";
@@ -14,13 +16,13 @@ const STATUS_STYLE = { pending: "bg-amber-100 text-amber-900", verified: "bg-gre
 /** Payee bank accounts. Only the last four characters are ever returned; verification is a human-recorded attestation. */
 export function PayeesScreen() {
   const { businessId, key, businessName } = useScoped();
-  const payees = useQuery({ queryKey: key("payees"), queryFn: () => listPayees(businessId), retry: false });
+  const payees = useCollection<PayeeView>(`/businesses/${businessId}/payees`);
   const business = useQuery({ queryKey: key("business-profile"), queryFn: () => getBusiness(businessId), retry: false });
   return <PageFrame title="Payees and bank accounts" intro={<>{businessName}. Account numbers are never shown in full: only the last four characters are kept for display. A verified account means a person recorded evidence, not that a bank confirmed it. Nothing here moves money. Lenders are added under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
     {payees.isPending && <Loading what="payees" />}
     {payees.isError && <QueryError error={payees.error} retry={() => void payees.refetch()} retrying={payees.isFetching} />}
     {payees.isSuccess && !payees.data.items.length && <p className={panel}>No payees are recorded for this business yet.</p>}
-    {payees.isSuccess && payees.data.items.length >= 100 && <Alert tone="info">Showing the first 100 payees.</Alert>}
+    <CollectionPages query={payees} noun="payees" />
     {payees.isSuccess && payees.data.items.map(p => <PayeeCard key={p.id} payee={p} financialRevision={business.data?.financial_revision} />)}
   </PageFrame>;
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
+
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getBusiness, listConstraints } from "@/lib/p7-api";
+import { getBusiness } from "@/lib/p7-api";
 import { bpsText } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import { Loading, PageFrame, QueryError, panel, useScoped } from "@/components/p7/common";
@@ -10,11 +12,11 @@ import { Loading, PageFrame, QueryError, panel, useScoped } from "@/components/p
 /** The saved default risk policy, read-only. Each edit creates a new immutable version under Cash and financing. */
 export function RiskScreen() {
   const { businessId, key } = useScoped();
-  const policies = useQuery({ queryKey: key("constraints"), queryFn: () => listConstraints(businessId), retry: false });
+  const policies = useCollection<ConstraintsView>(`/businesses/${businessId}/constraints?default_only=true`);
   const business = useQuery({ queryKey: key("business-profile"), queryFn: () => getBusiness(businessId), retry: false });
   const currency = business.data?.currency ?? "";
   const money = (minor: string | null) => (minor === null ? "no limit" : currency ? formatMinor(minor, currency) : `${minor} minor units`);
-  const current = policies.data?.items.find(p => p.is_default) ?? policies.data?.items[0];
+  const current = policies.data?.items.find(p => p.is_default);
   return <PageFrame title="Risk and constraints" intro={<>The default policy used by new evaluations. Policies are immutable versions: changing one creates a new version and never rewrites an order that already uses an earlier one. Edit under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
     {policies.isPending && <Loading what="the policy" />}
     {policies.isError && <QueryError error={policies.error} retry={() => void policies.refetch()} retrying={policies.isFetching} />}
@@ -38,5 +40,8 @@ export function RiskScreen() {
       </dl>
       {policies.data && policies.data.items.length > 1 && <p className="text-xs text-neutral-600">{policies.data.items.length} versions are saved; the default is shown.</p>}
     </section>}
+    <CollectionPages query={policies} noun="policies" />
   </PageFrame>;
 }
+
+import type { ConstraintsView } from "@/lib/generated-api";

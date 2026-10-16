@@ -1,0 +1,129 @@
+ Network orderfit-e2e-ebb6f22b22_default Creating 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Creating 
+ Network orderfit-e2e-ebb6f22b22_default Creating 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Creating 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Created 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Created 
+ Network orderfit-e2e-ebb6f22b22_default Created 
+ Network orderfit-e2e-ebb6f22b22_default Created 
+ Container orderfit-e2e-ebb6f22b22-db-1 Creating 
+ Container orderfit-e2e-ebb6f22b22-db-1 Created 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Creating 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Created 
+ Container orderfit-e2e-ebb6f22b22-db-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-db-1 Started 
+ Container orderfit-e2e-ebb6f22b22-db-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-db-1 Healthy 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Started 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Exited 
+ Container orderfit-e2e-ebb6f22b22-provision-run-a0c3afe712dd Creating 
+ Container orderfit-e2e-ebb6f22b22-provision-run-a0c3afe712dd Created 
+Restricted runtime logins provisioned
+ Container orderfit-e2e-ebb6f22b22-db-1 Running 
+ Network orderfit-e2e-ebb6f22b22_edge Creating 
+ Network orderfit-e2e-ebb6f22b22_edge Creating 
+ Volume orderfit-e2e-ebb6f22b22_documents Creating 
+ Volume orderfit-e2e-ebb6f22b22_documents Creating 
+ Volume orderfit-e2e-ebb6f22b22_documents Created 
+ Volume orderfit-e2e-ebb6f22b22_documents Created 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Creating 
+ Container orderfit-e2e-ebb6f22b22-api-1 Creating 
+ Network orderfit-e2e-ebb6f22b22_edge Created 
+ Network orderfit-e2e-ebb6f22b22_edge Created 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Created 
+ Container orderfit-e2e-ebb6f22b22-api-1 Created 
+ Container orderfit-e2e-ebb6f22b22-web-1 Creating 
+ Container orderfit-e2e-ebb6f22b22-web-1 Created 
+ Container orderfit-e2e-ebb6f22b22-db-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-db-1 Healthy 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Started 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Exited 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Exited 
+ Container orderfit-e2e-ebb6f22b22-api-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-api-1 Started 
+ Container orderfit-e2e-ebb6f22b22-api-1 Waiting 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Started 
+ Container orderfit-e2e-ebb6f22b22-api-1 Healthy 
+ Container orderfit-e2e-ebb6f22b22-web-1 Starting 
+ Container orderfit-e2e-ebb6f22b22-web-1 Started 
+
+> web@0.1.0 test:e2e
+> playwright test --workers=1
+
+
+Running 4 tests using 1 worker
+
+(node:1920) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API (11.9s)
+  x  2 tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts (852ms)
+(node:6412) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 3 tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus (877ms)
+mobile workspace width { content: 390, viewport: 390 }
+  ok 4 tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge (4.1s)
+
+
+  1) tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      22 |     return Boolean((window as unknown as { __csp_attack_executed?: boolean }).__csp_attack_executed);
+      23 |   });
+    > 24 |   expect(blocked).toBe(false);
+         |                   ^
+      25 |   // A correctly nonced script executes, proving the negative check is meaningful.
+      26 |   const trusted = await page.evaluate(() => {
+      27 |     const nonce = document.querySelector<HTMLScriptElement>("script[nonce]")?.nonce;
+        at D:\Kam 2\Order_Fit\web\tests\e2e\security-csp.spec.ts:24:19
+
+    Error Context: test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+  3 passed (20.2s)
+ Container orderfit-e2e-ebb6f22b22-web-1 Stopping 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Stopping 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Stopped 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Removing 
+ Container orderfit-e2e-ebb6f22b22-worker-1 Removed 
+ Container orderfit-e2e-ebb6f22b22-web-1 Stopped 
+ Container orderfit-e2e-ebb6f22b22-web-1 Removing 
+ Container orderfit-e2e-ebb6f22b22-web-1 Removed 
+ Container orderfit-e2e-ebb6f22b22-api-1 Stopping 
+ Container orderfit-e2e-ebb6f22b22-api-1 Stopped 
+ Container orderfit-e2e-ebb6f22b22-api-1 Removing 
+ Container orderfit-e2e-ebb6f22b22-api-1 Removed 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Stopping 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Stopped 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Removing 
+ Container orderfit-e2e-ebb6f22b22-migrate-1 Removed 
+ Container orderfit-e2e-ebb6f22b22-db-1 Stopping 
+ Container orderfit-e2e-ebb6f22b22-db-1 Stopped 
+ Container orderfit-e2e-ebb6f22b22-db-1 Removing 
+ Container orderfit-e2e-ebb6f22b22-db-1 Removed 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Removing 
+ Volume orderfit-e2e-ebb6f22b22_documents Removing 
+ Network orderfit-e2e-ebb6f22b22_edge Removing 
+ Network orderfit-e2e-ebb6f22b22_default Removing 
+ Volume orderfit-e2e-ebb6f22b22_pg-data Removed 
+ Volume orderfit-e2e-ebb6f22b22_documents Removed 
+ Network orderfit-e2e-ebb6f22b22_edge Removed 
+ Network orderfit-e2e-ebb6f22b22_default Removed 
