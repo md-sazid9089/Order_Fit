@@ -31,10 +31,7 @@ export default function AdminSecurityPage() {
     async function checkAuth() {
       try {
         const sess = await getSession();
-        const admin = Boolean(
-          sess.is_platform_admin ||
-          sess.memberships?.some((m) => (m.role as string) === "admin")
-        );
+        const admin = Boolean(sess.is_platform_admin === true);
         if (!admin) {
           router.replace("/deals");
           return;

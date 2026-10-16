@@ -35,3 +35,16 @@ def mutation(request: Request, *, authenticated=True):
     if authenticated:
         service.mutation_session(session_token(request), csrf)
     return service, key, csrf
+
+
+def require_admin(request: Request):
+    """Requires an authenticated session with authoritative is_platform_admin=True in the database."""
+    token = session_token(request)
+    service = identity_service(request)
+    with service.database.identity(token) as (c, scope, _):
+        from orderfit.store.repositories import IdentityRepository
+        user, _ = IdentityRepository.profile(c, scope)
+        if not user.get("is_platform_admin", False):
+            raise ApplicationError(403, "FORBIDDEN", "Administrative privileges required.")
+        return user, scope
+

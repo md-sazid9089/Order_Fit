@@ -38,7 +38,6 @@ export const NAV: readonly NavItem[] = [
   { href: "/audit-log", label: "Audit log", needs: "audit" },
   { href: "/useraccess", label: "Users", needs: "manage_members" },
   { href: "/settings", label: "Settings" },
-  { href: "/admin", label: "Capabilities" },
 ];
 export const navFor = (role: string | null | undefined): NavItem[] => NAV.filter(item => !item.needs || can(role, item.needs));
 /** The most specific nav entry for a path, so /deals/customers does not also highlight Orders. */

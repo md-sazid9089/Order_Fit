@@ -80,10 +80,7 @@ export default function AdminUsersPage() {
       const sess = await getSession();
       setSession(sess);
 
-      const admin = Boolean(
-        sess.is_platform_admin ||
-        sess.memberships?.some((m) => (m.role as string) === "admin")
-      );
+      const admin = Boolean(sess.is_platform_admin === true);
       if (!admin) {
         router.replace("/deals");
         return;
