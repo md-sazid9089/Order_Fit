@@ -267,7 +267,7 @@ class IdentityService:
                     },
                 ).scalar_one()
             else:
-                user_id = user["id"]
+                user_id = user["user_id"] if "user_id" in user else user["id"]
             token = self.create_jwt(user_id, email)
             new_csrf = self.csrf()
             # Replace this browser's old session atomically with the new one. Other
