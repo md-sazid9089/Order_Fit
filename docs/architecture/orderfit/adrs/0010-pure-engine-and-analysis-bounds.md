@@ -53,3 +53,15 @@ No migrations or new financial tables are needed for P2. P3 must adapt these typ
 results into the existing evaluation/option/series contracts and persist atomically
 using the existing SQL objects and freshness/tenant protections. P2 enables no
 evaluation routes, job handlers, provider calls or outgoing effects.
+
+## Calculator version history
+
+The shipped calculator version is **engine-0.2.1** (bumped from engine-0.2.0, which is
+the version recorded in the P2 progress notes). The bump recorded the
+complete-horizon/analysis-bound corrections made after the first P2 handoff; it is
+already shipped and asserted by `tests/engine/test_compute_adapter.py`. Golden expected
+files were not rewritten for it. A later hardening makes two previously raw-exception
+inputs return typed results without changing any numeric output: an explicit `null`
+payment-term anchor yields `needs_input` (`E-MISSING-ANCHOR`), and the horizon now
+includes the order-receipt delay for unconfirmed baseline events of an order class, so
+inputs near the 1095-day ceiling return `analysis_limit` instead of raising.

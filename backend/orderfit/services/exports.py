@@ -1,6 +1,8 @@
 """Authorized immutable decision files and PostgreSQL's exact canonical audit bytes."""
 
+import csv
 import hashlib
+import io
 import json
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
@@ -10,8 +12,11 @@ from sqlalchemy import text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.exports import DecisionRecordV1
 from orderfit.contracts.financial import ConfirmedInputV1
-from orderfit.contracts.protocol import canonical_bytes
+from orderfit.contracts.primitives import Page
+from orderfit.contracts.protocol import PERMISSIONS, canonical_bytes
 from orderfit.contracts.resources import AuditExport, AuditRow, ExportView
+from orderfit.services.documents import CSV_HEADER
+from orderfit.services.pagination import page_limit, split_page
 from orderfit.store.repositories import EvaluationRepository, append_audit
 
 AUDIT_ROW_LIMIT = 5000
@@ -144,3 +149,114 @@ def decision_download(connection, business_id, export_id):
     if hashlib.sha256(content).digest() != bytes(row["content_hash"]):
         raise ApplicationError(503, "EXPORT_INTEGRITY_FAILURE")
     return content
+
+
+AUDIT_LISTING = "audit"
+
+
+def audit_page(connection, scope, cursors, cursor, limit) -> Page[AuditRow]:
+    """Newest-first tenant log with PostgreSQL's exact canonical text (keyset on seq)."""
+    limit = page_limit(limit)
+    after = cursors.decode(cursor, business_id=scope.business_id, user_id=scope.user_id, listing=AUDIT_LISTING)
+    rows = connection.execute(text("""
+        SELECT id,seq,operation_log_canonical(l) AS canonical_text,
+               encode(prev_hash,'hex') AS previous_hash,encode(row_hash,'hex') AS row_hash
+        FROM operation_log l WHERE scope=:b AND business_id=:b
+          AND (CAST(:after AS bigint) IS NULL OR seq<CAST(:after AS bigint))
+        ORDER BY seq DESC LIMIT :n
+    """), {"b": scope.business_id, "after": after[0] if after else None, "n": limit + 1}).mappings().all()
+    rows, more = split_page(rows, limit)
+    next_cursor = None
+    if more:
+        next_cursor = cursors.encode(business_id=scope.business_id, user_id=scope.user_id,
+                                     listing=AUDIT_LISTING, position=[rows[-1]["seq"]])
+    return Page[AuditRow](items=[AuditRow(id=str(r["id"]), sequence=str(r["seq"]), canonical_text=r["canonical_text"],
+                                          previous_hash=r["previous_hash"], row_hash=r["row_hash"]) for r in rows],
+                          next_cursor=next_cursor)
+
+
+CASH_EXPORT_ROWS = 50000
+CASH_COLUMNS = ["event_id", *CSV_HEADER, "amount_minor", "currency"]
+FORMULA_PREFIXES = ("=", "+", "-", "@")
+# Control characters some spreadsheet parsers treat as separators ahead of a formula.
+CONTROL_PREFIXES = ("\t", "\r", "\n", "\v", "\f")
+
+
+def csv_cell(value) -> str:
+    """Spreadsheet formula-injection guard: formula-leading text is prefixed with '.
+
+    Also covers a formula character after leading whitespace (spreadsheets trim it, so
+    `` =1+1`` still evaluates) and cells beginning with a tab, carriage return, newline,
+    vertical tab or form feed.
+    """
+    text_value = "" if value is None else str(value)
+    if text_value.startswith(CONTROL_PREFIXES) or text_value.lstrip().startswith(FORMULA_PREFIXES):
+        return "'" + text_value
+    return text_value
+
+
+def major_units(minor: int) -> str:
+    """Exponent-2 decimal string from integer minor units (no float arithmetic)."""
+    sign = "-" if minor < 0 else ""
+    whole, cents = divmod(abs(minor), 100)
+    return f"{sign}{whole}.{cents:02d}"
+
+
+def cash_csv(rows, currency) -> bytes:
+    """Baseline events in the importer's columns (amount in major units) plus identity/minor
+    units; re-importable because the importer ignores the extra columns."""
+    stream = io.StringIO(newline="")
+    writer = csv.writer(stream, lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(CASH_COLUMNS)
+    for r in rows:
+        writer.writerow([csv_cell(v) for v in (
+            r["id"], r["event_date"].isoformat(), major_units(r["amount_minor"]), r["direction"], r["kind"],
+            r["certainty"], r["description"], r["invoice_ref"], "true" if r["is_deferrable"] else "false",
+            r["amount_minor"], currency)])
+    return stream.getvalue().encode("utf-8")
+
+
+def create_cash_export(connection, scope) -> ExportView:
+    business = connection.execute(text("SELECT currency,financial_revision FROM business WHERE id=:b"),
+                                  {"b": scope.business_id}).mappings().one()
+    rows = connection.execute(text("""
+        SELECT id,event_date,amount_minor,direction,kind,certainty,description,invoice_ref,is_deferrable
+        FROM cash_event WHERE business_id=:b AND deal_id IS NULL AND voided_at IS NULL
+        ORDER BY event_date,id LIMIT :n
+    """), {"b": scope.business_id, "n": CASH_EXPORT_ROWS + 1}).mappings().all()
+    if len(rows) > CASH_EXPORT_ROWS:
+        raise ApplicationError(413, "CASH_EXPORT_TOO_LARGE")
+    content = cash_csv(rows, business["currency"].strip())
+    if len(content) > 26214400:
+        raise ApplicationError(413, "CASH_EXPORT_TOO_LARGE")
+    identity, now = uuid4(), datetime.now(UTC)
+    expires, digest = now + timedelta(hours=24), hashlib.sha256(content).digest()
+    connection.execute(text("""
+        INSERT INTO cash_export(id,business_id,created_by,created_at,expires_at,financial_revision,row_count,content,content_hash)
+        VALUES(:id,:b,:u,:created,:expires,:revision,:count,:content,:hash)
+    """), {"id": identity, "b": scope.business_id, "u": scope.user_id, "created": now, "expires": expires,
+           "revision": business["financial_revision"], "count": len(rows), "content": content, "hash": digest})
+    append_audit(connection, scope, "cash.export",
+                 payload={"export_id": str(identity), "rows": len(rows), "content_hash": digest.hex(),
+                          "financial_revision": business["financial_revision"]})
+    return ExportView(id=identity, schema_version="cash-csv.v1", content_hash=digest.hex(),
+                      download_url=f"/api/v1/businesses/{scope.business_id}/exports/{identity}/download",
+                      expires_at=expires)
+
+
+def export_download(connection, scope, export_id):
+    """Returns (bytes, media type, filename). Decision exports also require audit permission."""
+    cash = connection.execute(text("SELECT content,content_hash,expires_at FROM cash_export WHERE business_id=:b AND id=:id"),
+                              {"b": scope.business_id, "id": export_id}).mappings().one_or_none()
+    if cash is None:
+        if scope.role not in PERMISSIONS["audit"]:
+            exists = connection.execute(text("SELECT EXISTS(SELECT FROM decision_export WHERE business_id=:b AND id=:id)"),
+                                        {"b": scope.business_id, "id": export_id}).scalar_one()
+            raise ApplicationError(403 if exists else 404, "FORBIDDEN" if exists else "NOT_FOUND")
+        return decision_download(connection, scope.business_id, export_id), "application/json", f"orderfit-decision-{export_id}.json"
+    if cash["expires_at"] <= datetime.now(UTC):
+        raise ApplicationError(409, "EXPORT_EXPIRED", "Create a new export to download this file.")
+    content = bytes(cash["content"])
+    if hashlib.sha256(content).digest() != bytes(cash["content_hash"]):
+        raise ApplicationError(503, "EXPORT_INTEGRITY_FAILURE")
+    return content, "text/csv; charset=utf-8", f"orderfit-cash-{export_id}.csv"

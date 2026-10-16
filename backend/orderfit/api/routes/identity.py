@@ -11,7 +11,9 @@ from orderfit.contracts.primitives import Acknowledgement
 from orderfit.contracts.resources import (
     Capabilities,
     CSRFChallenge,
+    InvitationAccept,
     PasswordChange,
+    ProfileWrite,
     SessionView,
     SignIn,
     SignUp,
@@ -88,6 +90,16 @@ IMPLEMENTED = {
     "message_get", "draft_edit", "reply_create", "reply_review", "reply_get",
     "acceptances", "acceptance_create", "evaluation_catalogue", "evaluation_explanation",
     "preparation_state", "preparation_review", "preparation_settings_reset",
+    # P6-A exact-bundle approval
+    "bundle_prepare", "bundle_get", "approval_create", "approval_get", "approval_revoke",
+    # P6-B sandbox execution, commitment projection and compensation
+    "bundle_execute", "execution_get", "actions", "compensation_prepare",
+    # P7 supporting operations and P8 readiness
+    "own_profile", "invitation_accept", "business_profile_update", "members", "member_role",
+    "member_revoke", "invitation_create", "invitation_revoke", "cash_export", "invoices",
+    "invoices_import", "customer_history", "accounts", "account_create", "account_verify",
+    "account_revoke", "notifications", "notification_read", "notifications_read", "audit_list",
+    "health", "ready",
 }
 
 
@@ -164,6 +176,20 @@ def password_change(data: PasswordChange, request: Request, response: Response):
     response.delete_cookie("orderfit_session", path="/")
     response.delete_cookie("orderfit_csrf", path="/")
     return Acknowledgement(request_id=str(uuid4()), completed=True)
+
+
+@router.patch("/auth/profile", response_model=SessionView, operation_id="own_profile")
+def own_profile(data: ProfileWrite, request: Request, response: Response):
+    service, _, csrf = mutation(request)
+    response.headers["Cache-Control"] = "no-store"
+    return service.update_profile(session_token(request), csrf, data)
+
+
+@router.post("/auth/invitations/accept", response_model=SessionView, operation_id="invitation_accept")
+def invitation_accept(data: InvitationAccept, request: Request, response: Response):
+    service, _, csrf = mutation(request)
+    response.headers["Cache-Control"] = "no-store"
+    return service.accept_invitation(session_token(request), csrf, data)
 
 
 @router.post("/auth/step-up", response_model=StepUpView, status_code=201, operation_id="step_up")

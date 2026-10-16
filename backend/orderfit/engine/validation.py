@@ -52,7 +52,7 @@ def validate_case(case):
     keys = [e["id"] for e in case["baseline_events"] + o["costs"]]
     if len(set(keys)) != len(keys):
         blocks.append({"code": "E-DUPLICATE-OBLIGATION", "message": "Duplicate event identity."})
-    anchor = o["terms"]["anchor"]
+    anchor = o["terms"].get("anchor")
     if anchor in (None, "unknown"):
         raise NeedsInput("E-MISSING-ANCHOR", "payment-term anchor event is unknown; ask the owner")
     if not o["anchor_dates"].get(anchor):

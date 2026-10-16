@@ -26,6 +26,7 @@ from orderfit.contracts.resources import (
 from orderfit.contracts.workflow import OperationAccepted, Review
 from orderfit.services.documents import UploadRejected, parse, sniff_mime
 from orderfit.store.document_repository import DocumentRepository
+from orderfit.store.documents import DocumentStorageUnavailable
 from orderfit.store.repositories import DealRepository, IdempotencyRepository
 from orderfit.workflow.operations import Admission, Operations
 
@@ -84,16 +85,29 @@ def upload_document(
     if (meta.kind == "csv") != (mime == "text/csv"):
         raise ApplicationError(422, "KIND_MIME_MISMATCH")
     digest = hashlib.sha256(data).digest()
+    # FastAPI has already received and spooled the multipart body before this function runs;
+    # this route cannot prevent that. BodyLimit (api/main.py) admits a body above 1 MiB only
+    # after its own database check of session, prepare membership and deal, and caps
+    # concurrent large uploads per process and per source. Here, authorize before the
+    # document parser runs: a non-member or a missing deal gets 404 without parsing. This
+    # short read-only check holds no business write lock; the write transaction below
+    # re-checks membership/role and versions after parsing.
+    with service.database.tenant(session_token(request), business_id, "prepare", readonly=True) as (c, _):
+        DealRepository.get_deal(c, business_id, deal_id)
     parsed = parse(data, mime)
     with service.database.tenant(session_token(request), business_id, "prepare") as (c, scope):
         existing = DocumentRepository.find_duplicate(c, business_id, deal_id, digest)
         if existing:
             return existing
         doc_id = uuid4()
-        key, stored_hash, size = request.app.state.documents.put(
-            business_id, deal_id, doc_id, [data]
-        )
+        try:
+            key, stored_hash, size = request.app.state.documents.put(
+                business_id, deal_id, doc_id, [data]
+            )
+        except DocumentStorageUnavailable:
+            raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE") from None
         if bytes.fromhex(stored_hash) != digest:
+            request.app.state.documents.discard(business_id, deal_id, doc_id)
             raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE")
         try:
             return DocumentRepository.create(
@@ -140,6 +154,8 @@ def download_document(business_id: UUID, deal_id: UUID, document_id: UUID, reque
         content = request.app.state.documents.read(business_id, deal_id, document_id)
     except (FileNotFoundError, ValueError):
         raise ApplicationError(404, "NOT_FOUND") from None
+    except DocumentStorageUnavailable:
+        raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE") from None
     name = _safe_name(meta["original_filename"]).replace('"', "")
     ascii_name = name.encode("ascii", "ignore").decode() or "document"
     return Response(

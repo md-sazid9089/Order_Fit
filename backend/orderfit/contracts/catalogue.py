@@ -8,6 +8,7 @@ from . import workflow as w
 from .primitives import (
     DTO,
     Acknowledgement,
+    EmptyRequest,
     ExpectedVersions,
     Page,
     ReasonCommand,
@@ -30,6 +31,8 @@ class Endpoint:
     verification: str
     collection: bool = False
     multipart: bool = False
+    # The body may be absent, JSON null or the request model (used for EmptyRequest commands).
+    optional_body: bool = False
 
 
 ROOT = "/api/v1/businesses/{business_id}"
@@ -51,6 +54,7 @@ def add(
     status=200,
     collection=False,
     multipart=False,
+    optional_body=False,
 ):
     ENDPOINTS.append(
         Endpoint(
@@ -67,6 +71,7 @@ def add(
             verification,
             collection,
             multipart,
+            optional_body,
         )
     )
 
@@ -409,7 +414,7 @@ add(
     "POST",
     "cash-events/export",
     "cash_export",
-    None,
+    EmptyRequest,
     r.ExportView,
     "read",
     "exports.cash_csv",
@@ -417,6 +422,7 @@ add(
     "P7",
     "V03",
     status=201,
+    optional_body=True,
 )
 add(
     "GET",
@@ -1127,7 +1133,7 @@ add(
     w.OperationAccepted,
     "execute",
     "execution.admit",
-    "execution_run,execution_action,operation,idempotency_key",
+    "execution_run,execution_action,operation,commitment_gate,idempotency_key,operation_log",
     "P6",
     "V13",
     status=202,
@@ -1140,7 +1146,7 @@ add(
     w.ExecutionRun,
     "read",
     "execution.get",
-    "execution_run,execution_action",
+    "execution_run,execution_action,sandbox_effect,commitment_settlement",
     "P6",
     "V13",
 )
@@ -1152,7 +1158,7 @@ add(
     Page[w.ActionView],
     "read",
     "execution.actions",
-    "execution_action",
+    "execution_action,sandbox_effect",
     "P6",
     "V13",
     collection=True,
@@ -1165,7 +1171,7 @@ add(
     w.BundleView,
     "execute",
     "execution.prepare_compensation",
-    "action_bundle,execution_action,commitment_projection",
+    "action_bundle,action_bundle_item,execution_action,sandbox_effect,operation_log",
     "P6",
     "V13",
     status=201,
@@ -1187,13 +1193,14 @@ add(
     "POST",
     "notifications/{notification_id}/read",
     "notification_read",
-    None,
+    EmptyRequest,
     r.Notification,
     "read",
     "notifications.read_own",
     "notification",
     "P7",
     "V03",
+    optional_body=True,
 )
 add(
     "POST",
@@ -1236,7 +1243,7 @@ add(
     "POST",
     "deals/{deal_id}/decision-export",
     "decision_export",
-    None,
+    EmptyRequest,
     r.ExportView,
     "audit",
     "exports.decision",
@@ -1244,6 +1251,7 @@ add(
     "P3",
     "V14",
     status=201,
+    optional_body=True,
 )
 add(
     "GET",
@@ -1251,9 +1259,10 @@ add(
     "export_download",
     None,
     DTO,
-    "audit",
+    # Tenant read; a decision export additionally requires the audit permission.
+    "read",
     "exports.download",
-    "decision_export",
+    "decision_export,cash_export",
     "P3",
     "V03",
 )

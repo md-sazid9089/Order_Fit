@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from orderfit.contracts.financial import ConfirmedInputV1
 from orderfit.contracts.protocol import canonical_hash
+from orderfit.contracts.workflow import DatedEvent
 from orderfit.engine import analyse
 from orderfit.engine.models import EngineInput, Result
 
@@ -158,6 +159,38 @@ def compute(snapshot: ConfirmedInputV1) -> Computation:
 def compute_review(engine_input: EngineInput) -> Result:
     """Same production engine for incomplete review probes; grants no confirmation."""
     return analyse(engine_input)
+
+
+def dated_commitment_events(result: Result, option_key: str) -> list[DatedEvent]:
+    """Exact engine-dated order/financing events of one option under the base scenario.
+
+    A pure mapping of engine output (no arithmetic): customer receipts with their engine
+    certainty, incremental costs including any extension surcharge, and fixed-term loan
+    draw/fee/interest/repayment. Baseline-scope events are excluded; decline has none.
+    """
+    candidate = next((c for c in result.catalogue if c.strategy.id == option_key), None)
+    if candidate is None:
+        raise KeyError("option not found")
+    if candidate.strategy.kind == "decline":
+        return []
+    events = [
+        DatedEvent(
+            event_key=f"{e.scope}:{e.id}",
+            scope=e.scope,
+            source_id=e.id,
+            kind=e.kind,
+            event_date=e.date,
+            amount_minor=str(e.amount),
+            direction=e.direction,
+            certainty=e.certainty,
+        )
+        for e in candidate.events["base"]
+        if e.scope in {"order", "financing"}
+    ]
+    keys = [e.event_key for e in events]
+    if len(set(keys)) != len(keys):
+        raise ValueError("engine produced duplicate dated event identities")
+    return sorted(events, key=lambda e: e.event_key)
 
 
 async def run(state: dict) -> dict:

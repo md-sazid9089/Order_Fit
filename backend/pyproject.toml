@@ -22,6 +22,7 @@ dependencies = [
   "argon2-cffi>=25,<26",
   "tzdata>=2025",
   "pypdf>=6.20.1",
+  "boto3>=1.37.32,<2",
 ]
 
 [project.optional-dependencies]
@@ -49,11 +50,8 @@ build-constraint-dependencies = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-  "e2e: full application journey (recorded/manual provider by default)",
-  "live: opt-in OpenAI calls requiring explicit credentials and budget",
-]
-addopts = "-m 'not e2e and not live'"
+markers = ["live: opt-in OpenAI calls requiring explicit credentials and budget"]
+addopts = "-m 'not live'"
 
 [tool.ruff]
 line-length = 100

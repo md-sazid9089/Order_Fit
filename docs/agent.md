@@ -1,11 +1,15 @@
 # Agent
 
 ```
-ingest → extract → validate → [confirm] → compute → explain → draft → [approve] → send
-                                  ↑                                                  │
-                                  └──────── validate ← read_reply ← (reply) ─────────┘   max 3 rounds
+persist source → review confirmed inputs → deterministic evaluation → prepare/reply
+                                                            → exact approval → sandbox action
 ```
 
-- Pause points: `[confirm]`, `[approve]` (LangGraph interrupts).
-- AI calls go through `agent/llm.py` only. Engine calls go through `nodes/compute.py` only.
-- Guards: numbers, terms, injection, fraud. Guards report; they never rewrite text.
+- Owner review, confirmation and approval are persisted application states, not
+  LangGraph interrupt semantics. Inspect `backend/orderfit/workflow/` and the
+  contract routes for the current state transitions.
+- The deterministic engine owns calculations; model outputs are proposed facts
+  or language and cannot authorize effects. Sandbox execution requires a current,
+  exact, step-up-approved bundle.
+- Guards flag untrusted or unsupported content for review; they do not silently
+  rewrite source evidence or financial inputs.

@@ -12,6 +12,7 @@ from .primitives import (
     BigId,
     BizDate,
     Bps,
+    CashKind,
     Days,
     ExpectedVersions,
     HashHex,
@@ -55,6 +56,10 @@ class Finding(DTO):
         "refresh",
         "unsupported",
     ]
+    # Persisted deal_flag identity when this finding projects an unresolved stored flag: the
+    # `flag_id` path parameter of flag_resolve. Null for findings computed from inputs, which are
+    # cleared by correcting the input, never by flag_resolve.
+    flag_id: BigId | None = None
 
 
 class Review(DTO):
@@ -424,8 +429,54 @@ class CancellationItem(DTO):
     reason: Text
 
 
+class DatedEvent(DTO):
+    """One engine-dated incremental cash event of an evaluated option (base scenario).
+
+    Produced only by agent/nodes/compute.py from the engine result and stored immutably with
+    the evaluation; commit manifests copy these amounts/dates and never re-derive them.
+    """
+
+    event_key: Text
+    scope: Literal["order", "financing"]
+    source_id: Text
+    kind: CashKind
+    event_date: BizDate
+    amount_minor: PositiveMoney
+    direction: Literal["in", "out"]
+    certainty: Literal["confirmed", "expected", "assumed"]
+
+
+class ProjectedEvent(DatedEvent):
+    """A dated event the completed commitment projects into the business baseline."""
+
+    original_obligation_id: Text
+    supersedes_event_id: BigId | None
+    payee_id: UUID | None
+    customer_id: UUID | None
+    attributed_item_key: Text
+
+
+class CommitmentItem(DTO):
+    kind: Literal["commitment"]
+    key: Text
+    evaluation_id: UUID
+    option_key: str = Field(min_length=1, max_length=80)
+    projections: list[ProjectedEvent] = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def unique_projection(self):
+        keys = [p.event_key for p in self.projections]
+        obligations = [p.original_obligation_id for p in self.projections]
+        if len(set(keys)) != len(keys) or len(set(obligations)) != len(obligations):
+            raise ValueError("duplicate projected event or obligation")
+        if keys != sorted(keys):
+            raise ValueError("projections must be in canonical event-key order")
+        return self
+
+
 BundleItem = Annotated[
-    MessageItem | LedgerItem | LenderItem | CancellationItem, Field(discriminator="kind")
+    MessageItem | LedgerItem | LenderItem | CancellationItem | CommitmentItem,
+    Field(discriminator="kind"),
 ]
 
 
@@ -464,11 +515,33 @@ class ActionBundleV1(DTO):
             raise ValueError("duplicate item key")
         allowed = {
             "send_message": {"message"},
-            "commit_plan": {"message", "ledger_entry", "lender_acceptance"},
+            "commit_plan": {"message", "ledger_entry", "lender_acceptance", "commitment"},
             "compensate": {"cancellation"},
         }
         if any(i.kind not in allowed[self.kind] for i in self.items):
             raise ValueError("approval kind cannot authorize item")
+        commitments = [i for i in self.items if i.kind == "commitment"]
+        if len(commitments) > 1:
+            raise ValueError("one commitment item per bundle")
+        keys = {i.key for i in self.items}
+        for item in commitments:
+            if item.evaluation_id != self.evaluation_id or item.option_key != self.option_key:
+                raise ValueError("commitment must project the bundle's evaluated option")
+            if any(p.attributed_item_key not in keys for p in item.projections):
+                raise ValueError("projection attributed to an item outside the manifest")
+        # Canonical order is part of the hashed bytes: items by key, acceptances by party.
+        if [i.key for i in self.items] != sorted(i.key for i in self.items):
+            raise ValueError("items must be in canonical key order")
+        parties = [(a.party_role, str(a.party_id)) for a in self.required_acceptances]
+        if parties != sorted(set(parties)):
+            raise ValueError("required acceptances must be unique and in canonical order")
+        if self.kind == "commit_plan" and (
+            not self.required_acceptances
+            or any(a.acceptance_id is None for a in self.required_acceptances)
+        ):
+            raise ValueError("commit requires recorded exact-term acceptances")
+        if self.kind == "send_message" and self.required_acceptances:
+            raise ValueError("send approval does not bind party acceptances")
         if self.expires_at <= self.created_at:
             raise ValueError("bundle already expired")
         if self.expires_at - self.created_at > timedelta(hours=24):
@@ -480,6 +553,12 @@ class BundleView(DTO):
     manifest: ActionBundleV1
     bundle_hash: HashHex
     allowed_actions: list[Text]
+    # Server-derived usability; a client hash or local flag is never authority.
+    is_stale: StrictBool = False
+    stale_reasons: list[Text] = Field(default_factory=list)
+    approval_id: UUID | None = None
+    # The bundle's single admitted execution run, once executed.
+    run_id: UUID | None = None
 
 
 class ApprovalRequest(ExpectedVersions):
@@ -506,6 +585,7 @@ class ApprovalView(DTO):
     expires_at: UTCInstant
     revoked_at: UTCInstant | None
     is_stale: StrictBool
+    stale_reasons: list[Text] = Field(default_factory=list)
 
 
 class ExecuteRequest(ExpectedVersions):
@@ -513,25 +593,51 @@ class ExecuteRequest(ExpectedVersions):
     bundle_hash: HashHex
 
 
+class EffectView(DTO):
+    """Locally simulated sandbox effect; no external delivery or payment occurred."""
+
+    effect_kind: Literal["outbox", "ledger", "lender_simulation", "inverse"]
+    payload_hash: HashHex
+    original_action_id: UUID | None
+    created_at: UTCInstant
+    sandbox: Literal[True]
+
+
 class ActionView(DTO):
     id: UUID
+    run_id: UUID | None = None
     item_key: Text
-    kind: Literal["ledger_entry", "message", "lender_acceptance", "cancellation"]
+    kind: Literal["ledger_entry", "message", "lender_acceptance", "cancellation", "commitment"]
     status: Literal[
         "drafted", "scheduled", "sent", "posted", "accepted", "cancelled", "voided", "failed"
     ]
     executed_at: UTCInstant | None
     failure: SafeError | None
+    effect: EffectView | None = None
+
+
+class SettlementView(DTO):
+    settlement_kind: Literal["commit", "compensate"]
+    projected_events: Annotated[int, Field(strict=True, ge=0, le=2000)]
+    revision_before: Version
+    revision_after: Version
+    settled_at: UTCInstant
 
 
 class ExecutionRun(DTO):
     id: UUID
+    deal_id: UUID
     bundle_id: UUID
     approval_id: UUID
     operation_id: UUID
+    run_kind: Literal["send_message", "commit_plan", "compensate"]
     status: Literal["queued", "running", "succeeded", "partial", "failed", "cancelled"]
     actions: list[ActionView]
     reconciliation_required: StrictBool
+    created_at: UTCInstant
+    started_at: UTCInstant | None
+    finished_at: UTCInstant | None
+    settlement: SettlementView | None
     sandbox: Literal[True]
 
 

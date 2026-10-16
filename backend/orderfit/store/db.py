@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0008_p6_execution"
+SCHEMA_REVISION = "0014_settlement_retention"
 
 
 def digest_token(token: str | None) -> bytes:
@@ -34,6 +34,21 @@ def set_context(connection, *, user_id, session_id, business_id=None):
     )
 
 
+# Transaction-local guards (SET LOCAL semantics via set_config(..., true)): nothing is
+# session-level, so PgBouncer transaction pooling and pool reuse stay safe. A blocked
+# lock or runaway statement fails as 55P03/57014 and maps to a retryable 503.
+TRANSACTION_TIMEOUTS = {
+    "lock_timeout": "10s",
+    "statement_timeout": "60s",
+    "idle_in_transaction_session_timeout": "60s",
+}
+
+
+def apply_timeouts(connection):
+    for name, value in TRANSACTION_TIMEOUTS.items():
+        connection.execute(text("SELECT set_config(:n,:v,true)"), {"n": name, "v": value})
+
+
 class Database:
     def __init__(self, url: str, *, pool_size=5):
         self.engine = create_engine(
@@ -46,41 +61,64 @@ class Database:
             connect_args={"prepare_threshold": None},
         )
 
+    @staticmethod
+    def _runtime_checks(c, *, worker=False) -> tuple[bool, bool]:
+        """(restricted non-owner login, schema revision current)."""
+        r = (
+            c.execute(
+                text(
+                    "SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolcanlogin,pg_has_role(current_user,'orderfit_admin','MEMBER') AS admin,pg_has_role(current_user,'orderfit_app','USAGE') AS app,pg_has_role(current_user,'orderfit_worker','USAGE') AS worker FROM pg_roles r WHERE rolname=current_user"
+                )
+            )
+            .mappings()
+            .one()
+        )
+        owns = c.execute(
+            text(
+                "SELECT EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND pg_has_role(current_user,c.relowner,'USAGE'))"
+            )
+        ).scalar_one()
+        restricted = not (
+            r["rolsuper"]
+            or r["rolbypassrls"]
+            or r["rolcreaterole"]
+            or r["rolcreatedb"]
+            or r["rolreplication"]
+            or not r["rolcanlogin"]
+            or r["admin"]
+            or owns
+            or not r["app"]
+            or (worker and not r["worker"])
+            or (not worker and r["worker"])
+        )
+        current = c.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == SCHEMA_REVISION
+        return restricted, current
+
     def validate_runtime(self, *, worker=False):
         with self.engine.connect() as c:
-            r = (
-                c.execute(
-                    text(
-                        "SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolcanlogin,pg_has_role(current_user,'orderfit_admin','MEMBER') AS admin,pg_has_role(current_user,'orderfit_app','USAGE') AS app,pg_has_role(current_user,'orderfit_worker','USAGE') AS worker FROM pg_roles r WHERE rolname=current_user"
-                    )
-                )
-                .mappings()
-                .one()
-            )
-            owns = c.execute(
-                text(
-                    "SELECT EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND pg_has_role(current_user,c.relowner,'USAGE'))"
-                )
-            ).scalar_one()
-            if (
-                r["rolsuper"]
-                or r["rolbypassrls"]
-                or r["rolcreaterole"]
-                or r["rolcreatedb"]
-                or r["rolreplication"]
-                or not r["rolcanlogin"]
-                or r["admin"]
-                or owns
-                or not r["app"]
-                or (worker and not r["worker"])
-                or (not worker and r["worker"])
-            ):
+            restricted, current = self._runtime_checks(c, worker=worker)
+            if not restricted:
                 raise RuntimeError("A restricted non-owner runtime login is required")
-            if (
-                c.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-                != SCHEMA_REVISION
-            ):
+            if not current:
                 raise RuntimeError("Database schema is not current")
+
+    def readiness(self, *, backlog_limit_seconds=300) -> dict:
+        """Safe booleans only; never raises and never returns driver or URL text."""
+        status = {"database": False, "schema_current": False, "worker": False}
+        try:
+            with self.engine.begin() as c:
+                c.execute(text("SELECT set_config('statement_timeout','5s',true)"))
+                restricted, current = self._runtime_checks(c)
+                status["database"] = restricted
+                status["schema_current"] = restricted and current
+                if status["schema_current"]:
+                    backlog = c.execute(text("SELECT p7_queue_backlog_seconds()")).scalar_one()
+                    status["worker"] = backlog < backlog_limit_seconds
+        except Exception:  # noqa: BLE001 - readiness reports, it does not propagate
+            import logging
+
+            logging.getLogger("orderfit.readiness").warning("readiness_database_check_failed")
+        return status
 
     @contextmanager
     def identity(self, token: str):
@@ -96,23 +134,37 @@ class Database:
                 raise ApplicationError(401, "INVALID_SESSION", "Sign in to continue.")
             scope = Scope(row["user_id"], row["session_id"])
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
+            apply_timeouts(c)
             yield c, scope, row
 
     @contextmanager
-    def tenant(self, token: str, business_id: UUID, permission="read"):
+    def tenant(self, token: str, business_id: UUID, permission="read", *, readonly=None):
+        """Membership and role are checked before any tenant row lock is requested.
+
+        ``readonly`` (default: the read/audit permissions) selects a shared business
+        lock; a route that only reads but needs a write-class permission (for example a
+        GET requiring ``prepare``) passes ``readonly=True`` so it never takes FOR UPDATE.
+        """
+        if readonly is None:
+            readonly = permission in {"read", "audit"}
         with self.identity(token) as (c, identity, _):
             set_context(
                 c, user_id=identity.user_id, session_id=identity.session_id, business_id=business_id
             )
-            lock = "FOR SHARE" if permission in {"read", "audit"} else "FOR UPDATE"
+            # Unlocked pre-check: a non-member gets 404 without waiting on another tenant's lock.
+            query = text(
+                "SELECT m.role FROM membership m JOIN business b ON b.id=m.business_id WHERE m.user_id=:u AND m.business_id=:b AND m.revoked_at IS NULL AND b.status='active'"
+            )
+            if c.execute(query, {"u": identity.user_id, "b": business_id}).scalar_one_or_none() is None:
+                raise ApplicationError(404, "NOT_FOUND")
+            # Documented lock order: business first, then the caller's membership row. Taking
+            # the membership share lock first deadlocked two owners changing each other.
             c.execute(
-                text("SELECT id FROM business WHERE id=:b " + lock), {"b": business_id}
+                text("SELECT id FROM business WHERE id=:b " + ("FOR SHARE" if readonly else "FOR UPDATE")),
+                {"b": business_id},
             ).first()
             member = c.execute(
-                text(
-                    "SELECT m.role FROM membership m JOIN business b ON b.id=m.business_id WHERE m.user_id=:u AND m.business_id=:b AND m.revoked_at IS NULL AND b.status='active' FOR SHARE OF m"
-                ),
-                {"u": identity.user_id, "b": business_id},
+                text(query.text + " FOR SHARE OF m"), {"u": identity.user_id, "b": business_id}
             ).scalar_one_or_none()
             if member is None:
                 raise ApplicationError(404, "NOT_FOUND")
@@ -121,11 +173,18 @@ class Database:
             yield c, Scope(identity.user_id, identity.session_id, business_id, member)
 
     @contextmanager
-    def job(self, operation_id: UUID, fence: UUID):
+    def job(self, operation_id: UUID, fence: UUID, *, settlement=False):
+        """A fenced worker transaction under the operation's verified actor context.
+
+        ``settlement=True`` (execution settlement only) uses ``operation_settle_context``:
+        the same lease/authorization predicate without the cancellation condition, because
+        a cancellation requested after every effect committed has nothing left to stop.
+        """
+        context = "operation_settle_context" if settlement else "operation_context"
         with self.engine.begin() as c:
             row = (
                 c.execute(
-                    text("SELECT * FROM operation_context(:id,:token)"),
+                    text(f"SELECT * FROM {context}(:id,:token)"),
                     {"id": operation_id, "token": fence},
                 )
                 .mappings()
@@ -139,7 +198,26 @@ class Database:
                 session_id=row["session_id"],
                 business_id=row["business_id"],
             )
+            apply_timeouts(c)
             yield c, Scope(row["user_id"], row["session_id"], row["business_id"])
+
+    @staticmethod
+    def fence(c, operation_id: UUID, token: UUID, *, settlement=False) -> bool:
+        """Lock the operation row, then recheck lease token, expiry and authorization.
+
+        Call after the business and deal locks (documented order: business, deal, related
+        rows, operation). ``job()`` checks the lease only when the transaction starts; an
+        effect must re-run this inside its own transaction so a worker whose lease lapsed or
+        was reclaimed meanwhile cannot commit. Claim, heartbeat and finish all need this row,
+        so the lease cannot change hands between this check and commit. ``settlement`` has the
+        meaning documented on ``job``.
+        """
+        context = "operation_settle_context" if settlement else "operation_context"
+        c.execute(text("SELECT id FROM operation WHERE id=:id FOR UPDATE"), {"id": operation_id})
+        return c.execute(
+            text(f"SELECT EXISTS(SELECT FROM {context}(:id,:token))"),
+            {"id": operation_id, "token": token},
+        ).scalar_one()
 
     def record_security(self, token, code):
         try:
