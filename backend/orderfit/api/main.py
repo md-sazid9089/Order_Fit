@@ -22,6 +22,7 @@ from orderfit.api.routes.identity import router
 from orderfit.api.routes.members import router as members_router
 from orderfit.api.routes.notifications import router as notifications_router
 from orderfit.api.routes.preparation import router as preparation_router
+from orderfit.api.security_headers import SecurityHeaders
 from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.contracts.resources import Readiness
 from orderfit.services.identity import IdentityService
@@ -174,20 +175,21 @@ class BodyLimit:
     process spool up to the gate's concurrency times 26 MiB.
     """
 
-    def __init__(self, app, *, authorize=authorize_upload, gate=None):
+    def __init__(self, app, *, authorize=authorize_upload, gate=None, small_deadline=(30, 10)):
         self.app, self.authorize, self.gate = app, authorize, gate
+        self.small_deadline = small_deadline
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or scope["method"] in {"GET", "HEAD", "OPTIONS"}:
             return await self.app(scope, receive, send)
         upload = scope["method"] == "POST" and bool(UPLOAD_PATH.match(scope["path"]))
         if not (upload and _has_session_cookie(scope)):
-            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT)
+            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT, deadline=self.small_deadline)
         if _declared_length(scope) > UPLOAD_BODY_LIMIT:
             return await _too_large()(scope, receive, send)
         gate = self.gate or getattr(getattr(scope.get("app"), "state", None), "upload_gate", None)
         if gate is None:  # not started: the route answers 503 within the small limit
-            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT)
+            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT, deadline=self.small_deadline)
         # Authorize first (no body byte is read yet): anonymous, forged-cookie or
         # foreign-tenant requests never occupy upload capacity.
         try:
@@ -197,7 +199,7 @@ class BodyLimit:
                 503, "DEPENDENCY_UNAVAILABLE", "The service is temporarily unavailable.", True
             )(scope, receive, send)
         if not principal:
-            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT)
+            return await self._limited(scope, receive, send, SMALL_BODY_LIMIT, deadline=self.small_deadline)
         if isinstance(principal, str):
             key = "user:" + principal
         else:  # an injected authorizer without a principal key: fall back to the peer address
@@ -314,6 +316,7 @@ def create_app(config=None, database=None):
         allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token"],
     )
     app.add_middleware(BodyLimit)
+    app.add_middleware(SecurityHeaders)
     install_errors(app)
     app.include_router(router)
     app.include_router(business_router)

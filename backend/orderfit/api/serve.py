@@ -30,6 +30,11 @@ def main():
         host=args.host,
         port=args.port,
         timeout_graceful_shutdown=20,
+        # URL query strings can contain private search terms or accidental secrets.
+        # Curated error logs already use route templates and random request IDs.
+        access_log=False,
+        limit_concurrency=64,
+        timeout_keep_alive=5,
         **proxy_options(config.trusted_proxy_ips),
     )
 

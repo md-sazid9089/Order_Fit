@@ -16,8 +16,8 @@ const blocking = (d: DealView) => d.findings.some(f => f.blocking);
 /** Which tab a saved order belongs to. A stale or blocked order always needs a person before anything else. */
 export function tabOf(deal: DealView, evaluation?: EvaluationResultV1 | null): Exclude<PipelineTab, "all"> {
   if (deal.status === "closed" || deal.status === "committed" || deal.status === "failed") return "closed";
-  if (evaluation?.decision === "decline_or_renegotiate" && !deal.is_stale) return "closed";
-  if (deal.is_stale || blocking(deal) || deal.status === "ingesting" || deal.status === "awaiting_confirm" || deal.status === "awaiting_reply") return "action";
+  if (deal.is_stale || evaluation?.is_stale || blocking(deal) || deal.status === "computing" || deal.status === "ingesting" || deal.status === "awaiting_confirm" || deal.status === "awaiting_reply") return "action";
+  if (evaluation?.decision === "decline_or_renegotiate") return "closed";
   return "recommended";
 }
 
@@ -27,14 +27,15 @@ export function verdictOf(deal: DealView, evaluation?: EvaluationResultV1 | null
   if (deal.status === "failed") return { label: "Computation failed", tone: "bad", action: "Open", text: "The saved evaluation operation failed. This is a technical result, not a financial rejection." };
   if (deal.status === "closed" || deal.status === "committed") return { label: deal.status === "closed" ? "Closed" : "Committed", tone: "neutral", action: "View", text: "This order is finished; the saved record is kept for audit." };
   if (deal.status === "ingesting" || deal.status === "awaiting_confirm") return { label: "Clarification Needed", tone: "warn", action: "Confirm Terms", text: first ?? "Inputs are saved but not confirmed yet. Review and confirm them to run the engine." };
-  if (deal.is_stale) return { label: "Re-evaluate", tone: "warn", action: "Re-evaluate", text: "Business cash or inputs changed after the last evaluation, so its verdict can no longer be relied on." };
   if (deal.status === "computing") return { label: "Computing", tone: "neutral", action: "View", text: "The engine is running on the saved inputs." };
+  if (deal.is_stale || evaluation?.is_stale) return { label: "Re-evaluate", tone: "warn", action: "Re-evaluate", text: "Business cash or inputs changed after the last evaluation, so its verdict can no longer be relied on." };
+  if (first) return { label: "Review required", tone: "warn", action: "Review", text: first };
   if (!evaluation) return { label: "Not evaluated", tone: "neutral", action: "Continue", text: first ?? "No saved evaluation yet." };
   const base = evaluation.as_is.scenarios.find(s => s.scenario === "base");
   const breach = base?.first_breach_date ? ` First reserve breach: ${base.first_breach_date}.` : "";
-  if (evaluation.decision === "accept_as_is") return { label: "Safe As Offered", tone: "ok", action: "Review Plan", text: `Cash stays above the reserve under the offered terms.` };
-  if (evaluation.decision === "accept_with_changes") return { label: "Changes Recommended", tone: "warn", action: "Review Plan", text: `The offered terms breach the reserve; a revised plan keeps cash above the floor.${breach}` };
-  return { label: "Infeasible Order", tone: "bad", action: "Review Offer", text: `No supported option keeps cash above the reserve.${breach}` };
+  if (evaluation.decision === "accept_as_is") return { label: "Feasible As Offered", tone: "ok", action: "Review Plan", text: "The offered terms meet the engine's configured hard constraints against the baseline. Existing baseline shortfalls may remain; review scenario headroom." };
+  if (evaluation.decision === "accept_with_changes") return { label: "Changes Recommended", tone: "warn", action: "Review Plan", text: `The engine recommends revised terms. Review cash headroom, profitability and scenario limits.${breach}` };
+  return { label: "No feasible plan", tone: "bad", action: "Review Offer", text: `No supported option satisfies every configured hard constraint. Review the recorded cash, profit and financing limits.${breach}` };
 }
 
 export type Kpis = { openingCash: string | null; openingDate: string | null; reserve: string | null; trough: string | null; headroom: string | null; troughDeal: string | null };
@@ -43,7 +44,7 @@ export type Kpis = { openingCash: string | null; openingDate: string | null; res
 export function worstTrough(evals: readonly { deal: DealView; evaluation: EvaluationResultV1 }[]): Pick<Kpis, "trough" | "headroom" | "troughDeal"> {
   let worst: { balance: bigint; headroom: string; ref: string; raw: string } | null = null;
   for (const { deal, evaluation } of evals) {
-    if (deal.is_stale || deal.status === "closed" || deal.status === "failed") continue;
+    if (deal.is_stale || evaluation.is_stale || deal.status === "computing" || deal.status === "closed" || deal.status === "failed") continue;
     const chosen = evaluation.recommended_option_key ? [evaluation.as_is, ...evaluation.ranked_candidates].find(o => o.option_key === evaluation.recommended_option_key) ?? evaluation.as_is : evaluation.as_is;
     const s = chosen.scenarios.find(x => x.scenario === "base");
     if (!s || !/^-?\d+$/.test(s.lowest_balance_minor)) continue;

@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   Layers, LineChart, CreditCard, Users, ShieldCheck, ShieldAlert, Settings, CheckCircle2, Building2,
-  PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet,
+  PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet, Menu,
 } from "lucide-react";
 import type { NavItem } from "@/lib/p7-model";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "/deals": Layers,
@@ -43,17 +44,29 @@ type Props = {
 export function AppSidebar({ links, current, query, companyName, currency, roleLabel }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isExpanded = !isCollapsed || isHovered;
 
   return (
     <>
+      <div className="fixed top-3 left-3 z-30 lg:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild><button type="button" aria-label="Open navigation" className="flex size-10 items-center justify-center rounded-xl bg-white border border-[#E8E6E1]"><Menu className="size-5" /></button></SheetTrigger>
+          <SheetContent side="left" aria-describedby={undefined} className="overflow-y-auto">
+            <SheetHeader><SheetTitle>Navigation</SheetTitle><p className="text-xs text-neutral-600">{companyName} · {roleLabel}</p></SheetHeader>
+            <nav aria-label="Primary" className="px-3 space-y-1">
+              {links.map(item => <Link key={item.href} href={`${item.href}${query}`} aria-current={current === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-neutral-100">{LABELS[item.href] ?? item.label}</Link>)}
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </div>
       {/* Reserves the rail's width so the page body does not shift when a collapsed rail expands on hover. */}
-      <div className={`shrink-0 transition-[width] duration-300 ease-in-out ${isCollapsed ? "w-[72px]" : "w-64"}`} />
+      <div className={`hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out ${isCollapsed ? "w-[72px]" : "w-64"}`} />
       <aside
         aria-label="Sidebar"
         onMouseEnter={() => isCollapsed && setIsHovered(true)}
         onMouseLeave={() => isCollapsed && setIsHovered(false)}
-        className={`fixed top-0 left-0 h-screen bg-white border-r border-[#E8E6E1] flex flex-col justify-between transition-[width] duration-300 ease-in-out ${
+        className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-white border-r border-[#E8E6E1] flex-col justify-between transition-[width] duration-300 ease-in-out ${
           isCollapsed ? (isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30") : "w-64 z-30"
         }`}
       >
@@ -104,6 +117,7 @@ export function AppSidebar({ links, current, query, companyName, currency, roleL
                   key={item.href}
                   href={`${item.href}${query}`}
                   aria-current={active ? "page" : undefined}
+                  aria-label={label}
                   title={label}
                   className={`flex items-center h-11 rounded-xl text-xs font-medium transition-colors ${
                     active ? "bg-[#1E2021] text-white font-semibold shadow-xs" : "text-[#525252] hover:text-[#1E2021] hover:bg-[#F4F2ED]"
@@ -124,7 +138,7 @@ export function AppSidebar({ links, current, query, companyName, currency, roleL
                 <CheckCircle2 className="size-3.5 shrink-0" />
                 <span>Pure Decision Engine</span>
               </div>
-              <p className="line-clamp-2">Integer minor cents, zero hallucinations.</p>
+              <p className="line-clamp-2">Figures from reviewed inputs and the deterministic engine.</p>
             </div>
           ) : (
             <div className="flex justify-center py-1"><CheckCircle2 className="size-4 text-[#737373]" /></div>

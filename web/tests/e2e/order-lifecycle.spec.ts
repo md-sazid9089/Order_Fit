@@ -28,6 +28,9 @@ test("an owner saves and evaluates an order through the web and API", async ({ p
   await page.getByPlaceholder("Password (min. 12 characters)*").fill(`E2E-${randomUUID()}-pass`);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+  await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("desktop-workspace.png"), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);
 
   await page.getByRole("link", { name: "New order" }).first().click();
   await expect(page.getByRole("heading", { name: "Set the business cash baseline first" })).toBeVisible();
@@ -59,6 +62,18 @@ test("an owner saves and evaluates an order through the web and API", async ({ p
   await expect(page.getByText(/Saved evaluation operation: succeeded/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 
+  const savedOrderUrl = page.url();
+  // A bounded customer list can omit this saved order's known customer. That is
+  // unavailable display metadata, not evidence that the order has no customer.
+  await page.route("**/api/v1/businesses/*/customers", route => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({ items: [], next_cursor: null }),
+  }));
+  await page.getByRole("link", { name: "Deals Pipeline", exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: `E2E-${suffix}` })).toContainText("Customer details not loaded");
+  await page.unroute("**/api/v1/businesses/*/customers");
+  await page.goto(savedOrderUrl);
+  await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
+
   await page.getByRole("link", { name: "What-if and negotiation preparation" }).click();
   await expect(page.getByRole("heading", { name: /Negotiation preparation/ })).toBeVisible();
   await page.getByRole("link", { name: "Back to order review and evaluation" }).click();
@@ -66,7 +81,7 @@ test("an owner saves and evaluates an order through the web and API", async ({ p
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 
   await page.getByRole("link", { name: "Customers" }).click();
-  await expect(page.getByRole("heading", { name: "Customers" })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { name: "Customers", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "New order" }).first().click();
   await expect(page.getByLabel("Order reference")).toBeEnabled();
   await expect(page.getByLabel("Order reference")).toHaveValue("");

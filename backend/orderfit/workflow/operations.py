@@ -11,6 +11,7 @@ from orderfit.api.errors import ApplicationError
 from orderfit.contracts.primitives import DTO, Version
 from orderfit.contracts.protocol import IdempotencyMaterial, canonical_hash
 from orderfit.contracts.workflow import Operation, OperationAccepted, OperationResult
+from orderfit.store.admission import ensure_operation_capacity
 from orderfit.store.repositories import IdempotencyRepository, append_audit
 from orderfit.store.tables import operation
 
@@ -84,6 +85,7 @@ class Operations:
             cached = IdempotencyRepository.reserve(c, business_id, key, path, fingerprint)
             if cached:
                 return OperationAccepted.model_validate(cached)
+            ensure_operation_capacity(c, business_id)
             business = c.execute(
                 text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
                 {"b": business_id},

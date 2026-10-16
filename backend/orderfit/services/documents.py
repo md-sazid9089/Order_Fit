@@ -6,17 +6,22 @@ Document bytes are untrusted data. Nothing here executes content or fetches embe
 import csv
 import io
 import json
+import os
 import re
+import subprocess
+import sys
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from threading import BoundedSemaphore
 
 from orderfit.agent.guards.injection import scan
 
-PARSER_VERSION = "p4.1"
+PARSER_VERSION = "p4.2"
 MAX_PAGES = 50
 MAX_PAGE_CHARS = 100_000
 MAX_CSV_ROWS = 2000
+PDF_WORK = BoundedSemaphore(2)
 ALLOWED_MIME = {"application/pdf", "text/plain", "text/csv", "application/json"}
 GENERATED_KINDS = {
     "order_deposit", "order_receipt", "order_final_receipt", "order_stage_receipt",
@@ -93,6 +98,45 @@ def _paginate(text: str) -> list[str]:
 
 
 def _parse_pdf(data: bytes) -> ParseResult:
+    """Untrusted decompression and parsing never run in the API process."""
+    if not PDF_WORK.acquire(blocking=False):
+        raise UploadRejected("PARSER_CAPACITY")
+    try:
+        return _bounded_pdf(data)
+    finally:
+        PDF_WORK.release()
+
+
+def _bounded_pdf(data: bytes) -> ParseResult:
+    try:
+        child = subprocess.Popen(
+            [sys.executable, "-m", "orderfit.services.pdf_parser"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            # A document parser needs neither application nor provider credentials.
+            # This is resource isolation, not a full filesystem/network sandbox.
+            env={name: os.environ[name] for name in
+                 ("SYSTEMROOT", "WINDIR", "PATH", "TMP", "TEMP", "LANG") if name in os.environ}
+                | {"PYTHONNOUSERSITE": "1", "PYTHONUTF8": "1"},
+        )
+    except OSError:
+        return ParseResult("pdf_text", "failed", [], "PARSER_UNAVAILABLE")
+    try:
+        output, _ = child.communicate(data, timeout=10)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        child.communicate()
+        return ParseResult("pdf_text", "failed", [], "PARSER_LIMIT")
+    if child.returncode != 0:
+        return ParseResult("pdf_text", "failed", [], "PARSER_LIMIT")
+    try:
+        return ParseResult(**json.loads(output))
+    except (ValueError, TypeError):
+        return ParseResult("pdf_text", "failed", [], "MALFORMED")
+
+
+def parse_pdf_child(data: bytes) -> ParseResult:
+    """Child-only implementation; caller must establish memory and wall-clock limits."""
     try:
         from pypdf import PdfReader  # lazy: optional until a PDF is parsed
 
@@ -101,7 +145,12 @@ def _parse_pdf(data: bytes) -> ParseResult:
             return ParseResult("pdf_text", "failed", [], "ENCRYPTED")
         if len(reader.pages) > MAX_PAGES:
             return ParseResult("pdf_text", "failed", [], "TOO_MANY_PAGES")
-        pages = [(p.extract_text() or "")[:MAX_PAGE_CHARS] for p in reader.pages]
+        pages = []
+        for page in reader.pages:
+            body = page.extract_text() or ""
+            if len(body) > MAX_PAGE_CHARS:
+                return ParseResult("pdf_text", "failed", [], "PAGE_TOO_LARGE")
+            pages.append(body)
     except Exception:  # malformed input must never escape as a server error
         return ParseResult("pdf_text", "failed", [], "MALFORMED")
     if not any(p.strip() for p in pages):

@@ -5,7 +5,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from pydantic import TypeAdapter, ValidationError
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.financial import ConfirmedInputV1
@@ -93,10 +93,24 @@ def option_for(result, key, require_feasible=True):
     return option
 
 
-def party(c, business_id, snapshot, option, party_id, role, historical=False):
+def _check_party_in_plan(snapshot, option, party_id, role):
     if role == "customer":
         if party_id != snapshot.order.customer_id:
             raise ApplicationError(404, "PARTY_NOT_IN_PLAN")
+    elif role == "lender":
+        offer = next((o for o in snapshot.offers if o.offer_id == option.parameters.offer_id), None)
+        if offer is None or offer.payee_id != party_id:
+            raise ApplicationError(404, "PARTY_NOT_IN_PLAN")
+    elif not option.parameters.extension.days or not any(
+        cost.payee_id == party_id and cost.cost_key in option.parameters.eligible_cost_keys
+        for cost in snapshot.order.costs
+    ):
+        raise ApplicationError(404, "PARTY_NOT_IN_PLAN")
+
+
+def party(c, business_id, snapshot, option, party_id, role, historical=False):
+    _check_party_in_plan(snapshot, option, party_id, role)
+    if role == "customer":
         row = one(
             c,
             "SELECT version,known_domains,archived_at,'customer' AS kind FROM customer WHERE business_id=:b AND id=:p",
@@ -106,15 +120,6 @@ def party(c, business_id, snapshot, option, party_id, role, historical=False):
         if row["archived_at"] and not historical:
             raise ApplicationError(409, "PARTY_ARCHIVED")
         return row
-    if role == "lender":
-        offer = next((o for o in snapshot.offers if o.offer_id == option.parameters.offer_id), None)
-        if offer is None or offer.payee_id != party_id:
-            raise ApplicationError(404, "PARTY_NOT_IN_PLAN")
-    elif not option.parameters.extension.days or not any(
-        cost.payee_id == party_id and cost.cost_key in option.parameters.eligible_cost_keys
-        for cost in snapshot.order.costs
-    ):
-        raise ApplicationError(404, "PARTY_NOT_IN_PLAN")
     row = one(
         c,
         "SELECT version,known_domains,archived_at,kind FROM payee WHERE business_id=:b AND id=:p",
@@ -171,10 +176,18 @@ def get_prepared(c, business_id, message_id):
         identity.party_role,
         historical=True,
     )
+    return _prepared_view(
+        identity, row["content_hash"], review, superseded, ev.is_stale, p, blockers
+    )
+
+
+def _prepared_view(identity, content_hash, reviewed, superseded, evaluation_stale, p, blockers):
+    # Shared by single-resource reads and batched history; never cached between requests.
+    blockers = list(blockers)
     if identity.recipient.rsplit("@", 1)[-1].lower() not in [d.lower() for d in p["known_domains"]]:
         blockers.append("RECIPIENT_DOMAIN_UNVERIFIED")
     stale = (
-        ev.is_stale
+        evaluation_stale
         or bool(superseded)
         or bool(p["archived_at"])
         or p["kind"] != identity.party_role
@@ -185,13 +198,89 @@ def get_prepared(c, business_id, message_id):
         blockers.append("STALE_PREPARATION")
     return PreparedMessage(
         identity=identity,
-        preparation_hash=bytes(row["content_hash"]).hex(),
+        preparation_hash=bytes(content_hash).hex(),
         provenance="manual" if identity.previous_message_id else "template",
-        reviewed=bool(review),
+        reviewed=bool(reviewed),
         is_stale=stale,
         blockers=blockers,
         edit_sentences=COURTESY,
     )
+
+
+def list_prepared(c, business_id, deal_id, offset, limit):
+    """Bounded history in three reads, without hydrating full evaluation catalogues."""
+    rows = (
+        c.execute(
+            text("""
+        SELECT m.payload,m.content_hash,
+          (e.input_version<>d.input_version OR e.financial_revision<>b.financial_revision
+           OR e.superseded_at IS NOT NULL) AS evaluation_stale,
+          EXISTS(SELECT 1 FROM prepared_message newer
+            WHERE newer.business_id=m.business_id AND newer.previous_id=m.id) AS superseded,
+          EXISTS(SELECT 1 FROM preparation_review r WHERE r.business_id=m.business_id
+            AND r.message_id=m.id AND r.preparation_hash=m.content_hash) AS reviewed,
+          ARRAY(SELECT f.code FROM deal_flag f WHERE f.business_id=m.business_id
+            AND f.deal_id=m.deal_id AND f.blocking AND f.resolved_at IS NULL ORDER BY f.id) AS blockers
+        FROM prepared_message m
+        JOIN evaluation e ON e.business_id=m.business_id AND e.id=m.evaluation_id
+        JOIN deal d ON d.business_id=m.business_id AND d.id=m.deal_id
+        JOIN business b ON b.id=m.business_id
+        WHERE m.business_id=:b AND m.deal_id=:d ORDER BY m.id LIMIT :limit OFFSET :offset
+        """),
+            dict(b=business_id, d=deal_id, limit=limit + 1, offset=offset),
+        )
+        .mappings()
+        .all()
+    )
+    more = len(rows) > limit
+    rows = rows[:limit]
+    if not rows:
+        return [], more
+    identities = [PreparationIdentity.model_validate(row["payload"]) for row in rows]
+    snapshots = {
+        row["id"]: ConfirmedInputV1.model_validate(row["payload"])
+        for row in c.execute(
+            text("""SELECT id,payload FROM input_snapshot
+            WHERE business_id=:b AND deal_id=:d AND id IN :ids""").bindparams(
+                bindparam("ids", expanding=True)
+            ),
+            dict(b=business_id, d=deal_id, ids=list({item.snapshot_id for item in identities})),
+        ).mappings()
+    }
+    parties = {
+        (row["source"], row["id"]): row
+        for row in c.execute(
+            text("""
+            SELECT id,version,known_domains,archived_at,'customer' AS kind,'customer' AS source
+            FROM customer WHERE business_id=:b AND id IN :ids
+            UNION ALL
+            SELECT id,version,known_domains,archived_at,kind,'payee' AS source
+            FROM payee WHERE business_id=:b AND id IN :ids
+            """).bindparams(bindparam("ids", expanding=True)),
+            dict(b=business_id, ids=list({item.party_id for item in identities})),
+        ).mappings()
+    }
+    items = []
+    for row, identity in zip(rows, identities, strict=True):
+        snapshot = snapshots.get(identity.snapshot_id)
+        p = parties.get(
+            ("customer" if identity.party_role == "customer" else "payee", identity.party_id)
+        )
+        if snapshot is None or p is None:
+            raise ApplicationError(404, "NOT_FOUND")
+        _check_party_in_plan(snapshot, identity.option, identity.party_id, identity.party_role)
+        items.append(
+            _prepared_view(
+                identity,
+                row["content_hash"],
+                row["reviewed"],
+                row["superseded"],
+                row["evaluation_stale"],
+                p,
+                row["blockers"],
+            )
+        )
+    return items, more
 
 
 def save_draft(c, scope, deal_id, command, previous=None):

@@ -1,5 +1,13 @@
 # OrderFit design set
 
+> Status note (16 October 2026): this is the 14 October design baseline, not a
+> current implementation report. Statements below that nothing is built, proposed
+> entity names, provider modes and the submission schedule are historical.
+> The later [implementation plan](../../initial_backend_implementation_plan.md)
+> resolves conflicts; the [audit matrix](../../orderfit_audit_2026-10-16.md) records
+> current code/tests and unverified gates. Local implementation is not hosted,
+> live-model, independent quality or submission acceptance.
+
 A design for the 2026 Shenzhen International FinTech Competition (International Track, Topic E) written on **2026-10-14**, six days before the deadline (**Tue 20 Oct 2026, 21:59 Dhaka = 23:59 Beijing**). It is a research-and-design deliverable: no application code was changed. Evidence labels used throughout: `[R]` repository, `[W]` web (accessed 2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. **Nothing is built and no performance result exists.** The one executed artefact is the reference calculation in [`fixtures/`](fixtures/), whose self-tests pass.
 
 ## What OrderFit does

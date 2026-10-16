@@ -53,6 +53,7 @@ membership = Table(
     Column("user_id", Uuid, primary_key=True),
     Column("role", String),
     Column("version", Integer),
+    Column("auth_valid_after", DateTime(timezone=True)),
 )
 
 owner_constraints = Table(

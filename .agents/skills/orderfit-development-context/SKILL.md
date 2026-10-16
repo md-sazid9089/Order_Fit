@@ -5,8 +5,10 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-Snapshot: **16 October 2026**, P0–P8 implementation is on `main` at `8e7d0ed`; round-3/4 audit repairs and shared-storage/E2E remediation remain uncommitted. Check today's branch/diff
-before relying on this snapshot. Repository root relative to this file: `../../..`.
+Snapshot: **16 October 2026**, audited from `main` at `6ca0ec3`. Earlier round-3/4,
+shared-storage and E2E repairs are committed; the current spec/UI/performance audit
+fixes are uncommitted, alongside concurrent security/deployment work. Check today's
+branch/diff before relying on this snapshot. Repository root: `../../..`.
 
 ## Read only what the task needs
 
@@ -29,15 +31,17 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 | P0–P2 | Contracts, foundation and deterministic engine gates passed locally. |
 | P3 | Latest remediation records **local gate passed**, superseding partial commit `c03b2eb`. Per-option scans, provenance, exports, process recovery and persisted UI were added afterward. |
 | P4 | Documents, guarded extraction, field review and CSV import are integrated. A shared S3 adapter now supports split API/worker storage; only provider-stub tests ran. Independent final acceptance and live OpenAI/model evaluation remain pending. |
-| P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. All outgoing effects remain disabled. |
+| P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. Preparation alone cannot dispatch; P6 separately authorizes sandbox effects. Live language/dialogue-quality acceptance is unverified. |
 | P6 | Local gate passed: exact-bundle approval, session-bound step-up, fenced durable execution, sandbox effects, serialized commitment gate with engine-derived baseline projection, rounds, compensation. Real adapters do not exist. |
 | P7 | Members/invitations (hashed single-use tokens), payee verification evidence, per-user notifications, audit/cash exports, as-of history; web screens wired. Older lists still use offset paging with null `next_cursor`. |
 | P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, live OpenAI, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
 
-Current local verification: **471 backend tests passed**, then 23 focused storage/readiness
-tests; 75 frontend tests and a browser signup→baseline→order→evaluation→reload journey passed.
-The full checks and explicit hosted limitations are recorded in the progress file; results do
-not establish external provider or deployment acceptance.
+Current audit evidence and remaining gates are in the
+[spec matrix](../../../docs/orderfit_audit_2026-10-16.md) and latest progress entry.
+The current browser checks cover the persisted order/negotiation-route journey,
+mobile navigation, accessible sign-in, CSRF recovery and failed-read retry.
+They do not automate the full sandbox send/reply/commit path or certify hosted
+providers. P4 and P8 remain partial; engineering completion is not submission evidence.
 
 ## Decisions easy to miss
 
@@ -58,6 +62,10 @@ not establish external provider or deployment acceptance.
   Destructive tests use disposable PostgreSQL fixtures, never configured Neon URLs.
 - No live OpenAI, hosted deployment, restore or production resource-calibration
   acceptance is established. Historical owner-credential rotation remains unverified.
+- Readiness's worker flag measures queue age, not an independent heartbeat. Legacy
+  lists still have paging gaps; pipeline reads are now bounded to 20 orders/page,
+  but deal/evaluation fan-out remains. Message history is batched with list/single
+  parity, query-count, paging and tenant regressions. See the audit before scaling.
 - OCR and docx/xlsx remain unsupported. P5 parses bounded quoted reply terms;
   arbitrary supplier/lender offers and unsupported prose require manual source review.
 - P5 reuses `whatif_run`/`negotiation_message`. Additive preparation/reply/acceptance
@@ -80,6 +88,8 @@ not establish external provider or deployment acceptance.
   the runtime role; uploads are authorized before slot admission and have overall/idle limits;
   `/docs`, `/redoc`, and `/openapi.json` require `EXPOSE_API_DOCS=true`.
 
+- Security hardening (16 October): see [audit findings](../../../docs/security/security_audit_2026-10-16.md). Remote runtime DB URLs now require `sslmode=verify-full`; HTTPS origins require Secure cookies. PDF parsing records p4.2 and runs in a 384-MiB/10-second child (two at once, no inherited application secrets); password work is capped at two operations per process; pending jobs at 25 per business. Historical DB credential rotation and hosted encryption/restore, strict script CSP, privilege-change session rotation and MFA remain open. Local tests do not close those release gates.
+
 ## Find the relevant implementation
 
 | Area | Entry points |
@@ -97,7 +107,8 @@ From `backend/`: `uv run --frozen ruff check .`,
 `uv run --frozen python -m orderfit.contracts.export --check`,
 `uv run --frozen python -m alembic heads`, and relevant tests using
 `uv run --frozen python -m pytest -q --tb=short -x -p no:cacheprovider`.
-DB tests need Docker; default pytest excludes opt-in `e2e`/`live` markers.
+DB tests need Docker; default pytest excludes opt-in `live` provider checks.
+Browser acceptance runs separately through the web Playwright scripts.
 From `web/`: `npm run typecheck`, `npm run lint`, `npm run build`.
 See [README](../../../README.md) for setup/runtime commands. Documentation-only
 edits need link/format checks and `git diff --check`, not the application suite.

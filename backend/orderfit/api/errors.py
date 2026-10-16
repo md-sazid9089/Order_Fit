@@ -123,7 +123,8 @@ def install_errors(app):
                 retryable=status in {429, 503},
             )
         )
-        return JSONResponse(status_code=status, content=error.model_dump(mode="json"))
+        return JSONResponse(status_code=status, content=error.model_dump(mode="json"),
+                            headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"})
 
     for error_type in (
         ApplicationError,

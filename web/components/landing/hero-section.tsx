@@ -62,7 +62,7 @@ export function HeroSection() {
                   <svg className="size-3 text-[#1E2021]/60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
                 </div>
               </div>
-              <span className="font-sans font-medium">450+ operators evaluating $120M+ in POs</span>
+              <span className="font-sans font-medium">Synthetic example · no customer usage statistics</span>
             </div>
           </div>
         </div>
@@ -70,6 +70,7 @@ export function HeroSection() {
         {/* Hero Mockup Container: Purchase Order & Cash Gap Card (Minimal, Monochromatic & Clean) */}
         <div className="relative mx-auto max-w-5xl mt-12">
           <div className="rounded-3xl bg-white text-[#1A1A1A] p-5 sm:p-8 md:p-10 shadow-xl border border-[#ECEAE4] relative overflow-hidden">
+            <p className="mb-4 text-xs text-[#526975]">Illustration only. Names, figures and plans below are invented; saved assessments use the backend engine.</p>
             
             {/* Top Bar: Clear Order Summary */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4">

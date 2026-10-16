@@ -5,7 +5,9 @@ import hmac
 import json
 import secrets
 import time
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from threading import BoundedSemaphore
 
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import InvalidHashError, VerificationError
@@ -28,6 +30,23 @@ from orderfit.store.repositories import IdentityRepository
 
 PASSWORDS = PasswordHasher(type=Type.ID, **PASSWORD_HASH_PARAMETERS)
 DUMMY_HASH = PASSWORDS.hash("synthetic-non-account-timing-padding")
+PASSWORD_WORK = BoundedSemaphore(2)
+
+
+@contextmanager
+def password_capacity():
+    """Bound Argon2 memory/CPU across accounts and sources, without an unbounded wait."""
+    if not PASSWORD_WORK.acquire(blocking=False):
+        raise ApplicationError(429, "AUTH_CAPACITY", "Too many verification requests. Try again shortly.")
+    try:
+        yield
+    finally:
+        PASSWORD_WORK.release()
+
+
+def hash_password(password):
+    with password_capacity():
+        return PASSWORDS.hash(password)
 
 
 class IdentityService:
@@ -132,10 +151,11 @@ class IdentityService:
 
     @staticmethod
     def verify(encoded, password):
-        try:
-            return PASSWORDS.verify(encoded or DUMMY_HASH, password)
-        except (VerificationError, InvalidHashError):
-            return False
+        with password_capacity():
+            try:
+                return PASSWORDS.verify(encoded or DUMMY_HASH, password)
+            except (VerificationError, InvalidHashError):
+                return False
 
     @staticmethod
     def view_connection(c, scope, session, csrf):
@@ -180,7 +200,7 @@ class IdentityService:
             # A verified sign-in is not a guess. Sign-ups stay counted: they create accounts.
             self.rate_release(throttles)
         hashed = (
-            PASSWORDS.hash(data.password.get_secret_value()) if signup else user["password_hash"]
+            hash_password(data.password.get_secret_value()) if signup else user["password_hash"]
         )
         scope_hash = hmac.digest(self.request_key, (purpose + ":" + email).encode(), "sha256")
         fingerprint = bytes.fromhex(request_body_digest(data, self.request_key))
@@ -223,6 +243,11 @@ class IdentityService:
                 )
             token = secrets.token_urlsafe(32)
             new_csrf = self.csrf()
+            # Replace this browser's old session atomically with the new one. Other
+            # devices remain signed in; failed authentication never reaches revocation.
+            if current_token:
+                c.execute(text("SELECT session_revoke(:digest)"),
+                          {"digest": digest_token(current_token)})
             c.execute(
                 text("SELECT session_issue(:email,:hash,:token,:csrf)"),
                 {
@@ -294,7 +319,7 @@ class IdentityService:
         ):
             raise ApplicationError(401, "INVALID_CREDENTIALS")
         self.rate_release(throttles)
-        hashed = PASSWORDS.hash(data.new_password.get_secret_value())
+        hashed = hash_password(data.new_password.get_secret_value())
         with self.database.engine.begin() as c:
             if not c.execute(
                 text("SELECT session_password(:digest,:expected,:new)"),

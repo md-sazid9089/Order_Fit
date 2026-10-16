@@ -20,7 +20,7 @@ from orderfit.contracts.resources import (
     FieldResolution,
 )
 from orderfit.contracts.workflow import Finding
-from orderfit.services.documents import ParseResult
+from orderfit.services.documents import PARSER_VERSION, ParseResult
 from orderfit.store.repositories import CashEventRepository, append_audit
 
 ROLE_DEFAULT = "other"
@@ -98,7 +98,7 @@ class DocumentRepository:
             ),
             {
                 "b": scope.business_id, "d": deal_id, "doc": doc_id, "parser": parse.parser,
-                "ver": "p4.1", "status": parse.status, "err": parse.error_code,
+                "ver": PARSER_VERSION, "status": parse.status, "err": parse.error_code,
                 "pages": json.dumps(parse.pages),
             },
         )

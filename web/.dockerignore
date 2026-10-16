@@ -5,5 +5,11 @@ out
 .env
 .env.*
 !.env.example
+*.log
+**/*.pem
+**/*.key
+**/*.p12
+**/id_rsa*
+**/.npmrc
 Dockerfile
 .dockerignore

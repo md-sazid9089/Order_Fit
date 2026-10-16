@@ -1,15 +1,20 @@
 # P0 contract freeze — 15 October 2026
 
-These are target contracts, not a claim of working business endpoints. The deployed
-API still exposes liveness only. No mock success handlers are mounted. The original
-SQL revision and its four component files remain unchanged.
+This document records the P0 freeze. Its source/decision matrix below describes
+that historical checkout. As of 16 October 2026 the application has registered
+business endpoints, a worker, readiness and a typed `web/` client; the generated
+catalogue contains 108 operations. A target contract is not proof of acceptance:
+see the [current audit matrix](../orderfit_audit_2026-10-16.md) for implementation
+and verification evidence. No mock success handlers are mounted. The original SQL
+revision and its four component files remain unchanged; forward revisions extend them.
 
 The code authority is `backend/orderfit/contracts/`: primitives, financial inputs,
 resources, workflow/results, language proposals, protocol predicates, configuration,
 endpoint catalogue and deterministic export. `openapi.json`, `frontend-api.d.ts`
 and `capability-ownership.md` are generated; edit models/catalogue, then regenerate.
 `typecheck.ts` exercises a frontend consumer including intentional invalid examples.
-The generated types are kept here until P3 introduces a real frontend API client.
+The export also maintains `web/lib/generated-api.d.ts` for the real frontend client;
+`--check` detects drift without rewriting either copy.
 
 From `backend/`:
 
@@ -21,7 +26,7 @@ uv run --frozen pytest tests/contracts tests/test_architecture.py -q
 uv run --frozen ruff check .
 ```
 
-From `frontend/` after `npm ci`:
+From `web/` after `npm ci`:
 
 ```text
 npx --no-install tsc --strict --noEmit ../docs/contracts/frontend-api.d.ts ../docs/contracts/typecheck.ts
