@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { UploadCloud, CheckSquare, Cpu, MailCheck, ArrowRight, ShieldCheck, RefreshCw } from "lucide-react";
+import { UploadCloud, CheckSquare, Cpu, MailCheck, ArrowRight, RefreshCw } from "lucide-react";
 
 export function WorkflowSection() {
   const steps = [
@@ -44,18 +43,18 @@ export function WorkflowSection() {
   ];
 
   return (
-    <section id="workflow" className="py-20 md:py-28 bg-settle-stone text-settle-dark">
+    <section id="workflow" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A] border-t border-[#ECEAE4]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs sm:text-sm font-bold tracking-widest text-settle-pine uppercase font-small-caps mb-3 inline-block">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block font-sans">
             End-to-End Decision Journey
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.12] mb-5">
+          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
             How OrderFit Evaluates &amp; Secures an Order
           </h2>
-          <p className="text-base sm:text-lg text-settle-muted leading-relaxed">
+          <p className="font-sans text-base sm:text-lg text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
             A structured, auditable 4-step workflow that pairs AI document understanding with deterministic financial arithmetic and mandatory human approvals.
           </p>
         </div>
@@ -67,29 +66,29 @@ export function WorkflowSection() {
             return (
               <div
                 key={s.num}
-                className="rounded-3xl bg-white border border-neutral-200/80 p-7 shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.06)] transition-all flex flex-col justify-between relative group"
+                className="rounded-3xl bg-white border border-[#ECEAE4] p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between relative group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <span className="text-3xl font-extrabold text-settle-pine/30 font-mono group-hover:text-settle-pine transition-colors">
+                    <span className="text-3xl font-extrabold text-[#093A2F]/25 font-mono group-hover:text-[#093A2F] transition-colors">
                       {s.num}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-settle-stone text-settle-pine border border-settle-pine/15 font-small-caps">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#F7F6F5] text-[#093A2F] border border-[#093A2F]/15 font-sans">
                       {s.tag}
                     </span>
                   </div>
 
-                  <div className="size-11 rounded-2xl bg-settle-pine/10 text-settle-pine flex items-center justify-center mb-4">
+                  <div className="size-11 rounded-2xl bg-[#093A2F]/10 text-[#093A2F] flex items-center justify-center mb-4">
                     <Icon className="size-5" />
                   </div>
 
-                  <h3 className="text-lg font-bold text-neutral-900 tracking-tight mb-1">
+                  <h3 className="font-heading text-lg font-semibold text-[#1A1A1A] tracking-tight mb-1">
                     {s.title}
                   </h3>
-                  <p className="text-xs font-semibold text-settle-pine mb-3">
+                  <p className="text-xs font-semibold text-[#093A2F] mb-3 font-sans">
                     {s.subtitle}
                   </p>
-                  <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
+                  <p className="font-sans text-xs sm:text-sm text-[#526975] leading-relaxed">
                     {s.description}
                   </p>
                 </div>
@@ -105,21 +104,21 @@ export function WorkflowSection() {
         </div>
 
         {/* Re-validation Loop Notice */}
-        <div className="mt-10 rounded-2xl bg-settle-pine/[0.04] border border-settle-pine/20 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="mt-10 rounded-2xl bg-[#093A2F]/5 border border-[#093A2F]/15 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-settle-pine text-white flex items-center justify-center shrink-0">
+            <div className="size-9 rounded-xl bg-[#093A2F] text-white flex items-center justify-center shrink-0">
               <RefreshCw className="size-4" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-neutral-900">
+              <h4 className="font-heading text-sm font-semibold text-[#1A1A1A]">
                 Automated Negotiation Re-Planning Loop (ADR 0004)
               </h4>
-              <p className="text-xs text-neutral-600">
+              <p className="font-sans text-xs text-[#526975]">
                 When a customer responds with a counter-offer (e.g. &quot;30% deposit instead of 40%&quot;), past approvals automatically turn stale. The engine re-computes headroom and re-calibrates remaining options.
               </p>
             </div>
           </div>
-          <span className="text-xs font-bold uppercase font-small-caps px-3 py-1.5 rounded-full bg-settle-pine text-white shrink-0">
+          <span className="text-xs font-bold uppercase font-sans px-3 py-1.5 rounded-full bg-[#093A2F] text-white shrink-0">
             Max 3 Negotiated Rounds
           </span>
         </div>
