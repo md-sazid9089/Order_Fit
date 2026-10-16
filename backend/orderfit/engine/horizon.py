@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta
 
+from orderfit.engine.stress import SHIFTED_BY_ORDER_DELAY
 from orderfit.engine.utilities import d
 
 
@@ -25,15 +26,18 @@ def horizon_end(case):
     ar = max(s.get("ar_delay_days", 0) for s in scenarios)
     extension = max(e["days"] for e in space["extensions"])
     ends = [start, d(anchor) + timedelta(days=order["terms"]["days"] + delay)]
-    ends += [
-        d(e["date"])
-        + timedelta(
-            days=ar
-            if e["kind"] == "ar_collection" and e.get("certainty", "confirmed") != "confirmed"
-            else 0
-        )
-        for e in case["baseline_events"]
-    ]
+    def baseline_shift(e):
+        # Mirror stress.apply_scenario: unconfirmed baseline events of an order class
+        # move with the order-receipt delay, so the horizon must cover that shift.
+        if e.get("certainty", "confirmed") == "confirmed":
+            return 0
+        if e["kind"] == "ar_collection":
+            return ar
+        if e["kind"] in SHIFTED_BY_ORDER_DELAY or e["kind"] == "order_deposit":
+            return delay
+        return 0
+
+    ends += [d(e["date"]) + timedelta(days=baseline_shift(e)) for e in case["baseline_events"]]
     ends += [
         d(e["date"]) + timedelta(days=extension if e["deferrable"] else 0) for e in order["costs"]
     ]

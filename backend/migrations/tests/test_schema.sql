@@ -210,7 +210,10 @@ SELECT of_test.chk('b4 approval in A -> message of B', 'ERR', $q$
   VALUES (of_test.ba(), of_test.da1(), 'send_message', of_test.eva(), 'dep40', sha256('p'), of_test.msgb(), sha256(convert_to('Hello B','UTF8')), of_test.ua(), 'approved', 'b4', now())$q$);
 SELECT of_test.chk('b5 extracted_field in A -> document of B', 'ERR 23503', $q$
   INSERT INTO extracted_field (business_id, deal_id, document_id, field, value, confidence) VALUES (of_test.ba(), of_test.da1(), of_test.docb(), 'x', '1', 0.5)$q$);
-SELECT of_test.chk('b6 notification in A for a user of B', 'ERR 23503', $q$
+-- From 0012_notification_writer the runtime role has no INSERT at all (only p7_notify writes).
+SELECT of_test.chk('b6 notification in A for a user of B',
+  CASE WHEN EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notification' AND policyname = 'notification_definer_insert')
+       THEN 'ERR 42501' ELSE 'ERR 23503' END, $q$
   INSERT INTO notification (business_id, user_id, title, message) VALUES (of_test.ba(), of_test.ub(), 't', 'm')$q$);
 SELECT of_test.chk('b7 deal currency differs from business currency', 'ERR 23503', $q$
   INSERT INTO deal (business_id, public_ref, customer_id, constraints_id, created_by, currency) VALUES (of_test.ba(), 'X-b7', of_test.custa(), of_test.ca(), of_test.ua(), 'USD')$q$);
@@ -666,16 +669,22 @@ SELECT of_test.eq('H1 public functions without a pinned search_path', '0',
 -- Exact inventories for both supported revisions; behavior checks above are unchanged.
 SELECT of_test.eq('H2 SECURITY DEFINER functions', CASE WHEN to_regclass('public.operation') IS NULL
   THEN 'auth_lookup,user_businesses'
-  ELSE 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses' END,
+  WHEN to_regclass('public.commitment_settlement') IS NULL
+  THEN 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses'
+  WHEN to_regprocedure('public.auth_rate_release(bytea)') IS NOT NULL
+  THEN 'auth_lookup,auth_rate_consume,auth_rate_release,auth_request_complete,auth_request_reserve,invitation_accept,operation_claim,operation_context,operation_finish,operation_heartbeat,operation_settle_context,owner_provision,p6_run_actor_current,p7_caller_session_current,p7_event_notification,p7_notify,p7_queue_backlog_seconds,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses'
+  WHEN to_regclass('public.membership_invitation') IS NOT NULL
+  THEN 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,invitation_accept,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,p6_run_actor_current,p7_caller_session_current,p7_event_notification,p7_notify,p7_queue_backlog_seconds,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses'
+  ELSE 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,p6_run_actor_current,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses' END,
   (SELECT string_agg(proname, ',' ORDER BY proname) FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND prosecdef));
 SELECT of_test.eq('H3 tables without a primary key', '0',
   (SELECT count(*)::text FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
      AND c.relname <> 'alembic_version' AND NOT EXISTS (SELECT 1 FROM pg_constraint k WHERE k.conrelid = c.oid AND k.contype = 'p')));
 SELECT of_test.eq('H4 timestamp without time zone columns', '0',
   (SELECT count(*)::text FROM information_schema.columns WHERE table_schema = 'public' AND data_type = 'timestamp without time zone'));
-SELECT of_test.eq('H5 tenant tables with RLS forced', ((CASE WHEN to_regclass('public.evaluation_series') IS NOT NULL THEN 30 WHEN to_regclass('public.operation') IS NULL THEN 22 ELSE 29 END) + (CASE WHEN to_regclass('public.decision_export') IS NOT NULL THEN 1 ELSE 0 END) + (CASE WHEN to_regclass('public.document_parse') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.prepared_message') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.action_bundle') IS NOT NULL THEN 8 ELSE 0 END))::text,
+SELECT of_test.eq('H5 tenant tables with RLS forced', ((CASE WHEN to_regclass('public.evaluation_series') IS NOT NULL THEN 30 WHEN to_regclass('public.operation') IS NULL THEN 22 ELSE 29 END) + (CASE WHEN to_regclass('public.decision_export') IS NOT NULL THEN 1 ELSE 0 END) + (CASE WHEN to_regclass('public.document_parse') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.prepared_message') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.action_bundle') IS NOT NULL THEN 8 ELSE 0 END) + (CASE WHEN to_regclass('public.commitment_settlement') IS NOT NULL THEN 3 ELSE 0 END) + (CASE WHEN to_regclass('public.membership_invitation') IS NOT NULL THEN 3 ELSE 0 END))::text,
   (SELECT count(*)::text FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' AND relrowsecurity AND relforcerowsecurity));
-SELECT of_test.eq('H6 tenant policies that are a plain equality', ((CASE WHEN to_regclass('public.evaluation_series') IS NOT NULL THEN 26 WHEN to_regclass('public.operation') IS NULL THEN 22 ELSE 25 END) + (CASE WHEN to_regclass('public.decision_export') IS NOT NULL THEN 1 ELSE 0 END) + (CASE WHEN to_regclass('public.document_parse') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.prepared_message') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.action_bundle') IS NOT NULL THEN 8 ELSE 0 END))::text,
+SELECT of_test.eq('H6 tenant policies that are a plain equality', ((CASE WHEN to_regclass('public.evaluation_series') IS NOT NULL THEN 26 WHEN to_regclass('public.operation') IS NULL THEN 22 ELSE 25 END) + (CASE WHEN to_regclass('public.decision_export') IS NOT NULL THEN 1 ELSE 0 END) + (CASE WHEN to_regclass('public.document_parse') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.prepared_message') IS NOT NULL THEN 5 ELSE 0 END) + (CASE WHEN to_regclass('public.action_bundle') IS NOT NULL THEN 8 ELSE 0 END) + (CASE WHEN to_regclass('public.commitment_settlement') IS NOT NULL THEN 3 ELSE 0 END) + (CASE WHEN to_regclass('public.membership_invitation') IS NOT NULL THEN 2 ELSE 0 END))::text,
   (SELECT count(*)::text FROM pg_policies WHERE policyname = 'tenant_isolation' AND qual LIKE '%= ( SELECT app_business_id()%' AND qual NOT LIKE '% OR %'));
 
 -- ======================================================================= report

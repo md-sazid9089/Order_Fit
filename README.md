@@ -29,8 +29,12 @@ a deterministic engine does every calculation, and the owner approves every outg
 > P3 adds persisted manual-input workflows; P4 adds private documents, bounded extraction
 > (off/recorded by default; live OpenAI is unverified), field review and CSV import.
 > P5 adds persisted what-if comparisons, exact draft revisions, reviewed reply reassessment
-> and party attestations. All outgoing effects remain disabled; P6 approval/execution and
-> P7/P8 operational work are not implemented. P4's separate final review remains pending.
+> and party attestations. P6 adds exact-bundle approval and **sandbox-only** execution
+> (no real email, bank, payment or lender adapter exists), the serialized commitment gate
+> and compensation; P7 adds membership, invitations, payee verification, notifications and
+> exports; P8 adds readiness, graceful shutdown and the Vercel/Render/Neon configuration.
+> Hosted (Neon/Render/Vercel), live-OpenAI and restore acceptance remain unverified, and P4's
+> separate final review remains pending.
 > See [implementation progress](docs/backend_implementation_progress.md),
 > [contract guide](docs/contracts/README.md) and [implementation plan](docs/initial_backend_implementation_plan.md).
 > The feature list below describes intended behavior, not completed capabilities.

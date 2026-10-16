@@ -67,8 +67,9 @@ def main():
             for key, value in environment.items()
             if key.lower() in RuntimeConfiguration.model_fields
         }
-        if "allowed_origins" in config:
-            config["allowed_origins"] = json.loads(config["allowed_origins"])
+        for name in ("allowed_origins", "trusted_proxy_ips"):
+            if name in config:
+                config[name] = json.loads(config[name])
         # The child validates again with its isolated environment. This prefix
         # prevents ordinary parent settings from filling omissions in this precheck.
         RuntimeConfiguration(_env_prefix="ORDERFIT_FILE_VALIDATION_", **config)
@@ -78,8 +79,7 @@ def main():
         [
             sys.executable,
             "-m",
-            "uvicorn",
-            "orderfit.api.main:app",
+            "orderfit.api.serve",
             "--host",
             args.host,
             "--port",

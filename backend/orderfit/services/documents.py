@@ -60,7 +60,7 @@ def sniff_mime(data: bytes, declared: str) -> str:
             try:
                 json.loads(text)
                 actual = "application/json"
-            except ValueError:
+            except (ValueError, RecursionError):  # deeply nested JSON is rejected, not a 500
                 actual = "text/plain" if declared == "text/plain" else "invalid"
         else:
             actual = declared if declared in {"text/csv", "text/plain"} else "invalid"
@@ -81,7 +81,7 @@ def parse(data: bytes, mime: str) -> ParseResult:
         if not any(p.strip() for p in pages):
             return ParseResult(parser, "failed", [], "EMPTY_TEXT")
         return ParseResult(parser, "parsed", pages)
-    except (ValueError, UnicodeDecodeError):
+    except (ValueError, UnicodeDecodeError, RecursionError):
         return ParseResult("plain_text", "failed", [], "MALFORMED")
 
 
@@ -116,26 +116,37 @@ def _norm(value: str) -> str:
 
 NUMERIC_FIELDS = {"order_value_minor", "opening_cash_minor", "payment_days"}
 DATE_FIELDS = {"order_date", "invoice_date", "delivery_date"}
+BASIS_FIELDS = {"payment_basis"}
+# Group-separated (1,234 / 1,00,000) or plain numbers, never a fragment of a longer number.
+_NUMBER = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?![\d])")
+
+
+def _numbers_in(quote: str) -> set[Decimal]:
+    return {Decimal(m.group().replace(",", "")) for m in _NUMBER.finditer(quote)}
 
 
 def quote_supports(field_name: str, value: str | None, quote: str, page_text: str) -> str:
-    """Return 'ok', 'quote_mismatch' or 'ambiguous'. The quote must appear in the page text."""
-    if _norm(quote) not in _norm(page_text) or not quote.strip():
+    """Return 'ok', 'quote_mismatch' or 'ambiguous'. The quote must appear in the page text.
+
+    Numbers must match a whole numeric token of the quote exactly. Fields whose value this
+    function cannot compare structurally (costs, offers, acceptance, bank changes) are never
+    'ok': they stay 'ambiguous' so a person must review them against the cited quote.
+    """
+    if not quote.strip() or _norm(quote) not in _norm(page_text):
         return "quote_mismatch"
     if value is None:
         return "ok"
     if field_name in NUMERIC_FIELDS:
-        digits = re.sub(r"[^0-9]", "", value)
-        quoted = re.sub(r"[^0-9]", "", quote)
-        if field_name == "payment_days":
-            return "ok" if digits and digits in quoted else "quote_mismatch"
-        # minor units: quote must contain the major amount (value / 100)
-        if not digits or not value.isdigit():
+        if not value.isascii() or not value.isdigit():
             return "quote_mismatch"
-        major = Decimal(int(value)) / 100
-        forms = {f"{major:.2f}", f"{major:.0f}"} if major == major.to_integral() else {f"{major:.2f}"}
-        compact = re.sub(r"[,\s]", "", quote)
-        return "ok" if any(f in compact or f.rstrip("0").rstrip(".") in compact for f in forms) else "quote_mismatch"
+        if field_name == "payment_days":
+            return "ok" if Decimal(value) in _numbers_in(quote) else "quote_mismatch"
+        # minor units: a quoted token must equal the major amount (value / 100) exactly
+        return "ok" if Decimal(value) / 100 in _numbers_in(quote) else "quote_mismatch"
+    if field_name in BASIS_FIELDS:
+        words = re.sub(r"[\W_]+", " ", value.lower()).strip()
+        found = re.search(rf"(?<!\w){re.escape(words)}(?!\w)", re.sub(r"[\W_]+", " ", quote.lower()))
+        return "ok" if words and found else "quote_mismatch"
     if field_name in DATE_FIELDS:
         try:
             wanted = date.fromisoformat(value)
@@ -145,7 +156,7 @@ def quote_supports(field_name: str, value: str | None, quote: str, page_text: st
         if wanted not in found:
             return "quote_mismatch"
         return "ambiguous" if ambiguous else "ok"
-    return "ok"
+    return "ambiguous"
 
 
 MONTHS = {m: i for i, m in enumerate(
@@ -203,7 +214,10 @@ def _err(code, row, message):
 
 def parse_cash_csv(text: str, as_of: date) -> CsvOutcome:
     reader = csv.DictReader(io.StringIO(text))
-    header = [h.strip() for h in (reader.fieldnames or [])]
+    try:
+        header = [h.strip() for h in (reader.fieldnames or [])]
+    except csv.Error:
+        return CsvOutcome([], [_err("CSV-MALFORMED", 1, "The file is not a valid CSV (a field is too large).")], [])
     missing = [h for h in CSV_HEADER[:4] if h not in header]
     events: list[dict] = []
     errors: list[dict] = []
@@ -211,7 +225,17 @@ def parse_cash_csv(text: str, as_of: date) -> CsvOutcome:
     if missing:
         return CsvOutcome([], [_err("CSV-HEADER", 0, "Required columns: " + ", ".join(CSV_HEADER[:4]))], [])
     seen: set[str] = set()
-    for n, raw in enumerate(reader, start=2):
+    rows = iter(reader)
+    n = 1
+    while True:
+        n += 1
+        try:
+            raw = next(rows)
+        except StopIteration:
+            break
+        except csv.Error:
+            errors.append(_err("CSV-MALFORMED", n, "The file is not a valid CSV (a field is too large)."))
+            break
         if n - 1 > MAX_CSV_ROWS:
             errors.append(_err("CSV-TOO-MANY-ROWS", n, "At most 2000 rows can be previewed."))
             break

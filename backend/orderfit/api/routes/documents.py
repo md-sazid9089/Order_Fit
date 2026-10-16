@@ -84,6 +84,15 @@ def upload_document(
     if (meta.kind == "csv") != (mime == "text/csv"):
         raise ApplicationError(422, "KIND_MIME_MISMATCH")
     digest = hashlib.sha256(data).digest()
+    # FastAPI has already received and spooled the multipart body before this function runs;
+    # this route cannot prevent that. BodyLimit (api/main.py) admits a body above 1 MiB only
+    # after its own database check of session, prepare membership and deal, and caps
+    # concurrent large uploads per process and per source. Here, authorize before the
+    # document parser runs: a non-member or a missing deal gets 404 without parsing. This
+    # short read-only check holds no business write lock; the write transaction below
+    # re-checks membership/role and versions after parsing.
+    with service.database.tenant(session_token(request), business_id, "prepare", readonly=True) as (c, _):
+        DealRepository.get_deal(c, business_id, deal_id)
     parsed = parse(data, mime)
     with service.database.tenant(session_token(request), business_id, "prepare") as (c, scope):
         existing = DocumentRepository.find_duplicate(c, business_id, deal_id, digest)
@@ -94,6 +103,7 @@ def upload_document(
             business_id, deal_id, doc_id, [data]
         )
         if bytes.fromhex(stored_hash) != digest:
+            request.app.state.documents.discard(business_id, deal_id, doc_id)
             raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE")
         try:
             return DocumentRepository.create(

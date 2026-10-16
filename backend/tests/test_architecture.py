@@ -43,6 +43,25 @@ def test_engine_imports_only_stdlib_pydantic_and_itself():
     assert not offenders, "engine/ must stay pure:\n" + "\n".join(offenders)
 
 
+def _engine_entry_offenders(tree) -> list[str]:
+    """Every spelling that reaches the engine entry point: analyse, calculate or the module."""
+    found = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.level == 0:
+            names = {alias.name for alias in node.names}
+            if node.module == "orderfit.engine" and names & {"analyse", "calculate", "*"}:
+                found.append(f"from {node.module} import {sorted(names)}")
+            elif node.module == "orderfit.engine.analyse" and names & {"analyse", "calculate", "*"}:
+                found.append(f"from {node.module} import {sorted(names)}")
+            elif node.module == "orderfit" and "engine" in names:
+                found.append("from orderfit import engine")
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in {"orderfit.engine", "orderfit.engine.analyse"}:
+                    found.append(f"import {alias.name}")
+    return found
+
+
 def test_only_compute_node_calls_engine_analyse():
     allowed = {PKG / "agent" / "nodes" / "compute.py", PKG / "engine" / "__init__.py"}
     offenders = []
@@ -50,14 +69,21 @@ def test_only_compute_node_calls_engine_analyse():
         if path in allowed or path.is_relative_to(PKG / "engine"):
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module in {
-                "orderfit.engine",
-                "orderfit.engine.analyse",
-            }:
-                if any(alias.name == "analyse" for alias in node.names):
-                    offenders.append(str(path.relative_to(PKG)))
-    assert not offenders, "only agent/nodes/compute.py may import analyse:\n" + "\n".join(offenders)
+        offenders += [f"{path.relative_to(PKG)}: {why}" for why in _engine_entry_offenders(tree)]
+    assert not offenders, "only agent/nodes/compute.py may reach analyse:\n" + "\n".join(offenders)
+
+
+def test_entry_point_detector_catches_every_import_spelling():
+    for source in (
+        "import orderfit.engine\norderfit.engine.analyse(x)",
+        "import orderfit.engine.analyse as m",
+        "from orderfit.engine.analyse import calculate",
+        "from orderfit.engine import analyse",
+        "from orderfit.engine import *",
+        "from orderfit import engine",
+    ):
+        assert _engine_entry_offenders(ast.parse(source)), source
+    assert not _engine_entry_offenders(ast.parse("from orderfit.engine.models import Result"))
 
 
 def test_only_llm_module_imports_ai_sdk():

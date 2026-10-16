@@ -3,10 +3,11 @@
 import argparse
 import inspect
 import json
+import logging
 import multiprocessing
 import os
+import signal
 import threading
-import time
 from uuid import uuid4
 
 from sqlalchemy import text
@@ -28,6 +29,7 @@ from orderfit.services.evaluations import build_evaluation_dto
 from orderfit.store.db import Database
 from orderfit.store.documents import PrivateDocuments
 from orderfit.store.repositories import EvaluationRepository
+from orderfit.workflow.execution import run_execution
 from orderfit.workflow.operations import Operations, operation_dto
 
 
@@ -94,8 +96,41 @@ def bounded_compute(snapshot: ConfirmedInputV1, timeout_seconds: int = 90,
             process.join(5)
 
 
+# Multi-transaction handlers own their fenced transactions and finish their operation.
+run_execution.owns_transactions = True
 DEFAULT_HANDLERS = {
+    "execute": run_execution,
 }
+
+
+HEARTBEAT_SECONDS = 15
+HEARTBEAT_RETRY_SECONDS = (1, 2, 4)  # bounded retries inside one interval (lease is 60 s)
+
+
+def heartbeat_loop(operations, claim, stopped, *, interval=HEARTBEAT_SECONDS,
+                   retry_delays=HEARTBEAT_RETRY_SECONDS):
+    """Extend the lease until ``stopped`` is set or the database reports the lease lost.
+
+    Only an explicit ``False`` from operation_heartbeat (lease expired, reclaimed or
+    authorization revoked) stops the loop. A transient exception (pool/network/timeout) is
+    retried a bounded number of times within the interval and then the loop simply keeps
+    going at the next interval; it never gives up permanently on one error. Publication is
+    still decided by the database fence (``Database.fence``/operation_finish), never by
+    this thread, so a missed heartbeat can only let the lease lapse, not authorize a write.
+    """
+    while not stopped.wait(interval):
+        for attempt, delay in enumerate((*retry_delays, None)):
+            try:
+                valid = operations.heartbeat(claim)
+            except Exception as exc:  # noqa: BLE001 - classified as transient, retried
+                LOG.warning("heartbeat_retry operation_id=%s attempt=%s error=%s",
+                            claim["id"], attempt + 1, type(exc).__name__)
+                if delay is None or stopped.wait(delay):
+                    break
+                continue
+            if not valid:
+                stopped.set()  # explicit lease loss: stop extending it
+            break
 
 
 def run_once(operations, worker, handlers, runtime=None):
@@ -103,19 +138,7 @@ def run_once(operations, worker, handlers, runtime=None):
     if claim is None:
         return False
     stopped = threading.Event()
-
-    def heartbeat():
-        while not stopped.wait(15):
-            try:
-                valid = operations.heartbeat(claim)
-            except Exception:
-                # A lost lease must never be treated as permission to publish. The
-                # final database fence decides; recovery can reclaim expired work.
-                valid = False
-            if not valid:
-                stopped.set()
-
-    thread = threading.Thread(target=heartbeat, daemon=True)
+    thread = threading.Thread(target=heartbeat_loop, args=(operations, claim, stopped), daemon=True)
     thread.start()
     retry = False
     try:
@@ -134,12 +157,23 @@ def run_once(operations, worker, handlers, runtime=None):
             computation = bounded_compute(snapshot)
             eval_id = uuid4()
             with operations.database.job(claim["id"], claim["lease_token"]) as (c, scope):
-                fresh = c.execute(text("SELECT d.input_version,d.status,b.financial_revision,o.cancellation_requested FROM deal d JOIN business b ON b.id=d.business_id JOIN operation o ON o.id=:op WHERE d.business_id=:b AND d.id=:d FOR UPDATE OF b,d,o"),
-                                  {"op": claim["id"], "b": claim["business_id"], "d": job.deal_id}).mappings().one_or_none()
-                if fresh is None or fresh["input_version"] != snapshot.input_version or fresh["financial_revision"] != snapshot.financial_revision or fresh["status"] != "computing":
+                # One statement per row, in the documented order business -> deal -> operation
+                # (as operation_claim/operation_finish do). A single multi-table FOR UPDATE OF
+                # leaves the acquisition order to the planner and can deadlock with them.
+                revision = c.execute(text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+                                     {"b": claim["business_id"]}).mappings().one()["financial_revision"]
+                deal = c.execute(text("SELECT input_version,status FROM deal WHERE business_id=:b AND id=:d FOR UPDATE"),
+                                 {"b": claim["business_id"], "d": job.deal_id}).mappings().one_or_none()
+                if deal is None or deal["input_version"] != snapshot.input_version or revision != snapshot.financial_revision or deal["status"] != "computing":
                     result = BlockedResult(kind="blocked", outcome="stale", findings=[Finding(code="STALE_INPUT_VERSION",field=None,message="Inputs changed. Refresh before continuing.",blocking=True,resolution="refresh")])
-                elif fresh["cancellation_requested"]:
-                    result = BlockedResult(kind="blocked", outcome="stale", findings=[Finding(code="OPERATION-CANCELLED",field=None,message="The evaluation was cancelled before publication.",blocking=True,resolution="refresh")])
+                elif not operations.database.fence(c, claim["id"], claim["lease_token"]):
+                    # Same predicate operation_finish applies, re-evaluated after the
+                    # business/deal/operation locks: a revocation or a cancellation request
+                    # racing the job must not publish an evaluation. operation_finish then
+                    # records 'cancelled' (cancellation) or 'failed' (revocation), whatever
+                    # result is passed. A cancellation requested before this transaction
+                    # opened already made Database.job refuse the lease.
+                    result = failure("AUTHORIZATION_REVOKED")
                 elif computation.result.decision in {"analysis_limit", "needs_input", "unsupported_escalate", "blocked_data_conflict"}:
                     outcome = computation.result.decision
                     code, message = {
@@ -160,6 +194,10 @@ def run_once(operations, worker, handlers, runtime=None):
                     {"id": claim["id"], "token": claim["lease_token"], "result": serialized}).scalar_one()
                 if not finished:
                     raise RuntimeError("operation lease lost before publication")
+            return True
+        owned = handlers.get(job.kind)
+        if owned is not None and getattr(owned, "owns_transactions", False):
+            owned(operations, claim, job, runtime)
             return True
         if job.kind in {"whatif", "draft", "reply"} and job.kind not in handlers:
             from orderfit.workflow.preparation import run_preparation
@@ -207,12 +245,58 @@ def run_once(operations, worker, handlers, runtime=None):
     return True
 
 
+LOG = logging.getLogger("orderfit.worker")
+
+
+def install_shutdown_handlers(stop: threading.Event):
+    """SIGTERM/SIGINT request a graceful stop: no new claim; the in-flight job runs to its
+    normal fenced finish (or, if killed later, its lease simply expires and is reclaimed)."""
+
+    def request_stop(signum, _frame):
+        if not stop.is_set():
+            LOG.info("worker_shutdown_requested signal=%s", signum)
+        stop.set()
+
+    previous = {}
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        previous[sig] = signal.signal(sig, request_stop)
+    return previous
+
+
+def serve(operations, worker, handlers, runtime, stop: threading.Event, *, once=False, step=None):
+    """Claim loop. Checks ``stop`` only between jobs, so a job is never abandoned mid-way."""
+    step = step or run_once
+    while not stop.is_set():
+        worked = step(operations, worker, handlers, runtime)
+        if once:
+            break
+        if not worked:
+            stop.wait(1)
+
+
+def run_worker(database, runtime, *, once=False, handlers=None, step=None, stop=None) -> int:
+    """Validate the restricted login, serve until stopped, always close the pool; exit 0."""
+    stop = stop or threading.Event()
+    previous = install_shutdown_handlers(stop)
+    try:
+        database.validate_runtime(worker=True)
+        serve(Operations(database), str(uuid4()), handlers or DEFAULT_HANDLERS, runtime, stop,
+              once=once, step=step)
+        LOG.info("worker_stopped")
+        return 0
+    finally:
+        database.close()
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
     if os.environ.get("DATABASE_URL_DIRECT"):
         raise RuntimeError("Migration credentials must not be injected into worker")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     config = RuntimeConfiguration()
     documents = PrivateDocuments(config.document_dir)
     from pathlib import Path
@@ -233,19 +317,7 @@ def main():
         documents=documents,
         job_attempts=config.job_attempts,
     )
-    database = Database(config.database_url.get_secret_value())
-    database.validate_runtime(worker=True)
-    operations = Operations(database)
-    worker = str(uuid4())
-    try:
-        while True:
-            worked = run_once(operations, worker, DEFAULT_HANDLERS, runtime)
-            if args.once:
-                break
-            if not worked:
-                time.sleep(1)
-    finally:
-        database.close()
+    raise SystemExit(run_worker(Database(config.database_url.get_secret_value()), runtime, once=args.once))
 
 
 if __name__ == "__main__":

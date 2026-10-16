@@ -73,8 +73,10 @@ services:
       ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOWED_ORIGINS: '["http://localhost:${WEB_PORT:-3000}"]'
+      # Explicit proxy trust; [] ignores X-Forwarded-* (the browser reaches the API directly).
+      TRUSTED_PROXY_IPS: '${TRUSTED_PROXY_IPS:-[]}'
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases

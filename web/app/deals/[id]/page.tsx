@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ApiError, apiPath, get, mutate, type DraftInputs, type Session, type ConstraintsView, type ExportView, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
+import { ApiError, get, mutate, type DraftInputs, type Session, type ConstraintsView, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
+import { useScope } from "@/components/layout/auth-shell";
 import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs";
+import { createDecisionExport, downloadExport } from "@/lib/p7-api";
 type Snapshot = { snapshot_id: string; snapshot_hash: string; version: number; input_version: number; financial_revision: number };
 export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> }) {
+  const { businessId: selectedBusiness } = useScope();
   const [route, setRoute] = useState<{ dealId: string; businessId: string; operationId?: string } | null>(null);
   const loadGeneration = useRef(0);
   const dealId = route?.dealId ?? ""; const businessId = route?.businessId ?? "";
   const [deal, setDeal] = useState<Deal | null>(null); const [review, setReview] = useState<Review | null>(null); const [evaluation, setEvaluation] = useState<Evaluation | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [role, setRole] = useState(""); const [editing, setEditing] = useState<DraftInputs | null>(null); const [policies, setPolicies] = useState<ConstraintsView[]>([]); const [reason, setReason] = useState(""); const [operation, setOperation] = useState<Operation | null>(null); const [acknowledgements, setAcknowledgements] = useState<string[]>([]);
-  useEffect(() => { let active = true; void Promise.all([params, searchParams]).then(([p, q]) => { if (!active) return; loadGeneration.current++; setDeal(null); setEvaluation(null); setReview(null); setEditing(null); setRole(""); setOperation(null); setError(""); setRoute({ dealId: p.id, businessId: q.businessId ?? "", operationId: q.operationId }); }); return () => { active = false; }; }, [params, searchParams]);
+  useEffect(() => { let active = true; void Promise.all([params, searchParams]).then(([p, q]) => { if (!active) return; loadGeneration.current++; setDeal(null); setEvaluation(null); setReview(null); setEditing(null); setRole(""); setOperation(null); setError(""); setRoute({ dealId: p.id, businessId: selectedBusiness, operationId: q.operationId }); }); return () => { active = false; }; }, [params, searchParams, selectedBusiness]);
   const canPrepare = ["owner", "risk_officer", "commercial_lead"].includes(role);
   const refresh = useCallback(async () => {
     if (!businessId || !dealId) return;
@@ -32,7 +35,8 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
   }, [businessId, route, refresh]);
   async function save(e: FormEvent) { e.preventDefault(); if (!deal || !editing) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/deals/${dealId}`, "PATCH", { expected_version: deal.version, expected_input_version: deal.input_version, expected_financial_revision: deal.financial_revision, inputs: { ...editing, opening_cash_minor: null } }); setEditing(null); await refresh(); } catch (e) { setError(e instanceof ApiError && e.status === 409 ? `${e.message} Another edit was saved. Reload before editing again.` : e instanceof Error ? e.message : "Could not save inputs."); } finally { setBusy(false); } }
   async function command(name: string) { if (!deal) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/deals/${dealId}/${name}`, "POST", { expected_version: deal.version, expected_input_version: deal.input_version, expected_financial_revision: deal.financial_revision, reason }); setReason(""); await refresh(); } catch (e) { setError(e instanceof Error ? e.message : "Could not update workflow."); } finally { setBusy(false); } }
-  async function exportDecision() { setBusy(true); setError(""); try { const exported = await mutate<ExportView>(`/businesses/${businessId}/deals/${dealId}/decision-export`, "POST", {}); const response = await fetch(apiPath(exported.download_url.replace(/^\/api\/v1/, "")), { credentials: "include", cache: "no-store" }); if (!response.ok) throw new Error("Could not download the decision evidence."); const href = URL.createObjectURL(await response.blob()); const link = document.createElement("a"); link.href = href; link.download = `orderfit-decision-${dealId}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(href), 1000); } catch (e) { setError(e instanceof Error ? e.message : "Export failed."); } finally { setBusy(false); } }
+  // The export endpoints take no request body: a literal JSON null is the contract (an empty object is rejected with 422).
+  async function exportDecision() { setBusy(true); setError(""); try { const exported = await createDecisionExport(businessId, dealId); await downloadExport(businessId, exported, `orderfit-decision-${dealId}.json`); } catch (e) { setError(e instanceof Error ? e.message : "Export failed."); } finally { setBusy(false); } }
   async function evaluate() { if (!deal || !review?.snapshot_hash || !review.candidate_snapshot) return; setBusy(true); setError(""); try {
     const confirmed = await mutate<Snapshot>(`/businesses/${businessId}/deals/${dealId}/confirm`, "POST", { expected_version: review.version, expected_input_version: review.input_version, expected_financial_revision: review.financial_revision, snapshot_hash: review.snapshot_hash, confirmed_field_ids: review.required_field_ids, acknowledged_warning_codes: acknowledgements });
     const afterConfirm = await get<Deal>(`/businesses/${businessId}/deals/${dealId}`);

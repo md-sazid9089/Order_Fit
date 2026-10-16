@@ -1,13 +1,12 @@
-import Link from "next/link";
+"use client";
 
-// Negotiation drafting and approval arrive in P5/P6. Until then this route shows a notice for
-// every id: the former demo client faked a step-up approval and must not be reachable.
-export default function DealNegotiatePage() {
-  return (
-    <main className="space-y-3 p-8">
-      <h1 className="text-xl font-semibold">Negotiation preparation is unavailable</h1>
-      <p>This workflow requires P5. Saved manual order reviews and financial results are available from your orders.</p>
-      <Link className="underline" href="/deals">Saved orders</Link>
-    </main>
-  );
+import { use } from "react";
+import { PreparationWorkspace } from "@/components/preparation-workspace";
+import { useScope } from "@/components/layout/auth-shell";
+
+export default function DealPreparationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ operationId?: string }> }) {
+  const { id } = use(params);
+  const { operationId } = use(searchParams);
+  const { businessId } = useScope();
+  return <PreparationWorkspace dealId={id} businessId={businessId} operationId={operationId} />;
 }

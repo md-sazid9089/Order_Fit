@@ -57,6 +57,11 @@ def _page_texts(pages) -> list[str]:
     return [p for p in pages if isinstance(p, str)]
 
 
+def dropped_pages(pages) -> int:
+    """Readable pages beyond the extraction window; they must never be dropped silently."""
+    return sum(1 for p in _page_texts(pages)[MAX_SOURCES:] if p.strip())
+
+
 def build_request(doc, parse_row) -> LanguageRequest | None:
     pages = _page_texts(parse_row["pages"])
     sources = [
@@ -68,7 +73,7 @@ def build_request(doc, parse_row) -> LanguageRequest | None:
             text=body,
         )
         for index, body in enumerate(pages[:MAX_SOURCES], start=1)
-        if body.strip() and index <= 50
+        if body.strip()
     ]
     if not sources:
         return None
@@ -96,6 +101,12 @@ def run_extract(operations, claim, job, runtime: Runtime):
         return failure("DOCUMENT_UNAVAILABLE")
     if parse_row["status"] != "parsed":
         return _needs_input("DOCUMENT_NOT_PARSED", "This document has no readable text. Enter the values manually.")
+    if dropped_pages(parse_row["pages"]):
+        return _needs_input(
+            "DOCUMENT_TOO_LONG",
+            f"Only the first {MAX_SOURCES} pages can be read automatically. "
+            "Split the document or enter the values manually.",
+        )
     request = build_request(doc, parse_row)
     if request is None:
         return _needs_input("DOCUMENT_NOT_PARSED", "This document has no readable text. Enter the values manually.")

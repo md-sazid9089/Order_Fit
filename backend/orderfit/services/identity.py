@@ -14,7 +14,15 @@ from sqlalchemy import text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.configuration import PASSWORD_HASH_PARAMETERS
 from orderfit.contracts.protocol import request_body_digest
-from orderfit.contracts.resources import SessionView, SignUp, StepUp, StepUpView
+from orderfit.contracts.resources import (
+    InvitationAccept,
+    ProfileWrite,
+    SessionView,
+    SignUp,
+    StepUp,
+    StepUpView,
+)
+from orderfit.services.pagination import CursorCodec, cursor_key
 from orderfit.store.db import Scope, digest_token, set_context
 from orderfit.store.repositories import IdentityRepository
 
@@ -27,6 +35,7 @@ class IdentityService:
         self.database, self.config = database, config
         self.secret = config.session_secret.get_secret_value().encode()
         self.request_key = hmac.digest(self.secret, b"orderfit:idempotency-body:v1", "sha256")
+        self.cursors = CursorCodec(cursor_key(self.secret))
 
     def csrf(self):
         payload = secrets.token_urlsafe(32) + "." + str(int(time.time()) + 1800)
@@ -81,17 +90,45 @@ class IdentityService:
         except (ValueError, TypeError) as exc:
             raise ApplicationError(403, "CSRF_REJECTED") from exc
 
-    def rate_limit(self, email, source, purpose):
-        # A separate committed transaction keeps failed login attempts counted.
+    def rate_limit(self, email, source, purpose, *, session_id=None, message="Try signing in later."):
+        """Consume one attempt from each throttle key before the password is verified.
+
+        Keys: the account (strict ``auth_account_limit``), the step-up session (same strict
+        limit) and the source address (``auth_source_limit``, a coarse ceiling: behind a shared
+        proxy every user has the same source, so a strict per-source limit would let one client
+        lock everyone out). Counting before verification bounds concurrent guesses; callers
+        refund the returned keys with :meth:`rate_release` only after a successful
+        verification. When one key refuses, the keys already consumed for this attempt are
+        refunded, because the attempt never reaches verification. A separate committed
+        transaction keeps failed attempts counted when the caller's transaction rolls back.
+        """
+        dimensions = [("account:" + email.strip().lower(), self.config.auth_account_limit)]
+        if session_id is not None:
+            dimensions.append(("session:" + str(session_id), self.config.auth_account_limit))
+        if source is not None:
+            dimensions.append(("source:" + source, self.config.auth_source_limit))
+        consumed = []
         with self.database.engine.begin() as c:
-            allowed = []
-            for dimension in ("account:" + email.strip().lower(), "source:" + source):
+            for dimension, limit in dimensions:
                 key = hmac.digest(self.secret, (purpose + ":" + dimension).encode(), "sha256")
-                allowed.append(
-                    c.execute(text("SELECT auth_rate_consume(:key)"), {"key": key}).scalar_one()
-                )
-        if not all(allowed):
-            raise ApplicationError(429, "AUTH_RATE_LIMIT", "Try signing in later.")
+                if not c.execute(
+                    text("SELECT auth_rate_consume(:key,:limit)"), {"key": key, "limit": limit}
+                ).scalar_one():
+                    for earlier in consumed:
+                        c.execute(text("SELECT auth_rate_release(:key)"), {"key": earlier})
+                    break
+                consumed.append(key)
+            else:
+                return consumed
+        raise ApplicationError(429, "AUTH_RATE_LIMIT", message)
+
+    def rate_release(self, keys):
+        """Refund a verified attempt: only failed guesses count toward the throttles."""
+        if not keys:
+            return
+        with self.database.engine.begin() as c:
+            for key in keys:
+                c.execute(text("SELECT auth_rate_release(:key)"), {"key": key})
 
     @staticmethod
     def verify(encoded, password):
@@ -127,7 +164,7 @@ class IdentityService:
         signup = isinstance(data, SignUp)
         purpose = "signup" if signup else "signin"
         email = data.email.strip().lower()
-        self.rate_limit(email, source, purpose)
+        throttles = self.rate_limit(email, source, purpose)
         with self.database.engine.begin() as c:
             user = IdentityRepository.lookup(c, email)
         if not signup and (
@@ -139,6 +176,9 @@ class IdentityService:
             or user["mfa_enforced"]
         ):
             raise ApplicationError(401, "INVALID_CREDENTIALS", "Sign-in failed.")
+        if not signup:
+            # A verified sign-in is not a guess. Sign-ups stay counted: they create accounts.
+            self.rate_release(throttles)
         hashed = (
             PASSWORDS.hash(data.password.get_secret_value()) if signup else user["password_hash"]
         )
@@ -246,13 +286,14 @@ class IdentityService:
             email = c.execute(
                 text("SELECT email FROM app_user WHERE id=:u"), {"u": scope.user_id}
             ).scalar_one()
-        self.rate_limit(email, source, "password")
+        throttles = self.rate_limit(email, source, "password")
         with self.database.engine.begin() as c:
             user = IdentityRepository.lookup(c, email)
         if not user or not self.verify(
             user["password_hash"], data.current_password.get_secret_value()
         ):
             raise ApplicationError(401, "INVALID_CREDENTIALS")
+        self.rate_release(throttles)
         hashed = PASSWORDS.hash(data.new_password.get_secret_value())
         with self.database.engine.begin() as c:
             if not c.execute(
@@ -265,32 +306,86 @@ class IdentityService:
                 {"digest": digest_token(token)},
             )
 
+    def update_profile(self, token, csrf, data: ProfileWrite) -> SessionView:
+        """Self-only global profile; the RLS policy also restricts UPDATE to app.user_id."""
+        # Lock order for one user: session row (session_resolve) then app_user. Since
+        # 0013_runtime_hardening session_password() takes the same order (all sessions in id
+        # order, then app_user), so a concurrent password change cannot deadlock with this.
+        with self.database.identity(token) as (c, scope, row):
+            current = c.execute(
+                text("SELECT version FROM app_user WHERE id=:u FOR UPDATE"), {"u": scope.user_id}
+            ).scalar_one()
+            if current != data.expected_version:
+                raise ApplicationError(409, "STALE_VERSION")
+            c.execute(
+                text("UPDATE app_user SET full_name=:n, preferences=CAST(:p AS jsonb) WHERE id=:u"),
+                {
+                    "n": data.profile.full_name,
+                    "p": json.dumps(data.profile.preferences.model_dump(mode="json")),
+                    "u": scope.user_id,
+                },
+            )
+            c.execute(
+                text("SELECT security_record(:digest,'PROFILE_UPDATED')"), {"digest": digest_token(token)}
+            )
+            return self.view_connection(c, scope, row, csrf)
+
+    def accept_invitation(self, token, csrf, data: InvitationAccept) -> SessionView:
+        """Signed-in, matching-email, single-use acceptance; every failure is one generic 404."""
+        digest = hashlib.sha256(data.token.get_secret_value().encode("utf-8")).digest()
+        with self.database.identity(token) as (c, scope, row):
+            accepted = c.execute(
+                text("SELECT business_id,role FROM invitation_accept(:d)"), {"d": digest}
+            ).mappings().one_or_none()
+            if accepted is None:
+                raise ApplicationError(404, "INVITATION_UNAVAILABLE", "This invitation cannot be used.")
+            return self.view_connection(c, scope, row, csrf)
+
     def step_up(self, token, data: StepUp) -> StepUpView:
         """Re-authenticate this session for one live, immutable action bundle."""
-        with self.database.tenant(token, data.business_id, "execute") as (c, scope):
-            bundle = c.execute(
-                text("SELECT action,bundle_hash,expires_at FROM action_bundle "
-                     "WHERE business_id=:b AND deal_id IS NOT NULL AND id=:id "
-                     "AND expires_at>clock_timestamp() FOR SHARE"),
-                {"b": data.business_id, "id": data.bundle_id},
-            ).mappings().one_or_none()
-            if bundle is None or bundle["action"] != data.purpose:
-                raise ApplicationError(409, "BUNDLE_UNAVAILABLE")
-            if not hmac.compare_digest(bytes(bundle["bundle_hash"]).hex(), data.bundle_hash):
-                raise ApplicationError(409, "BUNDLE_HASH_MISMATCH")
-            user = IdentityRepository.lookup(
-                c, c.execute(text("SELECT email FROM app_user WHERE id=:u"), {"u": scope.user_id}).scalar_one()
-            )
-            if user is None or user["status"] != "active" or user["mfa_enforced"]:
-                raise ApplicationError(403, "STEP_UP_UNAVAILABLE")
-            if not self.verify(user["password_hash"], data.password.get_secret_value()):
-                raise ApplicationError(401, "INVALID_CREDENTIALS")
-            row = c.execute(
-                text("INSERT INTO step_up_grant(business_id,user_id,session_id,bundle_id,purpose,bundle_hash,expires_at) "
-                     "VALUES(:b,:u,:s,:id,:p,:h,LEAST(clock_timestamp()+interval '5 minutes',:expiry)) "
-                     "RETURNING id,expires_at"),
-                {"b": data.business_id, "u": scope.user_id, "s": scope.session_id,
-                 "id": data.bundle_id, "p": data.purpose, "h": bytes.fromhex(data.bundle_hash),
-                 "expiry": bundle["expires_at"]},
-            ).mappings().one()
-            return StepUpView(grant_id=row["id"], expires_at=row["expires_at"], bundle_hash=data.bundle_hash)
+        # Password guessing is bounded per account and per session (not per address, so one
+        # shared office address cannot lock other users out), counted before verification.
+        with self.database.identity(token) as (c, scope, _):
+            email = c.execute(
+                text("SELECT email FROM app_user WHERE id=:u"), {"u": scope.user_id}
+            ).scalar_one()
+        throttles = self.rate_limit(email, None, "step_up", session_id=scope.session_id,
+                                    message="Too many verification attempts. Try again later.")
+        verified = False
+        try:
+            with self.database.tenant(token, data.business_id, "execute") as (c, scope):
+                bundle = c.execute(
+                    text("SELECT action,bundle_hash,expires_at FROM action_bundle "
+                         "WHERE business_id=:b AND deal_id IS NOT NULL AND id=:id "
+                         # Bundles are immutable (no UPDATE grant); a row lock is unnecessary
+                         # and would require UPDATE privilege the runtime role lacks.
+                         "AND expires_at>clock_timestamp()"),
+                    {"b": data.business_id, "id": data.bundle_id},
+                ).mappings().one_or_none()
+                if bundle is None or bundle["action"] != data.purpose:
+                    raise ApplicationError(409, "BUNDLE_UNAVAILABLE")
+                if not hmac.compare_digest(bytes(bundle["bundle_hash"]).hex(), data.bundle_hash):
+                    raise ApplicationError(409, "BUNDLE_HASH_MISMATCH")
+                user = IdentityRepository.lookup(
+                    c, c.execute(text("SELECT email FROM app_user WHERE id=:u"), {"u": scope.user_id}).scalar_one()
+                )
+                if user is None or user["status"] != "active" or user["mfa_enforced"]:
+                    raise ApplicationError(403, "STEP_UP_UNAVAILABLE")
+                if not self.verify(user["password_hash"], data.password.get_secret_value()):
+                    raise ApplicationError(401, "INVALID_CREDENTIALS")
+                verified = True
+                row = c.execute(
+                    # One instant for created/expiry: separate clock reads could exceed the
+                    # five-minute CHECK by microseconds.
+                    text("INSERT INTO step_up_grant(business_id,user_id,session_id,bundle_id,purpose,bundle_hash,created_at,expires_at) "
+                         "SELECT :b,:u,:s,:id,:p,:h,t.now,LEAST(t.now+interval '5 minutes',:expiry) "
+                         "FROM (SELECT clock_timestamp() AS now) t "
+                         "RETURNING id,expires_at"),
+                    {"b": data.business_id, "u": scope.user_id, "s": scope.session_id,
+                     "id": data.bundle_id, "p": data.purpose, "h": bytes.fromhex(data.bundle_hash),
+                     "expiry": bundle["expires_at"]},
+                ).mappings().one()
+                return StepUpView(grant_id=row["id"], expires_at=row["expires_at"], bundle_hash=data.bundle_hash)
+        finally:
+            if verified:  # refunded after the transaction ends; a correct password is not a guess
+                self.rate_release(throttles)

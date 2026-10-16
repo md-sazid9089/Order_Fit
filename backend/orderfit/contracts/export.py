@@ -106,10 +106,6 @@ def build_openapi():
                 "scope": {"type": "string", "enum": ["baseline", "deal"]},
             },
             "customer_history": {"as_of": {"type": "string", "format": "date"}},
-            "cash_flow": {
-                "as_of": {"type": "string", "format": "date"},
-                "through": {"type": "string", "format": "date"},
-            },
             "evaluation_series": {
                 "option_key": {"type": "string", "maxLength": 80},
                 "scenario": {"type": "string", "enum": ["base", "downside", "severe"]},
@@ -127,7 +123,7 @@ def build_openapi():
                     "name": name,
                     "in": "query",
                     "required": endpoint.operation_id
-                    in {"customer_history", "cash_flow", "evaluation_series", "evaluation_explanation"},
+                    in {"customer_history", "evaluation_series", "evaluation_explanation"},
                     "schema": shape,
                 }
             )
@@ -180,7 +176,11 @@ def build_openapi():
                         "file": {"type": "string", "format": "binary"},
                     },
                 }
-            operation["requestBody"] = {"required": True, "content": {media: {"schema": shape}}}
+            if endpoint.optional_body:
+                # Absent body, JSON null and the (fieldless) request model are the same command.
+                shape = {"anyOf": [shape, {"type": "null"}]}
+            operation["requestBody"] = {"required": not endpoint.optional_body,
+                                        "content": {media: {"schema": shape}}}
             if endpoint.multipart:
                 operation["requestBody"]["content"][media]["encoding"] = {
                     "metadata": {"contentType": "application/json"}
@@ -255,6 +255,8 @@ def build_types(spec):
         for method, op in methods.items():
             req = op.get("requestBody", {}).get("content", {})
             request = ts_type(next(iter(req.values()))["schema"]) if req else "undefined"
+            if req and not op["requestBody"]["required"]:
+                request += " | undefined"
             success = next(v for k, v in op["responses"].items() if int(k) < 300)
             response = ts_type(next(iter(success["content"].values()))["schema"])
             params = op["parameters"]
