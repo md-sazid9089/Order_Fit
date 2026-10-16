@@ -57,27 +57,27 @@ export function Footer() {
             <hr className="mt-3 mb-4 border-solid border-[#D5C4FD]/40" />
             <ul className="flex flex-col gap-3 text-sm font-normal text-[#E6F4F1]/80">
               <li>
-                <a href="#support" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
                   For Startups
                 </a>
               </li>
               <li>
-                <a href="#support" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
                   For Scaling Brands
                 </a>
               </li>
               <li>
-                <a href="#support" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
                   For Accountants &amp; CFOs
                 </a>
               </li>
               <li>
-                <a href="#support" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
                   Become a Partner
                 </a>
               </li>
               <li>
-                <a href="#support" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
                   Tariffs &amp; Landed Margin Management
                 </a>
               </li>
