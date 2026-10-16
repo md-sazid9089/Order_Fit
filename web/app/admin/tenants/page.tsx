@@ -1,7 +1,5 @@
 "use client";
 
-import { platformAdminEnabled } from "@/lib/platform-admin";
-
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,7 +47,7 @@ export default function AdminTenantsPage() {
     setLoading(true);
     try {
       const sess = await getSession();
-      const admin = platformAdminEnabled();
+      const admin = Boolean(sess.is_platform_admin === true);
       if (!admin) {
         router.replace("/deals");
         return;
@@ -97,8 +95,7 @@ export default function AdminTenantsPage() {
   }, [router]);
 
   useEffect(() => {
-    const initialLoad = setTimeout(() => { void loadTenants(); }, 0);
-    return () => clearTimeout(initialLoad);
+    void loadTenants();
   }, [loadTenants]);
 
   const filteredTenants = tenants.filter(

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { getSession } from "@/lib/p7-api";
 import {
   Server,
   ArrowLeft,
@@ -87,12 +89,29 @@ const CLUSTER_NODES: ClusterNode[] = [
 ];
 
 export default function AdminSystemPage() {
+  const router = useRouter();
   const [nodes, setNodes] = useState<ClusterNode[]>(CLUSTER_NODES);
   const [isVerifying, setIsVerifying] = useState(false);
   const [dbConnected, setDbConnected] = useState(true);
   const [schemaVersion, setSchemaVersion] = useState("v0016 Current");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const sess = await getSession();
+        const admin = Boolean(sess.is_platform_admin === true);
+        if (!admin) {
+          router.replace("/deals");
+          return;
+        }
+      } catch {
+        router.replace("/auth/signin");
+      }
+    }
+    void checkAuth();
+  }, [router]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

@@ -105,6 +105,8 @@ class SessionView(DTO):
     expires_at: UTCInstant
     mfa_supported: Literal[False]
     email_verified: Literal[False]
+    token: str | None = None
+    is_platform_admin: bool = False
 
 
 class CSRFChallenge(DTO):
