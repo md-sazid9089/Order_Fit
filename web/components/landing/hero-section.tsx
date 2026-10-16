@@ -22,8 +22,7 @@ export function HeroSection() {
             Stress-test orders, protect cash flow, negotiate safe terms.
           </h1>
           <p className="font-sans text-lg sm:text-xl text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
-            From customer purchase order to supplier payment, with deterministic cash runway calculations and zero equity dilution.
-            Over $120M in commercial orders evaluated worldwide.
+            From customer purchase order to supplier payment, with deterministic cash runway calculations, linear late-payment stress testing, and mandatory human approvals.
           </p>
 
           {/* Action CTAs */}

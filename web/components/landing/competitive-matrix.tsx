@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Check, X, Minus, HelpCircle } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export function CompetitiveMatrix() {
   const comparison = [
@@ -102,32 +101,32 @@ export function CompetitiveMatrix() {
   };
 
   return (
-    <section className="py-20 md:py-28 bg-settle-stone text-settle-dark border-t border-neutral-200">
+    <section className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A] border-t border-[#ECEAE4]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs sm:text-sm font-bold tracking-widest text-settle-pine uppercase font-small-caps mb-3 inline-block">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block font-sans">
             Market &amp; Comparative Analysis
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.12] mb-5">
+          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
             How OrderFit Compares to Alternatives
           </h2>
-          <p className="text-base sm:text-lg text-settle-muted leading-relaxed">
+          <p className="font-sans text-base sm:text-lg text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
             Based directly on the <em>OrderFit Comparative Study</em> and market research. We compare documented capabilities — not subjective marketing claims.
           </p>
         </div>
 
         {/* Matrix Table Card */}
-        <div className="rounded-3xl bg-white border border-neutral-200/90 shadow-[0_16px_50px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div className="rounded-3xl bg-white border border-[#ECEAE4] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm border-collapse">
               <thead>
-                <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600">
-                  <th className="py-4 px-5 font-bold text-neutral-900 w-1/3">
+                <tr className="bg-[#FAF9F7] border-b border-[#ECEAE4] text-[#526975]">
+                  <th className="py-4 px-5 font-semibold text-[#1A1A1A] w-1/3 font-sans">
                     Decision Capability
                   </th>
-                  <th className="py-4 px-4 font-bold text-settle-pine text-center bg-settle-pine/5">
+                  <th className="py-4 px-4 font-bold text-[#093A2F] text-center bg-[#093A2F]/5 font-sans">
                     OrderFit (Proposed)
                   </th>
                   <th className="py-4 px-4 font-semibold text-center">

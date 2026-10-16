@@ -42,7 +42,7 @@ from .workflow import Finding, Strategy, WhatIfChange
 def valid_timezone(value: str) -> str:
     try:
         ZoneInfo(value)
-    except (ZoneInfoNotFoundError, ValueError) as exc:
+    except (ZoneInfoNotFoundError, ValueError, IsADirectoryError) as exc:
         raise ValueError("unknown IANA timezone") from exc
     return value
 

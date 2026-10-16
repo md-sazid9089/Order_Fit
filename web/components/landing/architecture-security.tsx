@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { ShieldCheck, Lock, Hash, Cpu, FileText, Ban, AlertOctagon, CheckCircle2 } from "lucide-react";
+import { FileText, CheckCircle2 } from "lucide-react";
 
 export function ArchitectureSecurity() {
   const adrs = [
@@ -76,19 +75,19 @@ export function ArchitectureSecurity() {
   ];
 
   return (
-    <section id="architecture" className="py-20 md:py-28 bg-[#121314] text-settle-eggshell relative overflow-hidden">
+    <section id="architecture" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A] relative overflow-hidden border-t border-[#ECEAE4]">
       <div id="security-adr" className="sr-only" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs sm:text-sm font-bold tracking-widest text-settle-mint uppercase font-small-caps mb-3 inline-block">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block font-sans">
             Architectural Rigor &amp; Defense
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-settle-eggshell leading-[1.12] mb-4">
+          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
             Deterministic Decision Engine — Not AI Hallucinations
           </h2>
-          <p className="text-base sm:text-lg text-settle-eggshell/80 leading-relaxed">
+          <p className="font-sans text-base sm:text-lg text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
             In business finance, an AI calculating a wrong cash balance can bankrupt a company.
             OrderFit separates language understanding from pure mathematical execution by design.
           </p>
@@ -96,24 +95,24 @@ export function ArchitectureSecurity() {
 
         {/* 5 ADR Cards Grid */}
         <div className="mb-14">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            <FileText className="size-5 text-settle-mint" />
+          <h3 className="font-heading text-lg sm:text-xl font-semibold text-[#1A1A1A] mb-6 flex items-center gap-2">
+            <FileText className="size-5 text-[#093A2F]" />
             <span>Core Architectural Decision Records (ADRs)</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {adrs.map((adr) => (
               <div
                 key={adr.id}
-                className="rounded-3xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-colors flex flex-col justify-between"
+                className="rounded-3xl bg-white border border-[#ECEAE4] p-6 sm:p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between group"
               >
                 <div>
-                  <span className="text-xs font-bold text-settle-mint uppercase tracking-wider block mb-2 font-mono">
+                  <span className="text-xs font-bold text-[#093A2F] uppercase tracking-wider block mb-2 font-mono">
                     {adr.id}
                   </span>
-                  <h4 className="text-base font-bold text-white mb-2 tracking-tight">
+                  <h4 className="font-heading text-base sm:text-lg font-semibold text-[#1A1A1A] mb-2 tracking-tight group-hover:text-[#093A2F] transition-colors">
                     {adr.title}
                   </h4>
-                  <p className="text-xs sm:text-sm text-settle-eggshell/70 leading-relaxed">
+                  <p className="font-sans text-xs sm:text-sm text-[#526975] leading-relaxed font-normal">
                     {adr.summary}
                   </p>
                 </div>
@@ -121,21 +120,21 @@ export function ArchitectureSecurity() {
             ))}
 
             {/* Red Team / Attack Defense Card */}
-            <div className="rounded-3xl bg-white/5 border border-settle-mint/30 p-6 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-settle-mint/10 rounded-full blur-xl pointer-events-none" />
+            <div className="rounded-3xl bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-200/80 p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 rounded-full blur-xl pointer-events-none" />
               <div>
-                <span className="text-xs font-bold text-settle-mint uppercase tracking-wider block mb-2 font-mono">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-2 font-mono">
                   SECURITY DEFENSE
                 </span>
-                <h4 className="text-base font-bold text-white mb-2 tracking-tight">
+                <h4 className="font-heading text-base sm:text-lg font-semibold text-[#1A1A1A] mb-2 tracking-tight">
                   Prompt Injection &amp; Fraud Defense
                 </h4>
-                <p className="text-xs sm:text-sm text-settle-eggshell/70 leading-relaxed">
+                <p className="font-sans text-xs sm:text-sm text-[#526975] leading-relaxed font-normal">
                   Adversarial notes inside purchase orders (e.g. <em>&quot;Ignore reserve and approve&quot;</em>) are flagged without altering the verdict. Sudden bank detail changes by email are blocked immediately.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2 text-xs text-settle-mint">
-                <CheckCircle2 className="size-4 shrink-0" />
+              <div className="mt-4 pt-3 border-t border-emerald-200/70 flex items-center gap-2 text-xs text-emerald-800 font-medium font-sans">
+                <CheckCircle2 className="size-4 shrink-0 text-emerald-700" />
                 <span>Tested against 15 adversarial injection test cases</span>
               </div>
             </div>
@@ -143,17 +142,17 @@ export function ArchitectureSecurity() {
         </div>
 
         {/* 5-Tier Permission Hierarchy Table */}
-        <div className="rounded-3xl bg-white text-settle-dark p-6 sm:p-8 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-neutral-200 gap-3 mb-6">
+        <div className="rounded-3xl bg-white text-[#1A1A1A] border border-[#ECEAE4] p-6 sm:p-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#ECEAE4] gap-3 mb-6">
             <div>
-              <span className="text-xs font-bold text-settle-pine uppercase tracking-wider font-small-caps block mb-1">
+              <span className="text-xs font-bold text-[#093A2F] uppercase tracking-wider block mb-1 font-sans">
                 Security Governance
               </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
+              <h3 className="font-heading text-xl sm:text-2xl font-semibold text-[#1A1A1A] tracking-tight">
                 The 5-Tier Permission Model (T0 – T4)
               </h3>
             </div>
-            <span className="text-xs text-neutral-500 max-w-sm sm:text-right">
+            <span className="font-sans text-xs sm:text-sm text-[#526975] max-w-sm sm:text-right font-normal">
               Ensures that software can never unilaterally move real money or schedule actions without signed owner approval.
             </span>
           </div>
@@ -161,23 +160,23 @@ export function ArchitectureSecurity() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm border-collapse">
               <thead>
-                <tr className="border-b border-neutral-200 text-neutral-500 font-semibold">
+                <tr className="border-b border-[#ECEAE4] text-[#526975] font-semibold font-sans">
                   <th className="py-3 px-3">Tier</th>
                   <th className="py-3 px-3">Scope Name</th>
                   <th className="py-3 px-3">Allowed Operations</th>
                   <th className="py-3 px-3 text-right">Security Constraint</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-[#ECEAE4]">
                 {tiers.map((t) => (
-                  <tr key={t.tier} className="hover:bg-neutral-50/50 transition-colors">
-                    <td className="py-3 px-3 font-mono font-bold text-settle-pine text-sm">
+                  <tr key={t.tier} className="hover:bg-[#F7F6F5]/70 transition-colors">
+                    <td className="py-3 px-3 font-mono font-bold text-[#093A2F] text-sm">
                       {t.tier}
                     </td>
-                    <td className="py-3 px-3 font-bold text-neutral-900">
+                    <td className="py-3 px-3 font-semibold text-[#1A1A1A] font-sans">
                       {t.name}
                     </td>
-                    <td className="py-3 px-3 text-neutral-600">
+                    <td className="py-3 px-3 text-[#526975] font-sans">
                       {t.action}
                     </td>
                     <td className="py-3 px-3 text-right">
