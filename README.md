@@ -167,10 +167,9 @@ docker compose up --build
 | Service | URL |
 |---------|-----|
 | Web     | http://localhost:3000 |
-| Postgres | localhost:5432 (bound to 127.0.0.1) |
-| API     | http://localhost:8000 |
-| API docs (OpenAPI) | http://localhost:8000/docs |
-| Health check | http://localhost:8000/health |
+| API / Postgres | Internal Compose network only; use `docker compose exec api ...` / `docker compose exec db ...` |
+| API docs (OpenAPI) | Disabled by default; API is not published to the host |
+| Health check | http://localhost:3000/api/health (same-origin web proxy) |
 
 Use independently generated passwords (at least 32 characters) for the API and
 worker logins, and distinct session/fingerprint secrets (at least 32 characters).
@@ -188,13 +187,12 @@ To stop the services, run `docker compose down`. Data is kept; add `-v` to also 
 `pg-data` and `documents` volumes.
 
 If a port is already taken on your machine, copy `.env.example` to `.env` at the repo root and
-change `WEB_PORT`, `API_PORT` or `DB_PORT`.
+change `WEB_PORT`.
 
 > [!TIP]
 > Deals, durable jobs and audit history live in Postgres (`pg-data` volume). Uploaded
-> documents live in the `documents` volume. `data/` is mounted read-only at `/app/data`.
-> `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so rebuild `web` after
-> changing it. The image is built from `web/`.
+> documents live in the `documents` volume locally; hosted API and worker share a private S3-compatible bucket. The API, worker and database have no outbound route; only the web proxy is host-facing. Browser API calls use the same-origin Next rewrite over the internal network. `data/` is mounted read-only at `/app/data`.
+> `API_INTERNAL_URL` is baked into the web image to target the internal API; rebuild `web` after changing it. The image is built from `web/`.
 
 ### Run locally
 
@@ -277,8 +275,8 @@ Frontend settings are read from `web/.env.local`. See [web/.env.example](web/.en
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Browser-facing API URL, inlined at build time |
-| `API_INTERNAL_URL` | *(falls back to `NEXT_PUBLIC_API_URL`)* | API URL for server-side route handlers. Compose sets `http://api:8000` |
+| `NEXT_PUBLIC_API_URL` | *(empty for Compose/Vercel)* | Leave empty to use the same-origin `/api/v1` proxy; direct browser/API mode is for local non-Compose development only |
+| `API_INTERNAL_URL` | *(falls back to `NEXT_PUBLIC_API_URL`)* | Server-side API URL and rewrite target. Compose builds/runs with `http://api:8000` |
 
 > [!WARNING]
 > Never commit `.env` files. They are listed in `.gitignore`.
@@ -291,8 +289,6 @@ uv sync --frozen --extra dev
 uv run --frozen pytest tests/contracts tests/test_architecture.py tests/engine tests/agent -q
 uv run --frozen ruff check .
 uv run --frozen python -m orderfit.contracts.export --check
-# e2e suites are scaffolds; default pytest excludes e2e and opt-in live markers.
-# Recorded/manual full-flow tests in later phases require no OpenAI key.
 ```
 
 ```bash
@@ -302,25 +298,32 @@ npm run lint
 npm run build
 ```
 
-CI runs lint, the backend tests, the frontend type check, lint and build, and a Docker build on every push
+The full browser journey builds and starts an isolated disposable Compose stack, then removes
+its containers and volumes:
+
+```powershell
+./scripts/run-e2e.ps1
+```
+
+CI runs lint, backend tests, frontend type check, lint, unit tests and build, plus a Docker build on every push
 and pull request. See [.github/workflows/tests.yml](.github/workflows/tests.yml).
 
-To add an engine test case, add an entry to [data/test_cases.json](data/test_cases.json).
-[tests/engine/test_catalogue.py](backend/tests/engine/test_catalogue.py) picks it up
-automatically.
+The reference calculator cases are maintained in [docs/architecture/orderfit/fixtures](docs/architecture/orderfit/fixtures/README.md) and checked directly in CI; the backend does not load `data/test_cases.json`.
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| [scripts/seed_demo.py](scripts/seed_demo.py) | Load the demo business into the database as `demo-rina` |
-| [scripts/make_demo_pdfs.py](scripts/make_demo_pdfs.py) | Generate demo order and quote PDFs, including adversarial variants |
-| [scripts/run_baseline.py](scripts/run_baseline.py) | Run the core cases through a plain AI model for comparison |
+| [scripts/run-e2e.ps1](scripts/run-e2e.ps1) | Isolated Compose-backed browser journey and cleanup |
 
 ## Documentation
 
 | Document | Contents |
 |----------|----------|
+| [docs/initial_backend_implementation_plan.md](docs/initial_backend_implementation_plan.md) | Backend contracts, implementation phases and acceptance gates |
+| [docs/backend_implementation_progress.md](docs/backend_implementation_progress.md) | Verified implementation history, current status and open gates |
+| [docs/architecture/orderfit/README.md](docs/architecture/orderfit/README.md) | Revised architecture, contracts, ADRs and reference fixtures |
+| [docs/deployment/](docs/deployment/) | Render, Neon and Vercel runbooks |
 | [docs/engine.md](docs/engine.md) | Algorithms, money rules, ranking, adding test cases |
 | [docs/agent.md](docs/agent.md) | Workflow, pause points, guards |
 | [docs/adr/](docs/adr/) | Architecture decision records |

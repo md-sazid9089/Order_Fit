@@ -186,7 +186,7 @@ def test_ready_requires_database_schema_and_storage(tmp_path, status, ok):
 
 def test_ready_reports_unwritable_storage(tmp_path):
     with ready_client(tmp_path, FakeDatabase()) as client:
-        client.app.state.documents.root = tmp_path / "missing" / "nested"
+        client.app.state.documents.writable = lambda: False
         response = client.get("/ready")
     assert response.status_code == 503 and response.json()["storage"] is False
     assert not list((tmp_path / "docs").glob(".ready-*"))

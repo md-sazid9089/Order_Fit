@@ -6,11 +6,11 @@ Scope: the FastAPI API, the durable worker and the one-shot migration job, defin
 
 | Service | Type | Command | Database variable and login | Notes |
 |---|---|---|---|---|
-| `orderfit-api` | web (docker) | image `CMD`: `python -m orderfit.api.serve` (uvicorn on `0.0.0.0:$PORT`, proxy trust from `TRUSTED_PROXY_IPS`) | `DATABASE_URL` = Neon **pooled**, `orderfit_runtime` | `healthCheckPath: /ready`; persistent disk at `/app/var` |
+| `orderfit-api` | web (docker) | image `CMD`: `python -m orderfit.api.serve` (uvicorn on `0.0.0.0:$PORT`, proxy trust from `TRUSTED_PROXY_IPS`) | `DATABASE_URL` = Neon **pooled**, `orderfit_runtime` | `healthCheckPath: /ready`; private S3-compatible bucket |
 | `orderfit-worker` | worker (docker) | `python -m orderfit.workflow.worker` | `DATABASE_URL` = Neon **pooled**, `orderfit_worker_login` | no HTTP port; always-on paid plan |
 | `orderfit-migrate` | cron (docker), run manually | `alembic upgrade head` | `DATABASE_URL_DIRECT` = Neon **direct**, migration owner | the only service that holds the owner credential |
 
-Shared group `orderfit-shared`: `SESSION_SECRET`, `ACCOUNT_FINGERPRINT_KEY` (both generated once by Render, distinct), `ACCOUNT_FINGERPRINT_KEY_VERSION=1`, `COOKIE_SECURE=true`, `LLM_MODE=off`. Prompted per service (`sync: false`): `DATABASE_URL`, `ALLOWED_ORIGINS`, and `DATABASE_URL_DIRECT` on the job.
+Shared group `orderfit-shared`: `SESSION_SECRET`, `ACCOUNT_FINGERPRINT_KEY` (both generated once by Render, distinct), `ACCOUNT_FINGERPRINT_KEY_VERSION=1`, `COOKIE_SECURE=true`, `LLM_MODE=off`. Prompted per service (`sync: false`): `DATABASE_URL`, `ALLOWED_ORIGINS`, and `DATABASE_URL_DIRECT` on the job. The API and worker must receive matching S3 bucket, region, endpoint/addressing style, and credentials; actual values and bucket provisioning are operator work.
 
 ### Decisions and why
 
@@ -63,15 +63,13 @@ Recommendation: run `orderfit-api` and `orderfit-worker` on an always-on paid pl
 
 ## 5. Document storage
 
-The API stores uploaded documents on local disk under `DOCUMENT_DIR` and database rows hold their hashes (`backend/orderfit/store/documents.py`). The plan assumes a persistent volume shared by API and worker on one host (plan 12.3, 13.2); object storage is a later migration.
+Both hosted processes use the same private S3-compatible bucket through `S3PrivateDocuments` (`backend/orderfit/store/s3_documents.py`); local Compose and tests default to filesystem storage. The adapter uses generated UUID-only keys, conditional create (never overwrite evidence), server-side encryption, SHA-256 metadata verification on read, bounded object size, and a write/delete readiness canary. The database stores the generated key and content hash. API and worker share this contract without sharing a machine disk.
 
-On Render:
+Before enabling uploads on Render, provision a **private** bucket and a dedicated service identity. Grant only object `Put`, `Get`, and `Delete` on the application's keyspace including `_orderfit/readiness/*`; do not grant bucket listing, ACL changes, public access, or bucket administration. Enable bucket-level encryption and choose lifecycle/retention to match evidence requirements. Set identical bucket, region, access key and secret on API and worker; for non-AWS providers also configure HTTPS `DOCUMENT_S3_ENDPOINT_URL` and required `DOCUMENT_S3_ADDRESSING_STYLE`. Do not put secrets in YAML, examples, logs or browser code. Prefer provider-native workload identity if supported, but this repository does not configure it.
 
-- **Free web services have an ephemeral filesystem.** Every restart, redeploy or sleep/wake discards files written after build. Uploaded documents would be lost while their database rows (and hashes) survive, which breaks link integrity: downloads fail and stored evidence cannot be re-verified. Do not use the free tier with real uploads.
-- **A persistent disk** (paid, `disk:` in `render.yaml`, mounted at `/app/var`, `DOCUMENT_DIR=/app/var/documents`) survives restarts and deploys. Consequences: it attaches to **one** service instance, so the web service cannot scale beyond one instance and deploys of a service with a disk stop the old instance before starting the new one (brief downtime); Render snapshots it daily, with restores replacing the disk contents (check the plan's snapshot behaviour).
-- **The worker cannot read the API's disk.** Render disks cannot be shared between services. Jobs that read uploaded files (`extract` via `run_extract`, `csv_preview` via `handle_csv_preview`, `workflow/worker.py:170-191`) will fail on the worker with its own empty `DOCUMENT_DIR`. Jobs that use only database rows (evaluate, what-if, draft, reply per `worker.py:115-166`) are unaffected. This is a **blocker for document-driven workflows** in the split topology until the backend gains shared storage (object storage) or a single-service mode. Until then run with `LLM_MODE=off` and manual input, or accept that extraction is unavailable.
-- **Non-root versus disk ownership (unverified).** The image runs as uid 10001 and creates `/app/var/documents` at build time, but mounting a disk over `/app/var` replaces that directory. If the mount is root-owned, `PrivateDocuments` fails at startup (`documents.py:15`) and the API exits. Fix if observed: an entrypoint that `chown`s the mount and then drops privileges, or `RUN`-time user alignment; do not simply run the app as root.
-- **Backups.** Render's disk snapshots are not coordinated with Neon PITR, so a restore can mismatch DB rows and files. Additionally copy the directory off-host (for example `tar` over SSH to encrypted storage) at the same time as the database dump ([neon.md](neon.md) 8). A restore drill must verify document SHA-256 values against the database.
+Compose intentionally uses local filesystem storage. Its API/worker network is internal and blocks outbound routes; switching a local stack to external object storage requires a deliberate network-topology override as well as S3 settings. Do not weaken the default merely to make a test pass. Keep `LLM_MODE=off` unless provider inference is separately approved and configured.
+
+Object storage and Postgres do not share a transaction: upload writes a generated object before the row commits and compensates with deletion on DB failure. A process crash between those operations can orphan an object, so do not enable automatic deletion until a reconciliation process and evidence-retention policy exist. Database PITR and object backups/versioning are separate. A restore drill must restore both and compare every document's SHA-256 with its database record. Bucket provisioning, IAM review, retention, and restore remain hosted gates.
 
 ## 6. Observability and readiness
 
@@ -94,7 +92,7 @@ All secrets live only in the Render and Neon dashboards. `render.yaml`, `.env.ex
 - [ ] Migration job succeeded; logins provisioned; verification SQL clean.
 - [ ] API `ALLOWED_ORIGINS` equals the exact Vercel production origin; `COOKIE_SECURE=true`.
 - [ ] `/health` OK; worker log clean; a durable evaluation completes end to end.
-- [ ] Document storage decision recorded (persistent disk and its limits, or uploads disabled/unsupported).
+- [ ] Private shared bucket provisioned; least-privilege credentials configured on API and worker; `/ready` confirms write/delete access.
 - [ ] Vercel `API_INTERNAL_URL` set; `NEXT_PUBLIC_API_URL` unset; smoke tests passed.
 - [ ] Restore drill performed ([neon.md](neon.md) 8.4) before claiming recoverability.
 - [ ] `/ready` returns 200 on the deployed API (it is the configured health check).
@@ -110,4 +108,5 @@ Unverified until run on Render and a disposable Neon branch (plan 13.3, 14 P8):
 5. Worker lease behaviour through deploys, restarts and sleeps; the worker's graceful `SIGTERM` path under Render's actual shutdown grace period (section 2).
 6. Same-origin proxy of large uploads (25 MB) through Vercel to Render (vercel.md section 5).
 7. Backup and restore of both the database and the documents (section 5; neon.md 8.4).
-8. `/ready` against the hosted Neon pooled login and the mounted disk.
+8. `/ready` against the hosted Neon pooled login and bucket, plus a real API-upload/worker-read round trip.
+9. Provider conditional-create/encryption/delete semantics, retention policy, and joint database/object restore drill.

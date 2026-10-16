@@ -10,11 +10,24 @@ type Snapshot = { snapshot_id: string; snapshot_hash: string; version: number; i
 export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> }) {
   const { businessId: selectedBusiness } = useScope();
   const [route, setRoute] = useState<{ dealId: string; businessId: string; operationId?: string } | null>(null);
+  const resolvedRoute = useRef<{ dealId: string; businessId: string; operationId?: string } | null>(null);
   const loadGeneration = useRef(0);
   const dealId = route?.dealId ?? ""; const businessId = route?.businessId ?? "";
   const [deal, setDeal] = useState<Deal | null>(null); const [review, setReview] = useState<Review | null>(null); const [evaluation, setEvaluation] = useState<Evaluation | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [role, setRole] = useState(""); const [editing, setEditing] = useState<DraftInputs | null>(null); const [policies, setPolicies] = useState<ConstraintsView[]>([]); const [reason, setReason] = useState(""); const [operation, setOperation] = useState<Operation | null>(null); const [acknowledgements, setAcknowledgements] = useState<string[]>([]);
-  useEffect(() => { let active = true; void Promise.all([params, searchParams]).then(([p, q]) => { if (!active) return; loadGeneration.current++; setDeal(null); setEvaluation(null); setReview(null); setEditing(null); setRole(""); setOperation(null); setError(""); setRoute({ dealId: p.id, businessId: selectedBusiness, operationId: q.operationId }); }); return () => { active = false; }; }, [params, searchParams, selectedBusiness]);
+  useEffect(() => { let active = true; void Promise.all([params, searchParams]).then(([p, q]) => {
+    if (!active) return;
+    const next = { dealId: p.id, businessId: selectedBusiness, operationId: q.operationId };
+    const previous = resolvedRoute.current;
+    const sameResource = previous?.dealId === next.dealId && previous.businessId === next.businessId;
+    if (sameResource && previous.operationId === next.operationId) return;
+    resolvedRoute.current = next;
+    if (!sameResource) {
+      loadGeneration.current++;
+      setDeal(null); setEvaluation(null); setReview(null); setEditing(null); setRole("");
+    }
+    setOperation(null); setError(""); setRoute(next);
+  }); return () => { active = false; }; }, [params, searchParams, selectedBusiness]);
   const canPrepare = ["owner", "risk_officer", "commercial_lead"].includes(role);
   const refresh = useCallback(async () => {
     if (!businessId || !dealId) return;
@@ -26,7 +39,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       setDeal(d); setRole(session.memberships.find(m => m.business_id === businessId)?.role ?? ""); setPolicies(configs.items); setEvaluation(result); setReview(checks); setAcknowledgements([]);
     } catch (e) { if (generation === loadGeneration.current) setError(e instanceof Error ? e.message : "Could not load this order."); }
   }, [businessId, dealId]);
-  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
+  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh, route?.operationId]);
   useEffect(() => {
     if (!route?.operationId || !businessId) return;
     let active = true; let timer: ReturnType<typeof setTimeout>;

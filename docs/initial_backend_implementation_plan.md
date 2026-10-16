@@ -48,7 +48,7 @@ All links are relative to this document. Symbol names are more stable anchors th
 | [Orchestration ADR](architecture/orderfit/adrs/0006-orchestration-and-learned-layer.md), other ADRs, [build handoff](architecture/orderfit/BUILD-HANDOFF.md) | Plain runner default, AI boundaries, original scope and historical delivery plan. Do not inherit obsolete vendor/model choices or dates. |
 | [Reference calculator](architecture/orderfit/fixtures/reference_engine.py), [fixture guide](architecture/orderfit/fixtures/README.md), `fixtures/cases/`, `fixtures/expected/`, `fixtures/selftest.py` | Executable baseline and 22 regression cases; not the application engine. |
 | [Backend dependencies](../backend/pyproject.toml), `backend/orderfit/`, `backend/tests/` | Actual application implementation and stubs. |
-| [Frontend package](../frontend/package.json), [frontend instructions](../frontend/AGENTS.md), `frontend/app/`, `frontend/components/`, [API base config](../frontend/lib/api.ts) | Current routes, user interactions and integration gaps. |
+| [Frontend package](../web/package.json), [frontend instructions](../web/AGENTS.md), `web/app/`, `web/components/`, [API base config](../web/lib/api.ts) | Current routes, user interactions and integration gaps. |
 | [Compose](../docker-compose.yml), backend/frontend Dockerfiles, [CI](../.github/workflows/tests.yml), example environment files | Actual build/deployment starting point; no live deployment proof. |
 
 Review coverage: application Python modules; SQL schema, guards, grants, reference data, views, migration runner and tests; database documents; all frontend route families and deal client components; shared API/health/provider/store components; dependency/configuration/build/CI files; scripts and synthetic data; revised requirements, architecture, ADRs and calculator fixtures. Decorative assets/lockfile entries are dependency/design evidence, not business contracts. Historical proposal material and the earlier PDF analysis remain lower-priority context. No new visual verification of every historical PDF page is claimed. The revised architecture and application source are unchanged relative to the previously reviewed ancestor `18b3c59`; the database and frontend integration changes were inspected directly.
@@ -751,7 +751,7 @@ Decision export includes exact inputs/sources/assumptions, calculator/result ver
 - Metrics for queue age, expired leases, job attempts, stale publications, engine duration, provider failures/usage, approval blocks and partial execution.
 - Readiness distinguishes API alive, schema current, DB accessible, private storage writable and worker recently heartbeating. A green health dot cannot imply AI or business workflow success.
 - Backup and restore both PostgreSQL and private document storage, preserving hash/link integrity. Run a restore rehearsal into a disposable environment before claiming recoverability.
-- Use persistent volumes and separate API/worker processes. Do not assume filesystem documents are shared across multiple hosts. Object storage is a later explicit migration.
+- Use private filesystem storage for local single-host operation and a shared private S3-compatible bucket for split hosted API/worker processes. Never assume local files are shared across hosts. Object storage still requires provider provisioning, least-privilege review and a joint restore drill.
 - No direct cloud account, SMTP, lender or payment integration in this release; UI/API label all executed financial/message effects as sandbox simulations.
 
 ## 13. Frontend, configuration, CI and deployment integration
@@ -776,7 +776,7 @@ Select one settings naming convention in P0 and update examples, Compose, Docker
 |---|---|
 | Runtime database URL | API/worker only; non-owner app login. SQLAlchemy psycopg URL scheme where required. |
 | Migration/direct database URL | Migration process only; explicit disposable-test override. Never public or passed into normal API environment. |
-| `DOCUMENT_DIR` | Persistent private storage root shared by API/worker on one host. |
+| `DOCUMENT_DIR` | Private local storage root; hosted split services use the shared S3 adapter instead. |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | Server-only, live mode only; no `NEXT_PUBLIC_` prefix. Replace obsolete generic/provider settings in examples deliberately. |
 | `LLM_MODE` | `off`, `recorded`, `live`; test defaults recorded/off, never automatic live fallback. |
 | Session/CSRF/cookie settings | Environment-specific cookie security, allowed origins, TTLs and secrets; no demo production defaults. |
@@ -938,7 +938,7 @@ Preparation-time evidence remains limited to section 1.3: reference check/selfte
 | External effects | Sandbox only. Real email/payment/lender use requires separate provider contracts, authorization and unknown-outcome recovery work. |
 | Authentication | Password sessions/step-up for bounded sandbox release; verified email/MFA/SSO later, honestly reflected in UI. |
 | Engine scope | Supported dated cash-flow/deposit/extension/flat term-loan scenarios. Other SQL/UI financing/policy options remain disabled. |
-| Files | Private single-host persistent storage, text PDF/text/CSV/typed JSON. OCR/DOCX/XLSX/shared object storage deferred. |
+| Files | Private filesystem or shared S3-compatible storage, text PDF/text/CSV/typed JSON. OCR/DOCX/XLSX deferred. |
 | Accounting/portfolio | No asset valuation, turnover-to-cash conversion, inferred FDR return or portfolio optimizer. Dated confirmed proceeds and serialized commitment projection only. |
 
 The coding agent can resolve routine library/file-layout choices within these boundaries. Any change to financial meaning, authorization, supported effect scope or persistence integrity requires an explicit documented decision with tests; do not bury it in a mapper or silently label it an implementation detail.

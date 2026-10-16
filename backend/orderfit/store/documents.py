@@ -6,6 +6,12 @@ import secrets
 from pathlib import Path
 from uuid import UUID
 
+MAX_DOCUMENT_BYTES = 25 * 1024 * 1024
+
+
+class DocumentStorageUnavailable(RuntimeError):
+    """Private document storage could not complete an operation."""
+
 
 class PrivateDocuments:
     def __init__(self, root: str):
@@ -38,7 +44,7 @@ class PrivateDocuments:
                 os.chmod(temporary, 0o600)
                 for chunk in chunks:
                     size += len(chunk)
-                    if size > 26214400:
+                    if size > MAX_DOCUMENT_BYTES:
                         raise ValueError("document exceeds 25 MiB")
                     hasher.update(chunk)
                     stream.write(chunk)
@@ -64,3 +70,47 @@ class PrivateDocuments:
     def read(self, business_id, deal_id, document_id):
         # Service authorizes scope before calling this generated-ID-only interface.
         return self._path(business_id, deal_id, document_id).read_bytes()
+
+    def writable(self):
+        """Probe durable local write/delete access without leaving a file behind."""
+        probe = self.root / (".ready-" + secrets.token_hex(8))
+        created = False
+        removed = False
+        try:
+            with probe.open("xb") as stream:
+                created = True
+                stream.write(b"ready")
+                stream.flush()
+                os.fsync(stream.fileno())
+        except OSError:
+            pass
+        finally:
+            if created:
+                try:
+                    probe.unlink()
+                    removed = True
+                except OSError:
+                    pass
+        return created and removed
+
+
+def create_document_store(config):
+    """Build the configured private store once for the API or worker process."""
+    if config.document_storage_backend == "s3":
+        from orderfit.store.s3_documents import S3PrivateDocuments
+
+        return S3PrivateDocuments(
+            bucket=config.document_s3_bucket,
+            region=config.document_s3_region,
+            endpoint_url=config.document_s3_endpoint_url,
+            access_key_id=(
+                config.document_s3_access_key_id.get_secret_value()
+                if config.document_s3_access_key_id else None
+            ),
+            secret_access_key=(
+                config.document_s3_secret_access_key.get_secret_value()
+                if config.document_s3_secret_access_key else None
+            ),
+            addressing_style=config.document_s3_addressing_style,
+        )
+    return PrivateDocuments(config.document_dir)

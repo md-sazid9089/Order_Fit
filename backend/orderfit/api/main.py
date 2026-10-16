@@ -2,9 +2,7 @@
 
 import os
 import re
-import secrets
 from contextlib import asynccontextmanager
-from pathlib import Path
 from uuid import UUID, uuid4
 
 import anyio
@@ -28,7 +26,7 @@ from orderfit.contracts.configuration import RuntimeConfiguration
 from orderfit.contracts.resources import Readiness
 from orderfit.services.identity import IdentityService
 from orderfit.store.db import Database
-from orderfit.store.documents import PrivateDocuments
+from orderfit.store.documents import DocumentStorageUnavailable, create_document_store
 from orderfit.store.repositories import DealRepository
 from orderfit.workflow.operations import Operations
 
@@ -276,7 +274,7 @@ def create_app(config=None, database=None):
         db = database or Database(resolved.database_url.get_secret_value())
         try:
             db.validate_runtime()
-            app.state.documents = PrivateDocuments(resolved.document_dir)
+            app.state.documents = create_document_store(resolved)
             app.state.database = db
             app.state.identity = IdentityService(db, resolved)
             app.state.operations = Operations(db)
@@ -364,23 +362,13 @@ def api_docs_enabled(config) -> bool:
 
 
 def storage_writable(documents) -> bool:
-    """Create, fsync and remove a uniquely named probe file under the private document root."""
+    """Check that the configured private store can persist and remove bytes."""
     if documents is None:
         return False
-    probe = Path(documents.root) / (".ready-" + secrets.token_hex(8))
     try:
-        with probe.open("xb") as stream:
-            stream.write(b"ready")
-            stream.flush()
-            os.fsync(stream.fileno())
-        return True
-    except OSError:
+        return bool(documents.writable())
+    except (OSError, DocumentStorageUnavailable):
         return False
-    finally:
-        try:
-            probe.unlink(missing_ok=True)
-        except OSError:
-            pass
 
 
 app = create_app()

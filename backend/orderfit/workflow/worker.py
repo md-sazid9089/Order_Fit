@@ -27,7 +27,7 @@ from orderfit.contracts.workflow import (
 from orderfit.engine.models import Result
 from orderfit.services.evaluations import build_evaluation_dto
 from orderfit.store.db import Database
-from orderfit.store.documents import PrivateDocuments
+from orderfit.store.documents import create_document_store
 from orderfit.store.repositories import EvaluationRepository
 from orderfit.workflow.execution import run_execution
 from orderfit.workflow.operations import Operations, operation_dto
@@ -298,7 +298,7 @@ def main():
         raise RuntimeError("Migration credentials must not be injected into worker")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     config = RuntimeConfiguration()
-    documents = PrivateDocuments(config.document_dir)
+    documents = create_document_store(config)
     from pathlib import Path
 
     from orderfit.agent.llm import LLMSettings

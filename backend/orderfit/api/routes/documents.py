@@ -26,6 +26,7 @@ from orderfit.contracts.resources import (
 from orderfit.contracts.workflow import OperationAccepted, Review
 from orderfit.services.documents import UploadRejected, parse, sniff_mime
 from orderfit.store.document_repository import DocumentRepository
+from orderfit.store.documents import DocumentStorageUnavailable
 from orderfit.store.repositories import DealRepository, IdempotencyRepository
 from orderfit.workflow.operations import Admission, Operations
 
@@ -99,9 +100,12 @@ def upload_document(
         if existing:
             return existing
         doc_id = uuid4()
-        key, stored_hash, size = request.app.state.documents.put(
-            business_id, deal_id, doc_id, [data]
-        )
+        try:
+            key, stored_hash, size = request.app.state.documents.put(
+                business_id, deal_id, doc_id, [data]
+            )
+        except DocumentStorageUnavailable:
+            raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE") from None
         if bytes.fromhex(stored_hash) != digest:
             request.app.state.documents.discard(business_id, deal_id, doc_id)
             raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE")
@@ -150,6 +154,8 @@ def download_document(business_id: UUID, deal_id: UUID, document_id: UUID, reque
         content = request.app.state.documents.read(business_id, deal_id, document_id)
     except (FileNotFoundError, ValueError):
         raise ApplicationError(404, "NOT_FOUND") from None
+    except DocumentStorageUnavailable:
+        raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE") from None
     name = _safe_name(meta["original_filename"]).replace('"', "")
     ascii_name = name.encode("ascii", "ignore").decode() or "document"
     return Response(

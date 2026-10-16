@@ -1184,3 +1184,58 @@ limits, stale docs.
   business → deal → operation lock-order check; the subsequent full backend suite passed
   **465 tests**. Web typecheck, lint (0 errors), 75 tests and production build passed; root
   reference fixtures, selftest, Docker Compose image build and `git diff --check` passed.
+
+## Shared document storage and browser E2E remediation (16 October 2026)
+
+- The user selected a shared private S3-compatible bucket for Render API/worker documents. Added
+  a common store factory and S3 adapter with generated UUID key scopes, create-only writes,
+  server-side encryption, SHA-256 validation, bounded reads/writes, safe provider errors, and a
+  readiness canary that verifies put/get/delete. API and worker consume the same interface.
+  Botocore Stubber tests cover this contract without provider network access or private data.
+- Render Blueprint now configures the same S3 bucket/region/credentials/endpoint for API and
+  worker and no longer attaches a single-service disk. The deployment guide covers least
+  privilege, privacy, object/DB transaction orphan risk, and joint restore requirements. Actual
+  bucket provisioning, credential validation and restore remain unverified hosted gates.
+- Compose keeps API, worker and Postgres on an internal network with no outbound route. Only the
+  web service has a host-facing edge network; browser API calls use the built same-origin Next
+  rewrite. API and DB are no longer published to the host. The browser test runner creates a
+  unique disposable Compose project, provisions restricted logins, waits for API readiness via
+  the web proxy, tests signup → baseline → order → evaluation → reload, then removes containers,
+  networks and volumes.
+- Verification in this checkout: full backend suite **471 passed** (one upstream Starlette/httpx
+  deprecation warning); subsequent S3 + readiness focused suite **24 passed**; Ruff clean;
+  contract export checked 108 operations; Alembic head `0014_settlement_retention`; reference
+  fixture check and selftest passed. Browser E2E **1 passed** against built API/web/PG17 images
+  with restricted runtime DB roles. Frontend typecheck and 75 unit tests passed; lint had 0
+  errors with existing warnings; Docker production build passed; `npm audit --omit=dev` found 0
+  vulnerabilities. Full `npm audit` still reports 9 high-severity development dependency paths
+  through the unpatched `braces` 3.x dependency of Next ESLint and the shadcn build-time package;
+  the offered fix requires a breaking package downgrade, so it was not forced.
+- Local E2E and S3 adapter tests do not establish live S3, Render, Neon/PgBouncer, OpenAI,
+  Vercel upload limits or database/object restore acceptance. Object creation plus DB row commit
+  is not atomic; a process crash can leave an orphan, so no automatic object-deletion lifecycle
+  should be enabled until reconciliation and retention policy are defined. P4 independent final
+  acceptance review and live OpenAI evaluation remain open; P8 hosted acceptance remains open.
+
+## Follow-up browser journey (16 October 2026)
+
+- Reproduced and fixed a stale detail-page load when returning from negotiation after the route's
+  `operationId` changed. The resolver now preserves loaded deal/evaluation state for the same
+  deal/business and the loader observes operation-id changes. The added Playwright regression and
+  disposable-stack E2E passed.
+- Manually completed the local disposable-demo journey in the browser: signup, baseline, order,
+  persisted evaluation, negotiation draft/review, password-bound sandbox send approval/execution,
+  synthetic reply evidence, synthetic exact-term acceptance, and password-bound sandbox commit.
+  Both execution runs succeeded (one completed sandbox action each, zero failures); commit projected
+  one event and advanced financial revision 6→7. The UI states receipts remain expected, not
+  received. The reply and acceptance are explicitly marked synthetic and are not customer evidence.
+- Verification in this checkout: full backend suite 473 passed; targeted document extraction
+  fallback/persistence 2 passed; frontend typecheck passed, 75 unit tests passed, lint passed with
+  30 warnings and 0 errors; the rebuilt disposable-stack Playwright E2E passed; `git diff --check`
+  passed. This browser stack uses disposable local PostgreSQL and local document storage, not hosted
+  S3/Neon/Render services.
+- Remaining release gates are unchanged: provision and validate the shared private S3 bucket; live
+  Neon/PgBouncer, Render worker, restore, notification-owner and Vercel upload checks; live OpenAI
+  evaluation (not enabled in this demo). The automated browser spec currently covers the core
+  persisted order/negotiation route flow; the full send/reply/commit journey above is manual and
+  synthetic, not yet encoded as an automated browser scenario.

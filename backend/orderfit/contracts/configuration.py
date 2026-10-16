@@ -15,6 +15,13 @@ class RuntimeConfiguration(BaseSettings):
     account_fingerprint_key: SecretStr = Field(min_length=32)
     account_fingerprint_key_version: Annotated[int, Field(ge=1)]
     document_dir: str
+    document_storage_backend: Literal["filesystem", "s3"] = "filesystem"
+    document_s3_bucket: str | None = None
+    document_s3_region: str | None = None
+    document_s3_endpoint_url: str | None = None
+    document_s3_access_key_id: SecretStr | None = None
+    document_s3_secret_access_key: SecretStr | None = None
+    document_s3_addressing_style: Literal["auto", "path", "virtual"] = "auto"
     llm_mode: Literal["off", "recorded", "live"] = "off"
     openai_api_key: SecretStr | None = None
     openai_model: str | None = None
@@ -55,6 +62,46 @@ class RuntimeConfiguration(BaseSettings):
     def coherent(self):
         if not self.database_url.get_secret_value().startswith("postgresql+psycopg://"):
             raise ValueError("SQLAlchemy psycopg runtime URL required")
+        access_key = (
+            self.document_s3_access_key_id.get_secret_value()
+            if self.document_s3_access_key_id else ""
+        )
+        secret_key = (
+            self.document_s3_secret_access_key.get_secret_value()
+            if self.document_s3_secret_access_key else ""
+        )
+        if bool(access_key) != bool(secret_key):
+            raise ValueError("S3 access key and secret must be configured together")
+        s3_configured = any((
+            self.document_s3_bucket,
+            self.document_s3_region,
+            self.document_s3_endpoint_url,
+            access_key,
+            secret_key,
+        ))
+        if self.document_storage_backend == "s3":
+            if not self.document_s3_bucket or not self.document_s3_bucket.strip():
+                raise ValueError("S3 document storage requires a bucket")
+            if not self.document_s3_region or not self.document_s3_region.strip():
+                raise ValueError("S3 document storage requires a region")
+        elif s3_configured:
+            raise ValueError("S3 settings require DOCUMENT_STORAGE_BACKEND=s3")
+        if self.document_s3_endpoint_url:
+            endpoint = urlsplit(self.document_s3_endpoint_url)
+            if (
+                not endpoint.hostname
+                or endpoint.username
+                or endpoint.password
+                or endpoint.query
+                or endpoint.fragment
+                or endpoint.path not in {"", "/"}
+                or endpoint.scheme not in {"https", "http"}
+                or (
+                    endpoint.scheme == "http"
+                    and endpoint.hostname not in {"localhost", "127.0.0.1"}
+                )
+            ):
+                raise ValueError("S3 endpoint must be HTTPS (HTTP is allowed only on localhost)")
         if self.llm_mode == "live" and (
             not self.openai_api_key
             or not self.openai_api_key.get_secret_value()
