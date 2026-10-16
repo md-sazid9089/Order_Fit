@@ -138,7 +138,8 @@ export default function AdminUsersPage() {
   }, [router, newTenantId]);
 
   useEffect(() => {
-    void loadDatabaseUsers();
+    const initial = setTimeout(() => { void loadDatabaseUsers(); }, 0);
+    return () => clearTimeout(initial);
   }, [loadDatabaseUsers]);
 
   const tenantsList = useMemo(() => {

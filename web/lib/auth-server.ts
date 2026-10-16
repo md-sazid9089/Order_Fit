@@ -1,11 +1,13 @@
 export interface ServerAuthVerification {
   authenticated: boolean;
   isAdmin: boolean;
+  unavailable?: boolean;
   email?: string;
   userId?: string;
 }
 
 const BACKEND_INTERNAL_URL =
+  process.env.API_INTERNAL_URL ||
   process.env.INTERNAL_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   "http://127.0.0.1:8000";
@@ -44,6 +46,7 @@ export async function verifyAdminSessionServer(
       method: "GET",
       headers,
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (res.status === 401) {
@@ -51,7 +54,7 @@ export async function verifyAdminSessionServer(
     }
 
     if (!res.ok) {
-      return { authenticated: false, isAdmin: false };
+      return { authenticated: false, isAdmin: false, unavailable: true };
     }
 
     const session = await res.json();
@@ -63,9 +66,9 @@ export async function verifyAdminSessionServer(
       email: session?.email,
       userId: session?.user_id,
     };
-  } catch (error) {
+  } catch {
     // Fail closed on network or backend unavailability
-    console.error("[auth-server] Verification failure:", error);
-    return { authenticated: false, isAdmin: false };
+    console.error("[auth-server] Session verification unavailable");
+    return { authenticated: false, isAdmin: false, unavailable: true };
   }
 }

@@ -95,7 +95,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E2021] text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-700 selection:text-white font-sans">
+    <div className="min-h-screen bg-[#1E2021] text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-700 selection:text-white font-sans [&_:focus-visible]:outline-solid! [&_:focus-visible]:outline-2! [&_:focus-visible]:outline-white [&_:focus-visible]:outline-offset-2">
       {/* Top Navigation Bar */}
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group outline-none">
@@ -142,7 +142,7 @@ export default function SignUpPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Full Name*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
               />
             </div>
 
@@ -158,7 +158,7 @@ export default function SignUpPage() {
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Business / Company Name*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function SignUpPage() {
                   minLength={12}
                   autoComplete="new-password"
                   placeholder="Password (min. 12 characters)*"
-                  className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-500 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors pr-11"
+                  className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors pr-11"
                 />
                 <button
                   type="button"
@@ -261,7 +261,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Disclaimer */}
-            <div className="pt-2 text-center text-[11px] text-neutral-500 leading-relaxed">
+            <div className="pt-2 text-center text-[11px] text-neutral-400 leading-relaxed">
               Your account uses a password session. Financial assessments use reviewed manual inputs; outgoing actions are sandbox-only.
             </div>
           </form>
@@ -269,7 +269,7 @@ export default function SignUpPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 text-center text-xs text-neutral-500">
+      <footer className="w-full py-6 text-center text-xs text-neutral-400">
         <div className="flex items-center justify-center gap-4">
           <span>OrderFit © 2026</span>
         </div>

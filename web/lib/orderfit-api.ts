@@ -72,7 +72,7 @@ async function write<T>(path: string, method: "POST" | "PATCH", payload: Payload
     const csrf = await request<{ csrf_token: string }>("/auth/csrf");
     const result = await request<T>(path, { method, headers: { ...(payload.json ? { "Content-Type": "application/json" } : {}), "X-CSRF-Token": csrf.csrf_token, "Idempotency-Key": key }, body: payload.body });
     resolved();
-    if (auth && ["/auth/signup", "/auth/signin", "/auth/signout"].includes(path)) clearPendingCommands();
+    if (auth && ["/auth/signup", "/auth/signin", "/auth/signout", "/auth/passkeys/login/verify"].includes(path)) clearPendingCommands();
     return result;
   } catch (error) {
     // An HTTP rejection is known; a lost response may hide a committed command and must retain its key.
