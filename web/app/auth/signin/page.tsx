@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
-import { ApiError, mutate } from "@/lib/orderfit-api";
+import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { safeNext, signInNotice } from "@/lib/session-expiry";
 import { resetSessionState } from "@/lib/session-reset";
+import { setCachedSession } from "@/lib/session-store";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -29,9 +30,9 @@ export default function SignInPage() {
     setError("");
     setBusy(true);
     try {
-      await mutate("/auth/signin", "POST", { email: email.trim().toLowerCase(), password });
-      // A new sign-in must never see cache or pending commands from a previous account.
       resetSessionState(queryClient);
+      const session = await mutate<Session>("/auth/signin", "POST", { email: email.trim().toLowerCase(), password });
+      setCachedSession(session);
       router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/deals");
     } catch (cause) {
       if (cause instanceof ApiError && (cause.code === "INVALID_CREDENTIALS" || cause.status === 401)) {

@@ -44,6 +44,7 @@ app_user = Table(
     Column("full_name", String),
     Column("preferences", JSONB),
     Column("version", Integer),
+    Column("is_platform_admin", Boolean),
 )
 
 membership = Table(

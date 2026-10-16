@@ -9715,6 +9715,11 @@
             "title": "Expires At",
             "type": "string"
           },
+          "is_platform_admin": {
+            "default": false,
+            "title": "Is Platform Admin",
+            "type": "boolean"
+          },
           "memberships": {
             "items": {
               "$ref": "#/components/schemas/MembershipView"
@@ -9735,6 +9740,18 @@
             "minimum": 1,
             "title": "Profile Version",
             "type": "integer"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Token"
           },
           "user_id": {
             "format": "uuid",

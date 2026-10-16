@@ -14,5 +14,18 @@ export function UnavailableNotice({ title, reason, href = "/deals/sources", link
 
 /** Authenticated route wrapper: session guard plus the notice. */
 export function UnavailablePage(props: Parameters<typeof UnavailableNotice>[0]) {
-  return <Suspense fallback={<main className="p-8">Checking your session…</main>}><AuthShell><UnavailableNotice {...props} /></AuthShell></Suspense>;
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f7f6f5] flex items-center justify-center p-8 text-neutral-400">
+          <div className="flex items-center gap-2.5">
+            <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
+            <span className="text-xs font-medium tracking-wide">Loading…</span>
+          </div>
+        </main>
+      }
+    >
+      <AuthShell><UnavailableNotice {...props} /></AuthShell>
+    </Suspense>
+  );
 }

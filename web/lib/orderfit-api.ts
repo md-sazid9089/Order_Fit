@@ -18,14 +18,59 @@ export function isSessionExpired(status: number, code: string): boolean {
   return (status === 401 && code !== "INVALID_CREDENTIALS") || (status === 403 && code === "SESSION_REAUTH_REQUIRED");
 }
 
+const TOKEN_KEY = "orderfit.token";
+let memoryToken: string | null = null;
+
+export function getStoredToken(): string | null {
+  if (memoryToken) return memoryToken;
+  try {
+    const t = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+    if (t) {
+      memoryToken = t;
+      return t;
+    }
+  } catch {
+    // Storage may be disabled or SSR
+  }
+  return null;
+}
+
+export function setStoredToken(token: string | null | undefined) {
+  if (!token) return;
+  memoryToken = token;
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    /* Storage disabled */
+  }
+}
+
+export function clearStoredToken() {
+  memoryToken = null;
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* Storage disabled */
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getStoredToken();
+  const headers: Record<string, string> = { Accept: "application/json", ...(init.headers as Record<string, string>) };
+  if (token && !headers["Authorization"]) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   let response: Response;
-  try { response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
+  try { response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers }); }
   catch (cause) { const name = (cause as { name?: string } | null)?.name; throw name === "AbortError" || name === "TimeoutError" ? cause : new NetworkError(); }
   const body = await response.json().catch(() => ({})) as T & Envelope;
   if (!response.ok) {
     const code = body.error?.code ?? "REQUEST_FAILED";
-    if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    if (isSessionExpired(response.status, code) && typeof window !== "undefined") {
+      clearStoredToken();
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
     throw new ApiError(body.error?.message ?? `Request failed (${response.status})`, code, response.status);
   }
   return body;
@@ -72,7 +117,14 @@ async function write<T>(path: string, method: "POST" | "PATCH", payload: Payload
     const csrf = await request<{ csrf_token: string }>("/auth/csrf");
     const result = await request<T>(path, { method, headers: { ...(payload.json ? { "Content-Type": "application/json" } : {}), "X-CSRF-Token": csrf.csrf_token, "Idempotency-Key": key }, body: payload.body });
     resolved();
-    if (auth && ["/auth/signup", "/auth/signin", "/auth/signout"].includes(path)) clearPendingCommands();
+    if (auth && ["/auth/signup", "/auth/signin"].includes(path)) {
+      const res = result as { token?: string };
+      if (res?.token) setStoredToken(res.token);
+      clearPendingCommands();
+    } else if (auth && path === "/auth/signout") {
+      clearStoredToken();
+      clearPendingCommands();
+    }
     return result;
   } catch (error) {
     // An HTTP rejection is known; a lost response may hide a committed command and must retain its key.

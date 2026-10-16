@@ -118,7 +118,9 @@ def challenge(request: Request, response: Response):
         and request.headers["Origin"] not in service.config.allowed_origins
     ):
         raise ApplicationError(403, "CSRF_REJECTED")
-    csrf, expires_at = service.challenge(request.cookies.get("orderfit_session"), request.cookies.get("orderfit_csrf"))
+    auth = request.headers.get("Authorization")
+    curr_token = auth[7:].strip() if auth and auth.startswith("Bearer ") else request.cookies.get("orderfit_session")
+    csrf, expires_at = service.challenge(curr_token, request.cookies.get("orderfit_csrf"))
     cookies(response, service.config, None, csrf)
     response.headers["Cache-Control"] = "no-store"
     return CSRFChallenge(csrf_token=csrf, expires_at=expires_at)
@@ -126,10 +128,12 @@ def challenge(request: Request, response: Response):
 
 def authenticate(request, response, data):
     service, key, csrf = mutation(request, authenticated=False)
+    auth = request.headers.get("Authorization")
+    curr_token = auth[7:].strip() if auth and auth.startswith("Bearer ") else request.cookies.get("orderfit_session")
     view, token, new_csrf = service.authenticate(
         data,
         key,
-        request.cookies.get("orderfit_session"),
+        curr_token,
         csrf,
         request.client.host if request.client else "unknown",
     )
