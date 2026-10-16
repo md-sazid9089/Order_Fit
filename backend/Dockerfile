@@ -8,6 +8,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
+# tini runs as PID 1: it forwards SIGTERM/SIGINT to the child and reaps zombies. Without it
+# the kernel ignores SIGTERM for a PID 1 that installs no handler. The worker handles SIGTERM
+# by finishing its in-flight job, then closing the pool and exiting 0.
+RUN apt-get update  && apt-get install -y --no-install-recommends tini  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Dependencies first, in their own layer: source edits don't reinstall them.
@@ -27,9 +32,17 @@ RUN useradd --system --uid 10001 --no-create-home app \
  && chown -R app:app /app/var
 USER app
 
+# Local default 8000; Render injects PORT (default 10000) and requires binding 0.0.0.0:$PORT.
+ENV PORT=8000
 EXPOSE 8000
 
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+# Only meaningful for the API process; Render uses healthCheckPath and the worker/migration
+# services override it or have no HTTP port. /ready (not /health) checks the restricted DB
+# login, schema revision and writable document storage; it returns 503 otherwise.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3   CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/ready' % os.environ.get('PORT','8000'), timeout=4)"
 
-CMD ["uvicorn", "orderfit.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+ENTRYPOINT ["tini", "--"]
+# orderfit.api.serve reads PORT and TRUSTED_PROXY_IPS (JSON list of proxy IPs/CIDRs; default
+# empty = X-Forwarded-* ignored, never uvicorn's implicit loopback trust). Exec form keeps the
+# Python process as tini's child so it receives SIGTERM; uvicorn drains requests for up to 20 s.
+CMD ["python", "-m", "orderfit.api.serve"]

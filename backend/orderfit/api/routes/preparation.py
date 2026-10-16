@@ -288,6 +288,11 @@ def reply_review(
     operation_id="acceptance_create",
 )
 def acceptance_create(business_id: UUID, deal_id: UUID, data: RecordAcceptance, request: Request):
+    # Decision: "owner-recorded" (docs/contracts/p5-preparation.md) means a business member
+    # records an attestation; it is not independent counterparty authentication. The plan's
+    # permission matrix reserves approve/send/commit for risk_officer/owner, and acceptance
+    # evidence is preparation work, so prepare-permission roles may record it. It never
+    # substitutes for the separate P6 commitment approval.
     return write(
         request, business_id, data, lambda c, s: repo.record_acceptance(c, s, deal_id, data)
     )

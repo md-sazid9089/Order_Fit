@@ -1,6 +1,7 @@
 """Pure proposal transforms and closed-grammar language. No persistence or effects."""
 
 import re
+import unicodedata
 from uuid import uuid4
 
 from pydantic import TypeAdapter
@@ -159,9 +160,61 @@ def explanation(evaluation, option):
     ]
 
 
+# Characters that survive NFKC but look like Latin letters (common homoglyph spoofing).
+_CONFUSABLES = str.maketrans(
+    {
+        "а": "a", "е": "e", "о": "o", "р": "p", "с": "c",
+        "х": "x", "у": "y", "і": "i", "ј": "j", "һ": "h",
+        "ѕ": "s", "ԁ": "d", "ɡ": "g", "ο": "o", "α": "a",
+        "ι": "i", "ν": "v", "ı": "i", "Α": "a", "Β": "b",
+        "Ε": "e", "Ι": "i", "Κ": "k", "Μ": "m", "Ν": "n",
+        "Ο": "o", "Ρ": "p", "Τ": "t", "Χ": "x", "А": "a",
+        "В": "b", "Е": "e", "К": "k", "М": "m", "Н": "h",
+        "О": "o", "Р": "p", "С": "c", "Т": "t", "Х": "x",
+    }
+)
+_BANK_TERMS = re.compile(
+    r"(?<![a-z0-9])(?:"
+    r"bank|banking|account|accounts|acct|a\s*/\s*c|beneficiary|routing|iban|swift|bic|bsb|"
+    r"sort\s*code|ifsc|ach|aba|wire|wiring|remit|remits|remitted|remittance|wallet|"
+    r"bkash|nagad|rocket|payee|payment\s+(?:details|instructions?|info|information)|"
+    r"pay\s+(?:to|into)|transfer\s+(?:to|into)|new\s+(?:details|payee|bank|account)"
+    r")(?![a-z0-9])"
+)
+_SPACED_LETTERS = re.compile(r"(?<![a-z0-9])(?:[a-z][\s.\-_*]+){2,}[a-z](?![a-z0-9])")
+
+
+def _normalize_for_signals(body: str) -> str:
+    text = unicodedata.normalize("NFKC", body)
+    text = "".join(ch for ch in text if unicodedata.category(ch) not in {"Cf", "Cc"} or ch in "\n\t")
+    return re.sub(r"\s+", " ", text.translate(_CONFUSABLES).casefold())
+
+
 def bank_change(body):
-    # Conservative signal, not verification or an automatic account update.
-    return bool(re.search(r"\b(bank|account|beneficiary|routing|iban|swift)\b", body, re.I))
+    """Fail-closed signal, not verification or an automatic account update.
+
+    Matches payment-destination vocabulary after Unicode normalization (NFKC, zero-width
+    removal, common Cyrillic/Greek homoglyph folding, case/whitespace folding) and also
+    after rejoining letters spread out as "b a n k" or "b.a.n.k". False positives only
+    create a human-review blocker.
+    """
+    text = _normalize_for_signals(body)
+    rejoined = _SPACED_LETTERS.sub(lambda m: re.sub(r"[\s.\-_*]+", "", m.group()), text)
+    return bool(_BANK_TERMS.search(text) or _BANK_TERMS.search(rejoined))
+
+
+_NEGATION = re.compile(
+    r"\b(?:not|never|cannot|can't|cant|won't|wont|don't|dont|doesn't|doesnt|didn't|unable|"
+    r"decline|declines|declined|reject|rejects|rejected|refuse|refuses|refused|no longer|"
+    r"without|neither|nor|if|unless|provided|subject to|would|might|may|could)\b|n't\b",
+    re.I,
+)
+
+
+def _qualified(body, match):
+    """True when the sentence fragment before the match negates or conditions it."""
+    start = max(body.rfind(c, 0, match.start()) for c in ".\n!?")
+    return bool(_NEGATION.search(body[start + 1 : match.start()]))
 
 
 def reply_candidates(body):
@@ -182,6 +235,8 @@ def reply_candidates(body):
     ]
     for pattern, field in patterns:
         for match in re.finditer(pattern, body, re.I):
+            if field == "acceptance" and _qualified(body, match):
+                continue  # negated/conditional wording is never an acceptance candidate
             value = "accepted" if field == "acceptance" else match[1]
             if field == "deposit_pct" and int(value) > 100:
                 continue

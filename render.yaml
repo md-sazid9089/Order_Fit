@@ -1,0 +1,111 @@
+# Render Blueprint for the OrderFit backend. Web (Next.js) is on Vercel; Postgres is on Neon.
+# Runbook: docs/deployment/render.md and docs/deployment/neon.md.
+#
+# Names only: no secret value is stored here. `sync: false` makes Render prompt for the value
+# in the dashboard on first Blueprint sync. Values are never committed.
+#
+# Role/URL mapping (all Neon URLs MUST use the scheme `postgresql+psycopg://` and `sslmode=require`):
+#   orderfit-api      DATABASE_URL         -> restricted login `orderfit_runtime`       (member of orderfit_app),    Neon POOLED host (-pooler)
+#   orderfit-worker   DATABASE_URL         -> restricted login `orderfit_worker_login`  (member of orderfit_worker), Neon POOLED host (-pooler)
+#   orderfit-migrate  DATABASE_URL_DIRECT  -> migration owner login,                                              Neon DIRECT (unpooled) host
+# The API and worker refuse to start if DATABASE_URL_DIRECT is present in their environment
+# (backend/orderfit/api/main.py:73, workflow/worker.py:214), so the migrator credential lives only
+# on the one-shot `orderfit-migrate` service, never on a runtime service.
+
+services:
+  # ---------------------------------------------------------------- API
+  - type: web
+    name: orderfit-api
+    runtime: docker
+    # Pick the same region as the Neon project to keep DB round trips short.
+    # region: oregon
+    plan: starter            # `free` sleeps after 15 min idle and has an ephemeral disk: see render.md
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # /ready: restricted DB login + current schema + writable document storage (503 otherwise).
+    # /health remains liveness only.
+    healthCheckPath: /ready
+    autoDeploy: false        # deploy deliberately, after the migration job has run
+    envVars:
+      - fromGroup: orderfit-shared
+      # PORT is injected by Render (default 10000); the image binds 0.0.0.0:$PORT.
+      - key: DATABASE_URL    # pooled Neon URL, restricted API login
+        sync: false
+      - key: ALLOWED_ORIGINS # JSON list of exact browser origins, e.g. ["https://<app>.vercel.app"]
+        sync: false
+      - key: DOCUMENT_DIR
+        value: /app/var/documents
+      # Explicit proxy trust (JSON list of proxy IPs/CIDRs). [] = ignore X-Forwarded-* headers.
+      # Widen only if the API is reachable exclusively through the listed proxies.
+      - key: TRUSTED_PROXY_IPS
+        value: "[]"
+      # Auth/upload limits (defaults shown; see docs/deployment/render.md).
+      - key: AUTH_ACCOUNT_LIMIT
+        value: "15"
+      - key: AUTH_SOURCE_LIMIT
+        value: "300"
+      - key: UPLOAD_CONCURRENCY
+        value: "4"
+      - key: UPLOAD_SOURCE_CONCURRENCY
+        value: "2"
+      # Optional, only when LLM_MODE=live (set in the dashboard, never here): OPENAI_API_KEY, OPENAI_MODEL.
+    # Uploaded documents are private files on local disk. A persistent disk needs a paid plan and
+    # cannot be shared with the worker. See docs/deployment/render.md section "Document storage".
+    disk:
+      name: orderfit-documents
+      mountPath: /app/var
+      sizeGB: 1
+
+  # ---------------------------------------------------------------- Worker
+  - type: worker
+    name: orderfit-worker
+    runtime: docker
+    plan: starter            # no free worker tier exists; keep it always-on (60 s lease, 15 s heartbeat)
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Not `python -m orderfit.runtime worker`: that is a local launcher that reads a .env file and
+    # spawns a child (runtime.py). On Render the platform injects the environment, so run the
+    # worker module directly (workflow/worker.py main).
+    dockerCommand: python -m orderfit.workflow.worker
+    autoDeploy: false
+    envVars:
+      - fromGroup: orderfit-shared
+      - key: DATABASE_URL    # pooled Neon URL, restricted WORKER login (not the API login)
+        sync: false
+      - key: ALLOWED_ORIGINS # required by RuntimeConfiguration validation; same value as the API
+        sync: false
+      # Separate from the API: a Render disk attaches to one service only, so the worker cannot read
+      # API uploads. Document-reading jobs (extract, csv_preview) need shared storage first.
+      - key: DOCUMENT_DIR
+        value: /app/var/documents
+
+  # ---------------------------------------------------------------- Migrations (manual run)
+  # One-shot, migrator-only. Trigger "Run job" in the dashboard before each backend deploy.
+  # Chosen over preDeployCommand because a preDeployCommand runs with the web service's own
+  # environment, which would put the owner credential into the API process environment.
+  - type: cron
+    name: orderfit-migrate
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: alembic upgrade head
+    schedule: "0 0 29 2 *"   # placeholder schedule (29 February only): this job is run MANUALLY via "Trigger Run" before each deploy; `alembic upgrade head` is idempotent.
+    envVars:
+      - key: DATABASE_URL_DIRECT   # Neon DIRECT (unpooled) host, migration owner login
+        sync: false
+
+envVarGroups:
+  - name: orderfit-shared
+    envVars:
+      # Generated once by Render (256-bit random). Distinct values are required (configuration.py).
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ACCOUNT_FINGERPRINT_KEY
+        generateValue: true
+      - key: ACCOUNT_FINGERPRINT_KEY_VERSION
+        value: "1"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: LLM_MODE
+        value: "off"

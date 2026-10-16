@@ -3,11 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { mutate } from "@/lib/orderfit-api";
+import { resetSessionState } from "@/lib/session-reset";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("BDT");
   const [timezone, setTimezone] = useState("Asia/Dhaka");
@@ -20,7 +23,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setIsLoading(true); setError("");
-    try { await mutate("/auth/signup", "POST", { full_name: fullName, business_name: businessName, email, password, currency, timezone }); router.replace("/deals"); }
+    try { await mutate("/auth/signup", "POST", { full_name: fullName, business_name: businessName, email, password, currency, timezone }); resetSessionState(queryClient); router.replace("/deals"); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create the account."); }
     finally { setIsLoading(false); }
   };

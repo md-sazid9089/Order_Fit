@@ -44,14 +44,14 @@ export function ResultsSection() {
         {/* Settle Section 4 Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
           <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
-            Let the results speak for themselves.
+            Illustrative examples of what to look for.
           </h2>
           <div>
             <a
-              href="#case-studies"
+              href="#simulator"
               className="font-sans text-xs sm:text-sm font-semibold text-[#1E2021] hover:opacity-75 uppercase tracking-wider inline-flex items-center gap-1.5"
             >
-              <span>See all customer stories</span>
+              <span>Illustrative examples, not customer testimonials</span>
               <ArrowRight className="size-3.5" />
             </a>
           </div>
@@ -68,7 +68,7 @@ export function ResultsSection() {
               <div className="relative h-44 w-full overflow-hidden border-b border-[#ECEAE4] bg-[#ECEAE4]">
                 <img
                   src={res.image}
-                  alt={res.company}
+                  alt=""
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="eager"
                   onError={(e) => {
@@ -83,7 +83,7 @@ export function ResultsSection() {
                 </div>
                 <div className="absolute bottom-3 left-4 right-4 text-white">
                   <div className="text-2xl font-bold font-heading leading-none tracking-tight">
-                    {res.metric}
+                    {res.metric} <span className="text-[10px] font-medium">(example)</span>
                   </div>
                   <div className="text-[11px] font-medium text-white/90 uppercase tracking-wider font-sans mt-0.5">
                     {res.label}
@@ -93,6 +93,7 @@ export function ResultsSection() {
 
               {/* Quote Body */}
               <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-[#526975]">Illustrative example (not a customer testimonial)</p>
                 <blockquote className="text-sm sm:text-base text-[#1A1A1A] leading-relaxed mb-6 font-sans italic">
                   &ldquo;{res.quote}&rdquo;
                 </blockquote>
@@ -110,9 +111,9 @@ export function ResultsSection() {
                     </svg>
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-[#1A1A1A] font-sans">{res.author}</div>
+                    <div className="font-semibold text-sm text-[#1A1A1A] font-sans">Fictional persona</div>
                     <div className="text-xs text-[#526975] font-sans">
-                      {res.role} · {res.company}
+                      Invented scenario, no real customer
                     </div>
                   </div>
                 </div>

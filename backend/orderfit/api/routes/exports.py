@@ -6,11 +6,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
+from orderfit.api.commands import command, read
 from orderfit.api.deps import identity_service, mutation, session_token
-from orderfit.contracts.primitives import BigId
+from orderfit.contracts.primitives import BigId, EmptyRequest, Page
 from orderfit.contracts.protocol import IdempotencyMaterial, canonical_hash
-from orderfit.contracts.resources import AuditExport, ExportView
-from orderfit.services.exports import audit_export, create_decision_export, decision_download
+from orderfit.contracts.resources import AuditExport, AuditRow, ExportView
+from orderfit.services.exports import (
+    audit_export,
+    audit_page,
+    create_cash_export,
+    create_decision_export,
+    export_download,
+)
 from orderfit.store.repositories import IdempotencyRepository
 
 router = APIRouter(prefix="/api/v1/businesses/{business_id}")
@@ -29,9 +36,10 @@ def get_audit_export(business_id: UUID, request: Request,
 @router.post("/deals/{deal_id}/decision-export", response_model=ExportView,
              status_code=201, operation_id="decision_export")
 def export_decision(business_id: UUID, deal_id: UUID, request: Request,
-                    payload: Annotated[None, Body()] = None):
+                    payload: Annotated[EmptyRequest | None, Body()] = None):
     service, key, _ = mutation(request)
     with service.database.tenant(session_token(request), business_id, "audit") as (c, scope):
+        # Absent, null and {} are one command: the fingerprint uses one fixed body hash.
         fingerprint = bytes.fromhex(canonical_hash(IdempotencyMaterial(
             schema_version="idempotency.v1", business_id=business_id, actor_id=scope.user_id,
             method="POST", path=str(request.url.path), body_hash=hashlib.sha256(b"null").hexdigest())))
@@ -44,10 +52,24 @@ def export_decision(business_id: UUID, deal_id: UUID, request: Request,
 
 
 @router.get("/exports/{export_id}/download", operation_id="export_download")
-def download_decision(business_id: UUID, export_id: UUID, request: Request):
-    service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "audit") as (c, _):
-        content = decision_download(c, business_id, export_id)
-    return Response(content=content, media_type="application/json", headers={
-        "Content-Disposition": f'attachment; filename="orderfit-decision-{export_id}.json"',
+def download_export(business_id: UUID, export_id: UUID, request: Request):
+    """Tenant read for cash CSV; decision exports additionally require audit permission."""
+    content, media_type, filename = read(request, business_id, "read",
+                                         lambda c, s, _: export_download(c, s, export_id))
+    return Response(content=content, media_type=media_type, headers={
+        "Content-Disposition": f'attachment; filename="{filename}"',
         "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@router.get("/audit", response_model=Page[AuditRow], operation_id="audit_list")
+def audit_list(business_id: UUID, request: Request, cursor: str | None = Query(None, max_length=2048),
+               limit: int = Query(50, ge=1, le=100)):
+    return read(request, business_id, "audit",
+                lambda c, s, svc: audit_page(c, s, svc.cursors, cursor, limit))
+
+
+@router.post("/cash-events/export", response_model=ExportView, status_code=201, operation_id="cash_export")
+def cash_export(business_id: UUID, request: Request,
+                payload: Annotated[EmptyRequest | None, Body()] = None):
+    return command(request, business_id, None, "read", lambda c, s, _: create_cash_export(c, s),
+                   body_hash=hashlib.sha256(b"null").hexdigest())

@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { RefreshCw, X, ChevronUp, ChevronDown } from "lucide-react";
+import { HEALTH_TEXT, healthState, parseProbe, type Probe } from "@/lib/health-model";
 
 export function ConnectionIndicator() {
-  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [probe, setProbe] = useState<Probe | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [lastChecked, setLastChecked] = useState<string>("");
   const [isMinimized, setIsMinimized] = useState(false);
@@ -14,10 +15,9 @@ export function ConnectionIndicator() {
     try {
       // Same-origin probe (app/api/health) so it works behind the Vercel proxy without CORS.
       const res = await fetch("/api/health", { cache: "no-store", signal: AbortSignal.timeout(5000) });
-      const body = (await res.json().catch(() => ({}))) as { connected?: boolean };
-      setIsConnected(res.ok && body.connected === true);
+      setProbe(parseProbe(res.status, await res.json().catch(() => null)));
     } catch {
-      setIsConnected(false);
+      setProbe({ connected: false, ready: false });
     } finally {
       setIsChecking(false);
       setLastChecked(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -36,6 +36,13 @@ export function ConnectionIndicator() {
     return () => { clearTimeout(initial); clearInterval(interval); };
   }, [checkConnection]);
 
+  // Liveness (the process answers) and readiness (database, schema, storage) are different facts. Only a passing
+  // readiness probe is shown as healthy.
+  const state = healthState(probe);
+  const isConnected: boolean | null = probe === null ? null : state === "ready";
+  const caution = state === "not_ready" || state === "readiness_unknown";
+  const { label, detail } = HEALTH_TEXT[state];
+
   if (!isVisible) {
     return (
       <button
@@ -45,7 +52,7 @@ export function ConnectionIndicator() {
         title="Show Server Connection Status"
       >
         <span className={`size-2.5 rounded-full block ${
-          isConnected ? "bg-[#059669] animate-pulse" : "bg-[#DC2626]"
+          isConnected ? "bg-[#059669] animate-pulse" : caution ? "bg-[#D97706]" : "bg-[#DC2626]"
         }`} />
       </button>
     );
@@ -59,6 +66,8 @@ export function ConnectionIndicator() {
       <div className={`rounded-2xl border transition-all duration-200 shadow-xl backdrop-blur-md ${
         isConnected
           ? "bg-white/95 border-[#B5F2C6] text-[#004D3B] ring-1 ring-[#059669]/20"
+          : caution
+          ? "bg-white/95 border-[#FDE68A] text-[#92400E] ring-1 ring-[#D97706]/20"
           : isConnected === false
           ? "bg-white/95 border-[#FECACA] text-[#991B1B] ring-1 ring-[#DC2626]/20"
           : "bg-white/95 border-[#E8E6E1] text-[#525252]"
@@ -75,6 +84,8 @@ export function ConnectionIndicator() {
               <span className={`relative inline-flex rounded-full size-2.5 ${
                 isConnected
                   ? "bg-[#059669]"
+                  : caution
+                  ? "bg-[#D97706]"
                   : isConnected === false
                   ? "bg-[#DC2626]"
                   : "bg-[#D97706] animate-pulse"
@@ -84,11 +95,7 @@ export function ConnectionIndicator() {
             {/* Status Label */}
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="font-bold text-xs tracking-tight truncate">
-                {isConnected
-                  ? "API Reachable"
-                  : isConnected === false
-                  ? "API Unreachable"
-                  : "Checking API..."}
+                {label}
               </span>
 
               {isChecking && (
@@ -141,8 +148,8 @@ export function ConnectionIndicator() {
 
             <div className="flex items-center justify-between">
               <span className="text-[#737373]">Status:</span>
-              <span className={`font-semibold ${isConnected ? "text-[#004D3B]" : "text-[#991B1B]"}`}>
-                {isConnected ? "Health endpoint reachable" : "No Response (Offline)"}
+              <span className={`text-right font-semibold ${isConnected ? "text-[#004D3B]" : caution ? "text-[#92400E]" : "text-[#991B1B]"}`}>
+                {detail}
               </span>
             </div>
 

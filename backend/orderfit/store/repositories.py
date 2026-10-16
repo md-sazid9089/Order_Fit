@@ -156,6 +156,39 @@ def _check_mutation_versions(c, scope, row, command):
         raise ApplicationError(409, "STALE_INPUT_VERSION")
 
 
+def _bank_change_resolution(c, scope, deal_id, flag, req):
+    """P7 evidence path for a P5 bank-change hold (guarded again by SQL p6_bank_blocker).
+
+    Requires a current T3 actor, the exact bank-change reply on this deal, a verified account
+    of that reply's party and written evidence. No other route can clear this hold.
+    """
+    from orderfit.contracts.protocol import PERMISSIONS
+    from orderfit.store import account_repository
+
+    resolution = req.bank_verification
+    if resolution is None:
+        raise ApplicationError(409, "BANK_VERIFICATION_REQUIRED")
+    if scope.role not in PERMISSIONS["execute"]:
+        raise ApplicationError(403, "FORBIDDEN")
+    reply = account_repository.bank_change_reply(c, scope.business_id, deal_id, resolution.reply_id)
+    account = account_repository.account_by_id(c, scope.business_id, resolution.account_id)
+    if reply is None or account is None:
+        raise ApplicationError(404, "NOT_FOUND")
+    if not reply["bank_change"]:
+        raise ApplicationError(409, "NOT_A_BANK_CHANGE_REPLY")
+    if str(account["payee_id"]) != reply["party_id"]:
+        raise ApplicationError(409, "ACCOUNT_PARTY_MISMATCH")
+    if account["status"] != "verified":
+        raise ApplicationError(409, "ACCOUNT_NOT_VERIFIED")
+    resolution_id = account_repository.insert_bank_resolution(
+        c, scope.business_id, deal_id, flag["id"], resolution.reply_id, resolution.account_id,
+        scope.user_id, resolution.written_evidence, bytes(account["account_fingerprint"]),
+    )
+    c.execute(text("SELECT set_config('app.bank_resolution_id',:r,true)"), {"r": str(resolution_id)})
+    return {"bank_resolution_id": str(resolution_id), "reply_id": str(resolution.reply_id),
+            "account_id": str(resolution.account_id)}
+
+
 class IdentityRepository:
     @staticmethod
     def lookup(c, email):
@@ -1119,7 +1152,13 @@ class CashEventRepository:
         ).scalar_one()
         query = select(cash_event).where(cash_event.c.business_id == business_id)
         if deal_id is not None:
-            query = query.where(cash_event.c.deal_id == deal_id)
+            # A committed order's projected baseline events are not editable order costs.
+            query = query.where(cash_event.c.deal_id == deal_id).where(
+                text(
+                    "NOT EXISTS(SELECT FROM commitment_projection cp WHERE cp.business_id=cash_event.business_id "
+                    "AND cp.cash_event_id=cash_event.id)"
+                )
+            )
         else:
             query = query.where(cash_event.c.deal_id.is_(None))
         rows = (
@@ -1295,7 +1334,9 @@ class CashEventRepository:
         events = (
             c.execute(
                 text(
-                    "SELECT event_date, amount_minor, direction FROM cash_event WHERE business_id=:b AND deal_id IS NULL AND voided_at IS NULL ORDER BY event_date ASC,id ASC"
+                    "SELECT event_date, amount_minor, direction FROM cash_event ce WHERE business_id=:b AND voided_at IS NULL "
+                    "AND (deal_id IS NULL OR EXISTS(SELECT FROM commitment_projection cp WHERE cp.business_id=ce.business_id AND cp.cash_event_id=ce.id)) "
+                    "ORDER BY event_date ASC,id ASC"
                 ),
                 {"b": business_id},
             )
@@ -1362,7 +1403,8 @@ def _row_to_deal(c, r, fin_rev: int) -> DealView:
     flags = (
         c.execute(
             text(
-                "SELECT code, field, message, blocking FROM deal_flag WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL"
+                "SELECT id, code, field, message, blocking FROM deal_flag "
+                "WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL ORDER BY id"
             ),
             {"b": business_id, "d": deal_id},
         )
@@ -1376,6 +1418,7 @@ def _row_to_deal(c, r, fin_rev: int) -> DealView:
             message=f["message"],
             blocking=f["blocking"],
             resolution="correct_input",
+            flag_id=str(f["id"]),
         )
         for f in flags
     ]
@@ -1410,7 +1453,9 @@ def _row_to_deal(c, r, fin_rev: int) -> DealView:
     cost_rows = (
         c.execute(
             text(
-                "SELECT * FROM cash_event WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL ORDER BY event_date ASC,id ASC"
+                "SELECT * FROM cash_event ce WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL "
+                "AND NOT EXISTS(SELECT FROM commitment_projection cp WHERE cp.business_id=ce.business_id AND cp.cash_event_id=ce.id) "
+                "ORDER BY event_date ASC,id ASC"
             ),
             {"b": business_id, "d": deal_id},
         )
@@ -1463,6 +1508,7 @@ def _row_to_deal(c, r, fin_rev: int) -> DealView:
         order_value_minor=str(r["order_value_minor"]) if r["order_value_minor"] is not None else None,
         inputs=inputs,
         live_evaluation_id=live_id,
+        negotiation_round=r["negotiation_round"],
         is_stale=is_stale,
         findings=findings,
         allowed_actions=actions,
@@ -1818,8 +1864,11 @@ class DealRepository:
         )
         if not flag:
             raise ApplicationError(404, "NOT_FOUND")
+        audit_extra = {}
         if flag["code"] == "P5-BANK-CHANGE":
-            raise ApplicationError(409, "BANK_VERIFICATION_REQUIRED")
+            audit_extra = _bank_change_resolution(c, scope, deal_id, flag, req)
+        elif req.bank_verification is not None:
+            raise ApplicationError(422, "BANK_VERIFICATION_NOT_APPLICABLE")
         c.execute(
             text(
                 "UPDATE deal_flag SET resolved_at=clock_timestamp(), resolved_by=:u, resolution_note=:note WHERE id=:id AND business_id=:b AND deal_id=:d"
@@ -1827,7 +1876,8 @@ class DealRepository:
             {"id": flag_id, "u": scope.user_id, "note": req.reason, "b": scope.business_id, "d": deal_id},
         )
         c.execute(text("UPDATE deal SET version=version WHERE business_id=:b AND id=:id"), {"b": scope.business_id, "id": deal_id})
-        append_audit(c, scope, "resolve_flag", deal_id=deal_id, payload={"flag_id": flag_id, "reason": req.reason})
+        append_audit(c, scope, "resolve_flag", deal_id=deal_id,
+                     payload={"flag_id": flag_id, "reason": req.reason} | audit_extra)
         updated = c.execute(select(deal).where(deal.c.id == deal_id)).mappings().one()
         return _row_to_deal(c, updated, b)
 
@@ -1883,7 +1933,7 @@ class DealRepository:
             raise ApplicationError(404, "CONSTRAINTS_NOT_FOUND")
         flags = (
             c.execute(
-                text("SELECT * FROM deal_flag WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL"),
+                text("SELECT * FROM deal_flag WHERE business_id=:b AND deal_id=:d AND resolved_at IS NULL ORDER BY id"),
                 {"b": business_id, "d": deal_id},
             )
             .mappings()
@@ -1898,6 +1948,7 @@ class DealRepository:
                     message=f["message"],
                     blocking=f["blocking"],
                     resolution="correct_input",
+                    flag_id=str(f["id"]),
                 )
             )
         # Check required fields
@@ -1969,9 +2020,15 @@ class DealRepository:
         be_rows = (
             c.execute(
                 text(
-                    "SELECT * FROM cash_event WHERE business_id=:b AND deal_id IS NULL AND voided_at IS NULL ORDER BY event_date ASC,id ASC"
+                    # Committed orders' projected events join the baseline with their
+                    # immutable source-action attribution; their original cost rows do not.
+                    "SELECT ce.*,cp.action_id AS projection_action_id FROM cash_event ce "
+                    "LEFT JOIN commitment_projection cp ON cp.business_id=ce.business_id AND cp.cash_event_id=ce.id "
+                    "WHERE ce.business_id=:b AND ce.voided_at IS NULL "
+                    "AND (ce.deal_id IS NULL OR (cp.action_id IS NOT NULL AND ce.deal_id<>:d)) "
+                    "ORDER BY ce.event_date ASC,ce.id ASC"
                 ),
-                {"b": business_id},
+                {"b": business_id, "d": deal_id},
             )
             .mappings()
             .all()
@@ -1989,7 +2046,7 @@ class DealRepository:
                 certainty=e["certainty"],
                 original_obligation_id=e["original_obligation_id"] or f"obl-{e['id']}",
                 invoice_ref=e["invoice_ref"],
-                projection_action_id=None,
+                projection_action_id=e["projection_action_id"],
                 evidence=[Evidence.model_validate(v) for v in e["evidence"]] if e["evidence"] else [],
             )
             for e in be_rows
@@ -1998,7 +2055,9 @@ class DealRepository:
         cost_rows = (
             c.execute(
                 text(
-                    "SELECT * FROM cash_event WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL ORDER BY event_date ASC,id ASC"
+                    "SELECT * FROM cash_event ce WHERE business_id=:b AND deal_id=:d AND voided_at IS NULL "
+                    "AND NOT EXISTS(SELECT FROM commitment_projection cp WHERE cp.business_id=ce.business_id AND cp.cash_event_id=ce.id) "
+                    "ORDER BY event_date ASC,id ASC"
                 ),
                 {"b": business_id, "d": deal_id},
             )
@@ -2417,7 +2476,9 @@ class EvaluationRepository:
                     recommended_delay_tolerance_days, snapshot_id, input_version,
                     financial_revision, tolerance_status, created_at
                 ) VALUES (
-                    :id, :b, :d, 0, :eversion, :ihash,
+                    :id, :b, :d,
+                    (SELECT negotiation_round FROM deal WHERE business_id=:b AND id=:d),
+                    :eversion, :ihash,
                     CAST(:inputs AS jsonb), CAST(:output AS jsonb), :verdict, :vcode,
                     :first_breach, :lowest_bal, :rec_key, :rec_delay,
                     :snap_id, :iv, :fr, :tol_status, clock_timestamp()
@@ -2481,6 +2542,26 @@ class EvaluationRepository:
                     "s": scenario, "c": series.currency, "x": series.exponent,
                     "p": json.dumps([point.model_dump(mode="json") for point in series.points]),
                 })
+        # Immutable engine-dated order/financing events per option: the only source a commit
+        # manifest may use for receipts, surcharge-bearing costs and loan fee/interest timing.
+        from orderfit.agent.nodes.compute import dated_commitment_events
+
+        for opt in options.values():
+            if opt.parameters.kind == "decline":
+                continue
+            events = dated_commitment_events(computation.result, opt.option_key)
+            c.execute(
+                text(
+                    "INSERT INTO evaluation_projection(business_id,evaluation_id,option_key,events) "
+                    "VALUES(:b,:e,:o,CAST(:events AS jsonb))"
+                ),
+                {
+                    "b": snapshot.business_id,
+                    "e": eval_dto.id,
+                    "o": opt.option_key,
+                    "events": json.dumps([e.model_dump(mode="json") for e in events]),
+                },
+            )
         # 4. Advance deal status to awaiting_approval
         c.execute(
             text("UPDATE deal SET status='awaiting_approval' WHERE id=:d AND business_id=:b"),

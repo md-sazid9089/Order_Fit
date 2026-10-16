@@ -205,7 +205,8 @@ def test_exact_draft_revisions_review_acceptance_and_guards(case):
         ),
         409,
     )
-    assert s["client"].post(s["base"] + "/bundles/" + str(uuid4()) + "/execute").status_code == 404
+    # P6-B mounts execution; an untyped request never reaches a sandbox effect.
+    assert s["client"].post(s["base"] + "/bundles/" + str(uuid4()) + "/execute").status_code == 422
 
 
 def test_reply_review_reassessment_and_durable_bank_blocker(case, postgres):

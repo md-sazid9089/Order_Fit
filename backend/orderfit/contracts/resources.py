@@ -141,8 +141,12 @@ class InvitationView(DTO):
     id: UUID
     email: Email
     role: Role
+    version: Version
     expires_at: UTCInstant
+    accepted_at: UTCInstant | None
     revoked_at: UTCInstant | None
+    # One-time in-app link carrying the token in the URL fragment; returned only by the
+    # original create response (never stored, never replayed).
     invitation_url: str | None
 
 
@@ -461,6 +465,8 @@ class DealView(DTO):
     order_value_minor: PositiveMoney | None
     inputs: DraftInputs
     live_evaluation_id: UUID | None
+    # Completed outbound negotiation rounds (workflow state, not a financial input).
+    negotiation_round: Annotated[int, Field(strict=True, ge=0, le=3)] = 0
     is_stale: StrictBool
     findings: list[Finding]
     allowed_actions: list[Text]
@@ -517,9 +523,19 @@ class FieldResolution(ExpectedVersions):
     evidence: Evidence
 
 
+class BankVerificationResolution(DTO):
+    """Clears a P5-BANK-CHANGE hold only with the exact reply and a verified account."""
+
+    reply_id: UUID
+    account_id: UUID
+    written_evidence: str = Field(min_length=12, max_length=2000, pattern=r"\S")
+
+
 class FlagResolution(ExpectedVersions):
     evidence: Evidence
     reason: Text
+    # Required exactly for a P5-BANK-CHANGE hold (T3 only); rejected for other flags.
+    bank_verification: BankVerificationResolution | None = None
 
 
 class CSVPreviewRequest(DTO):
@@ -588,10 +604,20 @@ class ReplyReview(ExpectedVersions):
 
 class PrepareBundle(ExpectedVersions):
     evaluation_id: UUID
-    option_key: str
+    option_key: str = Field(min_length=1, max_length=80)
     kind: Literal["send_message", "commit_plan"]
-    message_ids: list[UUID]
+    # Exact frozen P5 messages; commit may also carry confirmation messages (outbox).
+    message_ids: list[UUID] = Field(max_length=20)
+    # Echo of the evaluated option's parameters; the server rejects any difference.
     strategy: Strategy
+
+    @model_validator(mode="after")
+    def unique_messages(self):
+        if len(set(self.message_ids)) != len(self.message_ids):
+            raise ValueError("duplicate message")
+        if self.kind == "send_message" and not self.message_ids:
+            raise ValueError("send bundle requires at least one prepared message")
+        return self
 
 
 class CompensationRequest(ExpectedVersions):
@@ -623,7 +649,9 @@ class Notification(DTO):
 
 
 class NotificationsRead(DTO):
-    through_cursor: str = Field(min_length=1, max_length=2048)
+    """Marks the caller's own unread notifications with id <= through_id as read."""
+
+    through_id: BigId
 
 
 class AuditRow(DTO):

@@ -393,6 +393,7 @@
               "discriminator": {
                 "mapping": {
                   "cancellation": "#/components/schemas/CancellationItem",
+                  "commitment": "#/components/schemas/CommitmentItem",
                   "ledger_entry": "#/components/schemas/LedgerItem",
                   "lender_acceptance": "#/components/schemas/LenderItem",
                   "message": "#/components/schemas/MessageItem"
@@ -411,6 +412,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/CancellationItem"
+                },
+                {
+                  "$ref": "#/components/schemas/CommitmentItem"
                 }
               ]
             },
@@ -498,6 +502,17 @@
       "ActionView": {
         "additionalProperties": false,
         "properties": {
+          "effect": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EffectView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "executed_at": {
             "anyOf": [
               {
@@ -537,10 +552,24 @@
               "ledger_entry",
               "message",
               "lender_acceptance",
-              "cancellation"
+              "cancellation",
+              "commitment"
             ],
             "title": "Kind",
             "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Run Id"
           },
           "status": {
             "enum": [
@@ -747,6 +776,16 @@
               }
             ],
             "title": "Revoked At"
+          },
+          "stale_reasons": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Stale Reasons",
+            "type": "array"
           }
         },
         "required": [
@@ -934,6 +973,36 @@
           "row_hash"
         ],
         "title": "AuditRow",
+        "type": "object"
+      },
+      "BankVerificationResolution": {
+        "additionalProperties": false,
+        "description": "Clears a P5-BANK-CHANGE hold only with the exact reply and a verified account.",
+        "properties": {
+          "account_id": {
+            "format": "uuid",
+            "title": "Account Id",
+            "type": "string"
+          },
+          "reply_id": {
+            "format": "uuid",
+            "title": "Reply Id",
+            "type": "string"
+          },
+          "written_evidence": {
+            "maxLength": 2000,
+            "minLength": 12,
+            "pattern": "\\S",
+            "title": "Written Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reply_id",
+          "account_id",
+          "written_evidence"
+        ],
+        "title": "BankVerificationResolution",
         "type": "object"
       },
       "BaselineBalance": {
@@ -1215,13 +1284,54 @@
             "title": "Allowed Actions",
             "type": "array"
           },
+          "approval_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Approval Id"
+          },
           "bundle_hash": {
             "pattern": "^[a-f0-9]{64}$",
             "title": "Bundle Hash",
             "type": "string"
           },
+          "is_stale": {
+            "default": false,
+            "title": "Is Stale",
+            "type": "boolean"
+          },
           "manifest": {
             "$ref": "#/components/schemas/ActionBundleV1"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Run Id"
+          },
+          "stale_reasons": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Stale Reasons",
+            "type": "array"
           }
         },
         "required": [
@@ -2000,6 +2110,52 @@
           "event"
         ],
         "title": "CashEventWrite",
+        "type": "object"
+      },
+      "CommitmentItem": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "key": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "commitment",
+            "title": "Kind",
+            "type": "string"
+          },
+          "option_key": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Option Key",
+            "type": "string"
+          },
+          "projections": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectedEvent"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Projections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "evaluation_id",
+          "option_key",
+          "projections"
+        ],
+        "title": "CommitmentItem",
         "type": "object"
       },
       "ComparisonOption": {
@@ -2895,6 +3051,13 @@
             ],
             "title": "Live Evaluation Id"
           },
+          "negotiation_round": {
+            "default": 0,
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Negotiation Round",
+            "type": "integer"
+          },
           "opening_cash_minor": {
             "anyOf": [
               {
@@ -3628,6 +3791,65 @@
         "title": "DraftRevisionRequest",
         "type": "object"
       },
+      "EffectView": {
+        "additionalProperties": false,
+        "description": "Locally simulated sandbox effect; no external delivery or payment occurred.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "effect_kind": {
+            "enum": [
+              "outbox",
+              "ledger",
+              "lender_simulation",
+              "inverse"
+            ],
+            "title": "Effect Kind",
+            "type": "string"
+          },
+          "original_action_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Action Id"
+          },
+          "payload_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Payload Hash",
+            "type": "string"
+          },
+          "sandbox": {
+            "const": true,
+            "title": "Sandbox",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "effect_kind",
+          "payload_hash",
+          "original_action_id",
+          "created_at",
+          "sandbox"
+        ],
+        "title": "EffectView",
+        "type": "object"
+      },
+      "EmptyRequest": {
+        "additionalProperties": false,
+        "description": "Body of a command that carries no fields.\n\nThe body may be absent, JSON ``null`` or ``{}``; all three mean the same command and share\none idempotency fingerprint. Any field is rejected (``extra=\"forbid\"``).",
+        "properties": {},
+        "title": "EmptyRequest",
+        "type": "object"
+      },
       "ErrorDetail": {
         "additionalProperties": false,
         "properties": {
@@ -4195,6 +4417,28 @@
             "title": "Bundle Id",
             "type": "string"
           },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -4209,10 +4453,41 @@
             "title": "Reconciliation Required",
             "type": "boolean"
           },
+          "run_kind": {
+            "enum": [
+              "send_message",
+              "commit_plan",
+              "compensate"
+            ],
+            "title": "Run Kind",
+            "type": "string"
+          },
           "sandbox": {
             "const": true,
             "title": "Sandbox",
             "type": "boolean"
+          },
+          "settlement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettlementView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
           },
           "status": {
             "enum": [
@@ -4229,12 +4504,18 @@
         },
         "required": [
           "id",
+          "deal_id",
           "bundle_id",
           "approval_id",
           "operation_id",
+          "run_kind",
           "status",
           "actions",
           "reconciliation_required",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "settlement",
           "sandbox"
         ],
         "title": "ExecutionRun",
@@ -4789,6 +5070,20 @@
             ],
             "title": "Field"
           },
+          "flag_id": {
+            "anyOf": [
+              {
+                "maxLength": 19,
+                "pattern": "^[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flag Id"
+          },
           "message": {
             "maxLength": 2000,
             "minLength": 1,
@@ -4822,6 +5117,17 @@
       "FlagResolution": {
         "additionalProperties": false,
         "properties": {
+          "bank_verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BankVerificationResolution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "evidence": {
             "$ref": "#/components/schemas/Evidence"
           },
@@ -5349,6 +5655,18 @@
       "InvitationView": {
         "additionalProperties": false,
         "properties": {
+          "accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
           "email": {
             "maxLength": 254,
             "minLength": 3,
@@ -5399,13 +5717,21 @@
             ],
             "title": "Role",
             "type": "string"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
           }
         },
         "required": [
           "id",
           "email",
           "role",
+          "version",
           "expires_at",
+          "accepted_at",
           "revoked_at",
           "invitation_url"
         ],
@@ -6081,16 +6407,17 @@
       },
       "NotificationsRead": {
         "additionalProperties": false,
+        "description": "Marks the caller's own unread notifications with id <= through_id as read.",
         "properties": {
-          "through_cursor": {
-            "maxLength": 2048,
-            "minLength": 1,
-            "title": "Through Cursor",
+          "through_id": {
+            "maxLength": 19,
+            "pattern": "^[1-9][0-9]*$",
+            "title": "Through Id",
             "type": "string"
           }
         },
         "required": [
-          "through_cursor"
+          "through_id"
         ],
         "title": "NotificationsRead",
         "type": "object"
@@ -8191,10 +8518,13 @@
               "format": "uuid",
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Message Ids",
             "type": "array"
           },
           "option_key": {
+            "maxLength": 80,
+            "minLength": 1,
             "title": "Option Key",
             "type": "string"
           },
@@ -8296,6 +8626,156 @@
           "profile"
         ],
         "title": "ProfileWrite",
+        "type": "object"
+      },
+      "ProjectedEvent": {
+        "additionalProperties": false,
+        "description": "A dated event the completed commitment projects into the business baseline.",
+        "properties": {
+          "amount_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "attributed_item_key": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Attributed Item Key",
+            "type": "string"
+          },
+          "certainty": {
+            "enum": [
+              "confirmed",
+              "expected",
+              "assumed"
+            ],
+            "title": "Certainty",
+            "type": "string"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          },
+          "direction": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "event_date": {
+            "format": "date",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "event_key": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Event Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "payroll",
+              "rent",
+              "tax",
+              "ap_payment",
+              "ar_collection",
+              "loan_installment",
+              "supplier_payment",
+              "labour",
+              "freight",
+              "subcontract",
+              "existing_inventory",
+              "order_deposit",
+              "order_receipt",
+              "order_final_receipt",
+              "order_stage_receipt",
+              "loan_draw",
+              "loan_fee",
+              "loan_interest",
+              "loan_repayment",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "original_obligation_id": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Original Obligation Id",
+            "type": "string"
+          },
+          "payee_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payee Id"
+          },
+          "scope": {
+            "enum": [
+              "order",
+              "financing"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "source_id": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "supersedes_event_id": {
+            "anyOf": [
+              {
+                "maxLength": 19,
+                "pattern": "^[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Event Id"
+          }
+        },
+        "required": [
+          "event_key",
+          "scope",
+          "source_id",
+          "kind",
+          "event_date",
+          "amount_minor",
+          "direction",
+          "certainty",
+          "original_obligation_id",
+          "supersedes_event_id",
+          "payee_id",
+          "customer_id",
+          "attributed_item_key"
+        ],
+        "title": "ProjectedEvent",
         "type": "object"
       },
       "Proposal": {
@@ -9274,6 +9754,51 @@
           "email_verified"
         ],
         "title": "SessionView",
+        "type": "object"
+      },
+      "SettlementView": {
+        "additionalProperties": false,
+        "properties": {
+          "projected_events": {
+            "maximum": 2000,
+            "minimum": 0,
+            "title": "Projected Events",
+            "type": "integer"
+          },
+          "revision_after": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Revision After",
+            "type": "integer"
+          },
+          "revision_before": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Revision Before",
+            "type": "integer"
+          },
+          "settled_at": {
+            "format": "date-time",
+            "title": "Settled At",
+            "type": "string"
+          },
+          "settlement_kind": {
+            "enum": [
+              "commit",
+              "compensate"
+            ],
+            "title": "Settlement Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "settlement_kind",
+          "projected_events",
+          "revision_before",
+          "revision_after",
+          "settled_at"
+        ],
+        "title": "SettlementView",
         "type": "object"
       },
       "SignIn": {
@@ -13147,7 +13672,9 @@
           "execution_run",
           "execution_action",
           "operation",
-          "idempotency_key"
+          "commitment_gate",
+          "idempotency_key",
+          "operation_log"
         ]
       }
     },
@@ -14185,6 +14712,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EmptyRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "201": {
             "content": {
@@ -14689,24 +15233,6 @@
             "required": true,
             "schema": {
               "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "as_of",
-            "required": true,
-            "schema": {
-              "format": "date",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "through",
-            "required": true,
-            "schema": {
-              "format": "date",
               "type": "string"
             }
           }
@@ -17730,7 +18256,8 @@
         "x-permission": "read",
         "x-service-owner": "execution.actions",
         "x-storage-owner": [
-          "execution_action"
+          "execution_action",
+          "sandbox_effect"
         ]
       }
     },
@@ -18275,8 +18802,10 @@
         "x-service-owner": "execution.prepare_compensation",
         "x-storage-owner": [
           "action_bundle",
+          "action_bundle_item",
           "execution_action",
-          "commitment_projection"
+          "sandbox_effect",
+          "operation_log"
         ]
       }
     },
@@ -18506,6 +19035,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EmptyRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "201": {
             "content": {
@@ -23013,7 +23559,9 @@
         "x-service-owner": "execution.get",
         "x-storage-owner": [
           "execution_run",
-          "execution_action"
+          "execution_action",
+          "sandbox_effect",
+          "commitment_settlement"
         ]
       }
     },
@@ -23162,10 +23710,11 @@
         "summary": "exports.download",
         "x-acceptance-test": "V03",
         "x-implementation-phase": "P3",
-        "x-permission": "audit",
+        "x-permission": "read",
         "x-service-owner": "exports.download",
         "x-storage-owner": [
-          "decision_export"
+          "decision_export",
+          "cash_export"
         ]
       }
     },
@@ -25626,6 +26175,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EmptyRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {

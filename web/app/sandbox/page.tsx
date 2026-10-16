@@ -1,5 +1,5 @@
-import Link from "next/link";
+import { UnavailablePage } from "@/components/unavailable-notice";
 
-export default function SandboxPage() {
-  return <main className="space-y-4 p-8"><h1 className="text-2xl font-semibold">What-if planning</h1><p>Choose a saved, evaluated order to compare persisted what-if forks through the financial engine.</p><Link className="underline" href="/deals">Choose a saved order</Link><p>Sending, payments and commitment execution are disabled.</p></main>;
+export default function Page() {
+  return <UnavailablePage title="What-if planning" reason="What-if comparisons are run from a saved, evaluated order. Sending, payments and commitments are not available." href="/deals" linkLabel="Go to saved orders" />;
 }

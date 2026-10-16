@@ -2,27 +2,36 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { mutate } from "@/lib/orderfit-api";
+import { safeNext, signInNotice } from "@/lib/session-expiry";
+import { resetSessionState } from "@/lib/session-reset";
 
 export default function SignInPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  useEffect(() => { const text = signInNotice(new URLSearchParams(window.location.search).get("reason")); if (text) queueMicrotask(() => setNotice(text)); }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setError(""); setBusy(true);
     try {
       await mutate("/auth/signin", "POST", { email, password });
-      router.replace("/deals");
+      // A new sign-in must never see cache or pending commands from a previous account.
+      resetSessionState(queryClient);
+      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/deals");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Sign in failed."); }
     finally { setBusy(false); }
   }
 
   return <main className="min-h-screen bg-[#f7f6f5] grid place-items-center p-6"><form onSubmit={submit} className="w-full max-w-md rounded-2xl bg-white border border-neutral-200 p-8 space-y-5">
     <div><Link href="/" className="font-bold text-xl">OrderFit</Link><h1 className="text-2xl font-semibold mt-6">Sign in</h1><p className="text-sm text-neutral-600 mt-1">Use your OrderFit account to open saved business orders.</p></div>
+    {notice && <p role="status" className="rounded-lg bg-green-50 text-green-900 p-3 text-sm">{notice}</p>}
     {error && <p role="alert" className="rounded-lg bg-red-50 text-red-800 p-3 text-sm">{error}</p>}
     <label className="block text-sm">Email<input required type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>
     <label className="block text-sm">Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full rounded-lg border p-3" /></label>

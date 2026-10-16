@@ -70,6 +70,14 @@ class DTO(BaseModel):
         return value
 
 
+class EmptyRequest(DTO):
+    """Body of a command that carries no fields.
+
+    The body may be absent, JSON ``null`` or ``{}``; all three mean the same command and share
+    one idempotency fingerprint. Any field is rejected (``extra="forbid"``).
+    """
+
+
 MoneyMinor = Annotated[
     str,
     Field(strict=True, pattern=r"^(0|-?[1-9][0-9]*)$", max_length=17),
