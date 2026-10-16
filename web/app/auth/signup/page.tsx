@@ -1,12 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { mutate } from "@/lib/orderfit-api";
+import { ApiError, mutate } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { Eye, EyeOff } from "lucide-react";
+
+const COMMON_TIMEZONES = [
+  "Asia/Dhaka",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Asia/Dubai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Kolkata",
+  "Australia/Sydney",
+  "UTC",
+];
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,11 +38,60 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    try {
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (userTz) {
+        setTimezone(userTz);
+      }
+    } catch {
+      // Fallback stays Asia/Dhaka
+    }
+  }, []);
+
+  const timezoneList = useMemo(() => {
+    if (timezone && !COMMON_TIMEZONES.includes(timezone)) {
+      return [timezone, ...COMMON_TIMEZONES];
+    }
+    return COMMON_TIMEZONES;
+  }, [timezone]);
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setIsLoading(true); setError("");
-    try { await mutate("/auth/signup", "POST", { full_name: fullName, business_name: businessName, email, password, currency, timezone }); resetSessionState(queryClient); router.replace("/deals"); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create the account."); }
-    finally { setIsLoading(false); }
+    e.preventDefault();
+    setError("");
+
+    if (password.length < 12) {
+      setError("Password must be at least 12 characters.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await mutate("/auth/signup", "POST", {
+        full_name: fullName.trim(),
+        business_name: businessName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        currency,
+        timezone: timezone.trim(),
+      });
+      resetSessionState(queryClient);
+      router.replace("/deals");
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        if (cause.code === "UNIQUE_CONFLICT" || cause.status === 409) {
+          setError("An account with this email address already exists. Please log in.");
+          return;
+        }
+        if (cause.code === "VALIDATION_ERROR" || cause.status === 422) {
+          setError(cause.message || "Please check your inputs and try again.");
+          return;
+        }
+      }
+      setError(cause instanceof Error ? cause.message : "Could not create the account.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -58,15 +124,20 @@ export default function SignUpPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p role="alert" className="rounded-lg bg-red-950 p-3 text-sm text-red-100">{error}</p>}
-            <label className="block text-sm">Business currency<select className="mt-1 w-full rounded-xl bg-[#222425] p-3" value={currency} onChange={e => setCurrency(e.target.value)}>{["BDT", "USD", "EUR", "GBP"].map(c => <option key={c}>{c}</option>)}</select></label>
-            <label className="block text-sm">Business timezone<input required className="mt-1 w-full rounded-xl bg-[#222425] p-3" value={timezone} onChange={e => setTimezone(e.target.value)} /></label>
+            {error && (
+              <p role="alert" className="rounded-lg bg-red-950 p-3 text-sm text-red-100">
+                {error}
+              </p>
+            )}
+
             {/* Full Name Field */}
             <div>
               <input
                 type="text"
                 id="fullName"
+                name="fullName"
                 required
+                autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Full Name*"
@@ -79,7 +150,9 @@ export default function SignUpPage() {
               <input
                 type="text"
                 id="businessName"
+                name="businessName"
                 required
+                autoComplete="organization"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Business / Company Name*"
@@ -92,7 +165,9 @@ export default function SignUpPage() {
               <input
                 type="email"
                 id="email"
+                name="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email*"
@@ -106,6 +181,7 @@ export default function SignUpPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
+                  name="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -122,6 +198,44 @@ export default function SignUpPage() {
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
+              </div>
+            </div>
+
+            {/* Currency and Timezone Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label htmlFor="currency" className="block text-xs font-medium text-neutral-400 mb-1.5">
+                  Business currency
+                </label>
+                <select
+                  id="currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-[#222425] border-0 rounded-xl text-sm text-white outline-none focus:outline-none ring-0 focus:ring-0 transition-colors cursor-pointer"
+                >
+                  <option value="BDT" className="bg-[#222425] text-white">BDT (৳)</option>
+                  <option value="USD" className="bg-[#222425] text-white">USD ($)</option>
+                  <option value="EUR" className="bg-[#222425] text-white">EUR (€)</option>
+                  <option value="GBP" className="bg-[#222425] text-white">GBP (£)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="timezone" className="block text-xs font-medium text-neutral-400 mb-1.5">
+                  Business timezone
+                </label>
+                <select
+                  id="timezone"
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-[#222425] border-0 rounded-xl text-sm text-white outline-none focus:outline-none ring-0 focus:ring-0 transition-colors cursor-pointer"
+                >
+                  {timezoneList.map((tz) => (
+                    <option key={tz} value={tz} className="bg-[#222425] text-white">
+                      {tz}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
