@@ -1,0 +1,92 @@
+# OrderFit backend on the Azure VM (orderfit-vm). Neon is the database; there is no db service.
+# Secrets: .env (runtime, chmod 600) and migrate.env (DATABASE_URL_DIRECT only, used by `migrate` only).
+# .env selects the image: ORDERFIT_IMAGE=ghcr.io/md-sazid9089/orderfit-backend:<commit> (set by deploy/azure/remote.sh).
+# Normally deployed by .github/workflows/deploy-backend.yml; manual equivalents:
+#   one-shot migration:  docker compose -f docker-compose.azure.yml --profile migrate run --rm migrate
+#   start / update:      docker compose -f docker-compose.azure.yml up -d api worker caddy
+name: orderfit
+
+x-app: &app
+  image: ${ORDERFIT_IMAGE:?ORDERFIT_IMAGE is required}
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+
+x-runtime-env: &runtime-env
+  SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+  ACCOUNT_FINGERPRINT_KEY: ${ACCOUNT_FINGERPRINT_KEY:?ACCOUNT_FINGERPRINT_KEY is required}
+  ACCOUNT_FINGERPRINT_KEY_VERSION: ${ACCOUNT_FINGERPRINT_KEY_VERSION:-1}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
+  COOKIE_SECURE: "true"
+  DOCUMENT_STORAGE_BACKEND: filesystem
+  DOCUMENT_DIR: /app/var/documents
+  LLM_MODE: "off"
+  # Passkeys stay disabled unless both are set (HTTPS browser origin and its hostname).
+  WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
+  WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+
+services:
+  migrate:
+    <<: *app
+    build: {context: ./src/backend}
+    profiles: ["migrate"]
+    restart: "no"
+    env_file:
+      - path: ./migrate.env
+        required: false
+    command: ["alembic", "upgrade", "head"]
+    healthcheck: {disable: true}
+    networks: [edge]
+
+  api:
+    <<: *app
+    build: {context: ./src/backend}
+    environment:
+      <<: *runtime-env
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      # Only Caddy may supply X-Forwarded-For; the sign-in source key is then the peer that reached Caddy.
+      TRUSTED_PROXY_IPS: '["172.30.0.10"]'
+    volumes:
+      - /opt/orderfit/documents:/app/var/documents
+    networks:
+      edge: {ipv4_address: 172.30.0.20}
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "orderfit.workflow.worker"]
+    environment:
+      <<: *runtime-env
+      DATABASE_URL: ${WORKER_DATABASE_URL:?WORKER_DATABASE_URL is required}
+    volumes:
+      - /opt/orderfit/documents:/app/var/documents
+    healthcheck: {disable: true}
+    stop_grace_period: 100s
+    networks: [edge]
+
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+    networks:
+      edge: {ipv4_address: 172.30.0.10}
+
+networks:
+  edge:
+    # Azure VNet MTU is 1400; a 1500 bridge stalls TLS (pypi, Neon) from containers.
+    driver_opts: {com.docker.network.driver.mtu: "1400"}
+    ipam:
+      config: [{subnet: 172.30.0.0/24}]
+
+volumes:
+  caddy_data:
+  caddy_config:
