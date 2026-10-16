@@ -73,6 +73,7 @@ export function HeroSection() {
                 <div className="size-6 rounded-full bg-[#D5C4FD]/30 border-2 border-white flex items-center justify-center">
                   <svg className="size-3 text-[#004D3B]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
                 </div>
+              </div>
               <span className="font-sans font-medium text-[#1A1A1A]">Built for made-to-order B2B brands &amp; manufacturers</span>
             </div>
           </div>
