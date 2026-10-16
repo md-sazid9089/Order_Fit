@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import event, text
 
 from orderfit.api.main import create_app
 from orderfit.store import preparation_repository as repo
@@ -92,6 +92,65 @@ def draft(case):
     return case["finish"](case["write"](f"/deals/{deal['id']}/drafts", data, 202))
 
 
+def test_message_history_query_count_does_not_grow_per_revision(case, postgres, accounts):
+    """History must not reload complete evaluations/snapshots for every message."""
+    from statistics import median
+    from time import perf_counter
+
+    messages = [draft(case) for _ in range(8)]
+    engine = postgres["database"].engine
+
+    def measure(limit):
+        counts, durations = [], []
+        for _ in range(3):
+            statements = []
+
+            def counted(*args, statements=statements):
+                statements.append(1)
+
+            event.listen(engine, "before_cursor_execute", counted)
+            try:
+                started = perf_counter()
+                page = case["read"](f"/deals/{case['deal']['id']}/messages?limit={limit}")
+                durations.append((perf_counter() - started) * 1000)
+                counts.append(len(statements))
+            finally:
+                event.remove(engine, "before_cursor_execute", counted)
+        return page, median(counts), median(durations)
+
+    _, one_count, one_ms = measure(1)
+    page, eight_count, eight_ms = measure(8)
+    print(
+        f"message history: 1 row={one_count} queries/{one_ms:.1f}ms; "
+        f"8 rows={eight_count} queries/{eight_ms:.1f}ms (median of 3)"
+    )
+    assert {m["identity"]["message_id"] for m in page["items"]} == {
+        m["identity"]["message_id"] for m in messages
+    }
+    for item in page["items"]:
+        assert item == case["read"](f"/messages/{item['identity']['message_id']}")
+    assert eight_count <= one_count + 2
+    first = case["read"](f"/deals/{case['deal']['id']}/messages?limit=3")
+    second = case["read"](f"/deals/{case['deal']['id']}/messages?limit=3&offset=3")
+    assert first["next_cursor"] == "3" and second["next_cursor"] == "6"
+    assert not (
+        {m["identity"]["message_id"] for m in first["items"]}
+        & {m["identity"]["message_id"] for m in second["items"]}
+    )
+    assert case["read"](f"/deals/{case['deal']['id']}/messages?offset=80")["items"] == []
+    other = accounts[1]
+    case["client"].cookies.set("orderfit_session", other.token)
+    try:
+        assert (
+            case["client"]
+            .get(f"/api/v1/businesses/{other.business_id}/deals/{case['deal']['id']}/messages")
+            .status_code
+            == 404
+        )
+    finally:
+        case["client"].cookies.set("orderfit_session", case["account"].token)
+
+
 def test_fork_isolation_catalogue_apply_stale_and_idempotency(case, postgres, accounts):
     s = case
     before = s["read"](f"/deals/{s['deal']['id']}")
@@ -152,6 +211,7 @@ def test_exact_draft_revisions_review_acceptance_and_guards(case):
     )
     reviewed = s["write"](f"/messages/{mid}/review", review)
     assert reviewed["reviewed"]
+    assert s["read"](f"/deals/{s['deal']['id']}/messages")["items"] == [reviewed]
     acceptance = s["write"](
         f"/deals/{s['deal']['id']}/acceptances",
         dict(
@@ -195,6 +255,10 @@ def test_exact_draft_revisions_review_acceptance_and_guards(case):
     )
     assert revised["preparation_hash"] != message["preparation_hash"] and not revised["reviewed"]
     assert s["read"](f"/messages/{mid}")["is_stale"]
+    history = s["read"](f"/deals/{s['deal']['id']}/messages")["items"]
+    assert len(history) == 2
+    for item in history:
+        assert item == s["read"](f"/messages/{item['identity']['message_id']}")
     assert s["read"](f"/deals/{s['deal']['id']}/acceptances")["items"][0]["is_stale"]
     s["write"](
         f"/messages/{mid}/review",

@@ -1,5 +1,12 @@
 # 03 System architecture
 
+> Historical design baseline: the implementation now exists. Follow the later
+> [plan](../../initial_backend_implementation_plan.md) and accepted ADRs 0007–0010
+> for the eight-state workflow, existing SQL entities, strict RLS and restricted
+> runtime roles. In particular, recorded mode never silently calls a live provider.
+> See the [current audit](../../orderfit_audit_2026-10-16.md) for verified boundaries
+> and partial acceptance. Diagrams below retain their original design vocabulary.
+
 Part of the [OrderFit design set](README.md). Calculation semantics, entities and API payloads are in [04](04-decision-engine-and-data-contracts.md); threats, tests and fixtures in [05](05-security-and-evaluation.md); requirements and the demo in [01](01-requirements-scenario-edge-cases.md). This document is written so that sections 1 to 9 can become competition deliverable 1 (technical documentation) with light editing.
 
 Evidence labels: `[R]` repo, `[W]` web (accessed 2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. Nothing is built; no performance result exists. The only executed artefact is the reference calculation in [`fixtures/`](fixtures/).

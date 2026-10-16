@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class RuntimeConfiguration(BaseSettings):
-    model_config = SettingsConfigDict(env_file=None, extra="forbid")
+    model_config = SettingsConfigDict(env_file=None, extra="forbid", hide_input_in_errors=True)
     database_url: SecretStr
     session_secret: SecretStr = Field(min_length=32)
     account_fingerprint_key: SecretStr = Field(min_length=32)
@@ -138,6 +138,14 @@ class RuntimeConfiguration(BaseSettings):
 
         if not self.allowed_origins or not all(valid_origin(o) for o in self.allowed_origins):
             raise ValueError("explicit permitted origins required")
+        if not self.cookie_secure and any(urlsplit(o).scheme == "https" for o in self.allowed_origins):
+            raise ValueError("HTTPS origins require Secure cookies")
+        database = urlsplit(self.database_url.get_secret_value())
+        if database.hostname not in {"localhost", "127.0.0.1", "::1", "db"}:
+            from urllib.parse import parse_qs
+
+            if parse_qs(database.query).get("sslmode") != ["verify-full"]:
+                raise ValueError("Remote database connections require sslmode=verify-full")
         for entry in self.trusted_proxy_ips:
             try:
                 ipaddress.ip_network(entry, strict=False)

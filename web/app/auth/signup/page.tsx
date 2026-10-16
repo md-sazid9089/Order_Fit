@@ -121,7 +121,7 @@ export default function SignUpPage() {
           </h1>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 [&_:focus-visible]:outline-2! [&_:focus-visible]:outline-offset-2 [&_:focus-visible]:outline-white">
             {error && (
               <p role="alert" className="rounded-lg bg-red-950 p-3 text-sm text-red-100">
                 {error}
@@ -130,6 +130,7 @@ export default function SignUpPage() {
 
             {/* Full Name Field */}
             <div>
+              <label htmlFor="fullName" className="sr-only">Full name</label>
               <input
                 type="text"
                 id="fullName"
@@ -145,6 +146,7 @@ export default function SignUpPage() {
 
             {/* Company / Business Name */}
             <div>
+              <label htmlFor="businessName" className="sr-only">Business / Company name</label>
               <input
                 type="text"
                 id="businessName"
@@ -160,6 +162,7 @@ export default function SignUpPage() {
 
             {/* Email Field */}
             <div>
+              <label htmlFor="email" className="sr-only">Email</label>
               <input
                 type="email"
                 id="email"
@@ -175,6 +178,7 @@ export default function SignUpPage() {
 
             {/* Password Field */}
             <div>
+              <label htmlFor="password" className="sr-only">Password (min. 12 characters)</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}

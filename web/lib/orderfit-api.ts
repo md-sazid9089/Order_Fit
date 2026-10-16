@@ -14,7 +14,9 @@ export class NetworkError extends Error { constructor(message = "The network req
 export const SESSION_EXPIRED_EVENT = "orderfit:session-expired";
 
 /** 401 with any code except a wrong password: the sign-in form itself must keep showing "wrong password". */
-export function isSessionExpired(status: number, code: string): boolean { return status === 401 && code !== "INVALID_CREDENTIALS"; }
+export function isSessionExpired(status: number, code: string): boolean {
+  return (status === 401 && code !== "INVALID_CREDENTIALS") || (status === 403 && code === "SESSION_REAUTH_REQUIRED");
+}
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;

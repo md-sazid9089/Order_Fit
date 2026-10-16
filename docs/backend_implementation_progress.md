@@ -1,9 +1,10 @@
 # Backend implementation progress
 
-Current phase status (16 October 2026): P0–P8 implemented locally; see the
-**P0–P8 verification matrix** at the end of this file for per-gate evidence and the
-unverified hosted/provider gates. Earlier entries are historical and are superseded
-by later remediation.
+Current phase status (16 October 2026): P0–P3/P5–P7 have local implementation and
+gate evidence, with additional acceptance/scale gaps listed in the
+[current spec audit matrix](orderfit_audit_2026-10-16.md). **P4 and P8 remain partial**:
+live/independent AI quality and hosted/restore acceptance are unverified. Earlier
+entries and their counts are historical; later remediation supersedes old gaps.
 
 ## P0 — contract freeze (15 October 2026)
 
@@ -1239,3 +1240,145 @@ limits, stale docs.
   evaluation (not enabled in this demo). The automated browser spec currently covers the core
   persisted order/negotiation route flow; the full send/reply/commit journey above is manual and
   synthetic, not yet encoded as an automated browser scenario.
+
+## Spec, financial-UI and measured performance audit (16 October 2026)
+
+Audited from `main` at `6ca0ec3`, preserving the existing checkout. Earlier repairs
+are committed; the old context snapshot claiming they were uncommitted was stale.
+Root/backend/web instructions, plan/gap/gate registers, requirements, architecture,
+ADRs and financial contracts were reconciled with code through codebase-memory
+architecture/search/call-path/snippet exploration and direct reads where the graph
+did not cover recently merged UI. The complete feature matrix, evidence boundaries
+and severity-ranked remainder are in [the audit report](orderfit_audit_2026-10-16.md).
+Other security/deployment work arrived concurrently; it was preserved rather than
+overwritten or attributed to this audit. No real application secrets, shared
+database, provider configuration or git history were changed.
+
+### Reproduced and repaired
+
+- Five new pipeline tests failed on incorrect financial descriptions and state
+  classification: inherited baseline deficits were advertised as above-reserve,
+  profit/other constraint failure as insufficient cash, changed terms as proof of
+  an offered cash breach, stale evaluation races as current advice and computing
+  as recommendation. Fixed `web/lib/pipeline-model.ts` and page summaries without
+  changing any calculator, version or expected financial output. The default
+  policy reserve is no longer inferred from an arbitrary loaded order, and
+  single-order trough summaries explicitly do not establish portfolio affordability.
+- Preparation history reproduced an N+1: **23/79 statements** for **1/8 messages**,
+  median request times **64.0/236.5 ms** over three reads. Batched tenant-scoped
+  snapshots/parties and shared immutable-view assembly now use **17/17 statements**,
+  **31.8/30.3 ms** in the same synthetic benchmark. Mutation/approval locking is
+  unchanged. Added list/single parity, review/revision, paging, empty and tenant
+  regressions. The test enforces query growth, not a flaky timing target.
+- Real browser tests reproduced inaccessible sign-in fields and **734 px content
+  width at a 390 px viewport**. Persistent field labels, focus indicators, bounded
+  header controls and the existing Radix drawer now fit **390/390 px**; Escape
+  restores trigger focus and route selection closes the drawer. Existing visual
+  identity is retained. Added 20-order paging, explicit page-only counts/filter
+  scope, saved-state refresh and recoverable read-error retry.
+- Removed unsupported usage statistics/zero-hallucination copy and labelled the
+  marketing scenario as synthetic. Added historical/current status notes to plan,
+  architecture and contracts; corrected the development-context handoff. P4/P8
+  remain partial, not completed merely because implementation files exist.
+- An additional browser regression preserved a real saved order/customer ID while
+  simulating omission from the bounded customer list. It reproduced “No customer”;
+  the row now says “Customer details not loaded” in that case. This fixes the
+  misleading absence claim, not the underlying supporting-list pagination gap.
+
+### Verification executed now
+
+- Architecture/engine/contracts/agent subset: **214 passed**. P5 preparation:
+  **13 passed**. P6 approval/execution subset: **26 passed**. Concurrently added
+  database security regressions: **6 passed**. These overlap the full suite and
+  must not be summed as unique test coverage.
+- Ruff clean; contract export **108 operations current**; Alembic sole head
+  `0014_settlement_retention`; generated TypeScript consumer examples pass.
+- Disposable PG17 fixture verified original and forward SQL suites **296/296**
+  each, upgrade preservation, clean migration and audit/optimistic-lock concurrency.
+  These are not hosted Neon/PgBouncer or non-superuser migrator acceptance.
+- Frontend latest rerun: **83 unit tests passed**, typecheck passed, lint **0
+  errors / 10 existing warnings**. Production Docker web build passed (Next 16.4.1).
+  Production npm dependency audit found **0 vulnerabilities**.
+- Production web at `localhost:3000`, same-origin API and restricted local PG17:
+  **3 Playwright tests passed in 25.6 s**. Signup → baseline → customer/order →
+  confirm → queued evaluation → persisted reload → negotiation route round-trip;
+  labelled sign-in/focus; 1280 px desktop capture, 390 px mobile drawer/Escape,
+  valid-session/missing-CSRF recovery and injected read-503 → retry → real API.
+  Built-in browser preview also verified the drawer/cash route at about 746 px.
+- Reference engine `--check`: **22 cases / 0 problems**; selftest **0 failures**.
+  No fixture output regeneration. Audit/handoff/contract links resolve and
+  `git diff --check` passes. Mechanical UI detector returned no findings on changed
+  files; that is not a substitute for browser or accessibility acceptance.
+- First full-backend attempt stopped during collection on a concurrently written
+  security-test syntax error. No test was skipped/weakened; the complete command
+  was restarted once that write completed. Early browser failures also included
+  two selector ambiguities (shell/page heading and Next route-announcer alert),
+  resolved by scoping to page content while retaining functional assertions.
+- The restarted backend run reached **459 passed / 1 failed**, then stopped on an
+  old exact `Cache-Control: no-store` assertion after concurrent security work
+  strengthened the header to `private, no-store`. That task updated the assertion
+  to the exact stronger header, not a weaker cache policy. A full non-fail-fast
+  rerun follows; this failed run is not reported as a full pass.
+- Readiness/runtime/S3 follow-up after that assertion correction: **26 passed**.
+
+### Open acceptance and next phase
+
+P4 still needs independent final/live OpenAI quality and adversarial acceptance.
+P8 still needs private S3 provisioning/least privilege, Neon/PgBouncer/Render and
+joint DB/object restore evidence, plus other hosted gates already recorded above.
+No live calls, real outgoing actions, shared-DB changes or secret inspection were
+performed. Full browser send/reply/accept/commit/compensation automation, all-route
+screen-reader/zoom/contrast/layout-shift checks and a production bundle analysis
+were not run. Earlier full manual sandbox evidence is historical, not a fresh pass.
+
+Remaining P2 engineering gaps: worker readiness is a queue-age check, not a
+heartbeat; per-deal serialization/evaluation fetch fan-out and legacy pagination
+remain despite bounded pipeline pages. The expanded connectivity overlay can
+obscure mobile content until minimized/dismissed. Large persistence modules,
+unused scaffolds and lint/development-dependency debt remain P3 follow-ups. Measure
+realistic list workloads before a summary/batch contract change. See the audit
+matrix before treating any phase or competition deliverable as fully accepted.
+
+
+## Hostile-tenant/network security hardening (16 October 2026)
+
+- Starting checkout: main at `6ca0ec3`; preserved concurrent preparation, UI, spec and
+  performance changes. Audit findings, severity/exploit/fix/status, file:line evidence,
+  rotation handoff and limitations are in `docs/security/security_audit_2026-10-16.md`;
+  `docs/security/route_inventory.md` inventories 106 handlers plus two public probes.
+- Repaired 13 local code/configuration issues: bounded PDF child parsing (384 MiB/10 s, at most two children, scrubbed environment, parser p4.2),
+  API no-store/security headers, old-browser-session revocation on login, Secure-cookie
+  and remote verified-TLS configuration, small-body deadlines, pending-operation caps
+  (25/business, including execution), non-inherited owner-role detection, timeouts before
+  session resolution, redacted startup/raw-access logging, browser headers, immutable CI
+  action refs, S3 network deadlines, private build-context exclusions and shared Argon2
+  work admission (two operations/process). Related fixes share findings where appropriate.
+- No SQL migration or financial engine change. Runtime schema head remains
+  `0014_settlement_retention`; contracts still check 108 operations. Runbooks/templates
+  now require remote runtime URLs with `sslmode=verify-full` and trusted CA material
+  (`sslrootcert=system` or a CA file). Real deployment values were not read or changed.
+- Verification: final network/runtime/DB-security suites 26 passed (all 17 new backend
+  security cases); additional parser/body/S3 suite 35 passed before the final password
+  guard. Full backend run reached 459 passes then stopped on the readiness test's old
+  exact `no-store` header expectation. Updated that assertion to the stricter
+  `private, no-store`; all remaining P7/private-document/runtime/S3 files passed (29).
+  Current collection is 491 cases; this is split-run evidence, not one final 491-pass run.
+  The later parser/body/document DB suite passed 36 tests; a final upload regression
+  verified retry-safe parser admission and persisted p4.2 provenance. Ruff clean; contract export current; reference 22 cases/zero problems and independent
+  selftest zero failures. Frontend 83 unit tests, typecheck, build passed; lint zero
+  errors/10 warnings. Final API image built; UID-10001, no-network, read-only disposable
+  container passed bounded PDF and Argon2 checks. Diff/evidence-path checks passed.
+- Python pip-audit reported no known vulnerabilities (unpublished local package skipped).
+  npm production audit zero; full npm audit still has 9 high development paths through
+  unpatched braces. CI action tags are pinned to upstream-resolved commits. No forced
+  major dependency downgrade, advisory suppression or history rewrite was performed.
+- Confirmed historical remote credentials in commit `eb5758b`, `.env:4-5` and
+  `backend/.env:12-13` (DATABASE_URL/DATABASE_URL_DIRECT). Values were never printed.
+  Rotate underlying credentials unless independent evidence establishes prior rotation;
+  current env files remain untracked/ignored. Local diagnostic files were preserved.
+- Remaining release work: hosted encryption/CA/role/S3/retention and joint restore evidence,
+  strict script CSP, privilege-change session epoch, MFA/verified email and isolated auth
+  DB credentials, edge quotas/readiness admission, container OS scanning and live provider
+  adversarial acceptance. No hosted infrastructure, private source documents, real actions
+  or live OpenAI calls were exercised. P4/P8 hosted gates remain open; sandbox-only scope
+  is unchanged. See the security report before accepting sensitive-data deployment.

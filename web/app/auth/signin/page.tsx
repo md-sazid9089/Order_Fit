@@ -73,7 +73,7 @@ export default function SignInPage() {
           </h1>
 
           {/* Form */}
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="space-y-4 [&_:focus-visible]:outline-2! [&_:focus-visible]:outline-offset-2 [&_:focus-visible]:outline-white">
             {notice && (
               <p role="status" className="rounded-lg bg-emerald-950 p-3 text-sm text-emerald-100">
                 {notice}
@@ -87,6 +87,7 @@ export default function SignInPage() {
 
             {/* Email Field */}
             <div>
+              <label htmlFor="email" className="sr-only">Email</label>
               <input
                 type="email"
                 id="email"
@@ -101,6 +102,7 @@ export default function SignInPage() {
 
             {/* Password Field */}
             <div>
+              <label htmlFor="password" className="sr-only">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}

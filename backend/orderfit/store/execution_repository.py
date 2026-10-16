@@ -313,6 +313,9 @@ def gate_holder(c, business_id):
 
 
 def insert_operation(c, *, operation_id, scope, deal, revision, run_id, fingerprint):
+    from orderfit.store.admission import ensure_operation_capacity
+
+    ensure_operation_capacity(c, scope.business_id)
     c.execute(
         text(
             "INSERT INTO operation(id,business_id,deal_id,actor_user_id,session_id,kind,request_hash,"

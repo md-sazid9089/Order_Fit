@@ -181,7 +181,7 @@ def test_ready_requires_database_schema_and_storage(tmp_path, status, ok):
     assert response.status_code == (200 if ok else 503)
     body = response.json()
     assert body == {"status": "ready" if ok else "unavailable", "storage": True, **status}
-    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["cache-control"] == "private, no-store"
 
 
 def test_ready_reports_unwritable_storage(tmp_path):

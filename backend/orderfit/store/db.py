@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, text
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0014_settlement_retention"
+SCHEMA_REVISION = "0015_session_authority"
 
 
 def digest_token(token: str | None) -> bytes:
@@ -75,7 +75,9 @@ class Database:
         )
         owns = c.execute(
             text(
-                "SELECT EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND pg_has_role(current_user,c.relowner,'USAGE'))"
+                "SELECT EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p') AND pg_has_role(current_user,c.relowner,'MEMBER')) "
+                "OR EXISTS(SELECT FROM pg_database d WHERE d.datname=current_database() AND pg_has_role(current_user,d.datdba,'MEMBER')) "
+                "OR EXISTS(SELECT FROM pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolcreaterole OR p.rolcreatedb OR p.rolreplication) AND pg_has_role(current_user,p.oid,'MEMBER'))"
             )
         ).scalar_one()
         restricted = not (
@@ -123,6 +125,8 @@ class Database:
     @contextmanager
     def identity(self, token: str):
         with self.engine.begin() as c:
+            # session_resolve updates/locks the session row: bound that first query too.
+            apply_timeouts(c)
             row = (
                 c.execute(
                     text("SELECT * FROM session_resolve(:digest)"), {"digest": digest_token(token)}
@@ -134,7 +138,6 @@ class Database:
                 raise ApplicationError(401, "INVALID_SESSION", "Sign in to continue.")
             scope = Scope(row["user_id"], row["session_id"])
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
-            apply_timeouts(c)
             yield c, scope, row
 
     @contextmanager
@@ -170,6 +173,9 @@ class Database:
                 raise ApplicationError(404, "NOT_FOUND")
             if member not in PERMISSIONS[permission]:
                 raise ApplicationError(403, "FORBIDDEN")
+            if not c.execute(text("SELECT session_authority_current(:s,:b)"),
+                             {"s": identity.session_id, "b": business_id}).scalar_one():
+                raise ApplicationError(403, "SESSION_REAUTH_REQUIRED", "Your role changed. Sign in again to continue.")
             yield c, Scope(identity.user_id, identity.session_id, business_id, member)
 
     @contextmanager

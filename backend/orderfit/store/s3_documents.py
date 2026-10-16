@@ -41,6 +41,9 @@ class S3PrivateDocuments:
                 signature_version="s3v4",
                 s3={"addressing_style": addressing_style},
                 retries={"mode": "standard", "total_max_attempts": 3},
+                connect_timeout=5,
+                read_timeout=15,
+                max_pool_connections=4,
             ),
         )
 

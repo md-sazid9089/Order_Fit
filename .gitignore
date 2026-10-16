@@ -17,6 +17,8 @@ var/
 *.pgdump
 *.sql.gz
 *.bak
+# Local diagnostic logs can contain request/document data; never version them.
+*.log
 
 # Node
 node_modules/

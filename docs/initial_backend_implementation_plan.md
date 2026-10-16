@@ -1,5 +1,13 @@
 # OrderFit backend implementation plan — regenerated after database integration
 
+> Checkout reconciliation, 16 October 2026: the preparation-time statements below
+> describe `a0608e6`, not today's tree. The current frontend is `web/`; root,
+> `backend/` and `web/AGENTS.md`, contracts, lockfile and progress now exist.
+> Use those current instructions. Implementation and acceptance evidence are in
+> [the audit matrix](orderfit_audit_2026-10-16.md) and
+> [progress](backend_implementation_progress.md). P4 and P8 acceptance remain partial.
+> Historical file-presence claims below are retained as history, not setup commands.
+
 Prepared: **15 October 2026**. Audited checkout: **`a0608e6`**, branch `main`, matching the locally fetched `origin/main`. Database integration: `c8c1163`, merged by `1d68023`. Frontend integration: `a927123` and `8f0d2d7`, merged by `a0608e6`.
 
 This is an implementation handoff, not a claim that the backend is complete. It replaces the earlier plan written for a different checkout. The current frontend is **`frontend/`**. The database now has a substantial SQL implementation. The earlier P0 contracts, progress file, root/backend `AGENTS.md` files and Python lockfile are **not present in this checkout**. The user's earlier completion of P0 is historical context; verify or recover that work before marking any regenerated phase complete.
@@ -766,7 +774,7 @@ React Query keys include business ID and resource/version; invalidate dependent 
 
 Use decimal strings for transport and safe integer/decimal formatting; never convert large money strings to JavaScript Number for arithmetic. Provide explicit display units (minor vs major, BDT vs USD), date/timezone, scenario and coverage labels. Keep empty and unavailable states honest. All 6-digit demo approval widgets must be replaced with real password re-authentication UI or disabled until P6.
 
-Read `frontend/AGENTS.md` and bundled Next documentation before changing frontend code. Add typed API client and centralized error/session handling; generate types from backend OpenAPI. No duplicated business enums or calculation formulas in UI modules. Contract tests should catch drift in current route parameter/async APIs for the locked Next version.
+Read `web/AGENTS.md` and bundled Next documentation before changing frontend code. Add typed API client and centralized error/session handling; generate types from backend OpenAPI. No duplicated business enums or calculation formulas in UI modules. Contract tests should catch drift in current route parameter/async APIs for the locked Next version.
 
 ### 13.2 Configuration contract
 

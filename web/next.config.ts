@@ -18,8 +18,8 @@ if (process.env.VERCEL && process.env.NEXT_PUBLIC_API_URL) {
 const nextConfig: NextConfig = {
   // Self-contained server bundle for the Docker image (web/Dockerfile). Vercel builds with its own adapter.
   ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Request nonces cannot be combined with prerendered HTML/partial prefetch shells.
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {
@@ -28,17 +28,18 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  // Baseline response headers for every route. The CSP is deliberately limited to frame-ancestors: Next.js emits inline
-  // bootstrap scripts, so a script-src policy would need per-request nonces (which also makes every page dynamic) and has
-  // not been verified against this build. frame-ancestors plus X-Frame-Options (older browsers) blocks clickjacking.
+  // Nonce-bearing HTML gets its strict script policy from proxy.ts. This baseline also
+  // covers static assets; never put a fixed nonce in build-time configuration.
   async headers() {
     return [{
       source: "/:path*",
       headers: [
-        { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        { key: "Content-Security-Policy", value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" },
         { key: "X-Frame-Options", value: "DENY" },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+        { key: "Strict-Transport-Security", value: "max-age=31536000" },
       ],
     }];
   },

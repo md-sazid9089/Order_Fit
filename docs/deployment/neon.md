@@ -14,18 +14,18 @@ Everything here is a procedure to follow. **None of it has been executed against
 3. Every branch has two hostnames:
    - **Direct** (unpooled): `ep-<id>.<region>.aws.neon.tech`. Use for migrations, `provision`, `pg_dump`/`pg_restore`.
    - **Pooled** (PgBouncer, transaction mode): `ep-<id>-pooler.<region>.aws.neon.tech`. Use for the API and the worker.
-4. Always append `sslmode=require` (Neon refuses plaintext). The application builds URLs for SQLAlchemy + psycopg 3, so the scheme must be `postgresql+psycopg://` (the runtime validator rejects anything else: `backend/orderfit/contracts/configuration.py:35`). `pg_dump`/`psql` need plain `postgresql://`.
+4. Always append `sslmode=verify-full&sslrootcert=system` (Neon refuses plaintext). The application builds URLs for SQLAlchemy + psycopg 3, so the scheme must be `postgresql+psycopg://` (the runtime validator rejects anything else: `backend/orderfit/contracts/configuration.py:35`). `pg_dump`/`psql` need plain `postgresql://`.
 5. URL-encode passwords (`%`, `@`, `:`, `/`, `#`). `migrations/env.py` already escapes `%` for Alembic.
 
 URL templates (placeholders only):
 
 ```text
 # Migrator (orderfit-migrate only)
-DATABASE_URL_DIRECT=postgresql+psycopg://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=require
+DATABASE_URL_DIRECT=postgresql+psycopg://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=verify-full&sslrootcert=system
 # API (orderfit-api)
-DATABASE_URL=postgresql+psycopg://orderfit_runtime:<API_PASSWORD>@ep-<id>-pooler.<region>.aws.neon.tech/<db>?sslmode=require
+DATABASE_URL=postgresql+psycopg://orderfit_runtime:<API_PASSWORD>@ep-<id>-pooler.<region>.aws.neon.tech/<db>?sslmode=verify-full&sslrootcert=system
 # Worker (orderfit-worker); same variable NAME, different value
-DATABASE_URL=postgresql+psycopg://orderfit_worker_login:<WORKER_PASSWORD>@ep-<id>-pooler.<region>.aws.neon.tech/<db>?sslmode=require
+DATABASE_URL=postgresql+psycopg://orderfit_worker_login:<WORKER_PASSWORD>@ep-<id>-pooler.<region>.aws.neon.tech/<db>?sslmode=verify-full&sslrootcert=system
 ```
 
 Do not add `options=-c ...` or other startup parameters to the pooled URL. A probe that did so failed on the pooled endpoint in the earlier review (`neon_connection_review.md`), and PgBouncer rejects most startup parameters. The runtime does not need them.
@@ -51,7 +51,7 @@ Preferred, from an operator shell with the direct URL, using the repository tool
 
 ```bash
 cd backend
-export DATABASE_URL_DIRECT='postgresql+psycopg://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=require'
+export DATABASE_URL_DIRECT='postgresql+psycopg://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=verify-full&sslrootcert=system'
 export RUNTIME_LOGIN=orderfit_runtime      RUNTIME_PASSWORD='<API_PASSWORD>'
 export WORKER_LOGIN=orderfit_worker_login  WORKER_PASSWORD='<WORKER_PASSWORD>'
 uv run --frozen python -m orderfit.store.provision
@@ -145,7 +145,7 @@ Use the **direct** URL and the plain `postgresql://` scheme. Store dumps in encr
 
 ```bash
 # backup (custom format, no owner/ACL surprises on restore into another project)
-pg_dump "postgresql://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=require" \
+pg_dump "postgresql://<owner>:<OWNER_PASSWORD>@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=verify-full&sslrootcert=system" \
   --format=custom --no-owner --file=orderfit-$(date -u +%Y%m%dT%H%M%SZ).dump
 
 # restore into a DISPOSABLE target (new Neon branch/project or local Postgres); never over production
@@ -177,7 +177,7 @@ Notes: `pg_dump` must be the same or a newer major version than the server. Role
 - [ ] `alembic upgrade head` ran on `acceptance` first, then `main`, via the direct URL.
 - [ ] `orderfit_runtime` and `orderfit_worker_login` created with SQL (not the console), 32+ character distinct passwords.
 - [ ] Section 3 verification SQL returned the expected values.
-- [ ] URLs: API/worker use the pooled host, `postgresql+psycopg://`, `sslmode=require`; migrator uses the direct host.
+- [ ] URLs: API/worker use the pooled host, `postgresql+psycopg://`, `sslmode=verify-full&sslrootcert=system`; migrator uses the direct host.
 - [ ] Retention window noted; first restore drill (8.4) done on a disposable branch.
 
 ## 11. Unverified hosted gates

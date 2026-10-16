@@ -205,21 +205,10 @@ def messages(
         _,
     ):
         DealRepository.get_deal(c, business_id, deal_id)
-        from sqlalchemy import text
-
-        ids = (
-            c.execute(
-                text(
-                    "SELECT id FROM prepared_message WHERE business_id=:b AND deal_id=:d ORDER BY id LIMIT :limit OFFSET :offset"
-                ),
-                dict(b=business_id, d=deal_id, limit=limit + 1, offset=offset),
-            )
-            .scalars()
-            .all()
-        )
+        items, more = repo.list_prepared(c, business_id, deal_id, offset, limit)
         return Page[PreparedMessage](
-            items=[repo.get_prepared(c, business_id, mid) for mid in ids[:limit]],
-            next_cursor=str(offset + limit) if len(ids) > limit else None,
+            items=items,
+            next_cursor=str(offset + limit) if more else None,
         )
 
 

@@ -96,16 +96,16 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
-            <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">{title === "Orders" ? "Deals & Orders Pipeline" : title}</h1>
-            <div className="flex items-center gap-3 text-sm">
+            <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] font-display leading-tight">{title === "Orders" ? "Deals & Orders Pipeline" : title}</h1>
+            <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
-              <select id="business-switcher" className="rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+              <select id="business-switcher" className="min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
                 {scope.session.memberships.length === 0 && <option value="">No business</option>}
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>
-              {canPrepare && businessId && <Link href={`/deals/new${query}`} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span>Evaluate New Order</span></Link>}
-              <button type="button" disabled={busy} title="Sign out" aria-label="Sign out" className="size-9 rounded-full bg-[#1E2021] text-white text-xs font-semibold disabled:opacity-50" onClick={() => { void signOut(); }}>{initial}</button>
+              {canPrepare && businessId && <Link href={`/deals/new${query}`} aria-label="Evaluate New Order" className="inline-flex shrink-0 items-center gap-1.5 p-2 xl:px-4 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span className="hidden xl:inline">Evaluate New Order</span></Link>}
+              <button type="button" disabled={busy} title="Sign out" aria-label="Sign out" className="size-9 shrink-0 rounded-full bg-[#1E2021] text-white text-xs font-semibold disabled:opacity-50" onClick={() => { void signOut(); }}>{initial}</button>
             </div>
           </div>
         </header>

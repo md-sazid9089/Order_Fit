@@ -94,7 +94,12 @@ def upload_document(
     # re-checks membership/role and versions after parsing.
     with service.database.tenant(session_token(request), business_id, "prepare", readonly=True) as (c, _):
         DealRepository.get_deal(c, business_id, deal_id)
-    parsed = parse(data, mime)
+    try:
+        parsed = parse(data, mime)
+    except UploadRejected as exc:
+        # Capacity refusal persists neither a failed parse nor immutable source metadata;
+        # the caller can retry the same upload once a parser slot is available.
+        raise ApplicationError(429, exc.code, "Document processing is busy. Try again shortly.") from None
     with service.database.tenant(session_token(request), business_id, "prepare") as (c, scope):
         existing = DocumentRepository.find_duplicate(c, business_id, deal_id, digest)
         if existing:

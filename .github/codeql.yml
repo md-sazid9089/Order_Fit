@@ -1,0 +1,11 @@
+name: OrderFit security analysis
+queries:
+  - uses: security-extended
+paths:
+  - backend/orderfit
+  - web/app
+  - web/components
+  - web/lib
+  - web/proxy.ts
+paths-ignore:
+  - web/lib/generated-api.d.ts

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
@@ -37,11 +38,12 @@ export const metadata: Metadata = {
 
 import { ConnectionIndicator } from "@/components/layout/connection-indicator";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
   return (
     <html lang="en" className="min-h-full antialiased" style={{ backgroundColor: "#F7F6F5" }}>
       <head>

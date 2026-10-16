@@ -6,6 +6,12 @@
 .ruff_cache
 .env
 .env.*
+*.log
+**/*.pem
+**/*.key
+**/*.p12
+**/id_rsa*
+**/.npmrc
 var
 tests
 Dockerfile

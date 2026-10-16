@@ -43,6 +43,12 @@ test("expiry redirect targets sign-in with a notice and never fires on public pa
   assert.equal(x.signInNotice("other"), "");
 });
 
+test("a changed role clears session-scoped state through the shared reauthentication event", async () => {
+  const { client, events } = transport([{ status: 403, body: { error: { code: "SESSION_REAUTH_REQUIRED", message: "Sign in again." } } }]);
+  await assert.rejects(client.get("/businesses/a/deals"), e => e.code === "SESSION_REAUTH_REQUIRED");
+  assert.deepEqual(events, [client.SESSION_EXPIRED_EVENT]);
+});
+
 test("switching business keeps pending command keys; sign-out, sign-in and expiry clear them", async () => {
   const storage = {}; const body = { order_value_minor: "100" };
   const first = transport([{ status: 200, body: { csrf_token: "a" } }, new TypeError("lost")], { storage });
@@ -90,8 +96,11 @@ test("deal routes resolve the business through membership-validated scope", () =
   }
 });
 
-test("security headers are configured without a script CSP", () => {
+test("static headers retain baseline protections while HTML uses request-specific CSP", () => {
   const source = readFileSync(new URL("../next.config.ts", import.meta.url), "utf8");
   for (const needle of ["frame-ancestors 'none'", "X-Frame-Options", "DENY", "X-Content-Type-Options", "nosniff", "strict-origin-when-cross-origin"]) assert.ok(source.includes(needle), needle);
   assert.ok(!/value: "[^"]*script-src/.test(source));
+  const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
+  assert.match(proxy, /randomBytes\(32\)/);
+  assert.match(proxy, /headers.set\("Content-Security-Policy", policy\)/);
 });

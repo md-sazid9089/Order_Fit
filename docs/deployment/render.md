@@ -84,8 +84,8 @@ Render dashboard for each service. **Never commit these values.**
 
 | Variable | Value | Notes |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+psycopg://<runtime_user>:<password>@<neon-pooler-host>/<db>?sslmode=require` | Restricted runtime login |
-| `DATABASE_URL_DIRECT` | `postgresql+psycopg://<migrator>:<password>@<neon-direct-host>/<db>?sslmode=require` | Owner login; used only during pre-deploy migration |
+| `DATABASE_URL` | `postgresql+psycopg://<runtime_user>:<password>@<neon-pooler-host>/<db>?sslmode=verify-full&sslrootcert=system` | Restricted runtime login |
+| `DATABASE_URL_DIRECT` | `postgresql+psycopg://<migrator>:<password>@<neon-direct-host>/<db>?sslmode=verify-full&sslrootcert=system` | Owner login; used only during pre-deploy migration |
 | `SESSION_SECRET` | ≥ 32 random chars | `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `ACCOUNT_FINGERPRINT_KEY` | ≥ 32 random chars, different from SESSION_SECRET | Same generation command |
 | `ALLOWED_ORIGINS` | `["https://orderfit.vercel.app"]` | Exact Vercel production origin |
@@ -95,7 +95,7 @@ Render dashboard for each service. **Never commit these values.**
 
 | Variable | Value | Notes |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+psycopg://<worker_user>:<password>@<neon-pooler-host>/<db>?sslmode=require` | Worker login (not the API runtime login) |
+| `DATABASE_URL` | `postgresql+psycopg://<worker_user>:<password>@<neon-pooler-host>/<db>?sslmode=verify-full&sslrootcert=system` | Worker login (not the API runtime login) |
 | `SESSION_SECRET` | Same value as API | Shared for token validation |
 | `ACCOUNT_FINGERPRINT_KEY` | Same value as API | Shared for fingerprint checks |
 | `ALLOWED_ORIGINS` | Same value as API | Worker validates configuration at startup |
