@@ -1,7 +1,5 @@
 "use client";
 
-import { platformAdminEnabled } from "@/lib/platform-admin";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -51,7 +49,7 @@ export default function AdminOverviewPage() {
   const loadData = async () => {
     try {
       const sess = await getSession();
-      const admin = platformAdminEnabled();
+      const admin = Boolean(sess.is_platform_admin === true);
       if (!admin) {
         router.replace("/deals");
         return;
@@ -131,8 +129,7 @@ export default function AdminOverviewPage() {
   };
 
   useEffect(() => {
-    const initialLoad = setTimeout(() => { void loadData(); }, 0);
-    return () => clearTimeout(initialLoad);
+    void loadData();
   }, [router]);
 
   const handleRunHealthCheck = async () => {

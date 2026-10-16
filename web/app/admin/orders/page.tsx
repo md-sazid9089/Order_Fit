@@ -1,7 +1,5 @@
 "use client";
 
-import { platformAdminEnabled } from "@/lib/platform-admin";
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,7 +56,7 @@ export default function AdminOrdersPage() {
       const sess = await getSession();
       setSession(sess);
 
-      const admin = platformAdminEnabled();
+      const admin = Boolean(sess.is_platform_admin === true);
       if (!admin) {
         router.replace("/deals");
         return;
@@ -106,8 +104,7 @@ export default function AdminOrdersPage() {
   }, [router]);
 
   useEffect(() => {
-    const initialLoad = setTimeout(() => { void loadDatabaseOrders(); }, 0);
-    return () => clearTimeout(initialLoad);
+    void loadDatabaseOrders();
   }, [loadDatabaseOrders]);
 
   const tenantsList = useMemo(() => {

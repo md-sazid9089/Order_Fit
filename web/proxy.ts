@@ -3,6 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { contentSecurityPolicy } from "./lib/security-policy";
 
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/admin")) {
+    const sessionCookie = request.cookies.get("orderfit_session");
+    if (!sessionCookie?.value) {
+      const loginUrl = new URL("/auth/signin", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   const nonce = randomBytes(32).toString("base64");
   const policy = contentSecurityPolicy(nonce, process.env.NODE_ENV === "development",
     request.nextUrl.protocol === "https:", process.env.NEXT_PUBLIC_API_URL);
