@@ -15,8 +15,8 @@ import sys
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
+load_dotenv("backend/.env", override=True)
 load_dotenv(".env")
-load_dotenv("backend/.env")
 
 DATABASE_URL = os.environ.get("DATABASE_URL_DIRECT") or os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
