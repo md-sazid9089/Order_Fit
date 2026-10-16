@@ -135,10 +135,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const current = activeHref(pathname, links);
   const canPrepare = can(scope.membership?.role, "prepare");
   const title = links.find(l => l.href === current)?.label ?? "OrderFit";
-  const isAdmin = Boolean(
-    scope.session.is_platform_admin ||
-    scope.session.memberships.some(m => (m.role as string) === "admin")
-  );
+  const isAdmin = Boolean(scope.session.is_platform_admin === true);
   return <ScopeContext.Provider value={scope}>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
       <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} isAdmin={isAdmin} />

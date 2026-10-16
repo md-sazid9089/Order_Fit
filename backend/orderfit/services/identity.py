@@ -183,9 +183,7 @@ class IdentityService:
         preferences = {"timezone": "UTC", "language": "en", "in_app_notifications": True} | user[
             "preferences"
         ]
-        is_admin = bool(user.get("is_platform_admin", False)) or any(
-            m.get("role") == "admin" for m in memberships
-        )
+        is_admin = bool(user.get("is_platform_admin", False))
         return SessionView(
             user_id=user["id"],
             email=user["email"],
