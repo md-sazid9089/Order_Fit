@@ -157,60 +157,35 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Solutions Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setOpenDropdown("solutions")}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <button
-                className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
-                onClick={() => setOpenDropdown(openDropdown === "solutions" ? null : "solutions")}
-              >
-                <span>Solutions</span>
-                <ChevronDown
-                  className={`size-3.5 transition-transform duration-200 ${
-                    openDropdown === "solutions" ? "rotate-180 text-[#FEF3C7]" : "text-white/60"
-                  }`}
-                />
-              </button>
-              {openDropdown === "solutions" && (
-                <div className="absolute top-full left-0 w-72 pt-2 z-50">
-                  <div className="bg-white rounded-2xl p-4 shadow-xl border border-neutral-200/80 text-[#1A1A1A] animate-in fade-in-50 zoom-in-95 duration-150">
-                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
-                      <div className="text-sm font-semibold">For Startups</div>
-                      <div className="text-xs text-neutral-500">Protect early cash flow on first major orders</div>
-                    </a>
-                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
-                      <div className="text-sm font-semibold">For Scaling Brands</div>
-                      <div className="text-xs text-neutral-500">Automate high-volume vendor quote audits</div>
-                    </a>
-                    <a href="#simulator" className="block p-2.5 rounded-xl hover:bg-[#F7F6F5] transition-colors">
-                      <div className="text-sm font-semibold">For Accountants & CFOs</div>
-                      <div className="text-xs text-neutral-500">Landed margin certainty and audit logs</div>
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <a
-              href="#resources"
+              href="#workflow"
               className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
-              Resources
+              Workflow
             </a>
             <a
-              href="#customers"
+              href="#architecture"
               className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
-              Customers
+              Architecture &amp; ADRs
+            </a>
+            <a
+              href="#comparison"
+              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
+            >
+              Compare
             </a>
             <a
               href="#simulator"
               className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
             >
-              Pricing
+              Simulator
+            </a>
+            <a
+              href="#faq"
+              className="px-3.5 py-2 text-sm font-medium text-white/90 hover:text-[#FEF3C7] transition-colors"
+            >
+              FAQ
             </a>
           </nav>
 
@@ -261,25 +236,32 @@ export function Navbar() {
               Products
             </a>
             <a
+              href="#workflow"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-medium text-white/90 py-2 border-b border-white/5"
+            >
+              Workflow
+            </a>
+            <a
+              href="#architecture"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-medium text-white/90 py-2 border-b border-white/5"
+            >
+              Architecture &amp; ADRs
+            </a>
+            <a
+              href="#comparison"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-medium text-white/90 py-2 border-b border-white/5"
+            >
+              Compare
+            </a>
+            <a
               href="#simulator"
               onClick={() => setMobileMenuOpen(false)}
               className="text-base font-medium text-white/90 py-2 border-b border-white/5"
             >
-              Solutions
-            </a>
-            <a
-              href="#customers"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base font-medium text-white/90 py-2 border-b border-white/5"
-            >
-              Customers
-            </a>
-            <a
-              href="#simulator"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base font-medium text-white/90 py-2 border-b border-white/5"
-            >
-              Live Simulator
+              Simulator
             </a>
             <a
               href="#faq"

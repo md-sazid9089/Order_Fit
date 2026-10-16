@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowUpRight, RotateCcw, AlertTriangle, CheckCircle2, ChevronRight, Play, ExternalLink } from "lucide-react";
+import { RotateCcw, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
 
 export function OrderSimulator() {
   // Slider states

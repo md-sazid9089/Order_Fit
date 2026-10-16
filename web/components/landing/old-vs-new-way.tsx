@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { X, Check } from "lucide-react";
 
 export function OldVsNewWay() {
@@ -9,13 +8,16 @@ export function OldVsNewWay() {
     <section id="comparison" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Settle Section 6 Header */}
+        {/* Comparison Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block">
+            Spreadsheet Guesswork vs. Deterministic Certainty
+          </span>
           <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
-            Less Busywork. More Breakthroughs.
+            Stop Gambling on Order Feasibility
           </h2>
           <p className="font-sans text-lg md:text-xl text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
-            We safeguard your back office so you can focus on growing your brand, not firefighting payroll.
+            A high-value purchase order should grow your business, not trigger a surprise cash crunch or emergency payroll crisis.
           </p>
         </div>
 

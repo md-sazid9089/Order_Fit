@@ -22,27 +22,27 @@ const faqs: FAQItem[] = [
   {
     question: "What happens if an enterprise customer pays 30 or 60 days late?",
     answer:
-      "OrderFit runs a linear delay stress test through 90 days of potential payment delay (ADR 0002). It pinpoints the exact calendar day your cash reserve would break and automatically sizes an advance deposit (e.g. 35%) to keep your operating cash positive regardless of payment delays.",
+      "OrderFit runs an exhaustive linear delay stress test through 90 days of potential payment delay (ADR 0002). It pinpoints the exact calendar day your cash reserve would break and automatically sizes an advance deposit or supplier extension to keep your operating cash positive regardless of payment delays.",
   },
   {
-    question: "Which accounting systems and tools does OrderFit integrate with?",
+    question: "How does OrderFit ingest orders and supplier quotes?",
     answer:
-      "OrderFit seamlessly integrates with QuickBooks Online, NetSuite, Xero, Stripe, Wise, Mercury, Brex, and Shopify Plus, allowing you to ingest purchase orders and export payment terms without manual data re-entry.",
+      "You can upload original PDF customer purchase orders and supplier quotes directly, or import structured cash-flow CSVs. The system extracts milestone dates, payment terms, and delivery obligations, then requires owner confirmation before running calculations.",
   },
   {
     question: "Can OrderFit send emails or approve terms autonomously?",
     answer:
-      "No. OrderFit enforces mandatory human-in-the-loop approval gates (ADR 0004 & ADR 0005). The system analyzes the purchase order and drafts counter-offer messages, but the business owner or finance manager must review and explicitly click Approve before anything is sent.",
+      "No. OrderFit enforces mandatory human-in-the-loop approval gates (ADR 0004 & ADR 0005). The system analyzes the purchase order and drafts counter-offer messages, but the business owner or finance manager must review and explicitly click Approve before any action is scheduled.",
   },
   {
-    question: "Does OrderFit offer a free plan?",
+    question: "Are actions executed on live financial or email rails?",
     answer:
-      "Yes. The Launch tier is free to get started, letting you evaluate purchase orders and run delay-scan stress tests. Paid tiers add custom multi-scenario planning, dedicated commercial support managers, and multi-entity consolidation.",
+      "All execution is currently sandbox-only. OrderFit simulates outgoing drafts and records approved commitments in an append-only, cryptographic audit ledger. Real email, banking, or lender integrations require separate authorization.",
   },
   {
-    question: "How is OrderFit priced compared to traditional ERPs?",
+    question: "What happens when a customer counter-offers?",
     answer:
-      "Unlike legacy enterprise platforms that charge thousands per seat or penalize you with transaction fees, OrderFit is priced transparently with flat tiers, unlimited seats, and no percentage fees on order volume.",
+      "When a customer replies with revised terms (e.g., '30% deposit instead of 40%'), any prior approvals instantly become stale. OrderFit extracts the reply, re-validates the timeline, and re-computes headroom automatically through up to 3 negotiation rounds (ADR 0004).",
   },
 ];
 

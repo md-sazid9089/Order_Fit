@@ -8,13 +8,16 @@ export function FeaturePillars() {
     <section id="products" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Settle Section Header */}
+        {/* OrderFit Pillars Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block">
+            Core Decision Capabilities
+          </span>
           <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A]">
-            The back office built for growing brands
+            Can you afford that next big commercial order?
           </h2>
           <p className="font-sans text-lg md:text-xl text-[#526975] leading-relaxed max-w-2xl mx-auto mt-4 font-normal">
-            Control spend, evaluate purchase orders, and protect working capital — all in one unified platform.
+            OrderFit evaluates customer POs, supplier quotes, and existing cash commitments to give you a deterministic verdict and ranked counter-offers before you sign.
           </p>
         </div>
 
@@ -119,10 +122,10 @@ export function FeaturePillars() {
               </div>
 
               <h3 className="font-heading font-medium text-[1.688rem] leading-[110%] md:text-[2rem] text-[#1A1A1A] mb-3">
-                Procurement
+                Order &amp; Quote Ingestion
               </h3>
               <p className="font-sans text-[#526975] text-base leading-relaxed mb-6 font-normal">
-                Ingest customer purchase orders, extract supplier quotes, track delivery milestones, and see your true landed costs before committing to production.
+                Ingest customer purchase orders and supplier quotes with multi-tier LLM parsing (T0), verified by the business owner (HITL Gate 1) before running deterministic math.
               </p>
             </div>
 
@@ -186,10 +189,10 @@ export function FeaturePillars() {
               </div>
 
               <h3 className="font-heading font-medium text-[1.688rem] leading-[110%] md:text-[2rem] text-[#1A1A1A] mb-3">
-                Working Capital
+                Ranked What-If &amp; Counter-Offers
               </h3>
               <p className="font-sans text-[#526975] text-base leading-relaxed mb-6 font-normal">
-                Accept high-value purchase orders while preserving operating cash, using ranked counter-offers (deposits, milestone terms, invoice credit) based on your real cash data.
+                When an order is profitable but strains cash reserves, compare customer deposits, supplier term extensions, and owner financing to find the best feasible path.
               </p>
             </div>
 

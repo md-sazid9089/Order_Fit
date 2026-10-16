@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,24 +30,22 @@ export default function SignUpPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("BDT");
-  const [timezone, setTimezone] = useState("Asia/Dhaka");
+  const [timezone, setTimezone] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Dhaka";
+      } catch {
+        return "Asia/Dhaka";
+      }
+    }
+    return "Asia/Dhaka";
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    try {
-      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (userTz) {
-        setTimezone(userTz);
-      }
-    } catch {
-      // Fallback stays Asia/Dhaka
-    }
-  }, []);
 
   const timezoneList = useMemo(() => {
     if (timezone && !COMMON_TIMEZONES.includes(timezone)) {
