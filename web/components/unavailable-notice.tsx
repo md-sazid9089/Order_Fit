@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/layout/auth-shell";
+import { AppShellSkeleton } from "@/components/ui/skeleton";
 
 /** Honest placeholder for screens that have no registered backend operation in this release. */
 export function UnavailableNotice({ title, reason, href = "/deals/sources", linkLabel = "Open cash, payees and financing" }: { title: string; reason: string; href?: string; linkLabel?: string }) {
@@ -15,16 +16,7 @@ export function UnavailableNotice({ title, reason, href = "/deals/sources", link
 /** Authenticated route wrapper: session guard plus the notice. */
 export function UnavailablePage(props: Parameters<typeof UnavailableNotice>[0]) {
   return (
-    <Suspense
-      fallback={
-        <main className="min-h-screen bg-[#f7f6f5] flex items-center justify-center p-8 text-neutral-400">
-          <div className="flex items-center gap-2.5">
-            <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
-            <span className="text-xs font-medium tracking-wide">Loading…</span>
-          </div>
-        </main>
-      }
-    >
+    <Suspense fallback={<AppShellSkeleton />}>
       <AuthShell><UnavailableNotice {...props} /></AuthShell>
     </Suspense>
   );

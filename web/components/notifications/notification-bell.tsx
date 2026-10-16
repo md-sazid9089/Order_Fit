@@ -7,6 +7,7 @@ import { Bell } from "lucide-react";
 import { listNotifications, markNotificationRead, markNotificationsRead } from "@/lib/p7-api";
 import { isUnread, maxNotificationId, safeActionPath, unreadCount, unreadLabel } from "@/lib/p7-model";
 import { Alert, QueryError, button, useCommand, useScoped, when } from "@/components/p7/common";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 const SEVERITY: Record<string, string> = { info: "bg-neutral-100 text-neutral-800", warning: "bg-amber-100 text-amber-900", critical: "bg-red-100 text-red-800" };
 
@@ -52,7 +53,12 @@ export function NotificationBell() {
         <button type="button" className={button} disabled={busy || unread === 0 || !throughId} onClick={() => void run(async () => { await markNotificationsRead(businessId, { through_id: throughId! }); await refresh(); })}>Mark all read</button></div>
       {more && unread > 0 && <p className="text-xs text-neutral-600">Older notifications are not all shown. Marking all read also marks those older than the newest shown.</p>}
       {error && <Alert>{error}</Alert>}
-      {query.isPending && <p role="status" className="text-neutral-600">Loading notifications…</p>}
+      {query.isPending && (
+        <div role="status" aria-busy="true" className="py-2">
+          <span className="sr-only">Loading notifications…</span>
+          <SkeletonList items={3} hasAvatar={false} />
+        </div>
+      )}
       {query.isError && !query.isFetching && <QueryError error={query.error} retry={() => void query.refetch()} />}
       {query.isSuccess && !items.length && <p className="text-neutral-600">No notifications for you in this business.</p>}
       <ul className="max-h-96 space-y-2 overflow-auto">

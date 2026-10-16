@@ -184,7 +184,7 @@ class IdentityService:
             "preferences"
         ]
         is_admin = bool(user.get("is_platform_admin", False)) or any(
-            m.get("role") in ("admin", "superadmin") for m in memberships
+            m.get("role") == "admin" for m in memberships
         )
         return SessionView(
             user_id=user["id"],

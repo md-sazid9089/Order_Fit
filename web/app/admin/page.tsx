@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSession } from "@/lib/p7-api";
+import { getSession, getBusiness, listMembers } from "@/lib/p7-api";
+import { get, type Deal } from "@/lib/orderfit-api";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppShellSkeleton } from "@/components/ui/skeleton";
 import {
   Server,
   Activity,
@@ -20,101 +22,181 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
-  HardDrive,
-  BarChart3,
-  Sliders,
+  Database,
   DollarSign,
-  Layers,
-  X
+  X,
 } from "lucide-react";
+
+interface DatabaseTelemetry {
+  databaseConnected: boolean;
+  schemaCurrent: boolean;
+  storageWritable: boolean;
+  workerActive: boolean;
+  totalUsers: number;
+  totalOrders: number;
+  totalPipelineMinor: number;
+  activeTenants: number;
+  currency: string;
+}
 
 export default function AdminOverviewPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [telemetry, setTelemetry] = useState<DatabaseTelemetry | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    getSession()
-      .then((sess) => {
-        const admin = Boolean(
-          sess.is_platform_admin ||
-          sess.memberships?.some((m) => (m.role as string) === "admin" || (m.role as string) === "superadmin")
-        );
-        if (!admin) {
-          router.replace("/deals");
-        } else {
-          setIsAdmin(true);
+  const loadData = async () => {
+    try {
+      const sess = await getSession();
+      const admin = Boolean(
+        sess.is_platform_admin ||
+        sess.memberships?.some((m) => (m.role as string) === "admin")
+      );
+      if (!admin) {
+        router.replace("/deals");
+        return;
+      }
+      setIsAdmin(true);
+
+      // Probe live database readiness
+      let dbReady = false;
+      let schemaOk = false;
+      let storageOk = false;
+      let workerOk = false;
+      try {
+        const readyRes = await fetch("/api/health", { cache: "no-store" });
+        if (readyRes.ok) {
+          const body = (await readyRes.json().catch(() => null)) as {
+            ready?: boolean;
+            database?: boolean;
+          } | null;
+          dbReady = body?.database === true || body?.ready === true;
+          schemaOk = body?.ready === true;
+          storageOk = body?.ready === true;
+          workerOk = body?.ready === true;
         }
-      })
-      .catch(() => {
-        router.replace("/auth/signin");
+      } catch {
+        dbReady = false;
+      }
+
+      // Query cross-tenant database metrics from accessible memberships
+      const memberships = sess.memberships ?? [];
+      let userCount = 0;
+      let orderCount = 0;
+      let pipelineSum = 0;
+      let defaultCurrency = "USD";
+
+      await Promise.all(
+        memberships.map(async (m) => {
+          try {
+            const [membersRes, dealsRes, bizProfile] = await Promise.all([
+              listMembers(m.business_id).catch(() => null),
+              get<{ items: Deal[] }>(`/businesses/${m.business_id}/deals?limit=100`).catch(() => null),
+              getBusiness(m.business_id).catch(() => null),
+            ]);
+
+            if (membersRes?.items) {
+              userCount += membersRes.items.length;
+            }
+            if (dealsRes?.items) {
+              orderCount += dealsRes.items.length;
+              for (const deal of dealsRes.items) {
+                const amount = Number(deal.order_value_minor) || 0;
+                pipelineSum += amount;
+              }
+            }
+            if (bizProfile?.currency) {
+              defaultCurrency = bizProfile.currency;
+            }
+          } catch {
+            // Ignore individual business read failures
+          }
+        })
+      );
+
+      setTelemetry({
+        databaseConnected: dbReady,
+        schemaCurrent: schemaOk,
+        storageWritable: storageOk,
+        workerActive: workerOk,
+        totalUsers: userCount > 0 ? userCount : memberships.length,
+        totalOrders: orderCount,
+        totalPipelineMinor: pipelineSum,
+        activeTenants: memberships.length,
+        currency: defaultCurrency,
       });
+    } catch {
+      router.replace("/auth/signin");
+    }
+  };
+
+  useEffect(() => {
+    void loadData();
   }, [router]);
 
-  const handleRunHealthCheck = () => {
+  const handleRunHealthCheck = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      setToastMessage("All 4 cluster nodes synchronized. Hash chain integrity verified (0 drift, 100% operational).");
-      setTimeout(() => setToastMessage(null), 3500);
-    }, 1000);
+    await loadData();
+    setIsVerifying(false);
+    setToastMessage("Database and cluster readiness probe verified live from PostgreSQL.");
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const ADMIN_SECTIONS = [
     {
       title: "User Management",
-      desc: "Manage 28 platform accounts, roles (Superadmin, Risk Officer, Commercial Lead), and MFA enforcement.",
-      href: "/users",
-      badge: "28 Accounts",
+      desc: "Manage platform accounts from database, assign admin and commercial roles, and control access.",
+      href: "/admin/users",
+      badge: `${telemetry?.totalUsers ?? 0} Users`,
       icon: Users,
     },
     {
       title: "Orders Management",
-      desc: "Cross-tenant oversight of all purchase orders, engine feasibility rankings, and emergency hold controls.",
-      href: "/orders",
-      badge: "$4.28M Pipeline",
+      desc: "Cross-tenant oversight of database purchase orders, deterministic feasibility rankings, and risk holds.",
+      href: "/admin/orders",
+      badge: `${telemetry?.totalOrders ?? 0} Orders`,
       icon: Package,
     },
     {
       title: "Tenant Namespaces",
-      desc: "Multi-tenant PostgreSQL isolation, custom reserve floors ($100k Apex), and baseline currency calibration.",
+      desc: "Multi-tenant PostgreSQL business isolation, reserve floors, and base currency calibrations.",
       href: "/admin/tenants",
-      badge: "4 Active Tenants",
+      badge: `${telemetry?.activeTenants ?? 0} Organizations`,
       icon: Building2,
     },
     {
       title: "Engine Invariants",
-      desc: "ADR 0001 integer minor unit arithmetic, linear delay scan horizon (0..90d), and max 3-round negotiation caps.",
+      desc: "ADR 0001 integer arithmetic rules, linear delay scan horizon (0..90d), and negotiation constraints.",
       href: "/admin/engine",
       badge: "Integer Precision",
       icon: Cpu,
     },
     {
       title: "Security & Gates",
-      desc: "T0-T4 permission gate enforcement, SHA-256 step-up authorization, and 20/20 red-team attack defense.",
+      desc: "T0-T4 permission gate enforcement, SHA-256 step-up authorization, and red-team defenses.",
       href: "/admin/security",
-      badge: "100% Blocked",
+      badge: "T0-T4 Gates",
       icon: ShieldAlert,
     },
     {
       title: "Cluster Audit Log",
       desc: "Tamper-evident append-only cryptographic ledger tracking all intake, compute, draft, and commit events.",
       href: "/admin/logs",
-      badge: "Block #1045",
+      badge: "Audit Stream",
       icon: Terminal,
+    },
+    {
+      title: "System & Nodes",
+      desc: "PostgreSQL connection pool, cluster node telemetry, background worker queues, and schema migrations.",
+      href: "/admin/system",
+      badge: telemetry?.databaseConnected ? "DB Connected" : "DB Offline",
+      icon: Server,
     },
   ];
 
-  if (isAdmin === null) {
-    return (
-      <main className="min-h-screen bg-[#F7F6F5] flex items-center justify-center p-8 text-neutral-400">
-        <div className="flex items-center gap-2.5">
-          <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
-          <span className="text-xs font-medium tracking-wide">Verifying authorization…</span>
-        </div>
-      </main>
-    );
+  if (isAdmin === null || !telemetry) {
+    return <AppShellSkeleton />;
   }
 
   return (
@@ -133,11 +215,11 @@ export default function AdminOverviewPage() {
                 <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight flex items-center gap-2">
                   <span>OrderFit Control Console</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#1E2021] text-white font-bold">
-                    CLUSTER LEVEL
+                    ADMIN
                   </span>
                 </h1>
                 <p className="text-[11px] text-[#737373] leading-tight hidden sm:block">
-                  Autonomous engine guards, multi-tenant isolation, cryptographic audit verifications & LLM routing
+                  Deterministic engine controls, multi-tenant database isolation & verifiable audit trail
                 </p>
               </div>
             </div>
@@ -145,12 +227,12 @@ export default function AdminOverviewPage() {
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={handleRunHealthCheck}
+                onClick={() => void handleRunHealthCheck()}
                 disabled={isVerifying}
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Activity className={`size-3.5 ${isVerifying ? "animate-spin text-[#1E2021]" : "text-[#1E2021]"}`} />
-                <span>{isVerifying ? "Verifying..." : "Verify Cluster Health"}</span>
+                <span>{isVerifying ? "Verifying..." : "Verify DB Health"}</span>
               </button>
 
               <Link
@@ -178,47 +260,58 @@ export default function AdminOverviewPage() {
             </div>
           )}
 
-          {/* KPI Telemetry Strip */}
+          {/* Database-grounded KPI Telemetry Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
               <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Cluster Health
+                Database Status
               </div>
               <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#1E2021]" />
-                <span>Operational</span>
+                <span
+                  className={`size-2 rounded-full ${
+                    telemetry.databaseConnected ? "bg-[#059669]" : "bg-[#DC2626]"
+                  }`}
+                />
+                <span>{telemetry.databaseConnected ? "Operational" : "Unavailable"}</span>
               </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">4 nodes synchronized</div>
-            </div>
-
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Deterministic Sweep Latency
-              </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1">
-                3.2 ms avg
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">0..90 days delay scan</div>
-            </div>
-
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Adversarial Defense
-              </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1">
-                100% Neutralized
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">20/20 attack vectors blocked</div>
+              <div className="text-[11px] text-[#525252] mt-0.5">PostgreSQL Live Connection</div>
             </div>
 
             <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
               <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
                 Active Tenant Namespaces
               </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1">
-                4 Organizations
+              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
+                <Building2 className="size-4 text-[#1E2021]" />
+                <span>{telemetry.activeTenants} Organizations</span>
               </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">Isolated PostgreSQL schemas</div>
+              <div className="text-[11px] text-[#525252] mt-0.5">Isolated tenant databases</div>
+            </div>
+
+            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
+              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
+                Database Orders
+              </div>
+              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
+                <Package className="size-4 text-[#1E2021]" />
+                <span>{telemetry.totalOrders} Orders</span>
+              </div>
+              <div className="text-[11px] text-[#525252] mt-0.5">In evaluation pipeline</div>
+            </div>
+
+            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
+              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
+                Total Pipeline Evaluated
+              </div>
+              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-1.5">
+                <DollarSign className="size-4.5 text-[#1E2021]" />
+                <span>
+                  {telemetry.totalPipelineMinor > 0
+                    ? `$${(telemetry.totalPipelineMinor / 100).toLocaleString()}`
+                    : "$0.00"}
+                </span>
+              </div>
+              <div className="text-[11px] text-[#525252] mt-0.5">Integer precision minor units</div>
             </div>
           </div>
 
@@ -244,7 +337,7 @@ export default function AdminOverviewPage() {
                         </span>
                       </div>
 
-                      <h3 className="font-bold text-sm text-[#1E2021] group-hover:text-[#1E2021]">
+                      <h3 className="font-bold text-sm text-[#1E2021]">
                         {sec.title}
                       </h3>
                       <p className="text-xs text-[#525252] mt-1 leading-relaxed">

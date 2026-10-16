@@ -137,7 +137,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const title = links.find(l => l.href === current)?.label ?? "OrderFit";
   const isAdmin = Boolean(
     scope.session.is_platform_admin ||
-    scope.session.memberships.some(m => (m.role as string) === "admin" || (m.role as string) === "superadmin")
+    scope.session.memberships.some(m => (m.role as string) === "admin")
   );
   return <ScopeContext.Provider value={scope}>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
@@ -149,7 +149,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
-              <select id="business-switcher" className="min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
                 {scope.session.memberships.length === 0 && <option value="">No business</option>}
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>
