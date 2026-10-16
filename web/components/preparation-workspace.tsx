@@ -8,6 +8,7 @@ import { BankChangeHold } from "@/components/p7/bank-hold";
 import { messageForCode } from "@/lib/approval-model";
 import { WHATIF_BOUNDS, validateWhatIfValue, type WhatIfKind } from "@/lib/p7-model";
 import type { DraftPreparationRequest, DraftRevisionRequest, Explanation, ForkRequest, ForkView, ForkSummary, OptionCatalogue, PreparedMessage, PreparationState, ReplyView, PayeeView, Series } from "@/lib/generated-api";
+import { Skeleton } from "@/components/ui/skeleton";
 type WhatIfChange = NonNullable<ForkRequest["changes"]>[number];
 
 const input = "block w-full rounded border border-neutral-300 bg-white p-2 text-sm";
@@ -96,7 +97,31 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
     const body: DraftPreparationRequest = { ...versions(), evaluation_id: evaluation.id, option_key: option, party_id: partyRole === "customer" ? deal!.inputs.customer_id! : partyId, party_role: partyRole, recipient, channel: "email" };
     const op = await mutate<Operation>(`${prefix}/deals/${dealId}/drafts`, "POST", body); saveOperation(op.operation_id);
   }
-  if (!deal) return <main className="p-8"><Link href="/deals">Saved orders</Link><p role={error ? "alert" : undefined}>{error || "Loading saved preparation…"}</p></main>;
+  if (!deal) {
+    if (error) {
+      return (
+        <main className="p-8">
+          <Link href="/deals">Saved orders</Link>
+          <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-red-800">{error}</p>
+        </main>
+      );
+    }
+    return (
+      <main className="mx-auto max-w-5xl space-y-5 p-6" role="status" aria-busy="true">
+        <span className="sr-only">Loading saved preparation…</span>
+        <Skeleton className="h-4 w-52" />
+        <Skeleton className="h-8 w-80" />
+        <div className="space-y-3 rounded-xl border border-[#ECEAE4] bg-white p-5">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-10 w-full" />
+          <div className="space-y-2 pt-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </div>
+      </main>
+    );
+  }
   return <main className="mx-auto max-w-5xl space-y-5 p-6">
     <Link className="underline" href={`/deals/${dealId}?businessId=${businessId}`}>Back to order review and evaluation</Link>
     <h1 className="text-2xl font-semibold">Negotiation preparation · {deal.public_ref}</h1><p>All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>

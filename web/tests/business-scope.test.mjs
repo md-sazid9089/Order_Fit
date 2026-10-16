@@ -20,5 +20,5 @@ test("switching business keeps business-level routes and leaves deal-specific ro
   assert.equal(pathForBusiness("/deals/sources", "b"), "/deals/sources?businessId=b");
   assert.equal(pathForBusiness("/deals/11111111/negotiate", "b"), "/deals?businessId=b");
   assert.equal(pathForBusiness("/deals", "x y"), "/deals?businessId=x%20y");
-  for (const route of ["/users", "/settings", "/payees", "/audit-log", "/cash-flow", "/deals/customers", "/admin"]) assert.equal(pathForBusiness(route, "b"), `${route}?businessId=b`);
+  for (const route of ["/users", "/useraccess", "/settings", "/payees", "/audit-log", "/cash-flow", "/deals/customers", "/admin"]) assert.equal(pathForBusiness(route, "b"), `${route}?businessId=b`);
 });

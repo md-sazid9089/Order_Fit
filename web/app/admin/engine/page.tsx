@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { getSession } from "@/lib/p7-api";
 import {
   Cpu,
   ArrowLeft,
@@ -18,6 +20,8 @@ import {
 } from "lucide-react";
 
 export default function AdminEnginePage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [integerPrecision, setIntegerPrecision] = useState(true);
   const [maxDelayDays, setMaxDelayDays] = useState("90");
   const [maxNegotiationRounds, setMaxNegotiationRounds] = useState("3");
@@ -25,6 +29,27 @@ export default function AdminEnginePage() {
   const [defaultDailyBurn, setDefaultDailyBurn] = useState("1200");
   const [resilienceFloorThreshold, setResilienceFloorThreshold] = useState("80");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const sess = await getSession();
+        const admin = Boolean(
+          sess.is_platform_admin ||
+          sess.memberships?.some((m) => (m.role as string) === "admin")
+        );
+        if (!admin) {
+          router.replace("/deals");
+          return;
+        }
+      } catch {
+        router.replace("/auth/signin");
+      } finally {
+        setLoading(false);
+      }
+    }
+    void checkAuth();
+  }, [router]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

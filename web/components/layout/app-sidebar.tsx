@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Layers, LineChart, CreditCard, Users, ShieldCheck, ShieldAlert, Settings, CheckCircle2, Building2,
+  Layers, LineChart, CreditCard, Users, ShieldCheck, ShieldAlert, Settings, Building2,
   PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet, Menu, LogOut,
   Activity, Cpu, Terminal, Server, ArrowLeft, Package,
 } from "lucide-react";
@@ -15,12 +15,13 @@ export type { NavItem } from "@/lib/p7-model";
 
 export const ADMIN_NAVIGATION_ITEMS: readonly NavItem[] = [
   { href: "/admin", label: "Platform Overview" },
-  { href: "/users", label: "User Management" },
-  { href: "/orders", label: "Orders Management" },
+  { href: "/admin/users", label: "User Management" },
+  { href: "/admin/orders", label: "Orders Management" },
   { href: "/admin/tenants", label: "Tenant Namespaces" },
   { href: "/admin/engine", label: "Engine Invariants" },
   { href: "/admin/security", label: "Security & Gates" },
   { href: "/admin/logs", label: "Cluster Audit Log" },
+  { href: "/admin/system", label: "System & Nodes" },
 ];
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -31,14 +32,18 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "/deals/sources": Wallet,
   "/payees": CreditCard,
   "/audit-log": ShieldCheck,
+  "/useraccess": Users,
   "/users": Users,
   "/settings": Settings,
   "/admin": Activity,
+  "/admin/users": Users,
+  "/admin/orders": Package,
   "/orders": Package,
   "/admin/tenants": Building2,
   "/admin/engine": Cpu,
   "/admin/security": ShieldAlert,
   "/admin/logs": Terminal,
+  "/admin/system": Server,
 };
 
 const LABELS: Record<string, string> = {
@@ -47,13 +52,17 @@ const LABELS: Record<string, string> = {
   "/deals/sources": "Cash & Financing",
   "/payees": "Payees & Suppliers",
   "/audit-log": "Operation Audit Log",
+  "/useraccess": "User Management",
   "/users": "User Management",
   "/orders": "Orders Management",
   "/admin": "Platform Overview",
+  "/admin/users": "User Management",
+  "/admin/orders": "Orders Management",
   "/admin/tenants": "Tenant Namespaces",
   "/admin/engine": "Engine Invariants",
   "/admin/security": "Security & Gates",
   "/admin/logs": "Cluster Audit Log",
+  "/admin/system": "System & Nodes",
 };
 
 export type AppSidebarProps = {
@@ -110,7 +119,7 @@ export function AppSidebar({
           (item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(item.href))
         )?.href ?? null);
   const effectiveCompanyName = companyName || (isAdminMode ? "OrderFit Control" : "Apex Manufacturing");
-  const effectiveRoleLabel = roleLabel || (isAdminMode ? "Superadmin Mode · Root" : "Owner");
+  const effectiveRoleLabel = roleLabel || (isAdminMode ? "Admin Mode" : "Owner");
 
   return (
     <>
@@ -118,9 +127,23 @@ export function AppSidebar({
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild><button type="button" aria-label="Open navigation" className="flex size-10 items-center justify-center rounded-xl bg-white border border-[#E8E6E1]"><Menu className="size-5" /></button></SheetTrigger>
           <SheetContent side="left" aria-describedby={undefined} className="overflow-y-auto">
-            <SheetHeader><SheetTitle>Navigation</SheetTitle><p className="text-xs text-neutral-600">{companyName} · {roleLabel}</p></SheetHeader>
+            <SheetHeader><SheetTitle>Navigation</SheetTitle><p className="text-xs text-neutral-600">{effectiveCompanyName} · {effectiveRoleLabel}</p></SheetHeader>
             <nav aria-label="Primary" className="px-3 space-y-1">
-              {links.map(item => <Link key={item.href} href={`${item.href}${query}`} aria-current={current === item.href ? "page" : undefined} onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-neutral-100">{LABELS[item.href] ?? item.label}</Link>)}
+              {activeLinks.map(item => {
+                const label = (item.href === "/admin" && !isAdminMode) ? "Admin Panel" : (LABELS[item.href] ?? item.label);
+                const href = item.href === "/admin" ? "/admin" : `${item.href}${query}`;
+                return (
+                  <Link
+                    key={item.href}
+                    href={href}
+                    aria-current={activeCurrent === item.href ? "page" : undefined}
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-xl px-4 py-3 text-sm hover:bg-neutral-100"
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
             </nav>
           </SheetContent>
         </Sheet>
@@ -201,47 +224,39 @@ export function AppSidebar({
           </nav>
         </div>
 
-        <div className="p-3 border-t border-[#E8E6E1] overflow-hidden space-y-2">
-          {isAdminMode ? (
-            <div className="space-y-2">
-              {isExpanded ? (
-                <>
-                  <div className="p-2.5 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed">
-                    <div className="font-semibold text-[#1E2021] flex items-center gap-1.5 whitespace-nowrap">
-                      <span className="size-2 rounded-full bg-[#1E2021]" />
-                      <span>Cluster Operational</span>
+        {(isAdminMode || onSignOut) && (
+          <div className="p-3 border-t border-[#E8E6E1] overflow-hidden space-y-2">
+            {isAdminMode ? (
+              <div className="space-y-2">
+                {isExpanded ? (
+                  <>
+                    <Link
+                      href="/deals"
+                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors w-full shadow-xs"
+                    >
+                      <ArrowLeft className="size-3.5" />
+                      <span>Exit to Business App</span>
+                    </Link>
+
+                    <div className="text-center font-mono text-[10px] text-[#737373]">
+                      Role: <span className="text-[#1E2021] font-bold">admin</span>
                     </div>
-                    <p className="text-[10px] text-[#737373] mt-0.5">4 nodes synchronized · 0 drift</p>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 py-1">
+                    <Link
+                      href="/deals"
+                      className="size-10 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] flex items-center justify-center transition-colors"
+                      title="Exit to Business App"
+                    >
+                      <ArrowLeft className="size-4" />
+                    </Link>
+                    <span className="font-mono text-[9px] text-[#737373]">ADM</span>
                   </div>
-
-                  <Link
-                    href="/deals"
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors w-full shadow-xs"
-                  >
-                    <ArrowLeft className="size-3.5" />
-                    <span>Exit to Business App</span>
-                  </Link>
-
-                  <div className="text-center font-mono text-[10px] text-[#737373]">
-                    Role: <span className="text-[#1E2021] font-bold">cluster_superadmin</span>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2 py-1">
-                  <Link
-                    href="/deals"
-                    className="size-10 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] flex items-center justify-center transition-colors"
-                    title="Exit to Business App"
-                  >
-                    <ArrowLeft className="size-4" />
-                  </Link>
-                  <span className="font-mono text-[9px] text-[#737373]">ADM</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              {onSignOut && (
+                )}
+              </div>
+            ) : (
+              onSignOut && (
                 <button
                   type="button"
                   onClick={onSignOut}
@@ -257,23 +272,10 @@ export function AppSidebar({
                   </div>
                   {isExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
                 </button>
-              )}
-              {isExpanded ? (
-                <div className="p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed">
-                  <div className="font-semibold text-[#1E2021] mb-1 flex items-center gap-1.5 whitespace-nowrap">
-                    <CheckCircle2 className="size-3.5 shrink-0" />
-                    <span>Pure Decision Engine</span>
-                  </div>
-                  <p className="line-clamp-2">Figures from reviewed inputs and the deterministic engine.</p>
-                </div>
-              ) : (
-                <div className="flex justify-center py-1">
-                  <CheckCircle2 className="size-4 text-[#737373]" />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+              )
+            )}
+          </div>
+        )}
       </aside>
     </>
   );

@@ -36,7 +36,7 @@ export const NAV: readonly NavItem[] = [
   { href: "/deals/sources", label: "Cash and financing" },
   { href: "/payees", label: "Payees" },
   { href: "/audit-log", label: "Audit log", needs: "audit" },
-  { href: "/users", label: "Users", needs: "manage_members" },
+  { href: "/useraccess", label: "Users", needs: "manage_members" },
   { href: "/settings", label: "Settings" },
   { href: "/admin", label: "Capabilities" },
 ];
