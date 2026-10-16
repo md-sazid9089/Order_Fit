@@ -3,11 +3,10 @@ import { Navbar } from "@/components/landing/navbar";
 import { HeroSection } from "@/components/landing/hero-section";
 import { SectorsMarquee } from "@/components/landing/sectors-marquee";
 import { FeaturePillars } from "@/components/landing/feature-pillars";
-import { ResultsSection } from "@/components/landing/results-section";
-import { MetricsSection } from "@/components/landing/metrics-section";
+import { WorkflowSection } from "@/components/landing/workflow-section";
+import { ArchitectureSecurity } from "@/components/landing/architecture-security";
 import { OldVsNewWay } from "@/components/landing/old-vs-new-way";
-import { IntegrationsSection } from "@/components/landing/integrations-section";
-import { CustomerStories } from "@/components/landing/customer-stories";
+import { CompetitiveMatrix } from "@/components/landing/competitive-matrix";
 import { OrderSimulator } from "@/components/landing/order-simulator";
 import { FaqSection } from "@/components/landing/faq-section";
 import { InsightsSection } from "@/components/landing/insights-section";
@@ -24,63 +23,57 @@ export default function Home() {
       {/* Navigation */}
       <Navbar />
 
-      {/* Main Landing Page matching Settle.com 1-to-1 */}
+      {/* Main Landing Page grounded in OrderFit Architecture & ADRs */}
       <main id="main-content">
         {/* Section 1: Hero Section */}
         <HeroSection />
 
-        {/* Section 2: Press ticker and Brand Logos Marquee */}
+        {/* Section 2: Supported Sectors & Architecture Principle Ticker */}
         <ScrollReveal direction="up" distance={24} duration={0.6}>
           <SectorsMarquee />
         </ScrollReveal>
 
-        {/* Section 3: The back office built for growing brands (3 pillars + 4 capabilities) */}
+        {/* Section 3: Core Decision Pillars (Feasibility, Quotes, Working Capital) */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <FeaturePillars />
         </ScrollReveal>
 
-        {/* Section 4: Let the results speak for themselves */}
+        {/* Section 4: 4-Step Decision Workflow Journey */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <ResultsSection />
+          <WorkflowSection />
         </ScrollReveal>
 
-        {/* Section 5: OrderFit by the numbers (Settle lavender container) */}
+        {/* Section 5: Architecture, ADRs & Security Tiers */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <MetricsSection />
+          <ArchitectureSecurity />
         </ScrollReveal>
 
-        {/* Section 6: Less Busywork. More Breakthroughs. (The old way vs The OrderFit way) */}
+        {/* Section 6: The Old Way (Spreadsheet Chaos) vs The OrderFit Way */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <OldVsNewWay />
         </ScrollReveal>
 
-        {/* Section 7: All the integrations you need */}
+        {/* Section 7: Market & Comparative Analysis (OrderFit vs Settle vs FP&A vs Spreadsheets) */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <IntegrationsSection />
+          <CompetitiveMatrix />
         </ScrollReveal>
 
-        {/* Section 8: Customer Stories */}
-        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <CustomerStories />
-        </ScrollReveal>
-
-        {/* Section 9 & 10: Take an interactive product tour (Live browser container) */}
+        {/* Section 8: Interactive Product Simulator (Live Cash Runway & Delay Scan) */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <OrderSimulator />
         </ScrollReveal>
 
-
-        {/* Section 12: Frequently asked questions */}
+        {/* Section 9: Frequently Asked Questions */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <FaqSection />
         </ScrollReveal>
 
-        {/* Section 13: Latest news & insights */}
+        {/* Section 10: News & Perspectives */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <InsightsSection />
         </ScrollReveal>
 
-        {/* Section 14: Insights in your inbox (Newsletter CTA) */}
+        {/* Section 11: Insights Newsletter CTA */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <CtaSection />
         </ScrollReveal>

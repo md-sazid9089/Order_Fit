@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { useSmoothScroll } from "@/components/layout/smooth-scroll-provider";
 
 export function Footer() {
@@ -49,36 +48,36 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Solutions Column */}
+          {/* Architecture & Decision Engine Column */}
           <div>
             <h2 className="font-beausite tracking-[0.04em] text-base font-normal text-white">
-              Solutions
+              Capabilities
             </h2>
             <hr className="mt-3 mb-4 border-solid border-[#D5C4FD]/40" />
             <ul className="flex flex-col gap-3 text-sm font-normal text-[#E6F4F1]/80">
               <li>
                 <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  For Startups
+                  Cash Feasibility Engine
                 </a>
               </li>
               <li>
-                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  For Scaling Brands
+                <a href="#workflow" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                  4-Step Decision Workflow
                 </a>
               </li>
               <li>
-                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  For Accountants &amp; CFOs
+                <a href="#simulator" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                  Linear Delay Stress Testing
                 </a>
               </li>
               <li>
-                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Become a Partner
+                <a href="#architecture" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                  ADR System Guarantees
                 </a>
               </li>
               <li>
-                <a href="#products" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Tariffs &amp; Landed Margin Management
+                <a href="#comparison" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                  Market Comparison Matrix
                 </a>
               </li>
             </ul>
@@ -92,13 +91,13 @@ export function Footer() {
             <hr className="mt-3 mb-4 border-solid border-[#D5C4FD]/40" />
             <ul className="flex flex-col gap-3 text-sm font-normal text-[#E6F4F1]/80">
               <li>
-                <a href="#customers" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Customer Stories
+                <a href="#architecture" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
+                  Security &amp; T0–T4 Tiers
                 </a>
               </li>
               <li>
                 <a href="#resources" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Blog &amp; Guides
+                  Blog &amp; Perspectives
                 </a>
               </li>
               <li>
@@ -108,12 +107,12 @@ export function Footer() {
               </li>
               <li>
                 <a href="#simulator" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Working Capital Calculator
+                  Interactive Simulator
                 </a>
               </li>
               <li>
                 <a href="#faq" className="hover:text-white hover:underline hover:underline-offset-2 transition-colors">
-                  Help Center &amp; FAQ
+                  Architecture FAQ
                 </a>
               </li>
             </ul>
