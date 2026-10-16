@@ -63,8 +63,10 @@ def _body_timeout():
 
 
 def _session_cookie(scope) -> str | None:
-    """The orderfit_session cookie value, or None. Presence is not authentication."""
+    """The orderfit_session cookie or Bearer token value, or None. Presence is not authentication."""
     for name, value in scope.get("headers", ()):
+        if name == b"authorization" and value.lower().startswith(b"bearer "):
+            return value[7:].decode("latin-1").strip()
         if name == b"cookie":
             for part in value.split(b";"):
                 key, _, token = part.strip().partition(b"=")

@@ -45,11 +45,11 @@ export function CtaSection() {
                   placeholder="Enter your business email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-full bg-[#FAF9F7] border border-[#ECEAE4] px-5 py-3 text-sm text-[#1A1A1A] placeholder:text-[#737373] focus:outline-none focus:ring-2 focus:ring-[#1E2021] font-sans"
+                  className="w-full rounded-full bg-[#FAF9F7] border border-[#ECEAE4] px-5 py-3 text-sm text-[#1A1A1A] placeholder:text-[#737373] focus:outline-none focus:ring-2 focus:ring-[#004D3B] font-sans"
                 />
                 <button
                   type="submit"
-                  className="w-full sm:w-auto shrink-0 rounded-full tracking-wider font-sans font-semibold px-7 py-3 bg-[#1E2021] text-white hover:bg-black uppercase text-xs transition-all cursor-pointer shadow-xs"
+                  className="w-full sm:w-auto shrink-0 rounded-full tracking-wider font-sans font-semibold px-7 py-3 bg-[#004D3B] text-[#FFFAEC] hover:bg-[#00382B] active:bg-[#00261D] uppercase text-xs transition-all cursor-pointer shadow-xs"
                 >
                   Subscribe
                 </button>

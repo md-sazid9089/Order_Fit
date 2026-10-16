@@ -13,7 +13,11 @@ def identity_service(request: Request):
 
 
 def session_token(request: Request):
-    token = request.cookies.get("orderfit_session")
+    auth = request.headers.get("Authorization")
+    if auth and auth.startswith("Bearer "):
+        token = auth[7:].strip()
+    else:
+        token = request.cookies.get("orderfit_session")
     if not token:
         raise ApplicationError(401, "INVALID_SESSION")
     return token

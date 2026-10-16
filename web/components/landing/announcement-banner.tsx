@@ -14,7 +14,7 @@ export function AnnouncementBanner() {
           <span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline hover:underline-offset-2">
             Deterministic order feasibility from $20K–$5M. Stress-tested cash runway — calculated in seconds.
           </span>
-          <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-1 text-[#FEF3C7]" />
+          <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-1 text-[#B5F2C6]" />
         </a>
       </div>
     </aside>

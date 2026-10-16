@@ -7,6 +7,7 @@ import secrets
 import time
 from datetime import UTC, datetime
 
+import jwt
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import InvalidHashError, VerificationError
 from sqlalchemy import text
@@ -36,6 +37,25 @@ class IdentityService:
         self.secret = config.session_secret.get_secret_value().encode()
         self.request_key = hmac.digest(self.secret, b"orderfit:idempotency-body:v1", "sha256")
         self.cursors = CursorCodec(cursor_key(self.secret))
+
+    def create_jwt(self, user_id, email, expires_in: int = 28800) -> str:
+        now = int(time.time())
+        payload = {
+            "sub": str(user_id),
+            "email": email,
+            "jti": secrets.token_hex(16),
+            "iat": now,
+            "exp": now + expires_in,
+            "iss": "orderfit",
+            "aud": "orderfit",
+        }
+        return jwt.encode(payload, self.secret, algorithm="HS256")
+
+    def decode_jwt(self, token: str) -> dict | None:
+        try:
+            return jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
+        except (jwt.PyJWTError, Exception):
+            return None
 
     def csrf(self):
         payload = secrets.token_urlsafe(32) + "." + str(int(time.time()) + 1800)
@@ -138,11 +158,14 @@ class IdentityService:
             return False
 
     @staticmethod
-    def view_connection(c, scope, session, csrf):
+    def view_connection(c, scope, session, csrf, token: str | None = None):
         user, memberships = IdentityRepository.profile(c, scope)
         preferences = {"timezone": "UTC", "language": "en", "in_app_notifications": True} | user[
             "preferences"
         ]
+        is_admin = bool(user.get("is_platform_admin", False)) or any(
+            m.get("role") in ("admin", "superadmin") for m in memberships
+        )
         return SessionView(
             user_id=user["id"],
             email=user["email"],
@@ -158,6 +181,8 @@ class IdentityService:
             expires_at=session["expires_at"],
             mfa_supported=False,
             email_verified=False,
+            token=token,
+            is_platform_admin=is_admin,
         )
 
     def authenticate(self, data, key, current_token, csrf, source):
@@ -206,9 +231,9 @@ class IdentityService:
                     )
                 scope = Scope(row["user_id"], row["session_id"])
                 set_context(c, user_id=scope.user_id, session_id=scope.session_id)
-                return self.view_connection(c, scope, row, csrf), None, csrf
+                return self.view_connection(c, scope, row, csrf, current_token), None, csrf
             if signup:
-                c.execute(
+                user_id = c.execute(
                     text(
                         "SELECT owner_provision(:email,:name,:hash,:business,:currency,:timezone)"
                     ),
@@ -220,8 +245,10 @@ class IdentityService:
                         "currency": data.currency,
                         "timezone": data.timezone,
                     },
-                )
-            token = secrets.token_urlsafe(32)
+                ).scalar_one()
+            else:
+                user_id = user["id"]
+            token = self.create_jwt(user_id, email)
             new_csrf = self.csrf()
             c.execute(
                 text("SELECT session_issue(:email,:hash,:token,:csrf)"),
@@ -244,7 +271,7 @@ class IdentityService:
             c.execute(text("SELECT session_csrf(:digest,:csrf)"), {
                 "digest": digest_token(token), "csrf": digest_token(new_csrf)})
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
-            view = self.view_connection(c, scope, row, new_csrf)
+            view = self.view_connection(c, scope, row, new_csrf, token)
             c.execute(
                 text("SELECT auth_request_complete(:scope,:key,:hash,CAST(:result AS jsonb))"),
                 {
@@ -263,12 +290,26 @@ class IdentityService:
             return view, token, new_csrf
 
     def view(self, token, csrf):
+        if token and token.count(".") == 2:
+            try:
+                jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
+            except jwt.ExpiredSignatureError as e:
+                raise ApplicationError(401, "INVALID_SESSION", "Session has expired.") from e
+            except jwt.InvalidTokenError as e:
+                raise ApplicationError(401, "INVALID_SESSION", "Invalid session token.") from e
         with self.database.identity(token) as (c, scope, row):
             if not csrf or not hmac.compare_digest(bytes(row["csrf_digest"]), digest_token(csrf)):
                 raise ApplicationError(403, "CSRF_REJECTED")
-            return self.view_connection(c, scope, row, csrf)
+            return self.view_connection(c, scope, row, csrf, token)
 
     def mutation_session(self, token, csrf):
+        if token and token.count(".") == 2:
+            try:
+                jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
+            except jwt.ExpiredSignatureError as e:
+                raise ApplicationError(401, "INVALID_SESSION", "Session has expired.") from e
+            except jwt.InvalidTokenError as e:
+                raise ApplicationError(401, "INVALID_SESSION", "Invalid session token.") from e
         with self.database.identity(token) as (_, _, row):
             if not hmac.compare_digest(bytes(row["csrf_digest"]), digest_token(csrf)):
                 raise ApplicationError(403, "CSRF_REJECTED")
