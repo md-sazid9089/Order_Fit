@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from threading import BoundedSemaphore
 
-import jwt
 from argon2 import PasswordHasher, Type
 from argon2.exceptions import InvalidHashError, VerificationError
 from sqlalchemy import text
@@ -56,25 +55,6 @@ class IdentityService:
         self.secret = config.session_secret.get_secret_value().encode()
         self.request_key = hmac.digest(self.secret, b"orderfit:idempotency-body:v1", "sha256")
         self.cursors = CursorCodec(cursor_key(self.secret))
-
-    def create_jwt(self, user_id, email, expires_in: int = 28800) -> str:
-        now = int(time.time())
-        payload = {
-            "sub": str(user_id),
-            "email": email,
-            "jti": secrets.token_hex(16),
-            "iat": now,
-            "exp": now + expires_in,
-            "iss": "orderfit",
-            "aud": "orderfit",
-        }
-        return jwt.encode(payload, self.secret, algorithm="HS256")
-
-    def decode_jwt(self, token: str) -> dict | None:
-        try:
-            return jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
-        except (jwt.PyJWTError, Exception):
-            return None
 
     def csrf(self):
         payload = secrets.token_urlsafe(32) + "." + str(int(time.time()) + 1800)
@@ -177,8 +157,7 @@ class IdentityService:
             except (VerificationError, InvalidHashError):
                 return False
 
-    @staticmethod
-    def view_connection(c, scope, session, csrf, token: str | None = None):
+    def view_connection(self, c, scope, session, csrf):
         user, memberships = IdentityRepository.profile(c, scope)
         preferences = {"timezone": "UTC", "language": "en", "in_app_notifications": True} | user[
             "preferences"
@@ -197,9 +176,9 @@ class IdentityService:
             memberships=[dict(m) for m in memberships],
             csrf_token=csrf,
             expires_at=session["expires_at"],
-            mfa_supported=False,
+            mfa_supported=bool(self.config.webauthn_rp_id),
+            mfa_enabled=bool(user.get("passkey_required", False)),
             email_verified=False,
-            token=token,
             is_platform_admin=is_admin,
         )
 
@@ -220,6 +199,12 @@ class IdentityService:
         ):
             raise ApplicationError(401, "INVALID_CREDENTIALS", "Sign-in failed.")
         if not signup:
+            with self.database.transaction() as c:
+                required = c.execute(text("SELECT passkey_required(:email,:hash)"), {
+                    "email": email, "hash": user["password_hash"]}).scalar_one()
+            if required:
+                self.rate_release(throttles)
+                raise ApplicationError(409, "MFA_REQUIRED", "Verify your passkey to finish signing in.")
             # A verified sign-in is not a guess. Sign-ups stay counted: they create accounts.
             self.rate_release(throttles)
         hashed = (
@@ -249,9 +234,9 @@ class IdentityService:
                     )
                 scope = Scope(row["user_id"], row["session_id"])
                 set_context(c, user_id=scope.user_id, session_id=scope.session_id)
-                return self.view_connection(c, scope, row, csrf, current_token), None, csrf
+                return self.view_connection(c, scope, row, csrf), None, csrf
             if signup:
-                user_id = c.execute(
+                c.execute(
                     text(
                         "SELECT owner_provision(:email,:name,:hash,:business,:currency,:timezone)"
                     ),
@@ -264,9 +249,7 @@ class IdentityService:
                         "timezone": data.timezone,
                     },
                 ).scalar_one()
-            else:
-                user_id = user["user_id"] if "user_id" in user else user["id"]
-            token = self.create_jwt(user_id, email)
+            token = secrets.token_urlsafe(32)
             new_csrf = self.csrf()
             # Replace this browser's old session atomically with the new one. Other
             # devices remain signed in; failed authentication never reaches revocation.
@@ -294,7 +277,7 @@ class IdentityService:
             c.execute(text("SELECT session_csrf(:digest,:csrf)"), {
                 "digest": digest_token(token), "csrf": digest_token(new_csrf)})
             set_context(c, user_id=scope.user_id, session_id=scope.session_id)
-            view = self.view_connection(c, scope, row, new_csrf, token)
+            view = self.view_connection(c, scope, row, new_csrf)
             c.execute(
                 text("SELECT auth_request_complete(:scope,:key,:hash,CAST(:result AS jsonb))"),
                 {
@@ -313,26 +296,12 @@ class IdentityService:
             return view, token, new_csrf
 
     def view(self, token, csrf):
-        if token and token.count(".") == 2:
-            try:
-                jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
-            except jwt.ExpiredSignatureError as e:
-                raise ApplicationError(401, "INVALID_SESSION", "Session has expired.") from e
-            except jwt.InvalidTokenError as e:
-                raise ApplicationError(401, "INVALID_SESSION", "Invalid session token.") from e
         with self.database.identity(token) as (c, scope, row):
             if not csrf or not hmac.compare_digest(bytes(row["csrf_digest"]), digest_token(csrf)):
                 raise ApplicationError(403, "CSRF_REJECTED")
-            return self.view_connection(c, scope, row, csrf, token)
+            return self.view_connection(c, scope, row, csrf)
 
     def mutation_session(self, token, csrf):
-        if token and token.count(".") == 2:
-            try:
-                jwt.decode(token, self.secret, algorithms=["HS256"], audience="orderfit", issuer="orderfit")
-            except jwt.ExpiredSignatureError as e:
-                raise ApplicationError(401, "INVALID_SESSION", "Session has expired.") from e
-            except jwt.InvalidTokenError as e:
-                raise ApplicationError(401, "INVALID_SESSION", "Invalid session token.") from e
         with self.database.identity(token) as (_, _, row):
             if not hmac.compare_digest(bytes(row["csrf_digest"]), digest_token(csrf)):
                 raise ApplicationError(403, "CSRF_REJECTED")

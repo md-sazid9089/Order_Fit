@@ -1341,3 +1341,12 @@ for method, path, name, req, response, permission, storage in [
     add(method, path, name, req, response, permission, "preparation", storage, "P5", "V09")
 add("POST", "deals/{deal_id}/preparation-settings/reset", "preparation_settings_reset", ExpectedVersions, w.Review,
     "prepare", "preparation.reset_settings", "deal,operation_log", "P5", "V09")
+
+for suffix, name, request, response, permission in [
+    ("enroll/options", "passkey_enroll_options", r.PasskeyPassword, r.PasskeyOptions, "self"),
+    ("enroll/verify", "passkey_enroll_verify", r.PasskeyResponse, Acknowledgement, "self"),
+    ("login/options", "passkey_login_options", r.SignIn, r.PasskeyOptions, "public"),
+    ("login/verify", "passkey_login_verify", r.PasskeyResponse, r.SessionView, "public"),
+]:
+    add("POST", "/api/v1/auth/passkeys/" + suffix, name, request, response, permission,
+        "identity.passkeys", "auth_passkey,auth_passkey_challenge,auth_session", "P1", "V04")

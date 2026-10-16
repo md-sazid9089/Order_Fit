@@ -218,6 +218,10 @@ def build_openapi():
 
 
 def ts_type(schema):
+    # JsonValue intentionally permits arbitrary JSON; unknown keeps consumers
+    # responsible for narrowing it rather than granting unsafe TypeScript any.
+    if not schema:
+        return "unknown"
     if "$ref" in schema:
         return schema["$ref"].rsplit("/", 1)[1]
     if "const" in schema:

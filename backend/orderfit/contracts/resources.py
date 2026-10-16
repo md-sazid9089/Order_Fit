@@ -4,7 +4,15 @@ from typing import Annotated, Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import AfterValidator, Field, SecretStr, StrictBool, model_validator
+from pydantic import (
+    AfterValidator,
+    Field,
+    JsonValue,
+    SecretStr,
+    StrictBool,
+    field_validator,
+    model_validator,
+)
 
 from .financial import (
     CostInput,
@@ -64,6 +72,28 @@ class SignUp(SignIn):
     timezone: Timezone
 
 
+class PasskeyPassword(DTO):
+    password: SecretStr = Field(min_length=1, max_length=1024)
+
+
+class PasskeyResponse(DTO):
+    challenge_id: UUID
+    credential: dict[str, JsonValue]
+
+    @field_validator("credential")
+    @classmethod
+    def bounded_credential(cls, value):
+        import json
+        if len(json.dumps(value).encode()) > 32768:
+            raise ValueError("credential exceeds limit")
+        return value
+
+
+class PasskeyOptions(DTO):
+    challenge_id: UUID
+    public_key: dict[str, JsonValue]
+
+
 class Preferences(DTO):
     timezone: Timezone
     language: Literal["en", "bn"]
@@ -103,9 +133,9 @@ class SessionView(DTO):
     memberships: list[MembershipView]
     csrf_token: str
     expires_at: UTCInstant
-    mfa_supported: Literal[False]
+    mfa_supported: bool
+    mfa_enabled: bool = False
     email_verified: Literal[False]
-    token: str | None = None
     is_platform_admin: bool = False
 
 
