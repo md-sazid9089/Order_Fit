@@ -1,5 +1,6 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -8,20 +9,27 @@ import { useScope } from "@/components/layout/auth-shell";
 import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
 
-type Page<T> = { items: T[] };
+
 export default function NewDealPage() {
   const router = useRouter();
   const { session, businessId: scoped } = useScope();
-  const [businessId, setBusinessId] = useState(""); const [business, setBusiness] = useState<Business | null>(null); const [baseline, setBaseline] = useState<BaselineView | null>(null); const [constraints, setConstraints] = useState<ConstraintsView[]>([]); const [customers, setCustomers] = useState<Customer[]>([]);
+  const [businessId, setBusinessId] = useState(""); const [business, setBusiness] = useState<Business | null>(null); const [baseline, setBaseline] = useState<BaselineView | null>(null);
   const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(true);
   const [openingDate, setOpeningDate] = useState(""); const [openingCash, setOpeningCash] = useState(""); const [coverage, setCoverage] = useState(""); const [attestation, setAttestation] = useState("");
   const [customerDomains, setCustomerDomains] = useState(""); const [reference, setReference] = useState(""); const [customerName, setCustomerName] = useState(""); const [startDate, setStartDate] = useState(""); const [createdDraft, setCreatedDraft] = useState<Deal | null>(null); const createdId = createdDraft?.id ?? null;
-  const [inputs, setInputs] = useState<DraftInputs>({ opening_cash_minor: null, reserve_minor: null, order_value_minor: null, order_date: null, invoice_date: null, delivery_date: null, payment_basis: "delivery", payment_days: null, customer_id: null, constraints_id: "", costs: [] });
+  const [draftInputs, setInputs] = useState<DraftInputs>({ opening_cash_minor: null, reserve_minor: null, order_value_minor: null, order_date: null, invoice_date: null, delivery_date: null, payment_basis: "delivery", payment_days: null, customer_id: null, constraints_id: "", costs: [] });
+  const customerPages = useCollection<Customer>(`/businesses/${businessId}/customers`, !!businessId);
+  const policyPages = useCollection<ConstraintsView>(`/businesses/${businessId}/constraints`, !!businessId);
+  const customers = customerPages.items.filter(c => !c.archived_at);
+  const constraints = policyPages.items;
+  const defaultPolicy = constraints.find(p => p.is_default);
+  const inputs = { ...draftInputs, constraints_id: draftInputs.constraints_id || defaultPolicy?.id || "", reserve_minor: draftInputs.reserve_minor ?? defaultPolicy?.reserve_minor ?? null };
   async function load(id: string) {
-    const [b, cs, cu] = await Promise.all([get<Business>(`/businesses/${id}/profile`), get<Page<ConstraintsView>>(`/businesses/${id}/constraints`), get<Page<Customer>>(`/businesses/${id}/customers`)]);
-    setBusiness(b); setConstraints(cs.items); setCustomers(cu.items.filter(x => !x.archived_at));
-    const selected = cs.items.find(x => x.is_default) ?? cs.items[0];
-    if (selected) setInputs(value => ({ ...value, constraints_id: selected.id, reserve_minor: value.reserve_minor ?? selected.reserve_minor }));
+    const b = await get<Business>(`/businesses/${id}/profile`);
+    setBusiness(b);
+    const defaults = await get<{ items: ConstraintsView[] }>(`/businesses/${id}/constraints?default_only=true`);
+    const chosen = defaults.items[0];
+    if (chosen) setInputs(value => value.constraints_id ? value : ({ ...value, constraints_id: chosen.id, reserve_minor: value.reserve_minor ?? chosen.reserve_minor }));
     try { const balance = await get<BaselineView>(`/businesses/${id}/baseline`); setBaseline(balance); setInputs(value => ({ ...value, opening_cash_minor: null })); }
     catch (e) { if (!(e instanceof ApiError) || e.code !== "BASELINE_NOT_CONFIGURED") throw e; }
   }
@@ -45,7 +53,7 @@ export default function NewDealPage() {
     {baseline && <form onSubmit={submit} className="space-y-4 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Order details</h2><p className="text-sm">Opening cash: {baseline.balance.opening_cash_minor} minor units, as of {baseline.balance.opening_date}; coverage through {baseline.balance.coverage_through}. <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Edit cash events, baseline and financing</Link></p>
       <label className="block text-sm">Order reference<input required maxLength={64} disabled={!!createdId} className={field} value={reference} onChange={e => setReference(e.target.value)} /></label><label className="block text-sm">As-of/start date<input required disabled={!!createdId} type="date" className={field} min={baseline.balance.opening_date} max={baseline.balance.opening_date} value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
       <label className="block text-sm">Customer<select className={field} value={inputs.customer_id ?? ""} onChange={e => setInputs({ ...inputs, customer_id: e.target.value || null })}><option value="">Add a customer below</option>{customers.map(c => <option key={c.id} value={c.id}>{c.customer.name}</option>)}</select></label>{!inputs.customer_id && <label className="block text-sm">New customer name<input required className={field} value={customerName} onChange={e => setCustomerName(e.target.value)} /></label>}
-      {!inputs.customer_id && <label className="block text-sm">Known customer email domains (comma separated)<input className={field} value={customerDomains} onChange={e => setCustomerDomains(e.target.value)} placeholder="buyer.example" /><span className="text-xs">Record domains from your trusted directory. AI never supplies recipients.</span></label>}<label className="block text-sm">Policy and financing configuration<select required className={field} value={inputs.constraints_id} onChange={e => { const selected = constraints.find(c => c.id === e.target.value); if (selected) setInputs({ ...inputs, constraints_id: selected.id, reserve_minor: selected.reserve_minor }); }}>{constraints.map(c => <option key={c.id} value={c.id}>{c.is_default ? "Default policy" : "Saved policy"} · {c.strategy_space.offer_ids.length} financing offers · {c.id.slice(0, 8)}</option>)}</select></label>
-      <ManualOrderInputs value={inputs} onChange={setInputs} /><p className="text-xs text-neutral-600">Saving creates a persisted draft. Review the saved inputs before confirming the financial calculation.</p><button disabled={busy || !inputs.constraints_id} className="rounded-lg bg-neutral-900 px-4 py-2 text-white">{busy ? "Saving…" : "Save and review"}</button>
+      {!inputs.customer_id && <label className="block text-sm">Known customer email domains (comma separated)<input className={field} value={customerDomains} onChange={e => setCustomerDomains(e.target.value)} placeholder="buyer.example" /><span className="text-xs">Record domains from your trusted directory. AI never supplies recipients.</span></label>}<label className="block text-sm">Policy and financing configuration<select required className={field} value={inputs.constraints_id} onChange={e => { const selected = constraints.find(c => c.id === e.target.value); if (selected) setInputs({ ...inputs, constraints_id: selected.id, reserve_minor: selected.reserve_minor }); }}>{!constraints.some(c => c.id === inputs.constraints_id) && inputs.constraints_id && <option value={inputs.constraints_id}>Selected default policy</option>}{constraints.map(c => <option key={c.id} value={c.id}>{c.is_default ? "Default policy" : "Saved policy"} · {c.strategy_space.offer_ids.length} financing offers · {c.id.slice(0, 8)}</option>)}</select></label>
+      <CollectionPages query={customerPages} noun="customers" /><CollectionPages query={policyPages} noun="policies" /><ManualOrderInputs value={inputs} onChange={setInputs} /><p className="text-xs text-neutral-600">Saving creates a persisted draft. Review the saved inputs before confirming the financial calculation.</p><button disabled={busy || !inputs.constraints_id} className="rounded-lg bg-neutral-900 px-4 py-2 text-white">{busy ? "Saving…" : "Save and review"}</button>
     </form>}</div></main>;
 }

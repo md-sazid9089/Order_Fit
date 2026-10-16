@@ -1,0 +1,196 @@
+ Network orderfit-e2e-9a93f9caea_default Creating 
+ Volume orderfit-e2e-9a93f9caea_pg-data Creating 
+ Network orderfit-e2e-9a93f9caea_default Creating 
+ Volume orderfit-e2e-9a93f9caea_pg-data Creating 
+ Volume orderfit-e2e-9a93f9caea_pg-data Created 
+ Volume orderfit-e2e-9a93f9caea_pg-data Created 
+ Network orderfit-e2e-9a93f9caea_default Created 
+ Network orderfit-e2e-9a93f9caea_default Created 
+ Container orderfit-e2e-9a93f9caea-db-1 Creating 
+ Container orderfit-e2e-9a93f9caea-db-1 Created 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Creating 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Created 
+ Container orderfit-e2e-9a93f9caea-db-1 Starting 
+ Container orderfit-e2e-9a93f9caea-db-1 Started 
+ Container orderfit-e2e-9a93f9caea-db-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-db-1 Healthy 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Starting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Started 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Exited 
+ Container orderfit-e2e-9a93f9caea-provision-run-a40064a8b36c Creating 
+ Container orderfit-e2e-9a93f9caea-provision-run-a40064a8b36c Created 
+Restricted runtime logins provisioned
+ Container orderfit-e2e-9a93f9caea-db-1 Running 
+ Network orderfit-e2e-9a93f9caea_edge Creating 
+ Volume orderfit-e2e-9a93f9caea_documents Creating 
+ Network orderfit-e2e-9a93f9caea_edge Creating 
+ Volume orderfit-e2e-9a93f9caea_documents Creating 
+ Volume orderfit-e2e-9a93f9caea_documents Created 
+ Volume orderfit-e2e-9a93f9caea_documents Created 
+ Container orderfit-e2e-9a93f9caea-worker-1 Creating 
+ Container orderfit-e2e-9a93f9caea-api-1 Creating 
+ Network orderfit-e2e-9a93f9caea_edge Created 
+ Network orderfit-e2e-9a93f9caea_edge Created 
+ Container orderfit-e2e-9a93f9caea-worker-1 Created 
+ Container orderfit-e2e-9a93f9caea-api-1 Created 
+ Container orderfit-e2e-9a93f9caea-web-1 Creating 
+ Container orderfit-e2e-9a93f9caea-web-1 Created 
+ Container orderfit-e2e-9a93f9caea-db-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-db-1 Healthy 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Starting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Started 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Exited 
+ Container orderfit-e2e-9a93f9caea-worker-1 Starting 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Exited 
+ Container orderfit-e2e-9a93f9caea-api-1 Starting 
+ Container orderfit-e2e-9a93f9caea-worker-1 Started 
+ Container orderfit-e2e-9a93f9caea-api-1 Started 
+ Container orderfit-e2e-9a93f9caea-api-1 Waiting 
+ Container orderfit-e2e-9a93f9caea-api-1 Healthy 
+ Container orderfit-e2e-9a93f9caea-web-1 Starting 
+ Container orderfit-e2e-9a93f9caea-web-1 Started 
+
+> web@0.1.0 test:e2e
+> playwright test --workers=1
+
+
+Running 4 tests using 1 worker
+
+(node:20084) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API (3ms)
+(node:13328) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts (2ms)
+(node:12244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus (3ms)
+(node:8696) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge (3ms)
+
+
+  1) tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\Administrator\AppData\Local\ms-playwright\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results\order-lifecycle-an-owner-s-58298-der-through-the-web-and-API\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\order-lifecycle-an-owner-s-58298-der-through-the-web-and-API\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\order-lifecycle-an-owner-s-58298-der-through-the-web-and-API\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\Administrator\AppData\Local\ms-playwright\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\security-csp-strict-CSP-us-66545-and-blocks-injected-scripts\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\Administrator\AppData\Local\ms-playwright\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results\ui-audit-authentication-fi-c8e17--and-visible-keyboard-focus\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\ui-audit-authentication-fi-c8e17--and-visible-keyboard-focus\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\ui-audit-authentication-fi-c8e17--and-visible-keyboard-focus\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\Administrator\AppData\Local\ms-playwright\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results\ui-audit-mobile-workspace--ea8d5-s-an-expired-CSRF-challenge\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\ui-audit-mobile-workspace--ea8d5-s-an-expired-CSRF-challenge\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\ui-audit-mobile-workspace--ea8d5-s-an-expired-CSRF-challenge\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API 
+    tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts 
+    tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus 
+    tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge 
+ Container orderfit-e2e-9a93f9caea-worker-1 Stopping 
+ Container orderfit-e2e-9a93f9caea-web-1 Stopping 
+ Container orderfit-e2e-9a93f9caea-web-1 Stopped 
+ Container orderfit-e2e-9a93f9caea-web-1 Removing 
+ Container orderfit-e2e-9a93f9caea-worker-1 Stopped 
+ Container orderfit-e2e-9a93f9caea-worker-1 Removing 
+ Container orderfit-e2e-9a93f9caea-web-1 Removed 
+ Container orderfit-e2e-9a93f9caea-api-1 Stopping 
+ Container orderfit-e2e-9a93f9caea-worker-1 Removed 
+ Container orderfit-e2e-9a93f9caea-api-1 Stopped 
+ Container orderfit-e2e-9a93f9caea-api-1 Removing 
+ Container orderfit-e2e-9a93f9caea-api-1 Removed 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Stopping 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Stopped 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Removing 
+ Container orderfit-e2e-9a93f9caea-migrate-1 Removed 
+ Container orderfit-e2e-9a93f9caea-db-1 Stopping 
+ Container orderfit-e2e-9a93f9caea-db-1 Stopped 
+ Container orderfit-e2e-9a93f9caea-db-1 Removing 
+ Container orderfit-e2e-9a93f9caea-db-1 Removed 
+ Network orderfit-e2e-9a93f9caea_edge Removing 
+ Network orderfit-e2e-9a93f9caea_default Removing 
+ Volume orderfit-e2e-9a93f9caea_documents Removing 
+ Volume orderfit-e2e-9a93f9caea_pg-data Removing 
+ Volume orderfit-e2e-9a93f9caea_documents Removed 
+ Volume orderfit-e2e-9a93f9caea_pg-data Removed 
+ Network orderfit-e2e-9a93f9caea_edge Removed 
+ Network orderfit-e2e-9a93f9caea_default Removed 

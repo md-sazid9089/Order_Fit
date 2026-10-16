@@ -1,8 +1,10 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
+
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { archiveOffer, getBusiness, listOffers } from "@/lib/p7-api";
+import { archiveOffer, getBusiness } from "@/lib/p7-api";
 import { bpsText } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import { ArchiveAction } from "@/components/p7/archive-action";
@@ -11,7 +13,7 @@ import { Alert, Loading, PageFrame, QueryError, panel, useScoped } from "@/compo
 /** Saved financing offers, read-only. Only fixed-term loans can be selected for evaluation; other kinds are informational. */
 export function FinancingScreen() {
   const { businessId, key } = useScoped();
-  const offers = useQuery({ queryKey: key("offers"), queryFn: () => listOffers(businessId), retry: false });
+  const offers = useCollection<OfferView>(`/businesses/${businessId}/financing-offers`);
   const business = useQuery({ queryKey: key("business-profile"), queryFn: () => getBusiness(businessId), retry: false });
   const queryClient = useQueryClient();
   const currency = business.data?.currency ?? "";
@@ -20,7 +22,7 @@ export function FinancingScreen() {
     {offers.isPending && <Loading what="financing offers" />}
     {offers.isError && <QueryError error={offers.error} retry={() => void offers.refetch()} retrying={offers.isFetching} />}
     {offers.isSuccess && !offers.data.items.length && <p className={panel}>No financing offers are saved.</p>}
-    {offers.isSuccess && offers.data.items.length >= 100 && <Alert tone="info">Showing the first 100 offers.</Alert>}
+    <CollectionPages query={offers} noun="offers" />
     {offers.isSuccess && offers.data.items.map(o => <section key={o.id} className={panel}>
       <div className="flex flex-wrap items-center gap-3"><h2 className="min-w-0 flex-1 text-lg font-semibold">{o.name}</h2><span className="text-sm text-neutral-600">{o.kind.replaceAll("_", " ")} · {o.status.replaceAll("_", " ")}{o.archived_at ? " · archived" : ""}</span></div>
       {o.supported && !o.archived_at ? <p className="text-sm text-green-800">Supported: can be selected for evaluation under your policy.</p> : <p className="text-sm text-amber-800">Not selectable{o.archived_at ? ": archived" : o.unavailable_reason ? `: ${o.unavailable_reason}` : ": this kind of financing is not supported yet"}.</p>}
@@ -35,3 +37,5 @@ export function FinancingScreen() {
     </section>)}
   </PageFrame>;
 }
+
+import type { OfferView } from "@/lib/generated-api";

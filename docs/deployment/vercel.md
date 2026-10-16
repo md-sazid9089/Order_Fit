@@ -83,3 +83,16 @@ Never use a wildcard origin.
 
 - **Default:** with `web/.env.local` unset or `API_INTERNAL_URL=http://localhost:8000`, `npm run dev` proxies `/api/v1` to the local API. Add `http://localhost:3000` to the API's `ALLOWED_ORIGINS`.
 - **Docker Compose:** `NEXT_PUBLIC_API_URL` is empty and `API_INTERNAL_URL=http://api:8000` is baked into the Next rewrite. The browser uses the host-facing web origin, while the web proxy reaches the API over the internal Compose network. API, worker and database are not published to the host and have no outbound route by default.
+
+
+## Stress remediation reconciliation — 16 October 2026
+
+Current required sole revision is `0016_worker_presence`. `/ready` requires an
+unexpired global worker heartbeat as well as restricted DB/schema/storage checks;
+`backlog_seconds` is separate. Keep process liveness `/health` for service restart
+monitoring so a worker outage does not restart a healthy API. Reserve one extra
+restricted DB connection per worker for liveness; do not inject migration access.
+See the [integration contract](../contracts/stress-remediation.md),
+[current evidence](../backend_stress_remediation_2026-10-16.md) and
+[executable external acceptance procedures](external-acceptance.md).
+Hosted acceptance and historical credential rotation remain unverified.

@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
 
 from orderfit.api.errors import ApplicationError
+from orderfit.contracts.primitives import Page
 from orderfit.contracts.protocol import canonical_hash
 from orderfit.contracts.resources import (
     CashEventCreate,
@@ -116,12 +118,27 @@ class DocumentRepository:
         return _row_to_view(row, row["parse_status"])
 
     @staticmethod
-    def list_documents(c, business_id, deal_id, limit, offset):
+    def list_documents(c, business_id, deal_id, limit, offset, *, cursors, scope, cursor=None):
+        filters = {"deal_id": deal_id}
+        after = cursors.decode(cursor, business_id=business_id, user_id=scope.user_id,
+                               listing="documents:uploaded_at:desc:v1", filters=filters)
+        condition, params = "", {"b": business_id, "d": deal_id, "l": limit + 1, "o": offset}
+        if after is not None:
+            try:
+                if offset or len(after) != 2:
+                    raise ValueError
+                params.update(t=datetime.fromisoformat(after[0]), id=UUID(after[1]))
+            except ValueError as exc:
+                raise ApplicationError(422, "INVALID_CURSOR") from exc
+            condition = " AND (d.uploaded_at,d.id)<(:t,:id)"
         rows = c.execute(
-            text(_DOC_SQL + " ORDER BY d.uploaded_at DESC, d.id LIMIT :l OFFSET :o"),
-            {"b": business_id, "d": deal_id, "l": limit, "o": offset},
+            text(_DOC_SQL + condition + " ORDER BY d.uploaded_at DESC, d.id DESC LIMIT :l OFFSET :o"), params,
         ).mappings().all()
-        return [_row_to_view(r, r["parse_status"]) for r in rows]
+        more, rows = len(rows) > limit, rows[:limit]
+        continuation = (cursors.encode(business_id=business_id, user_id=scope.user_id,
+            listing="documents:uploaded_at:desc:v1", filters=filters,
+            position=[rows[-1]["uploaded_at"], rows[-1]["id"]]) if more else None)
+        return Page(items=[_row_to_view(r, r["parse_status"]) for r in rows], next_cursor=continuation)
 
     @staticmethod
     def storage(c, business_id, deal_id, doc_id):

@@ -280,8 +280,12 @@ def run_worker(database, runtime, *, once=False, handlers=None, step=None, stop=
     previous = install_shutdown_handlers(stop)
     try:
         database.validate_runtime(worker=True)
-        serve(Operations(database), str(uuid4()), handlers or DEFAULT_HANDLERS, runtime, stop,
-              once=once, step=step)
+        from orderfit.workflow.presence import worker_presence
+
+        worker_id = uuid4()
+        with database.presence_channel() as channel, worker_presence(channel, worker_id):
+            serve(Operations(database), str(worker_id), handlers or DEFAULT_HANDLERS, runtime, stop,
+                  once=once, step=step)
         LOG.info("worker_stopped")
         return 0
     finally:

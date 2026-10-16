@@ -68,9 +68,11 @@ test("an owner saves and evaluates an order through the web and API", async ({ p
   await page.route("**/api/v1/businesses/*/customers", route => route.fulfill({
     status: 200, contentType: "application/json", body: JSON.stringify({ items: [], next_cursor: null }),
   }));
+  await page.route("**/api/v1/businesses/*/customers/*", route => route.fulfill({ status: 404, contentType: "application/json", body: "{}" }));
   await page.getByRole("link", { name: "Deals Pipeline", exact: true }).click();
   await expect(page.getByRole("row").filter({ hasText: `E2E-${suffix}` })).toContainText("Customer details not loaded");
   await page.unroute("**/api/v1/businesses/*/customers");
+  await page.unroute("**/api/v1/businesses/*/customers/*");
   await page.goto(savedOrderUrl);
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 

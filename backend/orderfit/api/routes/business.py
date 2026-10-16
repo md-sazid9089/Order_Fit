@@ -90,10 +90,13 @@ def list_constraints(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
+    default_only: bool = Query(False),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return ConstraintsRepository.list_constraints(c, business_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return ConstraintsRepository.list_constraints(c, business_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope,
+                                                     default_only=default_only)
 
 
 @router.get("/constraints/{constraints_id}", response_model=ConstraintsView, operation_id="constraints_get")
@@ -136,10 +139,11 @@ def list_cash_events(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return CashEventRepository.list_events(c, business_id, None, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return CashEventRepository.list_events(c, business_id, None, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)
 
 
 @router.post("/cash-events", response_model=CashEventView, operation_id="cash_event_create", status_code=200)
@@ -230,10 +234,11 @@ def list_customers(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return CustomerRepository.list_customers(c, business_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return CustomerRepository.list_customers(c, business_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)
 
 
 @router.post("/customers", response_model=CustomerView, operation_id="customer_create", status_code=200)
@@ -317,10 +322,11 @@ def list_payees(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return PayeeRepository.list_payees(c, business_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return PayeeRepository.list_payees(c, business_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)
 
 
 @router.post("/payees", response_model=PayeeView, operation_id="payee_create", status_code=200)
@@ -404,10 +410,11 @@ def list_offers(
     request: Request,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    cursor: str | None = Query(None, max_length=2048),
 ):
     service = identity_service(request)
-    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
-        return OfferRepository.list_offers(c, business_id, limit, offset)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, scope):
+        return OfferRepository.list_offers(c, business_id, limit, offset, cursor=cursor, cursors=service.cursors, scope=scope)
 
 
 @router.post("/financing-offers", response_model=OfferView, operation_id="offer_create", status_code=200)

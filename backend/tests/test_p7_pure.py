@@ -150,7 +150,7 @@ def test_expected_errors_are_not_logged_as_failures(caplog):
 
 class FakeDatabase:
     def __init__(self, readiness=None):
-        self.status = readiness or {"database": True, "schema_current": True, "worker": True}
+        self.status = readiness or {"database": True, "schema_current": True, "worker": True, "backlog_seconds": 0}
         self.closed = False
 
     def validate_runtime(self, **_):
@@ -158,6 +158,13 @@ class FakeDatabase:
 
     def readiness(self):
         return dict(self.status)
+
+    def publish_presence(self, *args):
+        pass
+
+    @contextmanager
+    def presence_channel(self):
+        yield self
 
     def close(self):
         self.closed = True
@@ -170,9 +177,9 @@ def ready_client(tmp_path, database):
 
 
 @pytest.mark.parametrize("status,ok", [
-    ({"database": True, "schema_current": True, "worker": False}, True),
-    ({"database": False, "schema_current": False, "worker": False}, False),
-    ({"database": True, "schema_current": False, "worker": False}, False),
+    ({"database": True, "schema_current": True, "worker": False, "backlog_seconds": 0}, False),
+    ({"database": False, "schema_current": False, "worker": False, "backlog_seconds": None}, False),
+    ({"database": True, "schema_current": False, "worker": False, "backlog_seconds": None}, False),
 ])
 def test_ready_requires_database_schema_and_storage(tmp_path, status, ok):
     with ready_client(tmp_path, FakeDatabase(status)) as client:
@@ -180,7 +187,7 @@ def test_ready_requires_database_schema_and_storage(tmp_path, status, ok):
         assert client.get("/health").json() == {"status": "ok"}
     assert response.status_code == (200 if ok else 503)
     body = response.json()
-    assert body == {"status": "ready" if ok else "unavailable", "storage": True, **status}
+    assert body == {"status": "ready" if ok else "unavailable", "storage": True, "backlog_seconds": None, **status}
     assert response.headers["cache-control"] == "private, no-store"
 
 

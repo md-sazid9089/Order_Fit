@@ -265,6 +265,28 @@ def config(postgres, tmp_path):
     )
 
 
+@pytest.fixture(autouse=True)
+def owned_queue(postgres):
+    """Each serial test owns only operations it creates; preserve all queue history.
+
+    This fixture's labeled, loopback-only DB is verified by ``postgres``. Cleanup
+    runs even on assertion failure. Do not globally claim/drain other tests' jobs.
+    Parallel pytest workers must use separate postgres fixtures (the default).
+    """
+    with psycopg.connect(postgres["migrator"]) as c:
+        before = {r[0] for r in c.execute("SELECT id FROM operation")}
+        presence_before = [r[0] for r in c.execute("SELECT id FROM worker_presence")]
+    try:
+        yield
+    finally:
+        with psycopg.connect(postgres["migrator"]) as c:
+            c.execute("DELETE FROM worker_presence WHERE NOT (id=ANY(%s::uuid[]))", (presence_before,))
+            owned = [r[0] for r in c.execute("SELECT id FROM operation") if r[0] not in before]
+            if owned:
+                c.execute("UPDATE operation SET status='cancelled',lease_token=NULL,lease_expires_at=NULL "
+                          "WHERE id=ANY(%s) AND status IN ('queued','running')", (owned,))
+
+
 @dataclass
 class Account:
     token: str

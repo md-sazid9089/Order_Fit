@@ -93,10 +93,15 @@ def build_openapi():
                     "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
                 },
             ]
+            if endpoint.operation_id in {"deals", "customers", "payees", "offers", "constraints_list", "cash_events", "evaluations", "documents"}:
+                parameters.append({"name": "offset", "in": "query", "required": False,
+                                   "description": "Legacy offset start; cannot be combined with cursor.",
+                                   "schema": {"type": "integer", "minimum": 0, "default": 0}})
             if endpoint.operation_id in {"messages", "acceptances"}:
                 parameters[-2] = {"name": "offset", "in": "query", "required": False,
                                   "schema": {"type": "integer", "minimum": 0, "default": 0}}
         queries = {
+            "constraints_list": {"default_only": {"type": "boolean", "default": False}},
             "deals": {
                 "search": {"type": "string", "maxLength": 100},
                 "status": {"$ref": "#/components/schemas/DealStateFilter"},

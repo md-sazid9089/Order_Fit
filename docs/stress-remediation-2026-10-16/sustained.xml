@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="93.125" timestamp="2026-10-16T23:00:07.154998+06:00" hostname="Ligma"><testcase classname="tests.db.test_sustained_capacity" name="test_sustained_local_service_capacity_and_recovery" time="92.785" /></testsuite></testsuites>

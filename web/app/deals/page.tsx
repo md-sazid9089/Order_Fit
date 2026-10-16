@@ -9,8 +9,8 @@ import { formatMinor } from "@/lib/approval-model";
 import { PIPELINE_TABS, tabOf, verdictOf, worstTrough, type PipelineTab, type Tone } from "@/lib/pipeline-model";
 import { useScope } from "@/components/layout/scope";
 
-type Page<T> = { items: T[] };
-type Data = { deals: Deal[]; evaluations: Record<string, Evaluation>; customers: Record<string, string>; baseline: BaselineView | null; reserve: string | null; currency: string };
+type Page<T> = { items: T[]; next_cursor: string | null };
+type Data = { more: boolean; deals: Deal[]; evaluations: Record<string, Evaluation>; customers: Record<string, string>; baseline: BaselineView | null; reserve: string | null; currency: string };
 const PAGE_SIZE = 20;
 
 const TONE: Record<Tone, string> = {
@@ -49,7 +49,14 @@ export default function DealsPage() {
       const [profile, deals, baseline] = await Promise.all([
         get<BusinessView>(`${base}/profile`), get<Page<Deal>>(`${base}/deals?limit=${PAGE_SIZE}&offset=${offset}`), optional(get<BaselineView>(`${base}/baseline`)),
       ]);
-      const [customers, constraints] = await Promise.all([get<Page<Customer>>(`${base}/customers`), get<Page<Constraints>>(`${base}/constraints`)]);
+      const [customers, constraints] = await Promise.all([get<Page<Customer>>(`${base}/customers`), get<Page<Constraints>>(`${base}/constraints?default_only=true`)]);
+      // Resolve only missing labels for this bounded order page, never fetch all customers.
+      const known = new Set(customers.items.map(c => c.id));
+      const missing = [...new Set(deals.items.map(d => d.inputs.customer_id).filter((id): id is string => !!id && !known.has(id)))];
+      for (const id of missing) {
+        const customer = await optional(get<Customer>(`${base}/customers/${id}`));
+        if (customer) customers.items.push(customer);
+      }
       const evaluations: Record<string, Evaluation> = {};
       await Promise.all(deals.items.filter(d => d.live_evaluation_id).map(async d => {
         const e = await optional(get<Evaluation>(`${base}/evaluations/${d.live_evaluation_id}`));
@@ -57,9 +64,9 @@ export default function DealsPage() {
       }));
       if (!active) return;
       setData({
-        deals: deals.items, evaluations, baseline,
+        more: !!deals.next_cursor, deals: deals.items, evaluations, baseline,
         customers: Object.fromEntries(customers.items.map(c => [c.id, c.customer.name])),
-        reserve: constraints.items[0]?.reserve_minor ?? null, currency: profile.currency,
+        reserve: constraints.items.find(c => c.is_default)?.reserve_minor ?? null, currency: profile.currency,
       });
     })().catch(e => { if (active) setError(e instanceof Error ? e.message : "Could not load the pipeline."); });
     return () => { active = false; };
@@ -90,7 +97,7 @@ export default function DealsPage() {
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#737373]">
-          <p role="status">Showing {data.deals.length} saved orders{offset ? ` from position ${offset + 1}` : ""}. Filters, counts and summaries cover this page only.{data.deals.length === PAGE_SIZE ? " More orders may exist." : ""}</p>
+          <p role="status">Showing {data.deals.length} saved orders{offset ? ` from position ${offset + 1}` : ""}. Filters, counts and summaries cover this page only.{data.more ? " More orders may exist." : ""}</p>
           <button type="button" className="underline" onClick={() => reload()}>Refresh saved state</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -174,7 +181,7 @@ export default function DealsPage() {
         </div>
         <nav aria-label="Order pages" className="flex gap-4 text-sm">
           <button type="button" className="underline disabled:opacity-40" disabled={offset === 0} onClick={() => reload(Math.max(0, offset - PAGE_SIZE))}>Previous orders</button>
-          <button type="button" className="underline disabled:opacity-40" disabled={data.deals.length < PAGE_SIZE} onClick={() => reload(offset + PAGE_SIZE)}>Older orders</button>
+          <button type="button" className="underline disabled:opacity-40" disabled={!data.more} onClick={() => reload(offset + PAGE_SIZE)}>Older orders</button>
         </nav>
       </div>
     </main>

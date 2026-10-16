@@ -1,5 +1,6 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, get, mutate, type Deal, type Evaluation, type Operation, type Session } from "@/lib/orderfit-api";
@@ -18,7 +19,8 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   const [businessId, setBusinessId] = useState(""); const [role, setRole] = useState("");
   const [deal, setDeal] = useState<Deal | null>(null); const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [state, setState] = useState<PreparationState | null>(null); const [catalogue, setCatalogue] = useState<OptionCatalogue | null>(null);
-  const [payees, setPayees] = useState<PayeeView[]>([]); const [option, setOption] = useState(""); const [explanation, setExplanation] = useState<Explanation | null>(null);
+  const payeePages = useCollection<PayeeView>(`/businesses/${businessId}/payees`, !!businessId);
+  const payees = payeePages.items; const [option, setOption] = useState(""); const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
   const [operationId, setOperationId] = useState(initialOperation ?? ""); const [operation, setOperation] = useState<Operation | null>(null);
   const [kind, setKind] = useState("deposit_pct"); const [value, setValue] = useState("30"); const [valueTouched, setValueTouched] = useState(false); const [instruction, setInstruction] = useState(""); const [typedChanges, setTypedChanges] = useState("");
@@ -39,11 +41,11 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   const refresh = useCallback(async () => {
     if (!businessId) return;
     const stamp = ++generation.current;
-    const [d, saved, parties] = await Promise.all([get<Deal>(`${prefix}/deals/${dealId}`), get<PreparationState>(`${prefix}/deals/${dealId}/preparation?offset=${offset}`), get<{ items: PayeeView[] }>(`${prefix}/payees?limit=100`)]);
+    const [d, saved] = await Promise.all([get<Deal>(`${prefix}/deals/${dealId}`), get<PreparationState>(`${prefix}/deals/${dealId}/preparation?offset=${offset}`)]);
     const ev = d.live_evaluation_id ? await get<Evaluation>(`${prefix}/evaluations/${d.live_evaluation_id}`) : null;
     const cat = ev ? await get<OptionCatalogue>(`${prefix}/evaluations/${ev.id}/catalogue`) : null;
     if (stamp !== generation.current) return;
-    setDeal(d); setState(saved); setPayees(parties.items); setEvaluation(ev); setCatalogue(cat);
+    setDeal(d); setState(saved); setEvaluation(ev); setCatalogue(cat);
     setOption(previous => cat?.options.some(o => o.option_key === previous) ? previous : ev?.recommended_option_key ?? ev?.as_is.option_key ?? "");
   }, [businessId, prefix, dealId, offset]);
   useEffect(() => { void refresh().catch(e => setError(e.message)); }, [refresh]);
@@ -124,7 +126,7 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
     <section className={panel}><h2 className="text-lg font-semibold">Incoming replies: review candidates</h2>{!state?.replies.length && <p>No incoming replies.</p>}{state?.replies.map(r => <ReplyCard key={r.id} reply={r} disabled={disabled} review={(candidate_ids, decision, reason) => command(async () => { await mutate(`${prefix}/deals/${dealId}/replies/${r.id}/review`, "POST", { ...versions(), candidate_ids, decision, reason }); setNotice(decision === "apply" ? "Reply applied for confirmation and reassessment." : "Reply rejected; original evidence retained."); })} />)}</section>
     <section className={panel}><h2 className="text-lg font-semibold">Party acceptance evidence</h2><p>Human attestations only; agreement does not establish receipt of cash or funding.</p>{!state?.acceptances.length && <p>No recorded acceptances.</p>}{state?.acceptances.map(a => <article key={a.id} className="border-t pt-3"><p>{a.party_role} · {a.is_stale ? "stale" : "current"} · expires {a.valid_until}</p><p>{a.attestation}</p><code className="break-all text-xs">Terms {a.terms_hash}</code></article>)}</section>
     <ApprovalWorkflow key={`${businessId}:${deal.id}`} businessId={businessId} deal={deal} evaluation={evaluation} option={catalogue?.options.find(o => o.option_key === option)} messages={state?.messages ?? []} canPrepare={canPrepare} onChanged={refresh} />
-    <div className="flex gap-3"><button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))}>Previous history</button><button className={button} disabled={!state?.has_more} onClick={() => setOffset(offset+50)}>More history</button><button className={button} onClick={() => void command(refresh)}>Refresh saved preparation</button></div>
+    <CollectionPages query={payeePages} noun="payees" /><div className="flex gap-3"><button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))}>Previous history</button><button className={button} disabled={!state?.has_more} onClick={() => setOffset(offset+50)}>More history</button><button className={button} onClick={() => void command(refresh)}>Refresh saved preparation</button></div>
   </main>;
 }
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="11.092" timestamp="2026-10-16T22:44:27.874672+06:00" hostname="Ligma"><testcase classname="tests.db.test_p7_operations" name="test_last_owner_role_downgrade_and_revocation_take_effect_next_request" time="9.193"><failure message="httpx.CookieConflict: Multiple cookies exist with name=orderfit_session">tests\db\test_p7_operations.py:260: in test_last_owner_role_downgrade_and_revocation_take_effect_next_request
+    risk.token = risk.client.cookies.get("orderfit_session")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_models.py:1161: in get
+    raise CookieConflict(message)
+E   httpx.CookieConflict: Multiple cookies exist with name=orderfit_session</failure></testcase><testcase classname="tests.db.test_security_hardening" name="test_queue_cap_serializes_concurrent_admissions_and_keeps_replay_and_other_tenant" time="0.780" /><testcase classname="tests.db.test_session_authority" name="test_old_worker_context_cannot_read_publish_or_settle_after_role_change" time="0.629" /></testsuite></testsuites>

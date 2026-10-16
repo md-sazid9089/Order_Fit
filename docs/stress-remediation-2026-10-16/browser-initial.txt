@@ -1,0 +1,353 @@
+ Image orderfit-api:local Building 
+ Image orderfit-web:local Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.05kB done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.39kB done
+#2 DONE 0.0s
+
+#3 [web internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.25kB done
+#3 DONE 0.1s
+
+#4 [web internal] load metadata for docker.io/library/node:22-alpine
+#4 ...
+
+#5 [auth] library/python:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/node:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [api internal] load metadata for docker.io/library/python:3.12-slim
+#7 DONE 1.6s
+
+#4 [web internal] load metadata for docker.io/library/node:22-alpine
+#4 DONE 1.6s
+
+#8 [api internal] load .dockerignore
+#8 transferring context: 214B done
+#8 DONE 0.0s
+
+#9 [web internal] load .dockerignore
+#9 transferring context: 184B done
+#9 DONE 0.0s
+
+#10 [web internal] load build context
+#10 DONE 0.0s
+
+#11 [api  1/10] FROM docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
+#11 resolve docker.io/library/python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 0.1s done
+#11 DONE 0.1s
+
+#12 [web deps 1/4] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+#12 resolve docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 0.0s done
+#12 DONE 0.0s
+
+#13 [api internal] load build context
+#13 transferring context: 340.24kB 0.1s done
+#13 DONE 0.1s
+
+#14 [api  3/10] WORKDIR /app
+#14 CACHED
+
+#15 [api  4/10] COPY pyproject.toml uv.lock .python-version ./
+#15 CACHED
+
+#16 [api  2/10] RUN apt-get update  && apt-get install -y --no-install-recommends tini  && rm -rf /var/lib/apt/lists/*
+#16 CACHED
+
+#17 [api  5/10] RUN pip install uv==0.11.24  && uv sync --frozen --no-dev --no-install-project
+#17 CACHED
+
+#10 [web internal] load build context
+#10 transferring context: 791.83kB 0.1s done
+#10 DONE 0.1s
+
+#18 [web deps 2/4] WORKDIR /app
+#18 CACHED
+
+#19 [web deps 4/4] RUN npm ci --no-audit --no-fund
+#19 CACHED
+
+#20 [web deps 3/4] COPY package.json package-lock.json ./
+#20 CACHED
+
+#21 [web build 3/5] COPY --from=deps /app/node_modules ./node_modules
+#21 CACHED
+
+#22 [api  6/10] COPY orderfit ./orderfit
+#22 DONE 0.1s
+
+#23 [web build 4/5] COPY . .
+#23 DONE 0.2s
+
+#24 [api  7/10] RUN uv sync --frozen --no-dev --no-editable
+#24 0.882    Building orderfit @ file:///app
+#24 2.353       Built orderfit @ file:///app
+#24 2.366 Prepared 1 package in 1.48s
+#24 2.372 Installed 1 package in 5ms
+#24 2.372  + orderfit==0.1.0 (from file:///app)
+#24 DONE 2.4s
+
+#25 [api  8/10] COPY alembic.ini ./
+#25 DONE 0.1s
+
+#26 [api  9/10] COPY migrations ./migrations
+#26 DONE 0.1s
+
+#27 [api 10/10] RUN useradd --system --uid 10001 --no-create-home app  && mkdir -p /app/var/documents /var/data/orderfit/documents  && chown -R app:app /app/var /var/data/orderfit
+#27 0.338 useradd warning: app's uid 10001 is greater than SYS_UID_MAX 999
+#27 DONE 0.6s
+
+#28 [web build 5/5] RUN npm run build
+#28 1.261 
+#28 1.261 > web@0.1.0 build
+#28 1.261 > next build
+#28 1.261 
+#28 2.196 ▲ Next.js 16.4.1 (Turbopack)
+#28 2.383 ✓ Running next.config.ts took 186ms
+#28 2.404 
+#28 2.492   Creating an optimized production build ...
+#28 ...
+
+#29 [api] exporting to image
+#29 exporting layers 0.7s done
+#29 exporting manifest sha256:b4220d5c347ffe922bb1ca02905cd08a42a8e6e979e7273da2c59e3d5b5a43e2 0.1s done
+#29 exporting config sha256:e2f6a01bfc1adad6c8fd06deddf5292a9a6c00ece1452843a6d79253d924fd83 0.1s done
+#29 exporting attestation manifest sha256:7868eb2ddaf864d85a637ffeba562e8034385c37905672e5df5c3da3d1fa4450 0.1s done
+#29 exporting manifest list sha256:81bbbb5874ee5ae96a908aa6761cb7036e0bc9f6d7b61aeb2aef9a5bbf551cad 0.1s done
+#29 naming to docker.io/library/orderfit-api:local done
+#29 unpacking to docker.io/library/orderfit-api:local 0.4s done
+#29 DONE 1.4s
+
+#30 [api] resolving provenance for metadata file
+#30 DONE 0.0s
+
+#28 [web build 5/5] RUN npm run build
+#28 9.218 ✓ Compiled successfully in 6.7s
+#28 9.221   Running TypeScript ...
+#28 20.61   Finished TypeScript in 11.4s ...
+#28 20.61   Collecting page data using 11 workers ...
+#28 22.04   Generating static pages using 11 workers (0/24) ...
+#28 22.39   Generating static pages using 11 workers (6/24) 
+#28 22.57   Generating static pages using 11 workers (12/24) 
+#28 22.69   Generating static pages using 11 workers (18/24) 
+#28 22.74 ✓ Generating static pages using 11 workers (24/24) in 706ms
+#28 22.75   Finalizing page optimization ...
+#28 23.10 
+#28 23.11 Route (app)
+#28 23.11 ┌ ƒ /
+#28 23.11 ├ ƒ /_not-found
+#28 23.11 ├ ƒ /admin
+#28 23.11 ├ ƒ /api/health
+#28 23.11 ├ ƒ /audit-log
+#28 23.11 ├ ƒ /auth/invitations/accept
+#28 23.11 ├ ƒ /auth/signin
+#28 23.11 ├ ƒ /auth/signup
+#28 23.11 ├ ƒ /cash-flow
+#28 23.11 ├ ƒ /deals
+#28 23.11 ├ ƒ /deals/[id]
+#28 23.11 ├ ƒ /deals/[id]/confirm
+#28 23.11 ├ ƒ /deals/[id]/documents
+#28 23.11 ├ ƒ /deals/[id]/negotiate
+#28 23.11 ├ ƒ /deals/[id]/reply
+#28 23.11 ├ ƒ /deals/customers
+#28 23.11 ├ ƒ /deals/new
+#28 23.11 ├ ƒ /deals/new/validate
+#28 23.11 ├ ƒ /deals/sources
+#28 23.11 ├ ƒ /financing
+#28 23.11 ├ ○ /icon.png
+#28 23.11 ├ ƒ /orders
+#28 23.11 ├ ƒ /payees
+#28 23.11 ├ ƒ /risk-constraints
+#28 23.11 ├ ƒ /sandbox
+#28 23.11 ├ ƒ /settings
+#28 23.11 └ ƒ /users
+#28 23.11 
+#28 23.11 
+#28 23.11 ƒ Proxy (Middleware)
+#28 23.11 
+#28 23.11 ○  (Static)   prerendered as static content
+#28 23.11 ƒ  (Dynamic)  server-rendered on demand
+#28 23.11 
+#28 23.17 npm notice
+#28 23.17 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#28 23.17 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#28 23.17 npm notice To update run: npm install -g npm@12.2.0
+#28 23.17 npm notice
+#28 DONE 23.3s
+
+#31 [web runner 3/6] RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
+#31 CACHED
+
+#32 [web runner 4/6] COPY --from=build --chown=app:app /app/.next/standalone ./
+#32 DONE 0.4s
+
+#33 [web runner 5/6] COPY --from=build --chown=app:app /app/.next/static ./.next/static
+#33 DONE 0.1s
+
+#34 [web runner 6/6] COPY --from=build --chown=app:app /app/public ./public
+#34 DONE 0.1s
+
+#35 [web] exporting to image
+#35 exporting layers
+#35 exporting layers 3.2s done
+#35 exporting manifest sha256:1628085b7c77252c292f3112afd4e5cb821d7fdc9691f3ac2b43cf4bbb71d500 0.0s done
+#35 exporting config sha256:83844ac9c2e0853ac8e38d6f592f9bfcd70f47612c9ef458a1f9a6e12b951732 0.0s done
+#35 exporting attestation manifest sha256:10ff5be786622694fb3e90ef22ae22779784e5296018ac8dec4b8e9a07b71826 0.0s done
+#35 exporting manifest list sha256:299fffa84c3a7d052e4b1ab1f2e43938328288aeba9794f3a7f15ac64315b6e9 0.0s done
+#35 naming to docker.io/library/orderfit-web:local done
+#35 unpacking to docker.io/library/orderfit-web:local
+#35 unpacking to docker.io/library/orderfit-web:local 1.0s done
+#35 DONE 4.4s
+
+#36 [web] resolving provenance for metadata file
+#36 DONE 0.0s
+ Image orderfit-web:local Built 
+ Image orderfit-api:local Built 
+ Network orderfit-e2e-a0050d0f54_default Creating 
+ Volume orderfit-e2e-a0050d0f54_pg-data Creating 
+ Volume orderfit-e2e-a0050d0f54_pg-data Creating 
+ Network orderfit-e2e-a0050d0f54_default Creating 
+ Volume orderfit-e2e-a0050d0f54_pg-data Created 
+ Volume orderfit-e2e-a0050d0f54_pg-data Created 
+ Network orderfit-e2e-a0050d0f54_default Created 
+ Network orderfit-e2e-a0050d0f54_default Created 
+ Container orderfit-e2e-a0050d0f54-db-1 Creating 
+ Container orderfit-e2e-a0050d0f54-db-1 Created 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Creating 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Created 
+ Container orderfit-e2e-a0050d0f54-db-1 Starting 
+ Container orderfit-e2e-a0050d0f54-db-1 Started 
+ Container orderfit-e2e-a0050d0f54-db-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-db-1 Healthy 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Starting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Started 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Exited 
+ Container orderfit-e2e-a0050d0f54-provision-run-548cd8ec966d Creating 
+ Container orderfit-e2e-a0050d0f54-provision-run-548cd8ec966d Created 
+Restricted runtime logins provisioned
+ Container orderfit-e2e-a0050d0f54-db-1 Running 
+ Network orderfit-e2e-a0050d0f54_edge Creating 
+ Volume orderfit-e2e-a0050d0f54_documents Creating 
+ Volume orderfit-e2e-a0050d0f54_documents Creating 
+ Network orderfit-e2e-a0050d0f54_edge Creating 
+ Volume orderfit-e2e-a0050d0f54_documents Created 
+ Volume orderfit-e2e-a0050d0f54_documents Created 
+ Container orderfit-e2e-a0050d0f54-api-1 Creating 
+ Container orderfit-e2e-a0050d0f54-worker-1 Creating 
+ Network orderfit-e2e-a0050d0f54_edge Created 
+ Network orderfit-e2e-a0050d0f54_edge Created 
+ Container orderfit-e2e-a0050d0f54-worker-1 Created 
+ Container orderfit-e2e-a0050d0f54-api-1 Created 
+ Container orderfit-e2e-a0050d0f54-web-1 Creating 
+ Container orderfit-e2e-a0050d0f54-web-1 Created 
+ Container orderfit-e2e-a0050d0f54-db-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-db-1 Healthy 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Starting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Started 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Exited 
+ Container orderfit-e2e-a0050d0f54-worker-1 Starting 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Exited 
+ Container orderfit-e2e-a0050d0f54-api-1 Starting 
+ Container orderfit-e2e-a0050d0f54-worker-1 Started 
+ Container orderfit-e2e-a0050d0f54-api-1 Started 
+ Container orderfit-e2e-a0050d0f54-api-1 Waiting 
+ Container orderfit-e2e-a0050d0f54-api-1 Healthy 
+ Container orderfit-e2e-a0050d0f54-web-1 Starting 
+ Container orderfit-e2e-a0050d0f54-web-1 Started 
+
+> web@0.1.0 test:e2e
+> playwright test --workers=1
+
+
+Running 6 tests using 1 worker
+
+(node:92) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+HTTP_STRESS_METRIC {"label":"mixed-tenant-profile-reads","count":200,"concurrency":16,"wall_ms":1723.86,"p50_ms":123.04,"p95_ms":287.19,"max_ms":375.77}
+HTTP_STRESS_METRIC {"label":"customer-write-same-key","count":32,"concurrency":16,"wall_ms":383.42,"p50_ms":158.7,"p95_ms":247.52,"max_ms":249.39}
+HTTP_STRESS_METRIC {"label":"malformed-customer-writes","count":32,"concurrency":8,"wall_ms":73.06,"p50_ms":16.62,"p95_ms":21.61,"max_ms":21.92}
+  ok 1 tests\e2e\backend-stress.spec.ts:5:5 › HTTP bursts preserve tenant isolation, exact replay and strict input rejection (2.6s)
+  ok 2 tests\e2e\order-lifecycle.spec.ts:14:5 › an owner saves and evaluates an order through the web and API (10.3s)
+  x  3 tests\e2e\pagination.spec.ts:4:5 › older saved customer is selectable after a recoverable continuation failure (8.8s)
+(node:21304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 tests\e2e\security-csp.spec.ts:3:5 › strict CSP uses fresh nonces, hydrates signin and blocks injected scripts (1.4s)
+  ok 5 tests\e2e\ui-audit.spec.ts:4:5 › authentication fields have persistent accessible names and visible keyboard focus (666ms)
+mobile workspace width { content: 390, viewport: 390 }
+  ok 6 tests\e2e\ui-audit.spec.ts:17:5 › mobile workspace fits the viewport and recovers an expired CSRF challenge (3.7s)
+
+
+  1) tests\e2e\pagination.spec.ts:4:5 › older saved customer is selectable after a recoverable continuation failure 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByLabel('Customer', { exact: true }).locator('option')
+    Expected: 51
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByLabel('Customer', { exact: true }).locator('option') with timeout 5000ms
+      - waiting for getByLabel('Customer', { exact: true }).locator('option')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      36 |   await page.reload();
+      37 |   const customer = page.getByLabel("Customer", { exact: true });
+    > 38 |   await expect(customer.locator("option")).toHaveCount(51); // placeholder plus 50
+         |                                            ^
+      39 |   await expect(customer.locator(`option[value="${oldest}"]`)).toHaveCount(0);
+      40 |   let failOnce = true;
+      41 |   await page.route("**/api/v1/businesses/*/customers?*", route => {
+        at D:\Kam 2\Order_Fit\web\tests\e2e\pagination.spec.ts:38:44
+
+    Error Context: test-results\pagination-older-saved-cus-a7d09-erable-continuation-failure\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\pagination-older-saved-cus-a7d09-erable-continuation-failure\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\pagination-older-saved-cus-a7d09-erable-continuation-failure\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\pagination.spec.ts:4:5 › older saved customer is selectable after a recoverable continuation failure 
+  5 passed (29.6s)
+ Container orderfit-e2e-a0050d0f54-web-1 Stopping 
+ Container orderfit-e2e-a0050d0f54-worker-1 Stopping 
+ Container orderfit-e2e-a0050d0f54-worker-1 Stopped 
+ Container orderfit-e2e-a0050d0f54-worker-1 Removing 
+ Container orderfit-e2e-a0050d0f54-worker-1 Removed 
+ Container orderfit-e2e-a0050d0f54-web-1 Stopped 
+ Container orderfit-e2e-a0050d0f54-web-1 Removing 
+ Container orderfit-e2e-a0050d0f54-web-1 Removed 
+ Container orderfit-e2e-a0050d0f54-api-1 Stopping 
+ Container orderfit-e2e-a0050d0f54-api-1 Stopped 
+ Container orderfit-e2e-a0050d0f54-api-1 Removing 
+ Container orderfit-e2e-a0050d0f54-api-1 Removed 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Stopping 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Stopped 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Removing 
+ Container orderfit-e2e-a0050d0f54-migrate-1 Removed 
+ Container orderfit-e2e-a0050d0f54-db-1 Stopping 
+ Container orderfit-e2e-a0050d0f54-db-1 Stopped 
+ Container orderfit-e2e-a0050d0f54-db-1 Removing 
+ Container orderfit-e2e-a0050d0f54-db-1 Removed 
+ Network orderfit-e2e-a0050d0f54_default Removing 
+ Network orderfit-e2e-a0050d0f54_edge Removing 
+ Volume orderfit-e2e-a0050d0f54_pg-data Removing 
+ Volume orderfit-e2e-a0050d0f54_documents Removing 
+ Volume orderfit-e2e-a0050d0f54_pg-data Removed 
+ Volume orderfit-e2e-a0050d0f54_documents Removed 
+ Network orderfit-e2e-a0050d0f54_default Removed 
+ Network orderfit-e2e-a0050d0f54_edge Removed 

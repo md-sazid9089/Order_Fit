@@ -1,12 +1,13 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useScope } from "@/components/layout/auth-shell";
 import { ApiError, get, type Deal, type Operation } from "@/lib/orderfit-api";
 import { describeP7Error, csvAsOf } from "@/lib/p7-model";
 import { versionsOf } from "@/lib/approval-model";
-import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listDocuments, listFields, previewCsv, resolveField, uploadDocument, type CsvPreview, type DocumentView, type ExtractedField } from "@/lib/documents-api";
+import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listFields, previewCsv, resolveField, uploadDocument, type CsvPreview, type DocumentView, type ExtractedField } from "@/lib/documents-api";
 
 const ROLES: Record<string, string[]> = { po: ["customer_order"], quote: ["customer_sales_quote", "supplier_cost_quote"], bills: ["baseline", "supplier_cost_quote"], financing: ["financing"], csv: ["baseline"], other: ["other"] };
 
@@ -22,15 +23,17 @@ async function settle(businessId: string, operationId: string): Promise<Operatio
 export default function DealDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { businessId: selectedBusiness } = useScope();
   const [scope, setScope] = useState<{ dealId: string; businessId: string } | null>(null);
-  const [deal, setDeal] = useState<Deal | null>(null); const [docs, setDocs] = useState<DocumentView[]>([]); const [fields, setFields] = useState<ExtractedField[]>([]);
+  const [deal, setDeal] = useState<Deal | null>(null); const [fields, setFields] = useState<ExtractedField[]>([]);
+  const documentPages = useCollection<DocumentView>(`/businesses/${scope?.businessId}/deals/${scope?.dealId}/documents`, !!scope);
+  const docs = documentPages.items;
   const [kind, setKind] = useState("po"); const [role, setRole] = useState("customer_order"); const [file, setFile] = useState<File | null>(null);
   const [asOf, setAsOf] = useState(""); const [preview, setPreview] = useState<CsvPreview | null>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   useEffect(() => { void params.then(p => setScope({ dealId: p.id, businessId: selectedBusiness })); }, [params, selectedBusiness]);
   const refresh = useCallback(async () => {
     if (!scope?.businessId) return;
     try {
-      const [d, documents, extracted] = await Promise.all([get<Deal>(`/businesses/${scope.businessId}/deals/${scope.dealId}`), listDocuments(scope.businessId, scope.dealId), listFields(scope.businessId, scope.dealId)]);
-      setDeal(d); setDocs(documents.items); setFields(extracted.items);
+      const [d, extracted] = await Promise.all([get<Deal>(`/businesses/${scope.businessId}/deals/${scope.dealId}`), listFields(scope.businessId, scope.dealId)]);
+      setDeal(d); setFields(extracted.items);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load documents."); }
   }, [scope]);
   useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
@@ -46,7 +49,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
     catch (e) {
       const described = describeP7Error(e);
       setError(e instanceof ApiError && e.status === 409 ? `${described.message} The order and extracted values were reloaded from the saved state. Review the current values before confirming again.` : e instanceof ApiError ? described.message : e instanceof Error && !(e.name === "NetworkError") && e.message ? e.message : described.message);
-    } finally { await refresh(); setBusy(false); }
+    } finally { await Promise.all([refresh(), documentPages.refetch()]); setBusy(false); }
   }
   const upload = (e: FormEvent) => { e.preventDefault(); if (!file || !scope) return; void run(async () => { await uploadDocument(scope.businessId, scope.dealId, { ...versions(), kind, source_role: role }, file); setFile(null); setMessage("Document stored privately."); }); };
   const extract = (doc: DocumentView) => scope && void run(async () => {
@@ -81,7 +84,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
         <input type="file" accept=".pdf,.txt,.csv,.json" onChange={e => setFile(e.target.files?.[0] ?? null)} aria-label="Document file" /></div>
       <p className="text-xs text-neutral-600">PDF with a text layer, text, CSV or JSON, up to 25 MiB. Document text is treated as data, never instructions.</p>
       <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || !file}>Upload</button></form>
-    <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Documents</h2>{docs.length === 0 ? <p className="text-sm">No documents yet. You can still enter values manually.</p> : <ul className="space-y-2 text-sm">{docs.map(d => <li key={d.id} className="flex flex-wrap items-center gap-3"><span className="font-medium">{d.original_filename}</span><span>{d.source_role} · {d.parse_status === "ocr_required" ? "scanned, no text layer" : d.parse_status}</span>
+    <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Documents</h2><CollectionPages query={documentPages} noun="documents" />{docs.length === 0 && !documentPages.isPending && !documentPages.isError ? <p className="text-sm">No documents yet. You can still enter values manually.</p> : <ul className="space-y-2 text-sm">{docs.map(d => <li key={d.id} className="flex flex-wrap items-center gap-3"><span className="font-medium">{d.original_filename}</span><span>{d.source_role} · {d.parse_status === "ocr_required" ? "scanned, no text layer" : d.parse_status}</span>
       <button className="rounded border px-2 py-1" disabled={busy} onClick={() => download(d)}>Download original</button>{d.kind === "csv" ? <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => csvPreview(d)}>Preview import</button> : <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => extract(d)}>Extract values</button>}</li>)}</ul>}</section>
     {docs.some(d => d.kind === "csv") && deal && <div className="space-y-1 rounded-2xl border bg-white p-5 text-sm"><label className="block">As-of date for CSV import<input type="date" min="2000-01-01" max="2100-12-31" className="ml-2 rounded border p-1" value={asOf || deal.start_date} onChange={e => { setAsOf(e.target.value); setPreview(null); }} /></label><p className="text-xs text-neutral-600">The as-of date tells the preview which day the imported balances describe. It starts as this order&apos;s start date ({deal.start_date}); change it if the file describes another day.</p></div>}
     {preview && <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Import preview</h2><p className="text-sm">As of {asOf || deal?.start_date}: {preview.events.length} events, {preview.duplicate_keys.length} duplicates skipped, {preview.errors.length} errors. Nothing is saved until you confirm.</p>

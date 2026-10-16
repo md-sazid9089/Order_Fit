@@ -8853,6 +8853,19 @@
       "Readiness": {
         "additionalProperties": false,
         "properties": {
+          "backlog_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Backlog Seconds"
+          },
           "database": {
             "title": "Database",
             "type": "boolean"
@@ -13855,6 +13868,17 @@
             }
           },
           {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
             "in": "query",
             "name": "deal_id",
             "required": false,
@@ -15398,6 +15422,26 @@
               "minimum": 1,
               "type": "integer"
             }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "default_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -15879,6 +15923,17 @@
               "default": 50,
               "maximum": 100,
               "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
               "type": "integer"
             }
           }
@@ -17085,6 +17140,17 @@
               "default": 50,
               "maximum": 100,
               "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
               "type": "integer"
             }
           },
@@ -19224,6 +19290,17 @@
               "minimum": 1,
               "type": "integer"
             }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -20302,6 +20379,17 @@
               "default": 50,
               "maximum": 100,
               "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
               "type": "integer"
             }
           }
@@ -23751,6 +23839,17 @@
               "minimum": 1,
               "type": "integer"
             }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -26681,6 +26780,17 @@
               "default": 50,
               "maximum": 100,
               "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Legacy offset start; cannot be combined with cursor.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
               "type": "integer"
             }
           }

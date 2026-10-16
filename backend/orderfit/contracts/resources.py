@@ -695,6 +695,7 @@ class Readiness(DTO):
     schema_current: StrictBool
     storage: StrictBool
     worker: StrictBool
+    backlog_seconds: Annotated[int, Field(strict=True, ge=0)] | None = None
 
 
 class ExtractionCandidateView(DTO):

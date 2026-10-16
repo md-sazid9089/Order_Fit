@@ -23,7 +23,7 @@ export function healthState(probe: Probe | null): HealthState {
 export const HEALTH_TEXT: Record<HealthState, { label: string; detail: string }> = {
   checking: { label: "Checking API...", detail: "Waiting for the first answer." },
   ready: { label: "API ready", detail: "Liveness and readiness checks both passed." },
-  not_ready: { label: "API reachable, not ready", detail: "The process answers, but its database, schema or storage check failed. Saving may not work." },
+  not_ready: { label: "API reachable, not ready", detail: "The process answers, but database, schema, storage or worker capacity is unavailable. Saving or background work may not work." },
   readiness_unknown: { label: "API reachable, readiness unknown", detail: "The process answers (liveness only). This API reports no readiness check." },
   unreachable: { label: "API unreachable", detail: "No answer from the API." },
 };

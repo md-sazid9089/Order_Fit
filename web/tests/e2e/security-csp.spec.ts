@@ -14,22 +14,29 @@ test("strict CSP uses fresh nonces, hydrates signin and blocks injected scripts"
   await page.goto("/auth/signin");
   await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
   await page.getByLabel("Email", { exact: true }).fill("synthetic-csp@example.test");
-  const blocked = await page.evaluate(async () => {
-    const script = document.createElement("script");
-    script.textContent = "window.__csp_attack_executed = true";
-    document.head.append(script);
-    await new Promise(resolve => setTimeout(resolve, 30));
-    return Boolean((window as unknown as { __csp_attack_executed?: boolean }).__csp_attack_executed);
+  // Controlled response injection models parser execution. page.evaluate already has
+  // script authority; strict-dynamic intentionally trusts its non-parser children.
+  // This is a negative control, not evidence of an application injection sink.
+  await page.route("**/auth/signin?csp-control=1", async route => {
+    const response = await route.fetch();
+    const body = await response.text();
+    const fresh = /script-src 'nonce-([^']+)'/.exec(response.headers()["content-security-policy"])?.[1];
+    expect(fresh).toBeTruthy();
+    await route.fulfill({ response, body: body.replace("</body>", `
+      <script>window.__missingNonce = true</script>
+      <script nonce="wrong">window.__wrongNonce = true</script>
+      <button id="handler-control" onclick="window.__inlineHandler = true">Control</button>
+      <script nonce="${fresh}">window.__authorized = true</script></body>`) });
   });
-  expect(blocked).toBe(false);
-  // A correctly nonced script executes, proving the negative check is meaningful.
-  const trusted = await page.evaluate(() => {
-    const nonce = document.querySelector<HTMLScriptElement>("script[nonce]")?.nonce;
-    const script = document.createElement("script");
-    script.nonce = nonce ?? "";
-    script.textContent = "window.__csp_trusted_executed = true";
-    document.head.append(script);
-    return Boolean((window as unknown as { __csp_trusted_executed?: boolean }).__csp_trusted_executed);
+  await page.goto("/auth/signin?csp-control=1");
+  await page.locator("#handler-control").click();
+  const controls = await page.evaluate(() => {
+    const w = window as unknown as Record<string, boolean>;
+    return { missing: !!w.__missingNonce, wrong: !!w.__wrongNonce,
+      handler: !!w.__inlineHandler, authorized: !!w.__authorized };
   });
-  expect(trusted).toBe(true);
+  expect(controls).toEqual({ missing: false, wrong: false, handler: false, authorized: true });
+  await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
+  await page.goto("/auth/signin");
+  await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
 });

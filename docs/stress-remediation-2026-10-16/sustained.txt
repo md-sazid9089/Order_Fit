@@ -1,0 +1,59 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_core_schema, OrderFit core schema: tables, integrity triggers, audit hash chain, row-level security, reference data.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 0001_core_schema -> 0002_backend_foundation, P1 identity, scoped operations and revision foundation; applied 0001 is untouched.
+INFO  [alembic.runtime.migration] Running upgrade 0002_backend_foundation -> 0003_p3_results, P3 lender provenance and immutable evaluation series on existing records.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p4_documents, P4 immutable parse, extraction and CSV preview evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p3_exports, P3 immutable decision records and preserved scenario policy fields.
+INFO  [alembic.runtime.migration] Running upgrade 0004_p3_exports, 0004_p4_documents -> 0005_p3_p4_integration, Join concurrent P3 fixes and P4 additions without changing either history.
+INFO  [alembic.runtime.migration] Running upgrade 0005_p3_p4_integration -> 0006_p3_input_integrity, Preserve reviewed cost identities across persistence and confirmation.
+INFO  [alembic.runtime.migration] Running upgrade 0006_p3_input_integrity -> 0007_p5_preparation, Immutable negotiation preparation and reviewed reply/acceptance evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0007_p5_preparation -> 0008_p6_execution, Exact bundle authorization and durable sandbox execution.
+INFO  [alembic.runtime.migration] Running upgrade 0008_p6_execution -> 0009_p6_approval, Exact-bundle approval repair: lock-free bundle guard, batch send pin, usability predicate.
+INFO  [alembic.runtime.migration] Running upgrade 0009_p6_approval -> 0010_p6_execution_runtime, P6-B sandbox execution: run admission/settlement, commitment gate, projection, compensation.
+INFO  [alembic.runtime.migration] Running upgrade 0010_p6_execution_runtime -> 0011_p7_operations, P7 supporting operations: invitations, account evidence, notifications, exports, readiness.
+INFO  [alembic.runtime.migration] Running upgrade 0011_p7_operations -> 0012_notification_writer, Notifications are written only by the SECURITY DEFINER p7_notify(); runtime keeps read_at.
+INFO  [alembic.runtime.migration] Running upgrade 0012_notification_writer -> 0013_runtime_hardening, Runtime hardening: split auth throttles, password lock order, narrowed business/document UPDATE.
+INFO  [alembic.runtime.migration] Running upgrade 0013_runtime_hardening -> 0014_settlement_retention, Late-cancellation settlement context and idempotency-key retention for the runtime role.
+INFO  [alembic.runtime.migration] Running upgrade 0014_settlement_retention -> 0015_session_authority, Require fresh authentication after membership role changes without cross-session locks.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_worker_presence, Durable expiring process liveness, separate from queue age.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_core_schema, OrderFit core schema: tables, integrity triggers, audit hash chain, row-level security, reference data.
+INFO  [alembic.runtime.migration] Running upgrade 0001_core_schema -> 0002_backend_foundation, P1 identity, scoped operations and revision foundation; applied 0001 is untouched.
+INFO  [alembic.runtime.migration] Running upgrade 0002_backend_foundation -> 0003_p3_results, P3 lender provenance and immutable evaluation series on existing records.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p4_documents, P4 immutable parse, extraction and CSV preview evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p3_exports, P3 immutable decision records and preserved scenario policy fields.
+INFO  [alembic.runtime.migration] Running upgrade 0004_p3_exports, 0004_p4_documents -> 0005_p3_p4_integration, Join concurrent P3 fixes and P4 additions without changing either history.
+INFO  [alembic.runtime.migration] Running upgrade 0005_p3_p4_integration -> 0006_p3_input_integrity, Preserve reviewed cost identities across persistence and confirmation.
+INFO  [alembic.runtime.migration] Running upgrade 0006_p3_input_integrity -> 0007_p5_preparation, Immutable negotiation preparation and reviewed reply/acceptance evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0007_p5_preparation -> 0008_p6_execution, Exact bundle authorization and durable sandbox execution.
+INFO  [alembic.runtime.migration] Running upgrade 0008_p6_execution -> 0009_p6_approval, Exact-bundle approval repair: lock-free bundle guard, batch send pin, usability predicate.
+INFO  [alembic.runtime.migration] Running upgrade 0009_p6_approval -> 0010_p6_execution_runtime, P6-B sandbox execution: run admission/settlement, commitment gate, projection, compensation.
+INFO  [alembic.runtime.migration] Running upgrade 0010_p6_execution_runtime -> 0011_p7_operations, P7 supporting operations: invitations, account evidence, notifications, exports, readiness.
+INFO  [alembic.runtime.migration] Running upgrade 0011_p7_operations -> 0012_notification_writer, Notifications are written only by the SECURITY DEFINER p7_notify(); runtime keeps read_at.
+INFO  [alembic.runtime.migration] Running upgrade 0012_notification_writer -> 0013_runtime_hardening, Runtime hardening: split auth throttles, password lock order, narrowed business/document UPDATE.
+INFO  [alembic.runtime.migration] Running upgrade 0013_runtime_hardening -> 0014_settlement_retention, Late-cancellation settlement context and idempotency-key retention for the runtime role.
+INFO  [alembic.runtime.migration] Running upgrade 0014_settlement_retention -> 0015_session_authority, Require fresh authentication after membership role changes without cross-session locks.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_worker_presence, Durable expiring process liveness, separate from queue age.
+
+Disposable PG17 target: orderfit-p1-test-bea788094f06 / orderfit_p1_test_bea788094f06 (loopback)
+Original 0001 SQL suite: 296/296 passed
+ok   chain: 400 rows, seq 1..400, verify=true 400
+ok   optimistic lock: second writer updated 0 rows, deal is 'S1 v2'
+CONCURRENCY TEST PASSED
+Forward-schema SQL suite: 296/296 passed
+Forward-schema ok   chain: 400 rows, seq 1..400, verify=true 400
+ok   optimistic lock: second writer updated 0 rows, deal is 'S1 v2'
+CONCURRENCY TEST PASSED
+SUSTAINED_METRIC {"seconds": 60.07800000000043, "service_concurrency": 8, "cpu_concurrency": 8, "tenants": 2, "sessions": 2, "counts": {"tenant0:read": 683, "tenant1:read": 700, "tenant1:replay": 700, "tenant0:replay": 683, "tenant1:cancelled": 494, "tenant0:OPERATION_STATE_CONFLICT": 1, "tenant1:editor_saved": 1, "tenant1:STALE_VERSION": 699, "tenant0:cancelled": 513, "tenant1:admitted": 485, "tenant0:editor_saved": 1, "tenant0:STALE_VERSION": 679, "tenant0:admitted": 498, "tenant1:DATABASE_CAPACITY": 38, "tenant0:DATABASE_CAPACITY": 19, "tenant1:OPERATION_CAPACITY": 422, "tenant0:OPERATION_CAPACITY": 351}, "cpu_counts": {"parser_accepted": 2, "password_accepted": 2, "PARSER_CAPACITY": 14, "AUTH_CAPACITY": 14}, "service_requests": 6967, "p50_ms": 33.36859999990338, "p95_ms": 124.93369999992865, "max_ms": 3013.911999999891, "queue_wait_max_seconds": 2.031115, "memory_before": 121081856, "parent_peak": 128286720, "engine_child_peak": 4145152, "combined_peak": 132386816, "memory_after_gc": 127279104, "checked_out_after": 0, "engine": {"cases": [{"input": "OF-02", "seconds": 20.504, "cpu_seconds": 20.266, "work_units": 8385004, "candidates": 45, "series_points": 46440, "decision": "accept_with_changes"}, {"input": "10000-combination-boundary", "seconds": 18.103, "cpu_seconds": 17.812, "work_units": 7568833, "candidates": 51, "series_points": 111996, "decision": "decline_or_renegotiate"}, {"input": "near-work-admission-ceiling", "seconds": 42.431, "cpu_seconds": 41.859, "work_units": 16789876, "candidates": 51, "series_points": 111996, "decision": "decline_or_renegotiate"}], "peak_process_rss_bytes": 342110208}, "limits": "Windows local service/engine child; parser children and Docker DB RSS excluded; finite 60-second load, not hosted capacity"}
+.
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Kam 2\Order_Fit\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 93.13s (0:01:33)

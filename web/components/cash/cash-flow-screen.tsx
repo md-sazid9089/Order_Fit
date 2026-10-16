@@ -1,9 +1,11 @@
 "use client";
 
+import { useCollection, CollectionPages } from "@/components/collection-pages";
+
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/orderfit-api";
-import { createCashExport, downloadExport, getBusiness, getCashFlow, listBaselineEvents } from "@/lib/p7-api";
+import { createCashExport, downloadExport, getBusiness, getCashFlow } from "@/lib/p7-api";
 import { cashExportFileName, cashFlowRows, lowestBalance } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import { CashEventActions } from "@/components/cash/cash-event-actions";
@@ -13,7 +15,7 @@ import { Alert, Loading, PageFrame, QueryError, panel, primary, useCommand, useS
 export function CashFlowScreen() {
   const { businessId, key } = useScoped();
   const flow = useQuery({ queryKey: key("cash-flow"), queryFn: () => getCashFlow(businessId), retry: false });
-  const events = useQuery({ queryKey: key("baseline-events"), queryFn: () => listBaselineEvents(businessId), retry: false });
+  const events = useCollection<CashEventView>(`/businesses/${businessId}/cash-events`);
   const business = useQuery({ queryKey: key("business-profile"), queryFn: () => getBusiness(businessId), retry: false });
   const queryClient = useQueryClient();
   // A correction or void changes the business revision, the event list and the running balance together.
@@ -42,7 +44,7 @@ export function CashFlowScreen() {
       {events.isPending && <Loading what="baseline events" />}
       {events.isError && <QueryError error={events.error} retry={() => void events.refetch()} retrying={events.isFetching} />}
       {events.isSuccess && !live.length && <p className="text-sm text-neutral-600">No baseline events are recorded.</p>}
-      {events.isSuccess && events.data.items.length >= 100 && <Alert tone="info">Showing the first 100 events.</Alert>}
+      <CollectionPages query={events} noun="events" />
       <ul className="divide-y text-sm">{live.map(e => <li key={e.id} className="flex flex-wrap gap-x-4 py-1.5"><span>{e.event.event_date}</span><span>{e.event.direction === "in" ? "Receipt in" : "Payment out"}</span><span className="font-mono">{currency ? formatMinor(e.event.amount_minor, currency) : `${e.event.amount_minor} minor units`}</span><span className="text-neutral-700">{e.event.kind.replaceAll("_", " ")} · {e.event.certainty}</span><span className="min-w-0 flex-1 text-neutral-600">{e.event.description}</span>{business.data ? <CashEventActions event={e} financialRevision={business.data.financial_revision} onChanged={reloadAll} /> : null}</li>)}</ul>
     </section>
     <section className={panel} aria-labelledby="export-heading">
@@ -53,3 +55,5 @@ export function CashFlowScreen() {
     </section>
   </PageFrame>;
 }
+
+import type { CashEventView } from "@/lib/generated-api";
