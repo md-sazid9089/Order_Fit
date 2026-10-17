@@ -75,5 +75,5 @@ These are not papered over by the acceptance result:
 - Historical credentials that were exposed during the drill or were previously
   committed must be rotated/revoked. No secret values are recorded here.
 
-The temporary `orderfit-security-acceptance` branch and its buckets are
-disposable review resources and must be removed after the acceptance review.
+The temporary `orderfit-security-acceptance` branch and both drill buckets were
+permanently removed through the Neon console after acceptance review.
