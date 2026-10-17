@@ -158,7 +158,7 @@ export function ArchitectureSecurity() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <table className="w-full min-w-[560px] text-left text-xs sm:text-sm border-collapse">
               <thead>
                 <tr className="border-b border-[#ECEAE4] text-[#526975] font-semibold font-sans">
                   <th className="py-3 px-3">Tier</th>

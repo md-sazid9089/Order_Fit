@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Plus } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ScopeContext, useScope, type Scope } from "@/components/layout/scope";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { fetchSession, getCachedSession, setCachedSession } from "@/lib/session-store";
 
@@ -144,6 +145,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
             <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] font-display leading-tight">{title === "Orders" ? "Deals & Orders Pipeline" : title}</h1>
             <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
+              <ThemeToggle variant="icon" />
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
               <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>

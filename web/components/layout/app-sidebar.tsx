@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import type { NavItem } from "@/lib/p7-model";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { getCachedSession, fetchSession } from "@/lib/session-store";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export type { NavItem } from "@/lib/p7-model";
 
@@ -83,19 +85,56 @@ export function AppSidebar({
   links,
   current,
   query = "",
-  companyName = "Apex Manufacturing",
+  companyName,
   currency,
-  roleLabel,
+  roleLabel: roleLabelProp,
   onSignOut,
   busy,
   variant = "auto",
-  isAdmin = false,
+  isAdmin: isAdminProp,
 }: AppSidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isExpanded = !isCollapsed || isHovered;
+
+  // Read session dynamically if available to ensure live database attributes are displayed
+  const [liveSession, setLiveSession] = useState(() => getCachedSession());
+
+  useEffect(() => {
+    let active = true;
+    if (!liveSession) {
+      void fetchSession().then((sess) => {
+        if (active && sess) {
+          setLiveSession(sess);
+        }
+      }).catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [liveSession]);
+
+  const activeMembership = liveSession?.memberships?.[0];
+  const isPlatformAdmin = Boolean(liveSession?.is_platform_admin === true || isAdminProp);
+  const isOwner = activeMembership?.role === "owner";
+
+  // Build authoritative role label reflecting database credentials
+  const computeRoleLabel = () => {
+    if (roleLabelProp) return roleLabelProp;
+    const parts: string[] = [];
+    if (isPlatformAdmin) parts.push("Admin");
+    if (isOwner) {
+      parts.push("Owner");
+    } else if (activeMembership?.role) {
+      parts.push(activeMembership.role.replace("_", " "));
+    }
+    if (parts.length > 0) {
+      return parts.join(" · ");
+    }
+    return isPlatformAdmin ? "Admin" : "Member";
+  };
 
   const isAdminMode =
     variant === "admin" ||
@@ -107,7 +146,7 @@ export function AppSidebar({
   const activeLinks = (links ? [...links] : (isAdminMode ? [...ADMIN_NAVIGATION_ITEMS] : []));
 
   // If the user is an admin in the database and in business view, display "Admin Panel" option
-  if (!isAdminMode && isAdmin && !activeLinks.some((item) => item.href === "/admin")) {
+  if (!isAdminMode && isPlatformAdmin && !activeLinks.some((item) => item.href === "/admin")) {
     activeLinks.push({ href: "/admin", label: "Admin Panel" });
   }
 
@@ -118,89 +157,95 @@ export function AppSidebar({
       : activeLinks.find(
           (item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(item.href))
         )?.href ?? null);
-  const effectiveCompanyName = companyName || (isAdminMode ? "OrderFit Control" : "Apex Manufacturing");
-  const effectiveRoleLabel = roleLabel || (isAdminMode ? "Admin Mode" : "Owner");
 
-  return (
-    <>
-      <div className="fixed top-3 left-3 z-30 lg:hidden">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild><button type="button" aria-label="Open navigation" className="flex size-10 items-center justify-center rounded-xl bg-white border border-[#E8E6E1]"><Menu className="size-5" /></button></SheetTrigger>
-          <SheetContent side="left" aria-describedby={undefined} className="overflow-y-auto">
-            <SheetHeader><SheetTitle>Navigation</SheetTitle><p className="text-xs text-neutral-600">{effectiveCompanyName} · {effectiveRoleLabel}</p></SheetHeader>
-            <nav aria-label="Primary" className="px-3 space-y-1">
-              {activeLinks.map(item => {
-                const label = (item.href === "/admin" && !isAdminMode) ? "Admin Panel" : (LABELS[item.href] ?? item.label);
-                const href = item.href === "/admin" ? "/admin" : `${item.href}${query}`;
-                return (
-                  <Link
-                    key={item.href}
-                    href={href}
-                    aria-current={activeCurrent === item.href ? "page" : undefined}
-                    onClick={() => setMobileOpen(false)}
-                    className="block rounded-xl px-4 py-3 text-sm hover:bg-neutral-100"
-                  >
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
-      {/* Reserves the rail's width so the page body does not shift when a collapsed rail expands on hover. */}
-      <div className={`hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out ${isCollapsed ? "w-[72px]" : "w-64"}`} />
-      <aside
-        aria-label="Sidebar"
-        onMouseEnter={() => isCollapsed && setIsHovered(true)}
-        onMouseLeave={() => isCollapsed && setIsHovered(false)}
-        className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-white border-r border-[#E8E6E1] flex-col justify-between transition-[width] duration-300 ease-in-out ${
-          isCollapsed ? (isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30") : "w-64 z-30"
-        }`}
-      >
-        <div>
-          <div className="h-16 border-b border-[#E8E6E1] flex items-center justify-between px-4 overflow-hidden">
-            {isExpanded ? (
+  const effectiveCompanyName =
+    companyName ||
+    activeMembership?.business_name ||
+    (isAdminMode ? "OrderFit Platform" : "Business Workspace");
+
+  const effectiveRoleLabel = computeRoleLabel();
+
+  const renderSidebarContent = (isMobileView = false) => {
+    const showExpanded = isMobileView || isExpanded;
+    return (
+      <div className="flex flex-col justify-between h-full min-h-0 bg-white dark:bg-[#181A1B]">
+        <div className="flex-1 overflow-y-auto">
+          {/* Header branding */}
+          <div className="h-16 border-b border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between px-4 overflow-hidden shrink-0">
+            {showExpanded ? (
               <div className="flex items-center justify-between w-full">
-                <Link href={isAdminMode ? "/admin" : `/deals${query}`} className="flex items-center gap-2 overflow-hidden">
-                  <span className="font-display text-xl font-bold tracking-tight text-[#1E2021] whitespace-nowrap">OrderFit</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EFECE6] text-[#525252] whitespace-nowrap">
+                <Link
+                  href={isAdminMode ? "/admin" : `/deals${query}`}
+                  onClick={() => isMobileView && setMobileOpen(false)}
+                  className="flex items-center gap-2 overflow-hidden"
+                >
+                  <span className="font-display text-xl font-bold tracking-tight text-[#1E2021] dark:text-white whitespace-nowrap">OrderFit</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EFECE6] dark:bg-[#282A2B] text-[#525252] dark:text-[#A3A3A3] whitespace-nowrap">
                     {isAdminMode ? "Control" : "Copilot"}
                   </span>
                 </Link>
-                <button type="button" onClick={() => { setIsCollapsed(true); setIsHovered(false); }} className="p-1.5 rounded-lg text-[#737373] hover:text-[#1E2021] hover:bg-[#F4F2ED] transition-colors shrink-0" title="Collapse sidebar" aria-label="Collapse sidebar">
-                  <PanelLeftClose className="size-4" />
-                </button>
+                {isMobileView ? (
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(false)}
+                    className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425] transition-colors shrink-0"
+                    title="Close navigation"
+                    aria-label="Close navigation"
+                  >
+                    <PanelLeftClose className="size-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setIsCollapsed(true); setIsHovered(false); }}
+                    className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425] transition-colors shrink-0"
+                    title="Collapse sidebar"
+                    aria-label="Collapse sidebar"
+                  >
+                    <PanelLeftClose className="size-4" />
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center w-full">
-                <button type="button" onClick={() => setIsCollapsed(false)} className="size-10 rounded-xl text-[#1E2021] hover:bg-[#F4F2ED] flex items-center justify-center transition-colors" title="Expand sidebar" aria-label="Expand sidebar">
+                <button
+                  type="button"
+                  onClick={() => setIsCollapsed(false)}
+                  className="size-10 rounded-xl text-[#1E2021] dark:text-[#F3F4F6] hover:bg-[#F4F2ED] dark:hover:bg-[#222425] flex items-center justify-center transition-colors"
+                  title="Expand sidebar"
+                  aria-label="Expand sidebar"
+                >
                   <PanelLeft className="size-5" />
                 </button>
               </div>
             )}
           </div>
 
+          {/* Tenant / Company card */}
           <div className="p-3">
-            {isExpanded ? (
-              <div className="p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-[#EFECE6] text-[#1E2021] flex items-center justify-center shrink-0">
+            {showExpanded ? (
+              <div className="p-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-[#EFECE6] dark:bg-[#282A2B] text-[#1E2021] dark:text-white flex items-center justify-center shrink-0">
                   {isAdminMode ? <Server className="size-4" /> : <Building2 className="size-4" />}
                 </div>
                 <div className="overflow-hidden whitespace-nowrap">
-                  <div className="font-semibold text-xs text-[#1E2021] truncate">{effectiveCompanyName}</div>
-                  <div className="text-[10px] text-[#737373] font-mono">{currency ? `${currency} · ` : ""}{effectiveRoleLabel}</div>
+                  <div className="font-semibold text-xs text-[#1E2021] dark:text-[#F3F4F6] truncate">{effectiveCompanyName}</div>
+                  <div className="text-[10px] text-[#737373] dark:text-[#A3A3A3] font-mono">{currency ? `${currency} · ` : ""}{effectiveRoleLabel}</div>
                 </div>
               </div>
             ) : (
-              <div className="size-11 mx-auto bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl flex items-center justify-center text-[#1E2021]" title={currency ? `${effectiveCompanyName} (${currency})` : effectiveCompanyName}>
+              <div
+                className="size-11 mx-auto bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex items-center justify-center text-[#1E2021] dark:text-[#F3F4F6]"
+                title={currency ? `${effectiveCompanyName} (${currency})` : effectiveCompanyName}
+              >
                 {isAdminMode ? <Server className="size-4" /> : <Building2 className="size-4" />}
               </div>
             )}
           </div>
 
-          <nav aria-label="Primary" className="px-3 space-y-1.5">
-            {activeLinks.map(item => {
+          {/* Primary Navigation */}
+          <nav aria-label={isMobileView ? "Mobile Primary Navigation" : "Primary Navigation"} className="px-3 space-y-1.5">
+            {activeLinks.map((item) => {
               const Icon = item.href === "/admin" ? (isAdminMode ? Activity : Server) : (ICONS[item.href] ?? Layers);
               const label = (item.href === "/admin" && !isAdminMode) ? "Admin Panel" : (LABELS[item.href] ?? item.label);
               const active = activeCurrent === item.href;
@@ -212,70 +257,134 @@ export function AppSidebar({
                   aria-current={active ? "page" : undefined}
                   aria-label={label}
                   title={label}
+                  onClick={() => isMobileView && setMobileOpen(false)}
                   className={`flex items-center h-11 rounded-xl text-xs font-medium transition-colors ${
-                    active ? "bg-[#1E2021] text-white font-semibold shadow-xs" : "text-[#525252] hover:text-[#1E2021] hover:bg-[#F4F2ED]"
-                  } ${isExpanded ? "w-full px-3.5 gap-3" : "w-11 mx-auto justify-center px-0"}`}
+                    active
+                      ? "bg-[#1E2021] dark:bg-[#2E3032] text-white font-semibold shadow-xs"
+                      : "text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
+                  } ${showExpanded ? "w-full px-3.5 gap-3" : "w-11 mx-auto justify-center px-0"}`}
                 >
-                  <div className="size-5 flex items-center justify-center shrink-0"><Icon className="size-4.5" /></div>
-                  {isExpanded && <span className="whitespace-nowrap overflow-hidden truncate">{label}</span>}
+                  <div className="size-5 flex items-center justify-center shrink-0">
+                    <Icon className="size-4.5" />
+                  </div>
+                  {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">{label}</span>}
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        {(isAdminMode || onSignOut) && (
-          <div className="p-3 border-t border-[#E8E6E1] overflow-hidden space-y-2">
-            {isAdminMode ? (
-              <div className="space-y-2">
-                {isExpanded ? (
-                  <>
-                    <Link
-                      href="/deals"
-                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] text-xs font-semibold transition-colors w-full shadow-xs"
-                    >
-                      <ArrowLeft className="size-3.5" />
-                      <span>Exit to Business App</span>
-                    </Link>
-
-                    <div className="text-center font-mono text-[10px] text-[#737373]">
-                      Role: <span className="text-[#1E2021] font-bold">admin</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 py-1">
-                    <Link
-                      href="/deals"
-                      className="size-10 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#1E2021] flex items-center justify-center transition-colors"
-                      title="Exit to Business App"
-                    >
-                      <ArrowLeft className="size-4" />
-                    </Link>
-                    <span className="font-mono text-[9px] text-[#737373]">ADM</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              onSignOut && (
-                <button
-                  type="button"
-                  onClick={onSignOut}
-                  disabled={busy}
-                  title="Sign out"
-                  aria-label="Sign out"
-                  className={`flex items-center h-9 rounded-xl text-xs font-medium text-[#737373] hover:text-[#991B1B] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 ${
-                    isExpanded ? "w-full px-3 gap-2.5" : "w-9 mx-auto justify-center px-0"
-                  }`}
-                >
-                  <div className="size-4 flex items-center justify-center shrink-0">
-                    <LogOut className="size-3.5" />
-                  </div>
-                  {isExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
-                </button>
-              )
-            )}
+        {/* Footer controls */}
+        <div className="p-3 border-t border-[#E8E6E1] dark:border-[#2A2C2D] overflow-hidden space-y-2 shrink-0">
+          {/* Theme Toggle Button (strictly icon-only, no text) */}
+          <div className="flex items-center justify-center py-0.5">
+            <ThemeToggle variant="icon" />
           </div>
-        )}
+
+          {isAdminMode ? (
+            <div className="space-y-2">
+              {showExpanded ? (
+                <>
+                  <Link
+                    href="/deals"
+                    onClick={() => isMobileView && setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-[#F3F4F6] text-xs font-semibold transition-colors w-full shadow-xs"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    <span>Exit to Business App</span>
+                  </Link>
+
+                  <div className="text-center font-mono text-[10px] text-[#737373] dark:text-[#A3A3A3]">
+                    Role: <span className="text-[#1E2021] dark:text-white font-bold">{effectiveRoleLabel}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2 py-1">
+                  <Link
+                    href="/deals"
+                    className="size-10 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-[#F3F4F6] flex items-center justify-center transition-colors"
+                    title="Exit to Business App"
+                  >
+                    <ArrowLeft className="size-4" />
+                  </Link>
+                  <span className="font-mono text-[9px] text-[#737373] dark:text-[#A3A3A3] uppercase" title={effectiveRoleLabel}>
+                    {isPlatformAdmin ? "ADM" : "USR"}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            onSignOut && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isMobileView) setMobileOpen(false);
+                  onSignOut();
+                }}
+                disabled={busy}
+                title="Sign out"
+                aria-label="Sign out"
+                className={`flex items-center h-9 rounded-xl text-xs font-medium text-[#737373] dark:text-[#A3A3A3] hover:text-[#991B1B] dark:hover:text-[#FCA5A5] hover:bg-[#FEF2F2] dark:hover:bg-[#DC2626]/20 transition-colors disabled:opacity-50 ${
+                  showExpanded ? "w-full px-3 gap-2.5" : "w-9 mx-auto justify-center px-0"
+                }`}
+              >
+                <div className="size-4 flex items-center justify-center shrink-0">
+                  <LogOut className="size-3.5" />
+                </div>
+                {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Mobile Sidebar (Slide-over drawer from the left) */}
+      <div className="fixed top-3 left-3 z-30 lg:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              aria-label="Open navigation"
+              className="flex size-10 items-center justify-center rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] shadow-xs hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-[#1E2021] dark:text-[#F3F4F6] transition-colors"
+            >
+              <Menu className="size-5" />
+            </button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            showCloseButton={false}
+            className="w-72 sm:w-80 p-0 border-r border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] gap-0 overflow-hidden"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <p>{effectiveCompanyName} · {effectiveRoleLabel}</p>
+            </SheetHeader>
+            {renderSidebarContent(true)}
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Spacer Rail */}
+      <div
+        className={`hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out ${
+          isCollapsed ? "w-[72px]" : "w-64"
+        }`}
+      />
+
+      {/* Desktop Sidebar */}
+      <aside
+        aria-label="Sidebar"
+        onMouseEnter={() => isCollapsed && setIsHovered(true)}
+        onMouseLeave={() => isCollapsed && setIsHovered(false)}
+        className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-white dark:bg-[#181A1B] border-r border-[#E8E6E1] dark:border-[#2A2C2D] flex-col justify-between transition-[width] duration-300 ease-in-out ${
+          isCollapsed ? (isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30") : "w-64 z-30"
+        }`}
+      >
+        {renderSidebarContent(false)}
       </aside>
     </>
   );

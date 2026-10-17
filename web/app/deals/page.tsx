@@ -135,7 +135,7 @@ export default function DealsPage() {
         </div>
 
         <div className="bg-white border border-[#E8E6E1] rounded-2xl shadow-xs overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full min-w-[760px] text-left text-xs">
             <thead><tr className="text-[#737373] uppercase tracking-wider text-[10px] border-b border-[#E8E6E1]">
               {["Order Reference", "Financials", "Timeline & Terms", "Engine Verdict", "Decision Status", "Action"].map(h => <th key={h} className="px-4 py-3 font-semibold">{h}</th>)}
             </tr></thead>

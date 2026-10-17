@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, listMembers, changeRole, createInvitation, revokeMember, getBusiness } from "@/lib/p7-api";
 import { ROLES, buildInvitation, buildRevocation, buildRoleChange, roleLabel, type Role } from "@/lib/p7-model";
 import type { Member, SessionView } from "@/lib/generated-api";
@@ -254,66 +255,68 @@ export default function AdminUsersPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white">Admin</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Admin</span>;
       case "owner":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white">Owner</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Owner</span>;
       case "risk_officer":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE]">Risk Officer</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE] dark:bg-[#8B5CF6]/20 dark:text-[#C4B5FD] dark:border-[#8B5CF6]/30">Risk Officer</span>;
       case "commercial_lead":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]">Commercial Lead</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0] dark:bg-[#059669]/20 dark:text-[#6EE7B7] dark:border-[#059669]/30">Commercial Lead</span>;
       case "auditor":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">Auditor</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] dark:bg-[#D97706]/20 dark:text-[#FCD34D] dark:border-[#D97706]/30">Auditor</span>;
       case "viewer":
       default:
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3F4F6] text-[#374151] border border-[#E5E7EB]">{roleLabel(role)}</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3F4F6] text-[#374151] border border-[#E5E7EB] dark:bg-[#26282A] dark:text-[#D1D5DB] dark:border-[#373A3C]">{roleLabel(role)}</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
+    <div className="min-h-screen bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] font-sans flex flex-row selection:bg-neutral-300 dark:selection:bg-neutral-700 selection:text-neutral-900 dark:selection:text-white">
       <AppSidebar variant="admin" />
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-[#181A1B]/95 backdrop-blur-md border-b border-[#E8E6E1] dark:border-[#2A2C2D] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <Link
                 href="/admin"
-                className="p-1.5 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] transition-colors shrink-0"
+                className="p-1.5 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] transition-colors shrink-0"
                 title="Return to Platform Overview"
               >
                 <ArrowLeft className="size-4" />
               </Link>
               <div>
                 <div className="flex items-center gap-2">
-                  <Link href="/admin" className="text-xs text-[#737373] hover:text-[#1E2021] transition-colors">
+                  <Link href="/admin" className="text-xs text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white transition-colors">
                     Admin Console
                   </Link>
-                  <span className="text-[#A3A3A3] text-xs">/</span>
-                  <span className="text-xs font-semibold text-[#1E2021]">User Management</span>
+                  <span className="text-[#A3A3A3] dark:text-[#737373] text-xs">/</span>
+                  <span className="text-xs font-semibold text-[#1E2021] dark:text-[#F3F4F6]">User Management</span>
                 </div>
-                <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">
+                <h1 className="text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">
                   Database User Credentials & Membership Roles
                 </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5">
+              <ThemeToggle variant="icon" />
+
               <button
                 type="button"
                 onClick={handleExportCsv}
                 disabled={users.length === 0}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
               >
-                <Download className="size-3.5 text-[#525252]" />
+                <Download className="size-3.5 text-[#525252] dark:text-[#A3A3A3]" />
                 <span className="hidden sm:inline">Export CSV</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsProvisionOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-[#181A1B] text-xs font-semibold transition-all shadow-xs cursor-pointer"
               >
                 <Plus className="size-3.5" />
                 <span>Invite User</span>

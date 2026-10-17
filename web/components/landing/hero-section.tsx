@@ -124,10 +124,10 @@ export function HeroSection() {
             </div>
 
             {/* 4 Clean, Unified Cards: In vs Out vs Problem vs Solution */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 my-6">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 my-6">
 
               {/* Card 1: Incoming */}
-              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between">
+              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#526975] uppercase tracking-wider font-sans">
@@ -137,7 +137,7 @@ export function HeroSection() {
                       In
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight truncate">
                     $120,000
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export function HeroSection() {
               </div>
 
               {/* Card 2: Outgoing */}
-              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between">
+              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#526975] uppercase tracking-wider font-sans">
@@ -157,7 +157,7 @@ export function HeroSection() {
                       Out
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight truncate">
                     $75,000
                   </div>
                 </div>
@@ -167,7 +167,7 @@ export function HeroSection() {
               </div>
 
               {/* Card 3: The Problem (Without Plan) */}
-              <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/80 shadow-xs flex flex-col justify-between">
+              <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/80 shadow-xs flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-rose-800 uppercase tracking-wider font-sans">
@@ -177,7 +177,7 @@ export function HeroSection() {
                       Risk
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-rose-700 tabular-nums font-heading tracking-tight">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-700 tabular-nums font-heading tracking-tight truncate">
                     -$30,000
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export function HeroSection() {
               </div>
 
               {/* Card 4: The OrderFit Fix */}
-              <div className="p-4 rounded-2xl bg-[#EAF7EE]/60 border border-[#B5F2C6] shadow-xs flex flex-col justify-between">
+              <div className="p-4 rounded-2xl bg-[#EAF7EE]/60 border border-[#B5F2C6] shadow-xs flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#004D3B] uppercase tracking-wider font-sans">
@@ -197,7 +197,7 @@ export function HeroSection() {
                       Safe
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#004D3B] tabular-nums font-heading tracking-tight">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#004D3B] tabular-nums font-heading tracking-tight truncate">
                     {selectedPlan === "deposit" ? "+$32,000" : selectedPlan === "split" ? "+$14,000" : "+$22,000"}
                   </div>
                 </div>
@@ -261,8 +261,8 @@ export function HeroSection() {
                 </svg>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-[#526975] mt-2 pt-2 border-t border-[#ECEAE4]/80">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#526975] mt-2 pt-2 border-t border-[#ECEAE4]/80 gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span className="flex items-center gap-1.5">
                     <span className="size-2 rounded-full bg-[#004D3B]" />
                     <span className="font-medium text-[#1A1A1A]">Evaluated Plan</span>
@@ -276,7 +276,7 @@ export function HeroSection() {
                     <span>Unplanned Deficit</span>
                   </span>
                 </div>
-                <span className="font-mono text-[#004D3B] font-semibold">
+                <span className="font-mono text-[#004D3B] font-semibold shrink-0">
                   {selectedPlan === "deposit" ? "Day 35 Min: +$32,000" : selectedPlan === "split" ? "Day 35 Min: +$14,000" : "Day 35 Min: +$22,000"}
                 </span>
               </div>
@@ -344,7 +344,7 @@ export function HeroSection() {
                       <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
                         Customer covers raw material costs before manufacturing starts. Completely eliminates cash gap with $0 financing fee and 100% late-payment resilience.
                       </p>
-                      <div className="flex items-center gap-3 pt-1 text-xs font-sans">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
                         <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
                           Cost: $0 Free
                         </span>
@@ -365,7 +365,7 @@ export function HeroSection() {
                       <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
                         Shifts supplier payment past product delivery so you pay them only after your customer pays you. Zero cash out of pocket and no interest debt.
                       </p>
-                      <div className="flex items-center gap-3 pt-1 text-xs font-sans">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
                         <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
                           Cost: $0 Free
                         </span>
@@ -386,7 +386,7 @@ export function HeroSection() {
                       <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
                         Pays suppliers immediately without asking customer or supplier to change terms. Repaid automatically upon invoice settlement.
                       </p>
-                      <div className="flex items-center gap-3 pt-1 text-xs font-sans">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
                         <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
                           Fee: 2.45% Flat ($980)
                         </span>
@@ -401,7 +401,7 @@ export function HeroSection() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#ECEAE4]">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#ECEAE4]">
                   <div className="text-left md:text-right">
                     <div className="flex items-center md:justify-end gap-1.5 text-[#004D3B] font-bold text-xs sm:text-sm font-sans">
                       <CheckCircle2 className="size-4 shrink-0 text-[#004D3B]" />
@@ -413,7 +413,7 @@ export function HeroSection() {
                   </div>
                   <a
                     href="#simulator"
-                    className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 bg-[#004D3B] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#00382B] transition-colors font-sans shadow-xs active:scale-98"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 bg-[#004D3B] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#00382B] transition-colors font-sans shadow-xs active:scale-98"
                   >
                     <span>Try Simulator</span>
                     <ArrowRight className="size-3.5" />

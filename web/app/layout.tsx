@@ -45,7 +45,7 @@ export default async function RootLayout({
 }) {
   await connection();
   return (
-    <html lang="en" className="min-h-full antialiased" style={{ backgroundColor: "#F7F6F5" }}>
+    <html lang="en" className="min-h-full antialiased" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -54,7 +54,7 @@ export default async function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#F7F6F5] text-[#1A1A1A] font-sans antialiased">
+      <body className="min-h-full flex flex-col bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] font-sans antialiased">
         <Providers>
           {children}
           <ConnectionIndicator />
