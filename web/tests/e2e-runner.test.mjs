@@ -23,6 +23,7 @@ test("E2E cleanup removes only private run tags and temporary files", () => {
   assert.match(runner, /Remove-Item -LiteralPath \$tempCompose/);
   assert.doesNotMatch(runner, /docker (?:system|image|volume) prune|git (?:clean|reset)/);
   assert.match(runner, /\$testOutput = .*\$project-results/);
-  assert.match(runner, /--workers=1 --output=\$testOutput/);
+  assert.match(runner, /\$acceptanceTestArgs = @\("--workers=1", "--output=\$testOutput"\)/);
+  assert.match(runner, /npm run test:e2e -- @acceptanceTestArgs/);
   assert.doesNotMatch(runner, /Remove-Item -LiteralPath \$testOutput/);
 });

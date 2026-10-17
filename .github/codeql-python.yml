@@ -1,0 +1,7 @@
+name: OrderFit security analysis (Python)
+# The Python extractor walks every `paths` entry as a directory, so the shared config's file entry
+# (web/proxy.ts) crashes it. Python only needs the backend package.
+queries:
+  - uses: security-extended
+paths:
+  - backend/orderfit

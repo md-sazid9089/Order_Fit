@@ -1,0 +1,7 @@
+orderfit-api.centralindia.cloudapp.azure.com {
+	encode gzip
+	request_body {
+		max_size 30MB
+	}
+	reverse_proxy api:8000
+}
