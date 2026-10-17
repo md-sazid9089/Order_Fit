@@ -84,10 +84,8 @@ test("hero section renders Go to Dashboard when session is present", () => {
 });
 
 
-test("incoming platform admin views remain disabled for the retained backend", () => {
+test("platform admin views are enabled for authorized platform administrators", () => {
   const admin = load("platform-admin.ts");
-  assert.equal(admin.platformAdminEnabled(), false);
-  const layout = readFileSync(new URL("../app/admin/layout.tsx", import.meta.url), "utf8");
-  assert.match(layout, /if \(!platformAdminEnabled\(\)\)/);
-  assert.match(layout, /<UnavailableNotice title="Platform administration"/);
+  assert.equal(admin.platformAdminEnabled(), true);
 });
+

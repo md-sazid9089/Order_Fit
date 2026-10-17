@@ -28,5 +28,5 @@ export function proxy(request: NextRequest) {
 export const config = {
   // Include HTML navigations and RSC/prefetch responses: nonce-bearing output must not
   // be shared across requests. API/download policies are supplied by the backend.
-  matcher: ["/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|icon.png|OrderFit.png).*)"],
+  matcher: ["/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|icon.png|OrderFit.png|images/).*)"],
 };
