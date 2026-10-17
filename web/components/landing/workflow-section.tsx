@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadCloud, CheckSquare, Cpu, MailCheck, ArrowRight, RefreshCw } from "lucide-react";
+import { UploadCloud, CheckSquare, Cpu, MailCheck, ArrowRight } from "lucide-react";
 
 export function WorkflowSection() {
   const steps = [
@@ -106,25 +106,6 @@ export function WorkflowSection() {
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-10 rounded-2xl bg-[#093A2F]/5 border border-[#093A2F]/15 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left">
-          <div className="flex items-start text-left gap-3">
-            <div className="size-9 rounded-xl bg-[#093A2F] text-white flex items-center justify-center shrink-0">
-              <RefreshCw className="size-4" />
-            </div>
-            <div>
-              <h4 className="font-heading text-sm font-semibold text-[#1A1A1A]">
-                Automated Negotiation Re-Planning Loop (ADR 0004)
-              </h4>
-              <p className="font-sans text-xs text-[#526975]">
-                When a customer responds with a counter-offer (e.g. &quot;30% deposit instead of 40%&quot;), past approvals automatically turn stale. The engine re-computes headroom and re-calibrates remaining options.
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-bold uppercase font-sans px-3 py-1.5 rounded-full bg-[#093A2F] text-white shrink-0">
-            Max 3 Negotiated Rounds
-          </span>
         </div>
 
       </div>

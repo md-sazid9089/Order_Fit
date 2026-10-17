@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Check, AlertOctagon, ShieldCheck } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 export function OldVsNewWay() {
   return (
@@ -26,43 +26,13 @@ export function OldVsNewWay() {
           
           {/* Card 1: The old way */}
           <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] shadow-xs hover:shadow-md transition-all">
-            {/* Visual Header: Spreadsheet Chaos & Overdraft Warning */}
-            <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] bg-gradient-to-br from-[#1C0D11] via-[#261218] to-[#12070A] p-4 sm:p-5 flex flex-col justify-between">
-              {/* Spreadsheet Grid Lines */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(244,63,94,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(244,63,94,0.08)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-
-              {/* Top Row: Error indicators */}
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-[11px] font-mono text-rose-300 font-semibold">
-                  <AlertOctagon className="size-3.5 text-rose-400" />
-                  <span>Formula Error: #REF!</span>
-                </div>
-                <span className="text-[10px] font-mono text-rose-400/80 uppercase">Spreadsheet v4_final_final.xlsx</span>
-              </div>
-
-              {/* Chaotic Mock Spreadsheet Rows */}
-              <div className="relative z-10 rounded-xl bg-black/40 border border-rose-500/30 p-2.5 space-y-1.5 font-mono text-xs shadow-inner">
-                <div className="flex items-center justify-between text-rose-200/90 py-0.5 border-b border-rose-900/40 text-[11px]">
-                  <span>A1: Vendor Invoice Terms</span>
-                  <span className="text-rose-400 font-bold">MISSED (Net 15 vs 45)</span>
-                </div>
-                <div className="flex items-center justify-between text-rose-200/90 py-0.5 border-b border-rose-900/40 text-[11px]">
-                  <span>B4: Projected Cash Runway</span>
-                  <span className="text-rose-400 font-bold">-$30,450 [OVERDRAFT]</span>
-                </div>
-                <div className="flex items-center justify-between text-rose-300/80 text-[11px]">
-                  <span>C7: Next Payroll Due</span>
-                  <span className="text-rose-400 font-bold">⚠️ INSUFFICIENT FUNDS</span>
-                </div>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 text-white">
-                <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-500/80 backdrop-blur-sm text-white">
-                  Manual Excel &amp; Bank Guesswork
-                </span>
-                <span className="text-xs text-rose-300 font-mono">Discrepancy Risk: High</span>
-              </div>
+            {/* Real Photography Header: Manual Spreadsheets & Paperwork Chaos */}
+            <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
+              <img
+                src="/images/manual-spreadsheets.jpg"
+                alt="Manual spreadsheets and paperwork on an office desk"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
             </div>
 
             <div className="p-8 sm:p-10 flex-1 flex flex-col justify-between">
@@ -118,43 +88,13 @@ export function OldVsNewWay() {
 
           {/* Card 2: The Settle / OrderFit way */}
           <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white dark:bg-[#1E2021] border-2 border-[#004D3B]/40 dark:border-[#34D399]/40 shadow-xs hover:shadow-md transition-all">
-            {/* Visual Header: Modern Deterministic Feasibility Clarity */}
-            <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] bg-gradient-to-br from-[#022117] via-[#043325] to-[#01140E] p-4 sm:p-5 flex flex-col justify-between">
-              {/* Subtle Tech Grid */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(52,211,153,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(52,211,153,0.08)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-
-              {/* Top Row: Verified Badges */}
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[11px] font-mono text-emerald-300 font-semibold">
-                  <ShieldCheck className="size-3.5 text-emerald-400" />
-                  <span>Integer Math · Minor Units</span>
-                </div>
-                <span className="text-[10px] font-mono text-[#34D399] uppercase tracking-wider">Gate 1 &amp; Gate 2 Verified</span>
-              </div>
-
-              {/* Clean Deterministic Runway Bar */}
-              <div className="relative z-10 rounded-xl bg-black/40 border border-emerald-500/30 p-2.5 space-y-2 font-mono text-xs shadow-inner">
-                <div className="flex items-center justify-between text-emerald-200 text-[11px]">
-                  <span>Cash Runway Horizon</span>
-                  <span className="text-[#34D399] font-bold">100% Feasible</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-emerald-950/80 overflow-hidden border border-emerald-500/30">
-                  <div className="h-full w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-[#34D399]" />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-emerald-300/80 pt-0.5">
-                  <span>Day 0: $45K</span>
-                  <span>Day 15: +$35K (Deposit)</span>
-                  <span>Day 60: $135K Paid</span>
-                </div>
-              </div>
-
-              {/* Bottom Row */}
-              <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 text-white">
-                <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[#B5F2C6] text-[#004D3B] font-sans font-bold">
-                  Automated OrderFeasibility
-                </span>
-                <span className="text-xs text-[#B5F2C6] font-mono font-semibold">Precision: 100% Deterministic</span>
-              </div>
+            {/* Real Photography Header: Modern Digital Analytics & Feasibility */}
+            <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
+              <img
+                src="/images/capital-growth.jpg"
+                alt="Modern financial growth analytics dashboard on laptop screen"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
             </div>
 
             <div className="p-8 sm:p-10 flex-1 flex flex-col justify-between">

@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyAdminSessionServer } from "@/lib/auth-server";
 import { UnavailableNotice } from "@/components/unavailable-notice";
-import { platformAdminEnabled } from "@/lib/platform-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +29,14 @@ export default async function AdminLayout({
   const auth = await verifyAdminSessionServer(sessionToken, csrfToken);
 
   if (auth.unavailable) {
-    return <UnavailableNotice title="Session verification unavailable" reason="The server could not verify your session. No administrator content has been loaded. Retry when the API is available; this is not a rejected password." href="/admin" linkLabel="Retry verification" />;
+    return (
+      <UnavailableNotice
+        title="Session verification unavailable"
+        reason="The server could not verify your session. No administrator content has been loaded. Retry when the API is available; this is not a rejected password."
+        href="/admin"
+        linkLabel="Retry verification"
+      />
+    );
   }
 
   if (!auth.authenticated) {
@@ -40,10 +46,6 @@ export default async function AdminLayout({
   // 3. Authenticated non-admin users are strictly denied and redirected to /deals
   if (!auth.isAdmin) {
     redirect("/deals");
-  }
-
-  if (!platformAdminEnabled()) {
-    return <UnavailableNotice title="Platform administration" reason="This console is not enabled in this release. Its cross-tenant reporting and operational controls need a verified backend contract; a platform-admin flag alone does not enable them." href="/deals" linkLabel="Open saved orders" />;
   }
 
   // 4. Verified platform administrator: allow rendering of protected admin pages
