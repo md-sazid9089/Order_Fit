@@ -94,8 +94,13 @@ export function WorkflowSection() {
                 </div>
 
                 {idx < 3 && (
-                  <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-20 text-neutral-300">
-                    <ArrowRight className="size-6" />
+                  <div
+                    className={`hidden absolute z-20 top-[106px] -translate-y-1/2 -right-3 translate-x-1/2 size-8 rounded-full bg-white border border-[#ECEAE4] shadow-xs items-center justify-center text-[#093A2F] group-hover:border-[#093A2F]/30 group-hover:shadow-sm transition-all ${
+                      idx === 1 ? "lg:flex" : "md:flex"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <ArrowRight className="size-4 stroke-[2.25] transition-transform duration-200 group-hover:translate-x-0.5" />
                   </div>
                 )}
               </div>
