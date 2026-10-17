@@ -134,10 +134,11 @@ Old sessions require reauthentication after both demotion and reinstatement; do
 not restore authority to satisfy an old test. Disposable tests terminalize only
 their own newly created operation IDs, preserving history and production ordering.
 CSP negative controls use parser-inserted HTML under the real nonce policy.
-The current browser checks cover the persisted order/negotiation-route journey,
-mobile navigation, accessible sign-in, CSRF recovery and failed-read retry.
-They do not automate the full sandbox send/reply/commit path or certify hosted
-providers. P4 and P8 remain partial; engineering completion is not submission evidence.
+The latest disposable browser evidence includes the persisted order/negotiation
+journey, the full sandbox send/reply/accept/commit/reload/compensation lifecycle,
+mobile navigation, accessible sign-in, CSRF recovery, failed-read retry and a
+15-route desktop/mobile sweep. It does not certify hosted providers. P4 and P8
+remain partial; engineering completion is not submission evidence.
 
 ## Decisions easy to miss
 

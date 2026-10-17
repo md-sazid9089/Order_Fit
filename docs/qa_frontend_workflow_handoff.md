@@ -193,7 +193,7 @@ persisted operation, and never create a duplicate action.
 | Main workspace | `/deals`, `/deals/new`, `/deals/new/validate`, `/deals/customers`, `/deals/sources`, `/cash-flow`, `/financing`, `/risk-constraints`, `/payees`, `/settings` | Business scope, role states, empty/loading/error/retry states, form validation and revisions. |
 | Saved order | `/deals/[id]`, `/deals/[id]/confirm`, `/deals/[id]/documents`, `/deals/[id]/negotiate`, `/deals/[id]/reply` | The critical order-to-evaluation-to-approval journey. Test stale URLs and missing/unauthorized business scope. |
 | Evidence and membership | `/audit-log`, `/useraccess` | Audit visibility for auditor/risk/owner and owner-only member management. |
-| Sandbox and legacy/admin surfaces | `/sandbox`, `/orders`, `/users`, `/admin`, `/admin/users`, `/admin/orders`, `/admin/tenants`, `/admin/engine`, `/admin/security`, `/admin/logs`, `/admin/system` | Treat as a separate platform-admin QA surface. Confirm platform-admin authorization, intentional navigation, empty/error state, and whether `/orders` or `/users` are retained aliases or need consolidation. |
+| Redirects and disabled surfaces | `/sandbox`, `/orders`, `/users`, `/admin`, `/admin/users`, `/admin/orders`, `/admin/tenants`, `/admin/engine`, `/admin/security`, `/admin/logs`, `/admin/system` | `/sandbox` and `/orders` show an honest unavailable notice that points to saved orders; `/users` redirects to `/useraccess`. The admin layout is hard-disabled in this release, so QA must verify the unavailable notice and absence of cross-tenant controls rather than test an enabled admin console. |
 
 ## QA acceptance checklist
 
@@ -249,6 +249,9 @@ persisted operation, and never create a duplicate action.
   AI-off/unavailable conditions is clear provenance plus manual/deterministic
   recovery.
 - OCR and DOCX/XLSX extraction are unsupported.
+- Platform administration is hard-disabled. A platform-admin flag or an `/admin/*`
+  URL must not expose cross-tenant data or operational controls until its
+  separately authorized backend contract is enabled and verified.
 - Hosted acceptance for provider behavior and some infrastructure remains a
   separate release gate; a successful disposable local run does not prove it.
 
