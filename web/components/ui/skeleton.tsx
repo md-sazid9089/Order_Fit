@@ -404,17 +404,17 @@ function SkeletonDashboard({
       </div>
 
       {/* Status Alert Banner */}
-      <div className="p-4 rounded-xl bg-white border border-[#E8E6E1] flex items-center justify-between gap-4">
-        <div className="space-y-1.5 flex-1">
+      <div className="p-4 rounded-xl bg-white border border-[#E8E6E1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1.5 flex-1 min-w-0 max-w-full">
           <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-3 w-80" />
+          <Skeleton className="h-3 w-80 max-w-full" />
         </div>
         <Skeleton className="h-8 w-28 rounded-lg shrink-0" />
       </div>
 
       {/* Tabs and Search Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Skeleton className="h-8 w-16 rounded-full" />
           <Skeleton className="h-8 w-24 rounded-full" />
           <Skeleton className="h-8 w-32 rounded-full" />

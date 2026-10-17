@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import json
 from datetime import date
 from uuid import uuid4
 
@@ -177,6 +178,17 @@ def test_live_error_mapping(monkeypatch):
         _live(monkeypatch, raising(exc))
         out = asyncio.run(extract(_live_request(), settings))
         assert out.result.code == code
+
+
+def test_live_malformed_json_is_invalid_output(monkeypatch):
+    def malformed():
+        raise json.JSONDecodeError("Synthetic malformed provider JSON", "{", 1)
+
+    _live(monkeypatch, malformed)
+    result = asyncio.run(extract(_live_request(), LLMSettings(mode="live", model="m", api_key="k")))
+    assert result.result.kind == "invalid_output"
+    assert result.result.code == "INVALID_OUTPUT"
+    assert result.result.retryable is False
 
 
 def test_live_incomplete_and_parsed(monkeypatch):

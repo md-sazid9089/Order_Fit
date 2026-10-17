@@ -129,6 +129,7 @@ def test_recorded_intents_no_live_fallthrough(tmp_path, monkeypatch):
         ("APITimeoutError", "TIMEOUT"),
         ("RateLimitError", "RATE_LIMIT"),
         ("APIConnectionError", "PROVIDER_UNAVAILABLE"),
+        ("JSONDecodeError", "INVALID_OUTPUT"),
     ],
 )
 def test_provider_failures_keep_useful_fallback(monkeypatch, error_name, expected):
@@ -136,7 +137,9 @@ def test_provider_failures_keep_useful_fallback(monkeypatch, error_name, expecte
     import openai
 
     request = httpx.Request("POST", "https://example.invalid")
-    if error_name == "RateLimitError":
+    if error_name == "JSONDecodeError":
+        exc = json.JSONDecodeError("Synthetic malformed provider JSON", "{", 1)
+    elif error_name == "RateLimitError":
         exc = openai.RateLimitError(
             "Synthetic", response=httpx.Response(429, request=request), body=None
         )
