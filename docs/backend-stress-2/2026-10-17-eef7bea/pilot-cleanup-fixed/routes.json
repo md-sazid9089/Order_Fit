@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/health",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "path": "/ready",
+    "methods": [
+      "GET"
+    ]
+  }
+]

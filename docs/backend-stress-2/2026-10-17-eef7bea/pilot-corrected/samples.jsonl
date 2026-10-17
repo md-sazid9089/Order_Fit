@@ -1,0 +1,6 @@
+{"stage": "ramp-1-2", "seconds": 0.03380089999973279, "api_tree_rss": 109711360, "in_flight": 1, "completed": 0}
+{"stage": "ramp-1-2", "seconds": 2.0318428999999014, "api_tree_rss": 109805568, "in_flight": 1, "completed": 4}
+{"stage": "ramp-1-2", "seconds": 4.028977799999666, "api_tree_rss": 109830144, "in_flight": 1, "completed": 8}
+{"stage": "ramp-1-80", "seconds": 0.03569210000023304, "api_tree_rss": 109838336, "in_flight": 3, "completed": 0}
+{"stage": "ramp-1-80", "seconds": 2.059200100000453, "api_tree_rss": 111714304, "in_flight": 3, "completed": 162}
+{"stage": "ramp-1-80", "seconds": 4.0533580999999685, "api_tree_rss": 112013312, "in_flight": 3, "completed": 322}

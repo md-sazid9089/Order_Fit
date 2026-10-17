@@ -1,0 +1,8 @@
+{
+  "application_files_verified_unchanged": 170,
+  "report_links_verified": 31,
+  "ruff": "passed",
+  "contracts_operations": 112,
+  "schema_head": "0019_merge_passkey_roles",
+  "verified_at": "2026-10-17T14:07:34.7179877+06:00"
+}
