@@ -14,6 +14,7 @@ import httpx
 from orderfit.runtime import process_environment
 from tests.db.p3_helpers import manual_evaluation
 from tests.db.test_foundation import expire_lease
+from tests.process_memory import kill_owned_tree
 
 
 def runtime_environment(postgres, config, *, worker=False):
@@ -53,12 +54,17 @@ def running_api(environment, port=None):
                 raise AssertionError("Isolated API did not become healthy")
             yield client, port
     finally:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+        if sys.platform == "win32":
+            # Include the interpreter behind the Windows venv redirector in
+            # the restart boundary, explicitly terminating the owned tree.
+            kill_owned_tree(process)
+        else:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
 
 
 def authenticate(client, account):

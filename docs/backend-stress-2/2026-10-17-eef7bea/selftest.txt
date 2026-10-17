@@ -1,0 +1,75 @@
+PASS apply_bps half-up .5 rounds up
+PASS apply_bps 3.5% of 15,000.00
+PASS apply_bps below half rounds down
+PASS split_exact sums to total, remainder on last
+PASS fmt negative
+PASS same-day trough applies outflow first
+PASS sweep == independent brute force
+PASS bruteforce cross-check DEMO-ASK
+PASS bruteforce cross-check DEMO-REPLY
+PASS bruteforce cross-check OF-01
+PASS bruteforce cross-check OF-02
+PASS bruteforce cross-check OF-03
+PASS bruteforce cross-check OF-04
+PASS bruteforce cross-check OF-05
+PASS bruteforce cross-check OF-06
+PASS bruteforce cross-check OF-07A
+PASS bruteforce cross-check OF-07B
+PASS bruteforce cross-check OF-08
+PASS bruteforce cross-check OF-09
+PASS bruteforce cross-check OF-10
+PASS bruteforce cross-check OF-11
+PASS bruteforce cross-check OF-12
+PASS bruteforce cross-check OF-13
+PASS bruteforce cross-check OF-14
+PASS bruteforce cross-check OF-15
+PASS bruteforce cross-check OF-16
+PASS bruteforce cross-check OF-17
+PASS bruteforce cross-check PX-01
+PASS bruteforce cross-check RINA
+MVP strategies scanned for monotonicity: 52 non-monotone: []
+PASS MVP levers: feasibility is monotone in the customer-receipt delay (so the scan is exact, not required)
+deferred receivable-advance strategies that are non-monotone in delay: ['dep30+ext30+fin:INV_ADV@50000000'] count 1
+PASS Deferred receivable-advance shape: feasibility CAN be non-monotone in delay (the repayment moves with the receipt)
+PASS tax lines raise Unsupported (M-01/M-02 detect, never guess)
+PASS non-calendar convention raises Unsupported (M-11)
+PASS unknown anchor asks (never defaults)
+PASS non-positive quantity is blocked
+PASS a date before as_of is blocked
+PASS horizon covers last dated event DEMO-REPLY
+PASS horizon covers last dated event OF-01
+PASS horizon covers last dated event OF-02
+PASS horizon covers last dated event OF-03
+PASS horizon covers last dated event OF-04
+PASS horizon covers last dated event OF-05
+PASS horizon covers last dated event OF-06
+PASS horizon covers last dated event OF-07A
+PASS horizon covers last dated event OF-07B
+PASS horizon covers last dated event OF-08
+PASS horizon covers last dated event OF-09
+PASS horizon covers last dated event OF-10
+PASS horizon covers last dated event OF-11
+PASS horizon covers last dated event OF-12
+PASS horizon covers last dated event OF-13
+PASS horizon covers last dated event OF-15
+PASS horizon covers last dated event OF-16
+PASS horizon covers last dated event OF-17
+PASS horizon covers last dated event PX-01
+PASS horizon covers last dated event RINA
+PASS balance exactly at reserve passes the strict < test
+PASS one unit below reserve breaches
+PASS tie on profit/deps/levers: smaller loan sorts first
+PASS slot text resolves with no problems
+PASS a rendered slot carries its own label (value cannot be attached to the wrong plan)
+PASS digits are rejected
+PASS non-ASCII digits are rejected
+PASS English number words are rejected
+PASS Bengali number words are rejected
+PASS Hindi number words are rejected
+PASS URLs are rejected
+PASS unknown slots are rejected
+PASS injection scan flags the D-05 string
+PASS injection scan flags the D-12 string
+PASS injection scan stays quiet on a normal sentence
+
+0 failure(s)

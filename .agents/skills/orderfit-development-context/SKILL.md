@@ -5,6 +5,18 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+17 October stress-plan-2 evidence at `eef7bea`, sole schema head
+`0019_merge_passkey_roles`: **542 backend tests and 7 fresh production-image
+browser/proxy tests passed**. See the
+[stress report](../../../docs/backend_stress_test_report_2.md) for exact coverage.
+The campaign is **partial/blocked**: Docker's C: storage had 7.147% free against
+the plan's 15% minimum. Two 60-second arrival stages passed; repeated ramps and
+the two-hour soak were not completed. A matched five-second client/server
+keep-alive experiment disconnected; a two-second client control passed.
+No production fix, capacity envelope or leak-free claim follows. All 50 final-run
+acknowledged writes and ten audit chains reconciled before disposable cleanup.
+The user chose the blocked-gate report; do not resume load implicitly.
+
 17 October reconciliation: resumed from `main` at `eca00c9`; subsequent backend/admin
 repairs are being made by a separate task. See the
 [current matrix](../../../docs/orderfit_audit_2026-10-17.md) before using the older

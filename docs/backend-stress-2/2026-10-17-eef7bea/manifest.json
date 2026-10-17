@@ -1,0 +1,690 @@
+{
+  "head": "eef7bea2f7d622dc293f8667a120222666fa0d29",
+  "branch": "backend/stress_test",
+  "recorded": "2026-10-17T13:06:31.9749794+06:00",
+  "python": "3.12 locked environment",
+  "logical_processors": 12,
+  "physical_memory_bytes": 16867045376,
+  "application_files": [
+    {
+      "path": "backend/migrations/env.py",
+      "sha256": "D898D2CCC2FC4005C71A4D587A35BD971A209FA452399CC0270392220294B683"
+    },
+    {
+      "path": "backend/migrations/script.py.mako",
+      "sha256": "D38920781B4D31AE1C0A71BC09F41C2ADE8FEAB9E5A087E3F30CB4BBF0C1C9D3"
+    },
+    {
+      "path": "backend/migrations/sql/0001_core_schema.sql",
+      "sha256": "F3B8B7B0979B5109F4695E0A6EB4E3AD958CC83F5F133114486B3E3AA364DF55"
+    },
+    {
+      "path": "backend/migrations/sql/0002_integrity_and_audit.sql",
+      "sha256": "FAF6A700EF8E0FFE0A43325C345E10E6FFFF1A890597770C808C914117CA4896"
+    },
+    {
+      "path": "backend/migrations/sql/0003_security.sql",
+      "sha256": "A4E49DB582694FE817AD4D753CE584A989D3B415F9E24DEBDBC35F8076DC08B5"
+    },
+    {
+      "path": "backend/migrations/sql/0004_reference_data.sql",
+      "sha256": "D13FD290575804D550EB6F734E01BAE1AF4E3101F61BC7FEF827D15FD1B6D8B4"
+    },
+    {
+      "path": "backend/migrations/sql/0005_backend_foundation.sql",
+      "sha256": "75AB8588D5BD4F1C6937908BA4A5C970B3CB4FCFD3D964D3A9B04C0C9A5CAE04"
+    },
+    {
+      "path": "backend/migrations/sql/0006_p3_results.sql",
+      "sha256": "2E5A69B1648DE9FCE09DD4FF732A808C50613F23E881F89CD6889F3EDA72B1B1"
+    },
+    {
+      "path": "backend/migrations/sql/0007_p3_exports.sql",
+      "sha256": "F9224A6BE4831CD11E52BB244B17ACE60BD89BFEC8ABE20422B194E3AE537A4E"
+    },
+    {
+      "path": "backend/migrations/sql/0007_p4_extraction.sql",
+      "sha256": "77C1AC83BDEE08B1BCB30ED51BBC15C8FF4318534A511BEC0FE5009A597E6900"
+    },
+    {
+      "path": "backend/migrations/sql/0008_p5_preparation.sql",
+      "sha256": "6AAD46549C55184758FD544AD1E81193F1CD8731AFED514FF2E84ED0F0BD9AC5"
+    },
+    {
+      "path": "backend/migrations/sql/0009_p6_execution.sql",
+      "sha256": "6555EE0E6DDB3CD8BDA421528A0C226C77EEF7A1F0B4D2BAD8996EDEE998A8E9"
+    },
+    {
+      "path": "backend/migrations/sql/0010_p6_approval.sql",
+      "sha256": "EEB1B4C18853358E0CB3F63D5B993722CEE479EEAABF303E331C0D670FA58C02"
+    },
+    {
+      "path": "backend/migrations/sql/0011_p6_execution_runtime.sql",
+      "sha256": "3FEF46161FD0DFAA56A6DC4683DB12BF4BBC69460987F071085A8EE46C27F84D"
+    },
+    {
+      "path": "backend/migrations/sql/0012_p7_operations.sql",
+      "sha256": "2BBBC4D7DBF076FBB0CF0B8EC502F135DA0965AE365B00F0169EF297F0A941AC"
+    },
+    {
+      "path": "backend/migrations/sql/0013_notification_writer.sql",
+      "sha256": "ADC085A30DA841FE6BE9DA9BFD7F4EA3BBFF0A8AB5AC4F84738D04155E33E788"
+    },
+    {
+      "path": "backend/migrations/sql/0014_runtime_hardening.sql",
+      "sha256": "0DC3601171104A6932D129B699F18343B2DC75EF3C4BBA6550B0C1AA3FAB3581"
+    },
+    {
+      "path": "backend/migrations/sql/0015_settlement_retention.sql",
+      "sha256": "2C81E21C7A09C49E852D7BC73F527392299173E61F631DBA1A8735CC1975CF5A"
+    },
+    {
+      "path": "backend/migrations/sql/0016_add_user_admin_roles.sql",
+      "sha256": "FEA61C968E2AE74B5299E10AA32DD97A61C49D328A5255CBF07D50B6B4030EB8"
+    },
+    {
+      "path": "backend/migrations/sql/0016_session_authority.sql",
+      "sha256": "969F001236B15FDFE0D0F23E59AE512242B140A013E53A1CA9C7B85B9EE902EE"
+    },
+    {
+      "path": "backend/migrations/sql/0017_worker_presence.sql",
+      "sha256": "5A7DF78DF815D653360A1F5598FE370916BFF7E5FBFEF94B7BA6423145DF9F77"
+    },
+    {
+      "path": "backend/migrations/sql/0018_platform_authority.sql",
+      "sha256": "FD6E87E826A5079E69D4782C17232D656D461E46088C3D833B73D995F7372683"
+    },
+    {
+      "path": "backend/migrations/sql/0019_passkey_mfa.sql",
+      "sha256": "C45566D97420D262D42378A135E0C1FCC6E21B374DA4089A68AB7BE8A957EC1D"
+    },
+    {
+      "path": "backend/migrations/sql/down_0001.sql",
+      "sha256": "E1E6EB0714CF036935484F5214FAD9D562A55065425B570CFF50E2BD79C5A0E0"
+    },
+    {
+      "path": "backend/migrations/tests/test_concurrency.sh",
+      "sha256": "B8792664683571AB9E54046A1F3A01E199B804F5B5F2A054F0897686F9C14AF9"
+    },
+    {
+      "path": "backend/migrations/tests/test_schema.sql",
+      "sha256": "943BA137EB677FB01148920033354EE72182399406B420197979C92EA40EAC36"
+    },
+    {
+      "path": "backend/migrations/versions/.gitkeep",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "backend/migrations/versions/0001_core_schema.py",
+      "sha256": "B805D01969F0BD5C6D2CDB591B7A2DC20403AB363F24DB793625315FA5DAC806"
+    },
+    {
+      "path": "backend/migrations/versions/0002_backend_foundation.py",
+      "sha256": "99260C250725E85261F35913C76F701B95634060D5589D826FD84A42B34E7ACC"
+    },
+    {
+      "path": "backend/migrations/versions/0003_p3_results.py",
+      "sha256": "7EF18D329E2A099A0A02C8D7F7FF63CDAB7AE8B558D58DC470EFAC346F0E2C84"
+    },
+    {
+      "path": "backend/migrations/versions/0004_p3_exports.py",
+      "sha256": "40BB23D1F4A0B640799BA6179487368A195C6FDC9A7ED10A0EAD4C15E89DD51A"
+    },
+    {
+      "path": "backend/migrations/versions/0004_p4_documents.py",
+      "sha256": "CBCC1F15A15E7C59740CA46FBE4347B5B7E50E541E88454517BAD5450D3FD09E"
+    },
+    {
+      "path": "backend/migrations/versions/0005_p3_p4_integration.py",
+      "sha256": "85596D5F4F6FEEB9213086B01182C6CFEBE8B6239747446EA736826BD0C317E5"
+    },
+    {
+      "path": "backend/migrations/versions/0006_p3_input_integrity.py",
+      "sha256": "DFDC2936D18A72CC54592996956E2379AF1424A1B72616CD1F86B9BC6B4B5860"
+    },
+    {
+      "path": "backend/migrations/versions/0007_p5_preparation.py",
+      "sha256": "BEDCCD61931C7C914E636D1B3DE60D49105B3C3A4039E23484EA5A0208E8DDB0"
+    },
+    {
+      "path": "backend/migrations/versions/0008_p6_execution.py",
+      "sha256": "6371966560B2E0FEFD74739C3C15E749978A3465CBBC0B67BA15962E3BB57CFD"
+    },
+    {
+      "path": "backend/migrations/versions/0009_p6_approval.py",
+      "sha256": "42CF58A6FF496E5D7B7BF4DAE5957E50C47BC67453CBDB5FB07CBBDA4DBF2C26"
+    },
+    {
+      "path": "backend/migrations/versions/0010_p6_execution_runtime.py",
+      "sha256": "2FAC5B3E9AC693756175FBEF67092CDF00BC38F466A0723F21D3A5C102263F7E"
+    },
+    {
+      "path": "backend/migrations/versions/0011_p7_operations.py",
+      "sha256": "7FA117C5BC6868C5245D4D7A5E83DA62068DD8982D1496623418708A956825BF"
+    },
+    {
+      "path": "backend/migrations/versions/0012_notification_writer.py",
+      "sha256": "30F8186EADBDC2D7E87D5E464105311033794DD572D1C0EEB1188DBF11126DFE"
+    },
+    {
+      "path": "backend/migrations/versions/0013_runtime_hardening.py",
+      "sha256": "D18B508766BAD1C7B643C2F938D9D5800C6F722AF307F1B494855D0536B63640"
+    },
+    {
+      "path": "backend/migrations/versions/0014_settlement_retention.py",
+      "sha256": "32AF976B6FAFCE2B93EE5911184E72D736A29B7F99CDADA7D80F82B47816FA53"
+    },
+    {
+      "path": "backend/migrations/versions/0015_session_authority.py",
+      "sha256": "043C40823A785E5BA0EF1CDFE4EB0E8968BDA1BBC669C6C272E8D40CB1924DB9"
+    },
+    {
+      "path": "backend/migrations/versions/0016_add_user_admin_roles.py",
+      "sha256": "E51B0620BDBB7A65A37C244AD7BB01A464EB0F1BD09847985C651BEF46AF6078"
+    },
+    {
+      "path": "backend/migrations/versions/0016_worker_presence.py",
+      "sha256": "69D8440E60E1D84E457E7EB412BCEE8FB72DEE4CC2049E309DABE7B0D2ED3A6B"
+    },
+    {
+      "path": "backend/migrations/versions/0017_merge_heads.py",
+      "sha256": "ADA084D99D9FD567E468B3CCC303B4C201A3C0620E466FA4F543EA27117458DC"
+    },
+    {
+      "path": "backend/migrations/versions/0017_platform_authority.py",
+      "sha256": "C359E00963F6538F3EDB5C7D36A62FC17AA629A7B9857885A73598D09164C110"
+    },
+    {
+      "path": "backend/migrations/versions/0018_passkey_mfa.py",
+      "sha256": "3D333B6CC2D3C11870D63664481A64AB3C90E4A54D1DFC655758E1DBD45677DC"
+    },
+    {
+      "path": "backend/migrations/versions/0019_merge_passkey_roles.py",
+      "sha256": "E04602C1F4306B9A438BD0AE7E261AD6BF26CADDB94BEBEB10A78AE5B0CC20C1"
+    },
+    {
+      "path": "backend/orderfit/__init__.py",
+      "sha256": "E87ABC63D571A24E90DAC3E94D4D7C73E9FC244E1F8D2E9A2969E2B629B6B04C"
+    },
+    {
+      "path": "backend/orderfit/agent/__init__.py",
+      "sha256": "2E92AB94E0B54228FEDDC9B924CEA81902805D60DADDC7BFF641686ECDE265A7"
+    },
+    {
+      "path": "backend/orderfit/agent/graph.py",
+      "sha256": "F810F4F959AAA55297EC3B6D2467B35A0FEAEB465D59A7556CC4FC72BEAB042D"
+    },
+    {
+      "path": "backend/orderfit/agent/guards/__init__.py",
+      "sha256": "04235FFA338B3F3A3B6FDC5D01F3FF924AFF3BE073A40D9BCCC7509F646FC345"
+    },
+    {
+      "path": "backend/orderfit/agent/guards/fraud.py",
+      "sha256": "87CC7D72239441BB9E1DF5AAD92B8DE893BF6C04E86703636E08CD51ABC5F602"
+    },
+    {
+      "path": "backend/orderfit/agent/guards/injection.py",
+      "sha256": "DBB67C09266851B5D310B78816E93DDFBF71CE7042ADFF0E43CEDAB551FE3F92"
+    },
+    {
+      "path": "backend/orderfit/agent/guards/numbers.py",
+      "sha256": "0CFF2643B42F37EE57F2B8FB755B453C8197EDE574A3B16D1947D1B2894B9F9F"
+    },
+    {
+      "path": "backend/orderfit/agent/guards/terms.py",
+      "sha256": "6527E8147A5EE97B1331BB5BB5A27159664955A206373B3874225125B52C1F44"
+    },
+    {
+      "path": "backend/orderfit/agent/llm.py",
+      "sha256": "2F54AA6492F20CD33A35AB6C6F3CEB79BDCC8C266F21FD2C16AC740A74CABEC4"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/__init__.py",
+      "sha256": "A1484EE3761CBABF4201C69AF4EEBBF2761EBC8C2C1E8F6E3BAB87C7A9BC2025"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/compute.py",
+      "sha256": "F4FB55ECE5D348C5D530AD5C944C5CA13EE2A444E718ECBBC7EE724758B4D8C9"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/draft.py",
+      "sha256": "1C4BA43F46FDBF8D3C2EFF351C3D38403F54860452E19200CE6DFC2768576B6D"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/explain.py",
+      "sha256": "D2E4A9C0128B339A2B04E8BBE5ECCB64E997BD9F760B234533537FD4DCC9DAB9"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/extract.py",
+      "sha256": "052A34D4DA287AE2A46F7BDCA9775C11D9CF97A1BDEE745A084F39824233244B"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/ingest.py",
+      "sha256": "1E1192682C0FD45BB34CC47B17083C8203B4E9A7B4C5D9E499F78B7C29E6D16F"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/read_reply.py",
+      "sha256": "ED500B2A3CEAE90ACE2F8215258BB81587C52161D8EA61CFF71AC6E0383BC58E"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/send.py",
+      "sha256": "2D30289894F01C45CE33D70113175F57B5A6E00ADF344D4DD0EE6B4758FDEE5D"
+    },
+    {
+      "path": "backend/orderfit/agent/nodes/validate.py",
+      "sha256": "C9C46E92637D7CF67F540B056881B92CACB4B1EC17FB24BE1692FD443B30AED1"
+    },
+    {
+      "path": "backend/orderfit/agent/prompts/draft_message.md",
+      "sha256": "FC694D9DD8318F59541E650EFB534EDF08D223AC9CBA725A5C3CBA59AAF09335"
+    },
+    {
+      "path": "backend/orderfit/agent/prompts/explain.md",
+      "sha256": "7FA770227D64B01089D6C4C39264AB6AE4EB74FF8D0679D96A893A07FFDCA3EF"
+    },
+    {
+      "path": "backend/orderfit/agent/prompts/extract_order.md",
+      "sha256": "6E13CD38503E229F16B07ADF53AE9FB2D43513776F840419B7441F21A35FE80D"
+    },
+    {
+      "path": "backend/orderfit/agent/prompts/extract_quote.md",
+      "sha256": "618A2932DA7D3B36A77AAD1621C041302524E09F6FA6095B9A0AC2058CA27875"
+    },
+    {
+      "path": "backend/orderfit/agent/prompts/read_reply.md",
+      "sha256": "AC93E558DBF64B730096517D94B1C61FC367E725C904EAF9A04015181A71E40A"
+    },
+    {
+      "path": "backend/orderfit/agent/state.py",
+      "sha256": "A100808F3FA5E6EE782D301697C535844CFC0BADA83E07076D7772BC3E1AD5E7"
+    },
+    {
+      "path": "backend/orderfit/api/__init__.py",
+      "sha256": "DA5FA4780022FEDF6ECB1E83532DE1CA54D7E24211FA00A18AE1563E63B5F19C"
+    },
+    {
+      "path": "backend/orderfit/api/commands.py",
+      "sha256": "7C28F370E93D445760880BA5FAD224F8974B9DD14BA43FA3CB302F1A7AD26F25"
+    },
+    {
+      "path": "backend/orderfit/api/deps.py",
+      "sha256": "926E71EAB40FF78993F688F11BC5DAF97A62095B99E76AC519150568FBDDCA31"
+    },
+    {
+      "path": "backend/orderfit/api/errors.py",
+      "sha256": "8D7F4C9891C53C6ECCB1688A41F677564257A131D458ACF571DBCD12BA2FFB07"
+    },
+    {
+      "path": "backend/orderfit/api/main.py",
+      "sha256": "43F6789BF6C436B9CDDB5920E4091AF79B68B5EFCA57CA724F0A524FAD9C2BD4"
+    },
+    {
+      "path": "backend/orderfit/api/routes/__init__.py",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "backend/orderfit/api/routes/accounts.py",
+      "sha256": "072B7FA34254EB4F5C84A43DDABCC55B1D8922F7106E533D9958DF77C059D6BF"
+    },
+    {
+      "path": "backend/orderfit/api/routes/actions.py",
+      "sha256": "5BCAE0D5CE255CC807C49ABEE2406730E1A99CDDE87281DC3BE75B90CACA402A"
+    },
+    {
+      "path": "backend/orderfit/api/routes/admin.py",
+      "sha256": "6F72385ED443580C039010783BAC271EEC0AA4AEB7893862B69581B19DFF1E44"
+    },
+    {
+      "path": "backend/orderfit/api/routes/bundles.py",
+      "sha256": "A3B810FD1D042E4556820CECE2CDF02C39295A7D0EEC97521F84D8FA40D79F44"
+    },
+    {
+      "path": "backend/orderfit/api/routes/business.py",
+      "sha256": "D93B415D8FF83CEE98C000A3D19F9F61620F3D1FCEA9D5134DB6A776A376C975"
+    },
+    {
+      "path": "backend/orderfit/api/routes/deals.py",
+      "sha256": "87634AF991B01A3836ED9122F450E1E5C72A4A54493D7B0A6A0A0CE601A1A39E"
+    },
+    {
+      "path": "backend/orderfit/api/routes/documents.py",
+      "sha256": "070750BAFE5C6944D3CA2843100472FC41F5D9C7AFC8B536C774AB9F297BF13E"
+    },
+    {
+      "path": "backend/orderfit/api/routes/evaluations.py",
+      "sha256": "CB88A8B7ED56CC14B0CFB6640E23D7B01C55E3950D26CD6444D71466C7124847"
+    },
+    {
+      "path": "backend/orderfit/api/routes/exports.py",
+      "sha256": "822576C5B03A8AE754B9D06401242DBBB4BCB53C07A6B3A3FA7F79B7A557ED19"
+    },
+    {
+      "path": "backend/orderfit/api/routes/identity.py",
+      "sha256": "451B774D673E6383732E75BD7AFAEF631D1F0A488492FE5FAB857F5656BDD7CF"
+    },
+    {
+      "path": "backend/orderfit/api/routes/members.py",
+      "sha256": "C409D0CCFD1824B5D584BC1A4E5E6F86EE8318A6EF00CE9C18A8F53EF9C77AB9"
+    },
+    {
+      "path": "backend/orderfit/api/routes/notifications.py",
+      "sha256": "B5CF9BBD8901E1F478EB9EE85DD06EBD42179309E32099F303496AB815B02902"
+    },
+    {
+      "path": "backend/orderfit/api/routes/passkeys.py",
+      "sha256": "86BAD27FD8F3AB2EBA0FA4984072424F728F98D2047D9AEA8F54DF6FE25E9EDF"
+    },
+    {
+      "path": "backend/orderfit/api/routes/preparation.py",
+      "sha256": "5784E420F92597E699B1F731A359C10D45C8BC8C8BEABB88F3E132E1540FAA73"
+    },
+    {
+      "path": "backend/orderfit/api/routes/stream.py",
+      "sha256": "32BBCB3155834A6D57A54035ADC4DB6A78162136AEAA8861361BD83EA949EBA8"
+    },
+    {
+      "path": "backend/orderfit/api/schemas.py",
+      "sha256": "5101D48AA83A2AF253279412AE0538371978AF94C6BFE17D7E8BF5EDB3DEE10C"
+    },
+    {
+      "path": "backend/orderfit/api/security_headers.py",
+      "sha256": "73F275DDBBBF10277D17E81EF3772B879B5F593210A7130AD0AEC5DBBA777EEF"
+    },
+    {
+      "path": "backend/orderfit/api/serve.py",
+      "sha256": "1B89D7922590E1DD238123B3FCB620C5D6D351A74026F03E4EBE485C670C51EC"
+    },
+    {
+      "path": "backend/orderfit/config.py",
+      "sha256": "CEE9C7E00BBA9F445B7FF50B8B2C3ABBB71EBBE85E97F9681BF394AC1CA461FC"
+    },
+    {
+      "path": "backend/orderfit/contracts/__init__.py",
+      "sha256": "ADC4544D70718B355890BEE3BE49F11DFC2B23D1D22FB8BCE197C38172ED8A7B"
+    },
+    {
+      "path": "backend/orderfit/contracts/catalogue.py",
+      "sha256": "5FA25522FCCE42F8F55B2A3246C33BEFB5B46088BD90E45701AE4D71391A71E7"
+    },
+    {
+      "path": "backend/orderfit/contracts/configuration.py",
+      "sha256": "47B6F4D20BA32B9DD49620BD7BA768C922AD7328289423AA6B564DDA275E06D4"
+    },
+    {
+      "path": "backend/orderfit/contracts/export.py",
+      "sha256": "8624D8256A4096F6A4E13EA461A5676CD1775CAE2699D617C56C3AFDD77A8D8D"
+    },
+    {
+      "path": "backend/orderfit/contracts/exports.py",
+      "sha256": "5BD52D329D104249E2E4049FC62678F1836557CA5BD2ABC7565B326BFA7494D9"
+    },
+    {
+      "path": "backend/orderfit/contracts/financial.py",
+      "sha256": "5EFE8D737B587F66FDC5CAFBA57908614B12612D51FC5F3A637EAE7BCCBF6941"
+    },
+    {
+      "path": "backend/orderfit/contracts/language.py",
+      "sha256": "2A1B5924B7A0BEBAA6BBF0C345BC76B4647BA18C5F1589D225F8390353D994C5"
+    },
+    {
+      "path": "backend/orderfit/contracts/preparation.py",
+      "sha256": "30BD9F34B9448A33C84928BF3331F12078E3F5FCB8083C665ED9882E6E7111C1"
+    },
+    {
+      "path": "backend/orderfit/contracts/primitives.py",
+      "sha256": "1C0CEE7DD411D02CB92EE21121A15D31EE0529D71030488EEFD470015B95D247"
+    },
+    {
+      "path": "backend/orderfit/contracts/protocol.py",
+      "sha256": "FEC627093CEEBB02070381DE0896F2DF3804E95416E645DF7404781C6AABB850"
+    },
+    {
+      "path": "backend/orderfit/contracts/resources.py",
+      "sha256": "B9392F03AA7A203DF1BBC32EB55DC4C6250E464F3EE462EC1C2720BBEFA173DE"
+    },
+    {
+      "path": "backend/orderfit/contracts/workflow.py",
+      "sha256": "83337BB739AB05B7DB19596A325AF02C60058DB180A122C487570300D3D56F64"
+    },
+    {
+      "path": "backend/orderfit/domain.py",
+      "sha256": "C66E23858FDA54597AB2D6D4B6C8E53417BC0CF0932FBC8108421CDA5A06225A"
+    },
+    {
+      "path": "backend/orderfit/engine/__init__.py",
+      "sha256": "44CE43DC36E49946EF2BAE8F3B84C8F2BFEED8F7B16CDBEB2F839BF184D5367C"
+    },
+    {
+      "path": "backend/orderfit/engine/analyse.py",
+      "sha256": "3B945420A25150E47077287BDA12D1C98CC4FD00E4CF8FFEC800616F3D600292"
+    },
+    {
+      "path": "backend/orderfit/engine/constants.py",
+      "sha256": "6713612A1253B2ADC68F2770BD0388AED01D606F312519517528AE5A8FFE049E"
+    },
+    {
+      "path": "backend/orderfit/engine/diagnostics.py",
+      "sha256": "10768DC32D02784473FBCFDA5BBECCDB1B64933EA7D849A9A3032A93035FFB4D"
+    },
+    {
+      "path": "backend/orderfit/engine/evaluation.py",
+      "sha256": "804274FB3E6322F8400AFFFA1FC42128EA0159E3ACFE93DBF2A77AE39CA27514"
+    },
+    {
+      "path": "backend/orderfit/engine/events.py",
+      "sha256": "39AD75CD88C50684EDF73AD46FE6624BC4F5DE49A648E9DE2BE162E4B5B35FF7"
+    },
+    {
+      "path": "backend/orderfit/engine/financing.py",
+      "sha256": "EBB6F1D89EC26302A1EA352D981E5279960E8FE668024430D4D931614A99A7E9"
+    },
+    {
+      "path": "backend/orderfit/engine/horizon.py",
+      "sha256": "BF339F2C8B337B6286374BF0CCD885B55A05C782335B9134B307ABC5AB0C3F47"
+    },
+    {
+      "path": "backend/orderfit/engine/models.py",
+      "sha256": "F82E24740BCBA005EFA645D13F0DCAF08EC8972B6C282F36A58BDF3E27E579E9"
+    },
+    {
+      "path": "backend/orderfit/engine/money.py",
+      "sha256": "E1FAFE05A8C29BCC15C0566D7495C33D4208FAC2B34811B4825FBF546292FE3E"
+    },
+    {
+      "path": "backend/orderfit/engine/options.py",
+      "sha256": "097D7580FE732EA4BF715C8367149BA31406D79D1F78A9725E06F7272BFE96E5"
+    },
+    {
+      "path": "backend/orderfit/engine/rank.py",
+      "sha256": "363F5E98206BF2F4AF291E1D30D944D246CA5046714C33A18DFEE2E6542A92AD"
+    },
+    {
+      "path": "backend/orderfit/engine/stress.py",
+      "sha256": "3350F2411D385244B09D09176BCC93DA94C3F90C08D6AB7AE4548B0FF16244F5"
+    },
+    {
+      "path": "backend/orderfit/engine/timeline.py",
+      "sha256": "8019547F7AEC846146004433311202BAD5E89FC11B53A0E2FD55BEA4E94FC1AA"
+    },
+    {
+      "path": "backend/orderfit/engine/tolerance.py",
+      "sha256": "17E51EFA1539F9EB73F8A186A9692475B3C1CBCA8F2DE3F61141577A3B9C11CD"
+    },
+    {
+      "path": "backend/orderfit/engine/utilities.py",
+      "sha256": "EB4D0102E474368186B590D0B1C2B13BF6F4D0E74CEE06C53307FDA89EADACB7"
+    },
+    {
+      "path": "backend/orderfit/engine/validation.py",
+      "sha256": "F86DC0E7397D1E0E0BC98B5FB7C1E7E8AE5E9BEE83396D527FFAFD0283E4C251"
+    },
+    {
+      "path": "backend/orderfit/runtime.py",
+      "sha256": "7C73B887F297C58DCEE043D4C17A3B2844A296F8ACA4BB1C923B8390D4C0B92E"
+    },
+    {
+      "path": "backend/orderfit/services/__init__.py",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "backend/orderfit/services/accounts.py",
+      "sha256": "0E697152A11D9709805266E7123DA9BBABEB2551858011B65E154466A5655A60"
+    },
+    {
+      "path": "backend/orderfit/services/admin.py",
+      "sha256": "1A99D7E641C34F295AD1DCD721FD7C22D3EA6BC48F5D7523B0F8FE752C3EA51C"
+    },
+    {
+      "path": "backend/orderfit/services/bundles.py",
+      "sha256": "95055206E8DBF1B7CA49C615CB14022F16F2A44F141C73C99EA15160CFDD9752"
+    },
+    {
+      "path": "backend/orderfit/services/documents.py",
+      "sha256": "A77639EFFF4C9990A3E6A4EE6C0A473F1365CC803D9D4F73F7E357D81EDF91D7"
+    },
+    {
+      "path": "backend/orderfit/services/evaluations.py",
+      "sha256": "B97A9F1F91AE43BD17CE8900CC621E4FF93E27F08077C285E8734C8A93F6142E"
+    },
+    {
+      "path": "backend/orderfit/services/execution.py",
+      "sha256": "525F0C9290729079FEF96D4485CA177C37485E254CC204D5E8BD12945258208B"
+    },
+    {
+      "path": "backend/orderfit/services/exports.py",
+      "sha256": "FD9BE434D54A808AA7452A073E7B4FADF6471A63ABB5AD6193E93369E2768BA3"
+    },
+    {
+      "path": "backend/orderfit/services/identity.py",
+      "sha256": "AA4E3BE4AB10A7640F94DBBC88FDF705919614C62E2BB25E8C585DDED3B626C4"
+    },
+    {
+      "path": "backend/orderfit/services/invoices.py",
+      "sha256": "2E23637FC60D4F0C8FE53DA60DFAC635850D8E297171530E83C6813E743C5992"
+    },
+    {
+      "path": "backend/orderfit/services/membership.py",
+      "sha256": "529E923B65C328D870A03CE33197E892BBE332209BAC6ADEDD0497A9BE4B8EA0"
+    },
+    {
+      "path": "backend/orderfit/services/notifications.py",
+      "sha256": "8A4E385356D27A4AB850BAC2E6CF24488DBDC5D23B9329DB127B5C4F6559146A"
+    },
+    {
+      "path": "backend/orderfit/services/pagination.py",
+      "sha256": "70B07E1D3A9DC1D86AC3485398F0B70B926FDBC4D2822EA05E49B51752EA848D"
+    },
+    {
+      "path": "backend/orderfit/services/passkeys.py",
+      "sha256": "8790A8B476CD524B1282330A0C8E23D107F87504DDF85B4101633B3FB010FD60"
+    },
+    {
+      "path": "backend/orderfit/services/pdf_parser.py",
+      "sha256": "D4BD596A59DBCE9011D1FCD17AB361902321C258A182C30EF60B7D58C9419FF6"
+    },
+    {
+      "path": "backend/orderfit/services/preparation.py",
+      "sha256": "BB4D2837F6634005E2E428F7F097404C56D5D20B0B00D38750990A63DC8078D1"
+    },
+    {
+      "path": "backend/orderfit/store/__init__.py",
+      "sha256": "8AB2C47CC1B66D52BD43C578AC3BB6A6C06CEA432F9E4112FD5D5467B46A4C83"
+    },
+    {
+      "path": "backend/orderfit/store/account_repository.py",
+      "sha256": "53E7C3884F75108C5B3D331117EEA2F9B7B749EB7BC746997027D9B669C0BD94"
+    },
+    {
+      "path": "backend/orderfit/store/admission.py",
+      "sha256": "4EBB3C727C381C37C276DACF20531B644BC4BBF33B54CF618E923F6C0E0BBD26"
+    },
+    {
+      "path": "backend/orderfit/store/audit.py",
+      "sha256": "5E832E0E3B655112F66D78BA608A9FCBD53059085C8B4AE2687AE658E2340D5E"
+    },
+    {
+      "path": "backend/orderfit/store/checkpoint.py",
+      "sha256": "E9F824A1D6280703CB617372765BDF001F1D9FA5B8AB55F7BAEFC8EF8E98D138"
+    },
+    {
+      "path": "backend/orderfit/store/collection_page.py",
+      "sha256": "04E934CD5A3781AE5F369D3A4FE414424BDD2600449E2F1EEB7FF32D7C24B134"
+    },
+    {
+      "path": "backend/orderfit/store/db.py",
+      "sha256": "73F484F5276511125C5FFD45DE081C8A652987C5417E3E98AD5237E31A073E40"
+    },
+    {
+      "path": "backend/orderfit/store/document_repository.py",
+      "sha256": "7DF4830891BA8549BBF12BD4DA21A000DFA0F29263E5A288DD031D31CF6A5B35"
+    },
+    {
+      "path": "backend/orderfit/store/documents.py",
+      "sha256": "852BBAD38A252707B52ED9D2196FF8E020530C0937E9E63E731251A07CF26B95"
+    },
+    {
+      "path": "backend/orderfit/store/execution_repository.py",
+      "sha256": "DB1160CEADABEDCD1201D950DD7FF9FA2C7CBA5326B30A9BE5A279073711CBCA"
+    },
+    {
+      "path": "backend/orderfit/store/membership_repository.py",
+      "sha256": "8E4C1897E620C71BCC128B5C5D8F6A3739E254A239AB406E2BBE4C9AC88317D9"
+    },
+    {
+      "path": "backend/orderfit/store/preparation_repository.py",
+      "sha256": "99BF311A80284FA63DBF141354FC67A360971798937710BE48A2D00A9CD5AF93"
+    },
+    {
+      "path": "backend/orderfit/store/provision.py",
+      "sha256": "D56A7B8FB6073B3FE788A70841576803B9C8FD77E63C85A0631E289EF8E2BFA9"
+    },
+    {
+      "path": "backend/orderfit/store/repositories.py",
+      "sha256": "040512C58E6F1DF1232386A9598E1DAD81C555437B02614A9C8D9FC3C22D1538"
+    },
+    {
+      "path": "backend/orderfit/store/s3_documents.py",
+      "sha256": "6BD9DF85EF6A825A749340D43FA4FACE7E97B82BC693D1473CAC71097707BE22"
+    },
+    {
+      "path": "backend/orderfit/store/tables.py",
+      "sha256": "CEEB5AC07032D5F4DBF7DA03D0A3C1572518A6CA1F1E7C1AD04786779D35A971"
+    },
+    {
+      "path": "backend/orderfit/workflow/__init__.py",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "backend/orderfit/workflow/compute_limits.py",
+      "sha256": "4C093808183B1FDEEFBBAC6E1FE025072659EC28D6E798D8096592C762646B41"
+    },
+    {
+      "path": "backend/orderfit/workflow/execution.py",
+      "sha256": "C69E66E22532373B02E0C814308AD7AAFABD2F60641B8C9F306879AFCFB22F07"
+    },
+    {
+      "path": "backend/orderfit/workflow/extraction.py",
+      "sha256": "F9C7A78D2A162960AD90B5A1DCB6E51D7BD53051ED1D07E1AA49C09E845A3F05"
+    },
+    {
+      "path": "backend/orderfit/workflow/operations.py",
+      "sha256": "F4A4C7FEFDB8A0BC050EC2C384A7B7B8C2DB6CDADB1E3650E0C985EFA6C0774C"
+    },
+    {
+      "path": "backend/orderfit/workflow/preparation.py",
+      "sha256": "F7D0792623C80A79884A9686206964972FAEACEA041BB5E973F7D86DA698E31B"
+    },
+    {
+      "path": "backend/orderfit/workflow/presence.py",
+      "sha256": "6C0F4317D764992D5303A0DCF2E330E49A767FDBDB78749DB08F7BE42AD7F0C2"
+    },
+    {
+      "path": "backend/orderfit/workflow/worker.py",
+      "sha256": "435EC66AA2BE5261AC915A1B24D4AF21867ABCBB85753D40C3B03DB6F5465A53"
+    },
+    {
+      "path": "backend/uv.lock",
+      "sha256": "CC2CCAA180BFBA6CBA96945A51ABFCBEFF3D91962B21DF9EAD174C3F289895CE"
+    }
+  ]
+}

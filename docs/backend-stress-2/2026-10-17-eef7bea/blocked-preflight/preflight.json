@@ -1,0 +1,24 @@
+{
+  "minimum_percent": 15,
+  "passed": false,
+  "paths": [
+    {
+      "path": "D:\\Kam 2\\Order_Fit\\docs\\backend-stress-2\\2026-10-17-eef7bea\\blocked-preflight",
+      "total_bytes": 163670126592,
+      "free_bytes": 83867152384,
+      "free_percent": 51.24157604708502
+    },
+    {
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp",
+      "total_bytes": 159944536064,
+      "free_bytes": 11422621696,
+      "free_percent": 7.141614197704989
+    },
+    {
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Docker\\wsl",
+      "total_bytes": 159944536064,
+      "free_bytes": 11422621696,
+      "free_percent": 7.141614197704989
+    }
+  ]
+}

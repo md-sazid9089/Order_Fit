@@ -1,0 +1,79 @@
+D:\Kam 2\Order_Fit\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_core_schema, OrderFit core schema: tables, integrity triggers, audit hash chain, row-level security, reference data.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 0001_core_schema -> 0002_backend_foundation, P1 identity, scoped operations and revision foundation; applied 0001 is untouched.
+INFO  [alembic.runtime.migration] Running upgrade 0002_backend_foundation -> 0003_p3_results, P3 lender provenance and immutable evaluation series on existing records.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p4_documents, P4 immutable parse, extraction and CSV preview evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p3_exports, P3 immutable decision records and preserved scenario policy fields.
+INFO  [alembic.runtime.migration] Running upgrade 0004_p3_exports, 0004_p4_documents -> 0005_p3_p4_integration, Join concurrent P3 fixes and P4 additions without changing either history.
+INFO  [alembic.runtime.migration] Running upgrade 0005_p3_p4_integration -> 0006_p3_input_integrity, Preserve reviewed cost identities across persistence and confirmation.
+INFO  [alembic.runtime.migration] Running upgrade 0006_p3_input_integrity -> 0007_p5_preparation, Immutable negotiation preparation and reviewed reply/acceptance evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0007_p5_preparation -> 0008_p6_execution, Exact bundle authorization and durable sandbox execution.
+INFO  [alembic.runtime.migration] Running upgrade 0008_p6_execution -> 0009_p6_approval, Exact-bundle approval repair: lock-free bundle guard, batch send pin, usability predicate.
+INFO  [alembic.runtime.migration] Running upgrade 0009_p6_approval -> 0010_p6_execution_runtime, P6-B sandbox execution: run admission/settlement, commitment gate, projection, compensation.
+INFO  [alembic.runtime.migration] Running upgrade 0010_p6_execution_runtime -> 0011_p7_operations, P7 supporting operations: invitations, account evidence, notifications, exports, readiness.
+INFO  [alembic.runtime.migration] Running upgrade 0011_p7_operations -> 0012_notification_writer, Notifications are written only by the SECURITY DEFINER p7_notify(); runtime keeps read_at.
+INFO  [alembic.runtime.migration] Running upgrade 0012_notification_writer -> 0013_runtime_hardening, Runtime hardening: split auth throttles, password lock order, narrowed business/document UPDATE.
+INFO  [alembic.runtime.migration] Running upgrade 0013_runtime_hardening -> 0014_settlement_retention, Late-cancellation settlement context and idempotency-key retention for the runtime role.
+INFO  [alembic.runtime.migration] Running upgrade 0014_settlement_retention -> 0015_session_authority, Require fresh authentication after membership role changes without cross-session locks.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_worker_presence, Durable expiring process liveness, separate from queue age.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_add_user_admin_roles, Add user and admin roles to reference table app_role.
+INFO  [alembic.runtime.migration] Running upgrade 0016_worker_presence, 0016_add_user_admin_roles -> 0017_merge_heads, Join the worker-presence and user/admin-role branches that both follow 0015.
+INFO  [alembic.runtime.migration] Running upgrade 0016_worker_presence -> 0017_platform_authority, Invalidate sessions when platform authority changes.
+INFO  [alembic.runtime.migration] Running upgrade 0017_platform_authority -> 0018_passkey_mfa, Password plus verified WebAuthn, with private one-use ceremonies.
+INFO  [alembic.runtime.migration] Running upgrade 0018_passkey_mfa, 0017_merge_heads -> 0019_merge_passkey_roles, Join main's platform-authority/passkey line with the 0017_merge_heads role branch.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_core_schema, OrderFit core schema: tables, integrity triggers, audit hash chain, row-level security, reference data.
+INFO  [alembic.runtime.migration] Running upgrade 0001_core_schema -> 0002_backend_foundation, P1 identity, scoped operations and revision foundation; applied 0001 is untouched.
+INFO  [alembic.runtime.migration] Running upgrade 0002_backend_foundation -> 0003_p3_results, P3 lender provenance and immutable evaluation series on existing records.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p4_documents, P4 immutable parse, extraction and CSV preview evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0003_p3_results -> 0004_p3_exports, P3 immutable decision records and preserved scenario policy fields.
+INFO  [alembic.runtime.migration] Running upgrade 0004_p3_exports, 0004_p4_documents -> 0005_p3_p4_integration, Join concurrent P3 fixes and P4 additions without changing either history.
+INFO  [alembic.runtime.migration] Running upgrade 0005_p3_p4_integration -> 0006_p3_input_integrity, Preserve reviewed cost identities across persistence and confirmation.
+INFO  [alembic.runtime.migration] Running upgrade 0006_p3_input_integrity -> 0007_p5_preparation, Immutable negotiation preparation and reviewed reply/acceptance evidence.
+INFO  [alembic.runtime.migration] Running upgrade 0007_p5_preparation -> 0008_p6_execution, Exact bundle authorization and durable sandbox execution.
+INFO  [alembic.runtime.migration] Running upgrade 0008_p6_execution -> 0009_p6_approval, Exact-bundle approval repair: lock-free bundle guard, batch send pin, usability predicate.
+INFO  [alembic.runtime.migration] Running upgrade 0009_p6_approval -> 0010_p6_execution_runtime, P6-B sandbox execution: run admission/settlement, commitment gate, projection, compensation.
+INFO  [alembic.runtime.migration] Running upgrade 0010_p6_execution_runtime -> 0011_p7_operations, P7 supporting operations: invitations, account evidence, notifications, exports, readiness.
+INFO  [alembic.runtime.migration] Running upgrade 0011_p7_operations -> 0012_notification_writer, Notifications are written only by the SECURITY DEFINER p7_notify(); runtime keeps read_at.
+INFO  [alembic.runtime.migration] Running upgrade 0012_notification_writer -> 0013_runtime_hardening, Runtime hardening: split auth throttles, password lock order, narrowed business/document UPDATE.
+INFO  [alembic.runtime.migration] Running upgrade 0013_runtime_hardening -> 0014_settlement_retention, Late-cancellation settlement context and idempotency-key retention for the runtime role.
+INFO  [alembic.runtime.migration] Running upgrade 0014_settlement_retention -> 0015_session_authority, Require fresh authentication after membership role changes without cross-session locks.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_worker_presence, Durable expiring process liveness, separate from queue age.
+INFO  [alembic.runtime.migration] Running upgrade 0015_session_authority -> 0016_add_user_admin_roles, Add user and admin roles to reference table app_role.
+INFO  [alembic.runtime.migration] Running upgrade 0016_worker_presence, 0016_add_user_admin_roles -> 0017_merge_heads, Join the worker-presence and user/admin-role branches that both follow 0015.
+INFO  [alembic.runtime.migration] Running upgrade 0016_worker_presence -> 0017_platform_authority, Invalidate sessions when platform authority changes.
+INFO  [alembic.runtime.migration] Running upgrade 0017_platform_authority -> 0018_passkey_mfa, Password plus verified WebAuthn, with private one-use ceremonies.
+INFO  [alembic.runtime.migration] Running upgrade 0018_passkey_mfa, 0017_merge_heads -> 0019_merge_passkey_roles, Join main's platform-authority/passkey line with the 0017_merge_heads role branch.
+
+Disposable PG17 target: orderfit-p1-test-79fdc1a1e034 / orderfit_p1_test_79fdc1a1e034 (loopback)
+Original 0001 SQL suite: 296/296 passed
+ok   chain: 400 rows, seq 1..400, verify=true 400
+ok   optimistic lock: second writer updated 0 rows, deal is 'S1 v2'
+CONCURRENCY TEST PASSED
+Forward-schema SQL suite: 296/296 passed
+Forward-schema ok   chain: 400 rows, seq 1..400, verify=true 400
+ok   optimistic lock: second writer updated 0 rows, deal is 'S1 v2'
+CONCURRENCY TEST PASSED
+{"kind": "manifest", "utc": "2026-10-17T07:27:40Z", "schema": "0019_merge_passkey_roles", "python": "3.12.13", "cpu_count": 12, "seed_deals": 2, "businesses": 2, "scope": "synthetic businesses; one session each; real HTTP; no jobs/providers"}
+{"kind": "seed", "utc": "2026-10-17T07:27:42Z", "tenants": 2, "deals_per_tenant": 2}
+{"kind": "stage_start", "utc": "2026-10-17T07:27:42Z", "stage": "ramp-1-2", "rate": 2, "seconds": 5, "mixed": true}
+{"kind": "progress", "utc": "2026-10-17T07:27:42Z", "stage": "ramp-1-2", "seconds": 0.0, "completed": 0, "in_flight": 1, "api_tree_rss": 109756416, "unexpected": 0}
+{"kind": "stage_end", "utc": "2026-10-17T07:27:47Z", "stage": "ramp-1-2", "offered_rate": 2, "scheduled": 10, "started": 10, "dropped": 0, "elapsed_seconds": 5.010991799999829, "counts": {"0:profile:200:": 1, "1:profile:200:": 1, "0:pipeline:200:": 1, "1:pipeline:200:": 1, "0:deal:200:": 1, "1:deal:200:": 1, "0:constraints:200:": 1, "1:constraints:200:": 1, "0:customers:200:": 1, "1:customers:200:": 1}, "latency": {"profile": {"n": 2, "p50_ms": 21.391199999925448, "p95_ms": 32.197200000155135, "max_ms": 32.197200000155135}, "pipeline": {"n": 2, "p50_ms": 21.490799999810406, "p95_ms": 47.588799999175535, "max_ms": 47.588799999175535}, "deal": {"n": 2, "p50_ms": 22.928899999897112, "p95_ms": 23.097400000551715, "max_ms": 23.097400000551715}, "constraints": {"n": 2, "p50_ms": 23.005400000329246, "p95_ms": 43.60709999946266, "max_ms": 43.60709999946266}, "customers": {"n": 2, "p50_ms": 19.343100000696722, "p95_ms": 23.681399999986752, "max_ms": 23.681399999986752}}, "generator_lag": {"n": 10, "p50_ms": 4.587799999171693, "p95_ms": 28.97419999953854, "max_ms": 28.97419999953854}, "unexpected": [], "memory_first": 109756416, "memory_last": 109871104, "memory_peak": 109871104}
+{"kind": "stage_start", "utc": "2026-10-17T07:27:47Z", "stage": "ramp-1-80", "rate": 80, "seconds": 5, "mixed": true}
+{"kind": "progress", "utc": "2026-10-17T07:27:47Z", "stage": "ramp-1-80", "seconds": 0.0, "completed": 0, "in_flight": 3, "api_tree_rss": 109875200, "unexpected": 0}
+{"kind": "stage_end", "utc": "2026-10-17T07:27:52Z", "stage": "ramp-1-80", "offered_rate": 80, "scheduled": 400, "started": 400, "dropped": 0, "elapsed_seconds": 5.016282900000078, "counts": {"0:profile:200:": 20, "1:pipeline:200:": 20, "0:pipeline:200:": 20, "1:profile:200:": 20, "0:deal:200:": 20, "1:deal:200:": 20, "0:constraints:200:": 20, "1:constraints:200:": 20, "0:customers:200:": 20, "1:customers:200:": 20, "0:notifications:200:": 20, "1:notifications:200:": 20, "0:invalid_limit:422:INVALID_INPUT": 20, "0:create:200:": 20, "1:invalid_limit:422:INVALID_INPUT": 20, "1:create:200:": 20, "1:replay:200:": 20, "0:replay:200:": 20, "0:cross_tenant:404:NOT_FOUND": 20, "1:cross_tenant:404:NOT_FOUND": 20}, "latency": {"profile": {"n": 40, "p50_ms": 17.35409999946569, "p95_ms": 96.24220000023342, "max_ms": 104.88979999990988}, "pipeline": {"n": 40, "p50_ms": 68.93579999996291, "p95_ms": 149.220599999353, "max_ms": 157.18980000019656}, "deal": {"n": 40, "p50_ms": 58.21749999995518, "p95_ms": 130.5981999994401, "max_ms": 154.50200000032055}, "constraints": {"n": 40, "p50_ms": 44.25459999947634, "p95_ms": 134.39180000023043, "max_ms": 167.20280000026833}, "customers": {"n": 40, "p50_ms": 33.2656999999017, "p95_ms": 121.64560000019264, "max_ms": 143.81890000004205}, "notifications": {"n": 40, "p50_ms": 26.061500000650994, "p95_ms": 118.28800000057527, "max_ms": 177.30419999952574}, "invalid_limit": {"n": 40, "p50_ms": 3.256300000430201, "p95_ms": 5.89510000008886, "max_ms": 7.487599999876693}, "create": {"n": 40, "p50_ms": 48.090899999806425, "p95_ms": 156.5336000003299, "max_ms": 159.3083999996452}, "replay": {"n": 40, "p50_ms": 53.76780000005965, "p95_ms": 152.96519999992597, "max_ms": 175.94199999984994}, "cross_tenant": {"n": 40, "p50_ms": 34.28489999987505, "p95_ms": 193.40310000006866, "max_ms": 249.16589999975258}}, "generator_lag": {"n": 400, "p50_ms": 4.33089999933145, "p95_ms": 12.385799999719893, "max_ms": 27.834300000904477}, "unexpected": [], "memory_first": 109875200, "memory_last": 113221632, "memory_peak": 113221632}
+{"kind": "reconciled", "utc": "2026-10-17T07:27:52Z", "tenant": 0, "saved_deals": 22, "new_creates": 20, "audit_chain": true}
+{"kind": "reconciled", "utc": "2026-10-17T07:27:52Z", "tenant": 1, "saved_deals": 22, "new_creates": 20, "audit_chain": true}
+{"kind": "connection_recovery", "utc": "2026-10-17T07:27:52Z", "observer_checkedout": 0, "idle_in_transaction": 0, "unscoped_deals": 0}
+{"kind": "reconciled", "utc": "2026-10-17T07:27:54Z", "tenant": 0, "saved_deals": 22, "new_creates": 20, "audit_chain": true}
+{"kind": "reconciled", "utc": "2026-10-17T07:27:54Z", "tenant": 1, "saved_deals": 22, "new_creates": 20, "audit_chain": true}
+{"kind": "connection_recovery", "utc": "2026-10-17T07:27:54Z", "observer_checkedout": 0, "idle_in_transaction": 0, "unscoped_deals": 0}
+{"kind": "restart_replay", "utc": "2026-10-17T07:27:54Z", "passed": true}
+{"kind": "process_cleanup", "utc": "2026-10-17T07:27:54Z", "owned_api_processes_exited": true}
+{"kind": "complete", "utc": "2026-10-17T07:27:54Z", "harness_sha256": "72a71ec1197938c6aeeb3c33d4551d2acbd72b3e2ab5b1ce5da618775576b3e1"}
