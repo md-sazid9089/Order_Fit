@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { RotateCcw, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
+import { RotateCcw, AlertTriangle, CheckCircle2, ExternalLink, Factory } from "lucide-react";
 
 export function OrderSimulator() {
   // Slider states
@@ -165,15 +165,11 @@ export function OrderSimulator() {
             {/* Presets Header with Real Product Image */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4 mb-8">
               <div className="flex items-center gap-3">
-                <img
-                  src="/images/precision-parts.jpg"
-                  alt="Simulated component parts"
-                  className="size-12 rounded-xl object-cover border border-[#ECEAE4] shrink-0 shadow-xs"
-                  loading="eager"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
+                <div className="relative size-12 rounded-xl bg-gradient-to-br from-[#004D3B] via-[#023327] to-[#011C15] dark:from-[#005A45] dark:to-[#01261D] border border-[#004D3B]/30 dark:border-[#34D399]/20 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(52,211,153,0.25),transparent_70%)]" />
+                  <Factory className="size-6 text-[#FFFAEC] relative z-10" />
+                  <span className="absolute bottom-1 right-1 size-2 rounded-full bg-[#34D399] ring-2 ring-white dark:ring-[#1E2021] z-20" />
+                </div>
                 <div>
                   <span className="text-xs font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">
                     Illustration only
