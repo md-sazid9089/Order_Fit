@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Play, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Play, AlertTriangle, CheckCircle2, Factory } from "lucide-react";
 import { useCurrentSession } from "@/lib/use-session";
 
 export function HeroSection() {
@@ -87,17 +87,10 @@ export function HeroSection() {
             {/* Top Bar: Clear Order Summary */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="relative size-12 rounded-xl overflow-hidden border border-[#ECEAE4] bg-[#F7F6F5] shrink-0 shadow-xs flex items-center justify-center">
-                  <img
-                    src="/images/precision-parts.jpg"
-                    alt="Precision Valve Assembly Hardware"
-                    className="size-full object-cover"
-                    loading="eager"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                  <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-xl" />
+                <div className="relative size-12 rounded-xl bg-gradient-to-br from-[#004D3B] via-[#023327] to-[#011C15] dark:from-[#005A45] dark:to-[#01261D] border border-[#004D3B]/30 dark:border-[#34D399]/20 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(52,211,153,0.25),transparent_70%)]" />
+                  <Factory className="size-6 text-[#FFFAEC] relative z-10" />
+                  <span className="absolute bottom-1 right-1 size-2 rounded-full bg-[#34D399] ring-2 ring-white dark:ring-[#1E2021] z-20" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
