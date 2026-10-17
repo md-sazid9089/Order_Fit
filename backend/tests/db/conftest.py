@@ -179,7 +179,7 @@ def postgres():
             assert current.pop("deal_transition") == sorted(
                 old["deal_transition"] + [repr(("computing", "awaiting_confirm"))]
             )
-            # 0016_add_user_admin_roles adds exactly these reference rows and changes no others.
+            # 0016 adds exactly these reference roles and changes no others.
             assert current.pop("app_role") == sorted(
                 old["app_role"]
                 + [repr(("user", "T0", "Standard user")), repr(("admin", "T4", "Administrator"))]

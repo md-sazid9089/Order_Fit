@@ -4,7 +4,7 @@ Part of the [OrderFit design set](README.md). Architecture and tiers are in [03]
 
 **Revised after the independent review** (`_work/review-log.md`): the approval binds the exact actions, the number check is slot-based, security evidence that could not fail was replaced by evidence that can (live adversarial runs, value-manipulation documents, a red-team script), and tenant isolation no longer depends on Row-Level Security.
 
-Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. **Nothing is implemented yet.** Every control below is a design with a named verification test; none has been run against a product. The only executed artefacts are the reference calculation and its self-tests in [`fixtures/`](fixtures/) (all passing at the time of writing).
+Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. **This is a historical design and evaluation plan, not an implementation-status record.** Its original baseline statement that nothing was implemented must not be used to assess the current checkout. Current, evidence-backed status is maintained in [`../../backend_implementation_progress.md`](../../backend_implementation_progress.md) and [`../../phase_closure_2026-10-17.md`](../../phase_closure_2026-10-17.md); controls without current evidence remain unverified.
 
 ## 1. Scope, assets, trust boundaries
 

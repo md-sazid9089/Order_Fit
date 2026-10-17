@@ -55,6 +55,32 @@ test("a lost financial response retains its command key across reload and exact 
   assert.deepEqual(Object.keys(storage), ["orderfit.pending:scope"]);
 });
 
+test("a proxy failure after a write retains the command key across reload and exact retry", async () => {
+  for (const status of [500, 502, 503, 504]) {
+    const storage = {};
+    const first = transport([{ status: 200, body: { csrf_token: "first" } }, { status, body: {} }], storage);
+    const body = { expected_version: 4, order_value_minor: "12345" };
+    await assert.rejects(first.client.mutate("/businesses/a/deals", "POST", body), error =>
+      error.name === "ApiError" && error.status === status);
+    const reloaded = transport([{ status: 200, body: { csrf_token: "next" } }, { status: 201, body: { id: "same-deal" } }], storage);
+    await reloaded.client.mutate("/businesses/a/deals", "POST", body);
+    assert.equal(first.calls[1].options.headers["Idempotency-Key"], reloaded.calls[1].options.headers["Idempotency-Key"]);
+    assert.deepEqual(Object.keys(storage), ["orderfit.pending:scope"]);
+  }
+});
+
+test("an empty server error remains a recoverable API failure with a useful message", async () => {
+  const { client } = transport([{ status: 503, body: null }]);
+  await assert.rejects(client.get("/auth/csrf"), error => error.name === "ApiError"
+    && error.code === "REQUEST_FAILED" && error.status === 503
+    && error.message === "The service is temporarily unavailable. Retry the same action when it recovers.");
+});
+
+test("a successful JSON null is preserved", async () => {
+  const { client } = transport([{ status: 200, body: null }]);
+  assert.equal(await client.get("/synthetic-null"), null);
+});
+
 test("concurrent writes keep each CSRF challenge and its command together", async () => {
   const { client, calls } = transport([{ status: 200, body: { csrf_token: "one" } }, { status: 201, body: {} }, { status: 200, body: { csrf_token: "two" } }, { status: 201, body: {} }]);
   await Promise.all([client.mutate("/businesses/a/customers", "POST", { name: "A" }), client.mutate("/businesses/a/financing-offers", "POST", { name: "B" })]);

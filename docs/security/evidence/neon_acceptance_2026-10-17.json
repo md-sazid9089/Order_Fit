@@ -1,0 +1,173 @@
+{
+  "database": {
+    "branch": "br-hidden-cell-aok23ia2",
+    "restricted_roles_and_verified_client_tls": true,
+    "postgres_version": "18.6 (653b019)",
+    "rls_exceptions": [
+      {
+        "relname": "alembic_version",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "app_role",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "app_user",
+        "relrowsecurity": true,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "cash_event_kind",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "currency",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "deal_status",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      },
+      {
+        "relname": "deal_transition",
+        "relrowsecurity": false,
+        "relforcerowsecurity": false
+      }
+    ],
+    "pooled_100_alternating_transactions_seconds": 105.562,
+    "synthetic_tenants": 2,
+    "cross_tenant_checks": [
+      "denied_404",
+      "denied_404"
+    ],
+    "api_ddl_worker_helper_and_table_denied": true
+  },
+  "storage": {
+    "bucket": "orderfit-security-acceptance-20261017",
+    "adapter_put_and_hash": true,
+    "read_and_hash": true,
+    "immutable_create": true,
+    "server_side_encryption": null,
+    "anonymous_get": 403,
+    "anonymous_list": 403,
+    "versioning": {
+      "supported": true,
+      "status": null,
+      "rules_present": false
+    },
+    "encryption": {
+      "error_type": "ClientError",
+      "code": "NotImplemented"
+    },
+    "policy": {
+      "error_type": "ClientError",
+      "code": "NoSuchBucketPolicy"
+    },
+    "public_access_block": {
+      "error_type": "ClientError",
+      "code": "NoSuchPublicAccessBlockConfiguration"
+    },
+    "readiness_put_get_delete": true,
+    "synthetic_object_removed": true,
+    "branch_credential_off_prefix_write_allowed": true
+  },
+  "performance": {
+    "runtime_validation_before_ms": [
+      234.0,
+      235.0,
+      250.0,
+      218.0,
+      235.0,
+      250.0,
+      234.0
+    ],
+    "runtime_validation_after_ms": [
+      125.0,
+      125.0,
+      125.0,
+      109.0,
+      125.0,
+      125.0,
+      141.0
+    ],
+    "pool_backend_pids": [
+      972,
+      972,
+      972,
+      972,
+      972,
+      972
+    ]
+  },
+  "local_restore": {
+    "source_branch": "br-hidden-cell-aok23ia2",
+    "restore_target": "new disposable loopback PG18",
+    "encrypted_archive_cloud_roundtrip": true,
+    "encrypted_archive_bytes": 552960,
+    "backup_object_key": "_orderfit/backups/adb8d50f2ae841318a01c7a06955d2a5.restic.tar",
+    "backup_sha256": "68d7ca9ea6816763685ba243d035acef9c07c6e54a14f7a20e2b285ab437280f",
+    "restore_seconds": 11.547,
+    "tenants": 2,
+    "documents": 2,
+    "old_sessions_rejected": true,
+    "fresh_login_and_cross_tenant_download": true,
+    "audit_heads_preserved": true,
+    "wrong_key_rejected": true,
+    "tamper_rejected": true
+  },
+  "hosted_restore": {
+    "source_branch": "br-hidden-cell-aok23ia2",
+    "source_bucket": "orderfit-security-acceptance-20261017",
+    "restored_bucket": "orderfit-security-restored-20261017",
+    "restored_database": "orderfit_restore_cfa0532373f4",
+    "backup_object_key": "_orderfit/backups/a3e73c4aad3545a9adf2e2b541b84f41.restic.tar",
+    "backup_sha256": "e20e808981eacc196e5f4c2db2c447a712fdb746da77142a638123efee05f2ad",
+    "encrypted_archive_bytes": 706560,
+    "all_source_document_objects": 4,
+    "quarantined_failed_database": "orderfit_restore_f0bd093d7ec6",
+    "omitted_provider_default_acls": [
+      "2435; 826 16399 DEFAULT ACL public DEFAULT PRIVILEGES FOR SEQUENCES cloud_admin",
+      "2436; 826 16398 DEFAULT ACL public DEFAULT PRIVILEGES FOR TABLES cloud_admin"
+    ],
+    "restore_seconds": 50.954,
+    "restored_sessions_revoked": 25,
+    "counts_match": {
+      "business": 17,
+      "app_user": 17,
+      "membership": 17,
+      "document": 4,
+      "deal": 7,
+      "evaluation": 3,
+      "evaluation_option": 6,
+      "operation_log": 63,
+      "approval": 3,
+      "operation": 3
+    },
+    "all_document_hashes_match": true,
+    "old_sessions_denied": true,
+    "fresh_login_passed": 2,
+    "cross_tenant_download_denied": true,
+    "audit_chains_verified": 17,
+    "client_tls_verified": true,
+    "rls_policy_catalogs_match": true,
+    "definer_owners_match": true
+  },
+  "verification": {
+    "disposable_pg17_db_tests": 43,
+    "architecture_tests": 4,
+    "ruff": "passed",
+    "full_suite_rerun": false,
+    "main_database_mutated": false
+  },
+  "resource_expiry_bangladesh": "2026-10-18 18:56:39 +06:00",
+  "manifest": {
+    "backend/orderfit/store/db.py": "ca714f8cc3098d7baabf268b044c88dde6c63aec96fa9d6fbebdcfb862ed4103",
+    "backend/tests/db/test_runtime_validation_roundtrips.py": "fa23cce4d881ddfc7ae57509ea54baed6c0571ea00fad653d2470b6dd52a1db1"
+  }
+}

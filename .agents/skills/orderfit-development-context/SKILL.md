@@ -17,6 +17,41 @@ No production fix, capacity envelope or leak-free claim follows. All 50 final-ru
 acknowledged writes and ten audit chains reconciled before disposable cleanup.
 The user chose the blocked-gate report; do not resume load implicitly.
 
+17 October isolated hosted drill: user-authorized Neon branch
+`orderfit-security-acceptance` (`br-hidden-cell-aok23ia2`, Singapore) and two private
+drill buckets now have executed pooled-role/100-transaction isolation/TLS/storage
+and encrypted cloud-to-Neon restore evidence. Restored four documents, verified
+17 audit chains, revoked 25 copied sessions and checked two fresh sign-ins plus
+cross-tenant denial. Branch expires18October18:56Bangladesh time. Provider-owned
+cloud_admin default ACLs require a reviewed two-entry exclusion during restore.
+Prefix-scoped API/worker keys, independent provider/KMS evidence and durable
+retention remain open (current history six hours); user deferred rotation.
+`_runtime_checks` now batches three catalog queries into one; seven-sample hosted
+median235ms to125ms.43fresh disposable-PG17 DB tests and4architecture tests pass;
+no whole-app speedup or full-suite rerun claimed. Main DB was unchanged by this
+drill. See [hosted evidence](../../../docs/security/neon_acceptance_2026-10-17.md).
+
+17 October Neon connection follow-up: the user restored pooled API/worker Neon
+URLs in the ignored backend environment. Read-only preflight found deployed schema
+`0019_merge_passkey_roles`, ahead of this checkout. Recovered the exact migration
+graph/SQL and regression tests from existing commit `d9670a0`; sole required head
+is now `0019_merge_passkey_roles`. Four disposable-PG17 compatibility tests and
+22 focused runtime/security/architecture tests pass. No Neon migration ran.
+Local runtime URLs now use `verify-full` with the installed certifi CA bundle;
+that host-specific CA path must not be copied into containers. Compose now gives
+API/worker/migration jobs a private outbound egress network for Neon while its
+local database remains internal-only; its entrypoint translates only Windows
+absolute CA paths to the image certifi bundle without weakening `verify-full`.
+Local production web on port3000 proxies to host API8000 backed by Neon; `/ready`
+passes all checks, including the existing worker heartbeat. A temporary duplicate
+container pair verified the Compose path and was stopped. A user-authorized
+synthetic account is created and sign-in verified; empty Neon dashboard reloads
+measured a5906ms median through browser automation. Timeout setup now batches
+three transaction-local settings into one query (22DBregressions pass; measured
+Neon setup median258ms to77ms). Post-fix UI timing remains unverified after the
+browser transport closed during interruption. Controlled20-order results remain
+separate. See the latest progress entry.
+
 17 October reconciliation: resumed from `main` at `eca00c9`; subsequent backend/admin
 repairs are being made by a separate task. See the
 [current matrix](../../../docs/orderfit_audit_2026-10-17.md) before using the older
@@ -26,12 +61,17 @@ capability after server-side RBAC. Simulated admin controls remain unavailable.
 The backend owner has advanced to `0018_passkey_mfa`. Docker is available now;
 the final seven-test browser suite passes sandbox send/reply/accept/commit/reload/
 compensation, lost-response recovery and passkey enrollment/login. Fresh targeted
-PG17 checks18passed; engine/agent/architecture133passed; frontend97unit tests pass.
-See [phase closure evidence](../../../docs/phase_closure_2026-10-17.md) for current
-checks, mixed-snapshot failures and remaining gates. The runner now isolates image
-tags and browser artifacts across concurrent tasks. Main port 3000 refuses its
-stale database schema; free-provider probes returned unavailable/timeouts. Do not
-migrate the main database merely because a test account was authorized.
+PG17 checks passed; the final frozen backend suite is **540 passed**. Passkey MFA
+and the synthetic encrypted DB/document restore drill now have local evidence,
+including replay/tenant controls, wrong-key/tamper rejection and restored-auth
+quarantine. See [security acceptance](../../../docs/security/security_acceptance_2026-10-17.md)
+and [phase closure evidence](../../../docs/phase_closure_2026-10-17.md) for current
+checks and limits. The runner now isolates image tags and browser artifacts across
+concurrent tasks. A read-only Neon preflight later verified restricted pooled
+connections with `verify-full`, but provider controls and actual
+bucket/KMS/retention remain unverified because no disposable target is available.
+Main port 3000 refuses its stale database schema; do not migrate the main database
+merely because a test account was authorized.
 
 Earlier snapshot: **17 October 2026**, security continuation atop `eca00c9`.
 Current checks: **359 non-DB backend tests**, **5 admin DB regression functions
@@ -103,7 +143,8 @@ providers. P4 and P8 remain partial; engineering completion is not submission ev
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0017_platform_authority` (sole head), following 0016 worker presence.
+- Code requires `0019_merge_passkey_roles` (sole head), joining the passkey/platform
+  authority line with the recovered Neon role branch.
   Platform flag changes revoke all existing sessions and record an atomic audit event.
   Revision 0015
   requires new authentication after membership role changes and fences old
@@ -119,6 +160,12 @@ providers. P4 and P8 remain partial; engineering completion is not submission ev
 - `/ready` now gates on an unexpired global worker heartbeat; `backlog_seconds`
   stays separate. Workers pulse every 10 s with DB-time expiry 60 s and one reserved
   DB connection, independent of job work. See the [contract](../../../docs/contracts/stress-remediation.md).
+- Pipeline performance: `web/lib/pipeline-data.ts` resolves missing customer labels
+  four at a time, preserves first-page label reuse and parallel evaluations, and
+  cancels obsolete GETs on navigation/failure. Still 20 orders/page; full evaluation
+  payloads and up-to-20 evaluation fan-out remain. See the
+  [performance review](../../../docs/performance_review_2026-10-17.md) for controlled
+  browser measurements and their limits. No financial caching was added.
 - Eight legacy lists now have scoped signed continuation; supporting selectors use
   bounded load-more/retry controls. General lists retain explicit offset-start
   compatibility; pipeline stays at 20 orders/page. Default policy reads use

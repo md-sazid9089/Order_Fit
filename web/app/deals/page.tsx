@@ -3,16 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Calendar, Search } from "lucide-react";
-import { ApiError, get, type Deal, type Evaluation, type BaselineView, type Constraints, type Customer } from "@/lib/orderfit-api";
-import type { BusinessView } from "@/lib/generated-api";
+import type { Deal, Evaluation } from "@/lib/orderfit-api";
+import { loadPipeline, PIPELINE_PAGE_SIZE as PAGE_SIZE, type PipelineData } from "@/lib/pipeline-data";
 import { formatMinor } from "@/lib/approval-model";
 import { PIPELINE_TABS, tabOf, verdictOf, worstTrough, type PipelineTab, type Tone } from "@/lib/pipeline-model";
 import { useScope } from "@/components/layout/scope";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 
-type Page<T> = { items: T[]; next_cursor: string | null };
-type Data = { more: boolean; deals: Deal[]; evaluations: Record<string, Evaluation>; customers: Record<string, string>; baseline: BaselineView | null; reserve: string | null; currency: string };
-const PAGE_SIZE = 20;
 
 const TONE: Record<Tone, string> = {
   ok: "bg-[#EAF7EE] text-[#004D3B] border border-[#B5F2C6]",
@@ -24,14 +21,9 @@ const CARD = "p-5 bg-white border border-[#E8E6E1] rounded-2xl shadow-xs hover:s
 const LABEL = "flex items-center justify-between text-xs font-medium text-[#737373] uppercase tracking-wider";
 const VALUE = "mt-2 text-2xl lg:text-3xl font-bold font-display text-[#1E2021]";
 
-async function optional<T>(request: Promise<T>): Promise<T | null> {
-  // A business without a baseline answers 409 (and a missing evaluation 404); anything else is a real failure.
-  try { return await request; } catch (e) { if (e instanceof ApiError && (e.status === 404 || e.status === 409)) return null; throw e; }
-}
-
 export default function DealsPage() {
   const { businessId } = useScope();
-  const [data, setData] = useState<Data | null>(null);
+  const [data, setData] = useState<PipelineData | null>(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<PipelineTab>("all");
   const [search, setSearch] = useState("");
@@ -44,33 +36,14 @@ export default function DealsPage() {
 
   useEffect(() => {
     let active = true;
-    (async () => {
-      const base = `/businesses/${businessId}`;
-      // Two small waves: the API's database pool is small, and the shell and bell already hold connections.
-      const [profile, deals, baseline] = await Promise.all([
-        get<BusinessView>(`${base}/profile`), get<Page<Deal>>(`${base}/deals?limit=${PAGE_SIZE}&offset=${offset}`), optional(get<BaselineView>(`${base}/baseline`)),
-      ]);
-      const [customers, constraints] = await Promise.all([get<Page<Customer>>(`${base}/customers`), get<Page<Constraints>>(`${base}/constraints?default_only=true`)]);
-      // Resolve only missing labels for this bounded order page, never fetch all customers.
-      const known = new Set(customers.items.map(c => c.id));
-      const missing = [...new Set(deals.items.map(d => d.inputs.customer_id).filter((id): id is string => !!id && !known.has(id)))];
-      for (const id of missing) {
-        const customer = await optional(get<Customer>(`${base}/customers/${id}`));
-        if (customer) customers.items.push(customer);
-      }
-      const evaluations: Record<string, Evaluation> = {};
-      await Promise.all(deals.items.filter(d => d.live_evaluation_id).map(async d => {
-        const e = await optional(get<Evaluation>(`${base}/evaluations/${d.live_evaluation_id}`));
-        if (e) evaluations[d.id] = e;
-      }));
-      if (!active) return;
-      setData({
-        more: !!deals.next_cursor, deals: deals.items, evaluations, baseline,
-        customers: Object.fromEntries(customers.items.map(c => [c.id, c.customer.name])),
-        reserve: constraints.items.find(c => c.is_default)?.reserve_minor ?? null, currency: profile.currency,
+    const controller = new AbortController();
+    loadPipeline(businessId, offset, controller.signal)
+      .then(result => { if (active) setData(result); })
+      .catch(e => {
+        controller.abort();
+        if (active) setError(e instanceof Error ? e.message : "Could not load the pipeline.");
       });
-    })().catch(e => { if (active) setError(e instanceof Error ? e.message : "Could not load the pipeline."); });
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [businessId, offset, refreshToken]);
 
   const rows = useMemo(() => (data?.deals ?? []).map(d => ({ deal: d, evaluation: data?.evaluations[d.id] ?? null })), [data]);
