@@ -1,0 +1,14 @@
+{
+  "reason": "Plan disk-space stop gate",
+  "drive": "C",
+  "free_bytes": 11431366656,
+  "free_percent": 7.147081693010049,
+  "minimum_percent": 15,
+  "docker_disk": "C:\\Users\\Administrator\\AppData\\Local\\Docker\\wsl\\disk\\docker_data.vhdx",
+  "owned_api_pids": [
+    11224,
+    24276
+  ],
+  "stopped_at": "2026-10-17T13:55:17.5299647+06:00",
+  "method": "Terminate only API descendants of exact http-final harness; allow harness DB reconciliation and fixture cleanup"
+}
