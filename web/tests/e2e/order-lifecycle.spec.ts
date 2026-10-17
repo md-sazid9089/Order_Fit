@@ -126,15 +126,16 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByText(/Order status: awaiting_reply · negotiation round 1/)).toBeVisible();
 
   await page.getByText("Record an incoming reply to this ask", { exact: true }).click();
-  await page.getByLabel("Original reply text").fill("Synthetic buyer accepts the exact proposed terms. No terms changed.");
+  const inexactReply = "Synthetic buyer accepts the exact proposed terms. No terms changed.";
+  await page.getByLabel("Original reply text").fill(inexactReply);
   await page.getByRole("button", { name: "Save reply and propose candidates" }).click();
   await expect(page.getByRole("blockquote")).toContainText("Synthetic buyer accepts");
   await page.getByText("Record exact-term party acceptance evidence", { exact: true }).click();
   await page.getByLabel("Acceptance attestation").fill("Synthetic fixture only: buyer accepted these exact terms in the recorded reply.");
   await page.getByLabel("Valid until (your local time)").fill(isoDateFrom(addDays(new Date(), 1)) + "T12:00");
-  await page.getByLabel("Supporting reply, if any").selectOption({ index: 1 });
+  await page.getByLabel("Supporting reply, if any").selectOption({ label: inexactReply });
   await page.getByRole("button", { name: "Record party attestation" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "does not contain the exact acceptance sentence" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: /exact proposed terms/i })).toBeVisible();
   await expect(page.getByText("No recorded acceptances.", { exact: true })).toBeVisible();
   // Preserve the rejected evidence; a new synthetic reply explicitly confirms
   // the exact terms instead of weakening the server's acceptance requirement.
