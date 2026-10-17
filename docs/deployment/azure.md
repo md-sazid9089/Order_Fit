@@ -11,9 +11,10 @@ Neon is the database and Vercel serves the web app with `API_INTERNAL_URL=https:
 2. **plan:** reads the database revision through the running API and compares it with the image's
    `SCHEMA_REVISION`. It fails early if the database revision is not in the image's migration history,
    which happens when branches diverged (see the 0017/0019 merge revisions).
-3. **migrate:** runs only when a migration is pending. It waits for a reviewer on the
-   `production-migration` environment, creates a Neon restore branch `pre-<revision>-<run id>`, then
-   runs `alembic upgrade head` once from the new image with `/opt/orderfit/migrate.env`.
+3. **migrate:** runs only when a migration is pending, in the same run (no approval step). It creates a
+   Neon restore branch `pre-<revision>-<run id>` when `NEON_API_KEY` is configured (otherwise recover
+   with Neon point-in-time restore), then runs `alembic upgrade head` once from the new image with
+   `/opt/orderfit/migrate.env`. To require a person first, add required reviewers to `production`.
 4. **deploy:** installs `deploy/azure/docker-compose.azure.yml` and `Caddyfile`, sets `ORDERFIT_IMAGE`
    in `/opt/orderfit/.env`, recreates the API and worker, and waits for `/ready`. If the image is not ready
    and no migration ran, the previous image and configuration are restored. After a migration the
@@ -30,15 +31,14 @@ Azure (run by an administrator):
 az ad app create --display-name orderfit-github-deploy
 az ad sp create --id <appId>
 az ad app federated-credential create --id <appId> --parameters '{"name":"production","issuer":"https://token.actions.githubusercontent.com","subject":"repo:md-sazid9089/Order_Fit:environment:production","audiences":["api://AzureADTokenExchange"]}'
-az ad app federated-credential create --id <appId> --parameters '{"name":"production-migration","issuer":"https://token.actions.githubusercontent.com","subject":"repo:md-sazid9089/Order_Fit:environment:production-migration","audiences":["api://AzureADTokenExchange"]}'
 az role assignment create --assignee <appId> --role "Virtual Machine Contributor" --scope <orderfit-vm resource id>
 ```
 
 GitHub, under Settings → Environments:
 
-- `production`: variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
-- `production-migration`: the same three variables, plus **Required reviewers**, the secret `NEON_API_KEY`,
-  and the variables `NEON_PROJECT_ID` and `NEON_PARENT_BRANCH_ID` (the production branch).
+- `production`: variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
+  `NEON_PROJECT_ID`, `NEON_PARENT_BRANCH_ID` (the production branch); optional secret `NEON_API_KEY`
+  for restore branches before each migration.
 
 On the VM: `/opt/orderfit/.env` (runtime settings, mode 600) and `/opt/orderfit/migrate.env`
 (`DATABASE_URL_DIRECT` only, mode 600). Rotate the Neon owner password by updating `migrate.env`.

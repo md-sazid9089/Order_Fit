@@ -3,8 +3,8 @@ name: deploy-backend
 # Deploys the backend to the Azure VM after `tests` passes on main.
 #   build   -> image ghcr.io/<owner>/orderfit-backend:<commit>
 #   plan    -> compares the Neon revision (read through the running API) with the image's head
-#   migrate -> only when a migration is pending; waits for approval on the
-#              `production-migration` environment, creates a Neon restore branch, runs Alembic once
+#   migrate -> only when a migration is pending: creates a Neon restore branch (when NEON_API_KEY is
+#              set; otherwise Neon's point-in-time history is the restore path) and runs Alembic once
 #   deploy  -> swaps the image, waits for /ready, rolls back automatically if no migration ran
 # The VM is reached with short-lived Azure OIDC tokens and Run Command; SSH stays closed.
 on:
@@ -97,8 +97,9 @@ jobs:
     needs: [build, plan]
     if: needs.plan.outputs.migrate == 'true'
     runs-on: ubuntu-latest
-    # Configure required reviewers on this environment so migrations wait for approval.
-    environment: production-migration
+    # Same environment as deploy: GitHub and the VM move together. Add required reviewers to
+    # `production` only if migrations should wait for a person.
+    environment: production
     permissions:
       contents: read
       id-token: write
@@ -114,6 +115,11 @@ jobs:
           PARENT: ${{ vars.NEON_PARENT_BRANCH_ID }}
           NAME: pre-${{ needs.plan.outputs.head }}-${{ github.run_id }}
         run: |
+          if [ -z "$NEON_API_KEY" ]; then
+            echo "::warning::NEON_API_KEY is not set; no restore branch. Recover with Neon point-in-time restore."
+            echo "### No Neon restore branch (NEON_API_KEY unset); use point-in-time restore" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           api=https://console.neon.tech/api/v2/projects/$PROJECT/branches
           body=$(jq -n --arg p "$PARENT" --arg n "$NAME" '{branch: {parent_id: $p, name: $n}}')
           id=$(curl -fsS -X POST "$api" -H "Authorization: Bearer $NEON_API_KEY" \
