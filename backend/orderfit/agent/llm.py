@@ -201,7 +201,7 @@ async def _live(request: LanguageRequest, settings: LLMSettings) -> LanguageResu
         return _unavailable("INCOMPLETE", "incomplete", True)
     except openai.ContentFilterFinishReasonError:
         return _unavailable("REFUSAL", "refused")
-    except ValidationError:
+    except (ValidationError, json.JSONDecodeError):
         return _unavailable("INVALID_OUTPUT", "invalid_output")
     except openai.APIConnectionError:
         return _unavailable("PROVIDER_UNAVAILABLE", retryable=True)
@@ -291,7 +291,7 @@ async def propose_intent(instruction: str, input_hash: str, settings: LLMSetting
         return fallback("INCOMPLETE")
     except openai.ContentFilterFinishReasonError:
         return fallback("REFUSAL")
-    except ValidationError:
+    except (ValidationError, json.JSONDecodeError):
         return fallback("INVALID_OUTPUT")
     except (openai.APIConnectionError, openai.APIStatusError):
         return fallback("PROVIDER_UNAVAILABLE")

@@ -2061,3 +2061,44 @@ It also contains a five-step live-demo sequence and names the remaining release
 blockers: provider network/retention limits, prefix-scoped storage credentials,
 independent KMS/version evidence, and required credential rotation. No runtime,
 database or provider configuration changed in this documentation handoff.
+
+## 17 October 2026 — AI-assisted website review against 40/30/30 rubric
+
+User requested full website review/repairs, AI encouraged, FreeLLMPool tests
+without paid OpenAI calls. Baseline main47289ad was clean. Full guidance,
+criteria audit, contribution evidence protocol and calibration/conversation
+scripts are in docs/ai_assisted_website_review_2026-10-17.md.
+
+- Fixed uncaught JSONDecodeError in both live extraction and what-if provider
+  paths: INVALID_OUTPUT preserves manual/template recovery. Two reproductions
+  failed before the fix;82focused P4/P5/audit/architecture checks then passed.
+- Corrected legacy /sandbox copy to describe approved saved-order sandbox
+  commitments. Fixed 481px loading-skeleton overflow at390px by stacking the
+  banner and wrapping placeholder tabs. Added15-route desktop/mobile sweep
+  plus a held-real-read loading assertion; lifecycle remains a separate check.
+- Fresh full backend run:553passed/1failed in743.94s. The failure expected3
+  timeout queries before session resolution, although the prior optimization
+  batches them into1. Test now asserts all3transaction-local settings precede
+  resolution and verifies actual PG values.10focused security/runtime DB tests
+  subsequently pass on another disposable PG17;changed-file Ruff passes.
+  No runtime security guard was weakened;no second full backend pass claimed.
+- Frontend105unit tests/typecheck pass;full lint0errors/68existing warnings.
+  Production builds pass. Six post-repair browser checks pass: lifecycle with
+  lost-response/send/reply/accept/commit/reload/compensation, passkeys, pagination,
+  CSP, sign-in accessibility and mobile recovery. Route-sweep closure evidence
+  is recorded in the linked review. Disposable stacks were removed by runner.
+- FreeLLMPool0.13.0 was loopback-only with no mounted credentials/private data.
+  Four synthetic probes (pollinations/openai-fast,llm7/default;extraction/whatif)
+  yielded TIMEOUT,PROVIDER_UNAVAILABLE,INVALID_OUTPUT,INVALID_OUTPUT. No usable
+  structured result;no paid OpenAI call;temporary gateway removed. Main provider
+  configuration unchanged. Live AI quality acceptance remains open.
+
+No hosted migration/deployment, shared database mutation or stress campaign.
+Next gate: successful synthetic free-route structured output plus independent
+quality review;main OpenAI acceptance remains separately opt-in. Existing hosted
+security/provider limitations remain unchanged. No phase-completion claim added.
+
+Final route-sweep closure: isolated production-image15-route desktop/mobile
+sweep passes, including held-read skeleton assertions at1280px/390px and all30
+route/width combinations. Runner identity orderfit-e2e-196d96e594;temporary
+browser results retained outside Git. Updated concise development context.

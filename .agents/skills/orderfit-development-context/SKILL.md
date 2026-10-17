@@ -5,6 +5,14 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+17 October AI-assisted website review from `47289ad`: malformed live JSON now
+maps to INVALID_OUTPUT in extraction/what-if; mobile pipeline skeleton overflow
+and stale sandbox copy repaired. Full backend553pass/1stale timeout-test failure;
+corrected test verifies actual guards,10targeted DB checks pass. Six final browser
+checks plus a separate15-route desktop/mobile/held-read sweep pass. Four synthetic
+FreeLLMPool probes produced no usable structured output; no paid OpenAI calls.
+See [review](../../../docs/ai_assisted_website_review_2026-10-17.md) for scope/limits.
+
 17 October stress-plan-2 evidence at `eef7bea`, sole schema head
 `0019_merge_passkey_roles`: **542 backend tests and 7 fresh production-image
 browser/proxy tests passed**. See the

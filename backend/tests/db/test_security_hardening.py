@@ -129,13 +129,23 @@ def test_session_resolution_has_transaction_timeouts_before_it_locks(postgres, a
 
     event.listen(database.engine, "before_cursor_execute", capture)
     try:
-        with database.identity(accounts[0].token):
-            pass
+        with database.identity(accounts[0].token) as (c, _, _):
+            active = c.execute(text("""
+                SELECT current_setting('lock_timeout')::interval = interval '10 seconds',
+                       current_setting('statement_timeout')::interval = interval '60 seconds',
+                       current_setting('idle_in_transaction_session_timeout')::interval = interval '60 seconds'
+            """)).one()
+            assert tuple(active) == (True, True, True)
     finally:
         event.remove(database.engine, "before_cursor_execute", capture)
     resolution = next(i for i, q in enumerate(statements) if "session_resolve" in q)
-    assert resolution == 3
-    assert all("set_config" in q for q in statements[:resolution])
+    # Timeout setup was batched into one round trip. Keep checking all three
+    # transaction-local guards precede session resolution, and their real values.
+    assert resolution == 1
+    setup = statements[0]
+    for name in ("lock_timeout", "statement_timeout", "idle_in_transaction_session_timeout"):
+        assert f"set_config('{name}'," in setup
+    assert setup.count(",true)") == 3
 
 
 def test_every_tenant_table_forces_rls_and_definer_entrypoints_are_not_public(postgres):
