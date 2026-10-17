@@ -109,10 +109,10 @@ was not a full backend-suite or deployed browser acceptance rerun.
    history requires a plan change. No paid change, retention policy, object-lock
    guarantee or long-term backup schedule was created. The retained encrypted
    archive in an expiring drill bucket is not a durable production backup policy.
-5. Resources remain available for report review until branch auto-expiry. The two
-   restore DBs belong only to that disposable branch; the source/restore buckets
-   are scoped there. Verify removal of branch/storage in the console after expiry
-   or delete the named temporary resources after review. Private temporary local
+5. After the report was accepted, the user directed cleanup through the Neon
+   console. Both temporary buckets and the `orderfit-security-acceptance` branch
+   were permanently deleted; the branch list dropped from four to three. The two
+   restore databases were contained by that deleted branch. Private temporary local
    backup/key files remain outside Git and must be handled together during cleanup.
 
 [Sanitized measured evidence](evidence/neon_acceptance_2026-10-17.json) includes
