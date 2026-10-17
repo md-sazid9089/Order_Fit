@@ -11,7 +11,6 @@ import {
 import type { NavItem } from "@/lib/p7-model";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getCachedSession, fetchSession } from "@/lib/session-store";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export type { NavItem } from "@/lib/p7-model";
 
@@ -276,11 +275,6 @@ export function AppSidebar({
 
         {/* Footer controls */}
         <div className="p-3 border-t border-[#E8E6E1] dark:border-[#2A2C2D] overflow-hidden space-y-2 shrink-0">
-          {/* Theme Toggle Button (strictly icon-only, no text) */}
-          <div className="flex items-center justify-center py-0.5">
-            <ThemeToggle variant="icon" />
-          </div>
-
           {isAdminMode ? (
             <div className="space-y-2">
               {showExpanded ? (
