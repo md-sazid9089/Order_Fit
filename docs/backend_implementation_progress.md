@@ -1749,3 +1749,315 @@ User explicitly selected **“Finish with the blocked-gate report.”** No furth
 load was run. Repeated five-minute ramps/warm-ups, capacity-knee confirmation,
 two-hour/eight-hour soak, full workload families, D2 datasets, complete resource
 telemetry and hosted Neon/Azure/Caddy/S3/provider/restore gates remain open.
+
+## 17 October 2026 — hands-on app reliability testing and retry repair
+
+User requested opening/testing the application and fixing reproduced issues.
+Started from clean main `8a9d1c2`; used the development context and graph-first
+discovery, falling back where the graph lacked current client symbols. See
+[failure map and evidence](app_reliability_2026-10-17.md).
+
+- Opened the frontend and reproduced unhelpful sign-in failure during API outage.
+  Restored the local Docker engine after stale runtime-socket startup failures,
+  preserving uniquely named backups; no factory reset or shared DB migration.
+- Fixed browser command-key deletion on HTTP5xx. A gateway failure after commit
+  now retains the same exact-write identity across retry/reload, as a lost network
+  response already did. Definitive 4xx still release keys. Null error bodies no
+  longer cause TypeError, structured errors remain intact, and unstructured 5xx
+  offer clear recovery feedback. Successful JSON null responses are preserved.
+- Added transport regressions for500/502/503/504, null errors and successful null;
+  extended the real browser lifecycle with post-save502 and same-key/same-draft
+  assertions. Repaired the runner test's stale argument-string assertion.
+- Fresh checks: **366 provider-free backend tests passed**, one Starlette/httpx
+  deprecation warning; **100 frontend unit tests passed**; typecheck, changed-file
+  ESLint, backend Ruff and generated contracts112operations passed. Full frontend
+  lint:0errors/68existing warnings. No separate full DB regression-suite rerun.
+- Four browser rounds: initial7passed; then6passed/1failed for an incorrect new
+  test201expectation (route explicitly returns200); then6passed/1failed for an
+  ambiguous alert locator. Final fresh production images: **7passed in1.8minutes**,
+  including502recovery and full sandbox send/reply/commit/reload/compensation,
+  passkeys, tenant isolation, continuation, CSP, focus/contrast and mobile/CSRF.
+  Final sustained probe7,462requests/60.05seconds, no5xx. No production capacity
+  inference. Evidence remains at
+  `C:/Users/moham/AppData/Local/Temp/orderfit-e2e-a640bcc789-results/`.
+
+All users, documents/terms and effects used were synthetic; restricted runtime
+logins and fresh disposable PG17 were used by the browser runner, which cleaned
+only its own resources. No live AI, actual outgoing action, hosted release,
+restore, shared-schema acceptance, commit or push is claimed. P4/P8 external gates
+remain open; next step is separately configured live-quality/hosted acceptance.
+
+## 17 October 2026 — measured dashboard performance repair
+
+User clarified that performance meant application speed. Preserved the existing
+reliability working-tree edits. See [measurements and limits](performance_review_2026-10-17.md).
+
+- Reproduced the 20-row pipeline's serial missing-customer lookup waterfall with
+  a controlled browser benchmark:20customers outside the first list,20live
+  evaluations,150ms delay on each related response,3full reloads. Original median
+  **4,235ms**, samples4235/4264/4228;40related reads and peak20.
+- Extracted page-specific reads into `web/lib/pipeline-data.ts`. Missing customer
+  labels now use four request slots. Retained first-page label reuse,20-row paging,
+  parallel evaluation loading, error/missing-data distinctions and stale flags;
+  deduplicate repeated resource IDs within a load. GETs accept an AbortSignal and
+  the pipeline cancels obsolete work on navigation/failure. No financial cache,
+  formula, tenant authority, mutation flow, API contract or DB pool change.
+- Intermediate shared-four-slot implementation passed8browser tests and measured
+  median2203ms; refined it to avoid extra evaluation waves on known-label pages.
+  Final median **1,704ms**, samples1689/1708/1704: **59.8% lower elapsed time** in
+  this controlled scenario, same40reads, customer concurrency4, overall peak20.
+  This is client-scheduling evidence, not a whole-app or hosted speedup claim.
+- Fresh final verification: **105frontend unit tests passed**; typecheck and
+  changed-file ESLint passed; full lint0errors/68existing warnings. Fresh API/web
+  production builds and **8browser tests passed in1.9minutes**, including the
+  benchmark and full sandbox lifecycle, tenant isolation, continuation, passkeys,
+  CSP, keyboard/contrast and mobile/CSRF. Final real HTTP probe7837requests/60.05s,
+  concurrency8/no5xx/p9595.32ms; no backend performance attribution or capacity
+  guarantee. No backend implementation changed or separate full DB suite rerun.
+
+Evidence: `C:/Users/moham/AppData/Local/Temp/orderfit-e2e-5047c52a83-results/` and
+`orderfit-performance-final.log` in the same Temp directory. Only fresh synthetic
+users/data and a disposable PG17 stack were used; runner cleanup completed.
+Remaining: full evaluation payloads and up-to20evaluation fan-out still warrant
+a scoped server summary/batch contract after payload profiling. Engine/provider,
+landing-page animation, hosted and large-tenant performance remain separate gates.
+Updated the development context with the loader path and scheduling decision.
+
+## 17 October 2026 — local MFA, Docker/PG17 and encrypted restore acceptance
+
+Security follow-up advanced the sole runtime schema to `0018_passkey_mfa` with a
+password-plus-passkey flow. Registration/login challenges are short-lived,
+CSRF-bound and consumed before WebAuthn verification; completion atomically
+rechecks current password/session state, updates the sign counter, rotates the
+browser session and records evidence. Enrollment invalidates old sessions. The
+new private auth tables are FORCE-RLS and only fixed-search-path helpers are
+callable by the restricted runtime role. The legacy unsupported `mfa_enforced`
+flag remains fail-closed.
+
+Fresh final verification: `uv run --frozen pytest -q --tb=short -x` completed
+with **540 passed** in 848.01 seconds (three upstream/dependency deprecation
+warnings). Dedicated signed-passkey, tenant isolation, concurrency/replay and
+password-change checks pass. Docker browser acceptance used isolated image tags,
+stack resources and PG17; final browser/HTTP round passed seven tests. The
+encrypted joint restore drill uses only fresh synthetic tenants/documents and a
+real restic repository. It validates wrong-key and tamper rejection, document and
+audit integrity, tenant isolation, session rejection and passkey-challenge
+quarantine after restore; its measured local restore portion was 8.109 seconds.
+
+No hosted acceptance is implied. A later read-only Neon preflight verified the
+configured restricted pooled logins and `verify-full`, but no hosted migration,
+synthetic tenant, destructive test, backup or restore ran. Render/Vercel controls,
+bucket/KMS/retention controls, hosted joint restore and credential-rotation
+confirmation remain open. The exact next procedure is
+`docs/deployment/external-acceptance.md`; it requires a verified disposable target
+and local secret channel. See `docs/security/security_acceptance_2026-10-17.md`
+for source evidence and limits.
+
+## 17 October 2026 — configured Neon connection and runtime reconciliation
+
+User requested Neon-backed verification and restored the pooled API/worker URLs
+in ignored `backend/.env`. Earlier checks had found only local PostgreSQL URLs.
+Both Neon logins now connect and pass the application's complete restricted,
+non-owner runtime checks using explicit read-only transactions.
+
+- Neon already records0019_merge_passkey_roles; checkout expected0018_passkey_mfa.
+  Recovered migration graph/role SQL/test files exactly from existing commit
+  d9670a0, set the matching required sole head, and updated the original-data fixture
+  assertion for the two known reference-role rows. No Neon migration/stamp ran.
+- Fresh disposable PG17 compatibility suite: **4passed in15.69s**, including
+  preservation of original schema-suite/concurrency evidence by the fixture and
+  upgrades from each historical migration branch. Fresh focused runtime/network/
+  passkey-configuration/architecture suite: **22passed /1deprecation warning**.
+  Ruff/contracts112operations and the local production frontend build passed.
+- Initial sslmode=require was encrypted but did not meet runtime certificate
+  validation policy. Verified both connections with verify-full and the installed
+  certifi bundle, then updated only ignored local runtime URLs. The CA path is
+  host-specific and must not be copied unchanged into a container configuration.
+- Started the local API with the isolating runtime launcher and local production
+  frontend against that API. `/ready` returns200 with DB/schema/storage/worker true;
+  the browser shows API ready. Existing shared worker presence is healthy; did not
+  start a local worker or claim any shared jobs. Local frontend settings contain
+  only the loopback API address in ignored `web/.env.local`.
+- Real verified Neon query round trips178.65–186.53ms (five sequential SELECT1
+  probes), connection+begin1886.46ms. Direct API readiness726–750ms; later local
+  IPv4 frontend health proxies1877–2995ms. These separate observations are neither
+  a controlled speedup comparison nor deployed Azure/Vercel latency acceptance.
+
+See [performance follow-up](performance_review_2026-10-17.md). User sign-in is
+pending for authenticated dashboard measurements; no financial payload, synthetic
+business/account creation, outgoing action, shared migration or destructive load
+test was performed on Neon. Preserve all earlier reliability/performance changes.
+
+## 17 October 2026 — local container/Neon runtime compatibility
+
+- Reconciled the updated ignored runtime configuration without printing its
+  values. Its direct target reports `neondb` at sole Alembic head
+  `0019_merge_passkey_roles`; the older visible Docker preview instead used its
+  separate local `orderfit` database at `0018_passkey_mfa`. No shared migration,
+  stamp, provisioner run, or data mutation was performed.
+- Reproduced two Compose-only startup blockers: the internal-only default network
+  could not resolve a hosted Neon pooler, and a Windows-local `sslrootcert` path
+  is not valid inside the Linux image. Added a private, non-published egress
+  network for API/worker/migration jobs while retaining the local database on
+  the internal network. The image entrypoint now maps only a Windows absolute
+  CA path to its bundled certifi CA file before `exec`; it preserves
+  `sslmode=verify-full` and leaves `sslrootcert=system` untouched.
+- Evidence: the focused entrypoint regression passed, Ruff passed, Compose
+  configuration validated, Alembic reports the single `0019_merge_passkey_roles`
+  head, and a rebuilt production API/worker pair reached `/ready` with database,
+  schema, storage and worker all true. The temporary duplicate pair was stopped
+  after verification so the existing local host API/worker remains the only
+  active shared-test runtime. The port-3000 production Next UI visibly reported
+  `API ready`; host `/ready` remains healthy with zero backlog.
+
+## 17 October 2026 — authorized Neon account and transaction round-trip repair
+
+User explicitly requested creating an account/signing in, then continuing work.
+Created one synthetic account/business labeled TEST ONLY — Neon Performance
+through the app UI and verified its authenticated Owner dashboard/API ready.
+No actual financial inputs, order or outgoing effect was added. The randomly
+generated password was not printed or committed. This authorized signup persists
+identity/business/session records on Neon; earlier preflight-only notes stay
+historical and must not be interpreted as claiming zero writes after signup.
+
+- Actual empty-dashboard automation reloads6478/5906/5877ms, median5906ms,
+  including browser bridge/polling overhead; not Core Web Vitals or a20-order
+  benchmark. Identified three serial timeout setup SQL requests in every identity/
+  job transaction. `apply_timeouts` now sets the same three transaction-local
+  values through one bound statement, retaining call sites/order and all security,
+  lock, lease, audit and financial controls.
+- Explicit read-only Neon microprobe before256.50/268.59/258.49ms (median258.49),
+  after128.62/76.79/73.05ms (median76.79). Statements3to1; all three timeout values
+  independently checked unchanged. No whole-dashboard speedup claim from this.
+- Added a regression that failed before the repair (3statements instead of1).
+  Fresh disposable PG17 checks: **22passed /1deprecation warning in35.09s**,
+  covering commit/rollback timeout reset on pool reuse, the foundation suite and
+  non-member/read-lock/lock-timeout behavior. Ruff/contracts112operations pass.
+- Preserved concurrent Docker/entrypoint/security/handoff edits from the other
+  task. After interruption the local API and web were restarted hidden on loopback
+  ports8000/3000. Browser transport closed on both recovery attempts, preventing
+  post-fix authenticated browser measurement. Sign-in screenshot remains in the
+  artifact path recorded in [the performance report](performance_review_2026-10-17.md).
+
+Next step: restore the browser connection and repeat the three authenticated
+reloads. No shared-schema migration, destructive Neon load, new privilege or
+financial-data change was performed in this repair. The created test account
+remains on Neon; its original successful sign-in is verified, not inferred.
+
+## 17 October 2026 — audit continuation: production web launcher
+
+- Reproduced the Next standalone-output warning from the local `npm start`
+  command: `next start` is not the compatible runtime launcher when the build
+  emits `.next/standalone`. Changed the `web` start script to run the generated
+  standalone server, matching the production Docker image. This is an
+  operational-only change; it does not alter API contracts, financial logic or
+  browser code.
+- Evidence: the standalone server served `/api/health` on an alternate loopback
+  port with `connected`, `ready`, and `database` true; a fresh production build
+  then completed successfully; the corrected port-3000 launcher served the
+  sign-in page and browser inspection showed the explicit `API ready` status
+  with no console warnings/errors. The backend `/ready` endpoint simultaneously
+  reported database/schema/storage/worker true and zero backlog.
+- This continuation also re-ran the non-DB contract and core suite earlier in
+  the audit: contracts report 112 operations, Alembic reports sole head
+  `0019_merge_passkey_roles`, 214 architecture/engine/agent/contract tests
+  passed, 105 frontend unit tests passed, and frontend typecheck passed. ESLint
+  reported zero errors and 68 existing warnings. The disposable database
+  regression run remains blocked because Docker Desktop's Linux engine is not
+  available; its 20 setup errors did not run test bodies. No hosted migration,
+  shared-data mutation, real outgoing action, or provider acceptance run was
+  performed.
+
+## 17 October 2026 — authenticated Neon console audit
+
+- Inspected the active Neon project through the owner's authenticated console,
+  without viewing credentials, running SQL, changing branches, or modifying
+  data. The default `production` branch is PostgreSQL 18 in Singapore with
+  four branches total; the security-acceptance branch is temporary while two
+  pre-merge branches remain available as recovery points. The production branch
+  is never-expiring and not protected. Its branch-protection control is disabled
+  in the current console session, so no misleading partial protection was
+  attempted.
+- Project access is restricted to one inherited organization Admin; no additional
+  project members are listed. The Free plan exposes public Internet access to
+  any source with valid credentials. IP allowlists and VPC connectivity are
+  unavailable on that plan, and the console disables both controls. This is a
+  concrete hosted security limitation: restrict runtime credentials, rotate
+  them through the owner-controlled process, and upgrade/provision private
+  networking before treating the hosted environment as production-ready.
+- Compute is configured at the provider's Free-plan default range with five
+  minute scale-to-zero and six-hour history retention. These are cost/recovery
+  trade-offs, not a defect to change blindly: increasing compute, retention or
+  networking capability requires a plan change and explicit owner approval.
+
+## 17 October 2026 — Vercel public integration check
+
+- The supplied HTTPS deployment served the landing page and public sign-in route
+  successfully. Both browser views reported the explicit `API ready` state and
+  produced no browser console warnings/errors during this check. This verifies
+  the public web-to-API readiness path only; it is not authenticated workflow,
+  hosted restore, or live-provider acceptance evidence.
+- The live landing copy claimed OCR support, while the implemented document
+  contract marks scanned documents as `ocr_required` and does not provide OCR.
+  Corrected the source landing copy to describe supported PDF/text/CSV parsing
+  and explicit scanned-document review. The correction needs the normal Vercel
+  deployment workflow before it will appear at the supplied URL.
+
+## 17 October 2026 — isolated Neon security acceptance and catalog-query optimization
+
+User authorized provisioning/testing from the logged-in Neon console and deferred
+credential rotation. Created Singapore branch orderfit-security-acceptance
+(br-hidden-cell-aok23ia2), expiring18October18:56:39Bangladesh time, plus private
+source/restore buckets. Verified console production endpoint matches the existing
+configured main endpoint. All drill writes targeted the new branch; main schema,
+credentials, compute settings and application configuration were unchanged.
+
+- Real PostgreSQL18.6/revision0019 restricted API/worker logins pass.100 alternating
+  tenant transactions with one local pool connection, no-context zero rows, foreign
+  tenant404, API DDL/worker helper/table42501, worker helper and verified client TLS
+  pass. Two concurrent client sockets reused one backend across six transactions.
+- Private object put/read/hash, immutable create, readiness and anonymous GET/LIST403
+  pass. The existing branch storage credential also allows a generated off-prefix
+  write: credential prefix least privilege and separate API/worker keys remain open.
+  S3 encryption API is unsupported and no enabled versioning was returned. Provider
+  encryption statements do not independently establish bucket/KMS acceptance.
+- Encrypted restic repository round-tripped through private cloud storage. Full
+  source dump/all4document objects restored into new Neon DB
+  orderfit_restore_cfa0532373f4 and second private bucket. Core row counts match,
+  all17audit chains pass,25copied sessions revoked,2fresh sign-ins and foreign
+  download404pass.65table RLS settings/owners,100policies and32security-definer
+  owners/search paths match source. Successful hosted restore/verification portion
+  50.954s; not a production RTO. Wrong key/tamper checks and a separate cloud-backed
+  local PG18 restore also pass. Failed orderfit_restore_f0bd093d7ec6 is quarantined.
+- Hosted restore needs a reviewed TOC excluding exactly2provider-owned cloud_admin
+  default ACL records; retained app ACLs/policies and verified owners. No broad role
+  grant or RLS weakening. Current provider history6hours; no paid plan/retention
+  expansion or long-term backup policy was applied. Resources remain for review.
+- Batched Database._runtime_checks role/inheritance/ownership/revision reads from3
+  SQL statements to1without caching/removing predicates. Seven warm hosted samples
+  median235ms before/125ms after (46.8% lower for this check only). Existing deal
+  index used at0.559ms on the small snapshot; no speculative indexes/pool expansion.
+- Fresh verification:24disposable-PG17DB tests (new query/role/schema tests, timeout
+  reset, foundation),19runtime-hardening/passkeyDB tests,4architecture tests pass;
+  changed-file Ruff passes. DB runs each have one existing Starlette deprecation.
+  Full backend/browser/deployment suites were not rerun for this targeted change.
+
+Actual files:backend/orderfit/store/db.py,
+backend/tests/db/test_runtime_validation_roundtrips.py; updated external-acceptance
+revision reference, security report, progress and development-context handoff.
+See docs/security/neon_acceptance_2026-10-17.md and its sanitized JSON manifest for
+samples/resources/counts/hashes and recovery limits. P8 remains partial pending
+scoped storage keys, independent provider/KMS evidence, durable retention and
+remaining deployed acceptance. No private config/key/backup was committed.
+
+## 17 October 2026 — hackathon security evidence matrix
+
+Added `docs/security/hackathon-security-matrix-2026-10-17.md`, linked from the
+README, to map the complete sandbox financial workflow to the scoring criteria:
+least-privilege roles/RLS, risk limits, exact human approval, audit-chain
+verification, data protection and restore. It points to current source and
+executed local/hosted evidence rather than asserting compliance by design alone.
+It also contains a five-step live-demo sequence and names the remaining release
+blockers: provider network/retention limits, prefix-scoped storage credentials,
+independent KMS/version evidence, and required credential rotation. No runtime,
+database or provider configuration changed in this documentation handoff.

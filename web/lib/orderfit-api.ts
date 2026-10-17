@@ -24,14 +24,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   catch (cause) { const name = (cause as { name?: string } | null)?.name; throw name === "AbortError" || name === "TimeoutError" ? cause : new NetworkError(); }
   const body = await response.json().catch(() => ({})) as T & Envelope;
   if (!response.ok) {
-    const code = body.error?.code ?? "REQUEST_FAILED";
+    const error = body?.error;
+    const code = error?.code ?? "REQUEST_FAILED";
     if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-    throw new ApiError(body.error?.message ?? `Request failed (${response.status})`, code, response.status);
+    const fallback = response.status >= 500
+      ? "The service is temporarily unavailable. Retry the same action when it recovers."
+      : `Request failed (${response.status})`;
+    throw new ApiError(error?.message ?? fallback, code, response.status);
   }
   return body;
 }
 
-export async function get<T>(path: string): Promise<T> { return request<T>(path); }
+export async function get<T>(path: string, options: Pick<RequestInit, "signal"> = {}): Promise<T> { return request<T>(path, options); }
 const pending = new Map<string, string>();
 const PREFIX = "orderfit.pending:";
 let writes: Promise<unknown> = Promise.resolve();
@@ -75,8 +79,9 @@ async function write<T>(path: string, method: "POST" | "PATCH", payload: Payload
     if (auth && ["/auth/signup", "/auth/signin", "/auth/signout", "/auth/passkeys/login/verify"].includes(path)) clearPendingCommands();
     return result;
   } catch (error) {
-    // An HTTP rejection is known; a lost response may hide a committed command and must retain its key.
-    if (error instanceof ApiError) resolved();
+    // A server/proxy failure can hide a committed command, just like a lost response.
+    // Only a definitive client rejection releases the key; retries must recover the same write.
+    if (error instanceof ApiError && error.status < 500) resolved();
     throw error;
   }
 }

@@ -36,6 +36,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
+      # Direct migrations may target the separately configured Neon database.
+      # Keep database traffic off the browser-facing network while allowing that
+      # explicitly configured outbound connection.
+      - egress
     restart: "no"
 
   provision:
@@ -54,6 +60,9 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    networks:
+      - default
+      - egress
     restart: "no"
 
   api:
@@ -84,6 +93,11 @@ services:
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases
+    networks:
+      - default
+      # The runtime DB can be a hosted Neon endpoint. This private egress
+      # network supplies outbound DNS/TLS only; the API has no published port.
+      - egress
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -114,6 +128,9 @@ services:
       LLM_MODE: off
     volumes:
       - documents:/app/var
+    networks:
+      - default
+      - egress
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -150,4 +167,9 @@ networks:
     internal: true
   edge:
     # Only the web proxy needs host/browser access. It has no DB/storage credentials.
+    driver: bridge
+  egress:
+    # API, worker and one-shot setup jobs need outbound DNS/TLS when their
+    # explicitly configured database is hosted. No service port is published on
+    # this network, and the local PostgreSQL service remains internal-only.
     driver: bridge

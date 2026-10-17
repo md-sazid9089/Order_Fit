@@ -329,6 +329,7 @@ The reference calculator cases are maintained in [docs/architecture/orderfit/fix
 | [docs/adr/](docs/adr/) | Architecture decision records |
 | [docs/technical.md](docs/technical.md) | Technical write-up |
 | [docs/security-assessment.md](docs/security-assessment.md) | Threat model and mitigations |
+| [docs/security/hackathon-security-matrix-2026-10-17.md](docs/security/hackathon-security-matrix-2026-10-17.md) | Security, approval and audit evidence mapped to the hackathon rubric |
 | [docs/evaluation.md](docs/evaluation.md) | Evaluation against a plain-AI baseline |
 | [docs/checkpoint.md](docs/checkpoint.md) | Progress report, next targets and risks |
 | [docs/team-assessment.md](docs/team-assessment.md) | Team, ownership, skills and working agreements |

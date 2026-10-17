@@ -40,7 +40,7 @@ export function ArchitectureSecurity() {
     {
       tier: "T0",
       name: "Read-Only Extraction",
-      action: "Document parsing, OCR, and table extraction into typed Pydantic models.",
+      action: "PDF and text/CSV parsing into typed models; scanned documents are explicitly marked for review.",
       status: "Safe",
       color: "bg-emerald-100 text-emerald-800",
     },

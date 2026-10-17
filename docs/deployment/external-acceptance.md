@@ -91,7 +91,7 @@ uv run --frozen python -m orderfit.store.provision --help
 ```
 
 Use the provisioning CLI as documented in [neon.md](neon.md), not a guessed role
-command. Verify sole revision `0018_passkey_mfa`, FORCE RLS, definer
+command. Verify sole revision `0019_merge_passkey_roles`, FORCE RLS, definer
 owners/search paths, no PUBLIC helper execution, runtime table grants, no
 superuser/admin/owner inheritance. Start isolated API/worker against this branch.
 Invite a synthetic viewer, produce one authorized workflow notification, verify

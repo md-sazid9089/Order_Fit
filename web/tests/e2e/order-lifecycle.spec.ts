@@ -58,8 +58,34 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByLabel("Invoice date").fill(delivery);
   await page.getByLabel("Order amount (integer minor units)").fill("5000000");
   await page.getByLabel("Payment days").fill("30");
+  // A gateway can lose the response after the draft has already been persisted.
+  // Retrying the form must recover that exact draft with the original command key.
+  const draftKeys: string[] = [];
+  let admittedDraftId = "";
+  await page.route("**/api/v1/businesses/*/deals", async route => {
+    if (route.request().method() !== "POST") return route.continue();
+    draftKeys.push(route.request().headers()["idempotency-key"]);
+    const saved = await route.fetch();
+    expect(saved.status()).toBe(200);
+    const draft = await saved.json();
+    if (!admittedDraftId) {
+      admittedDraftId = draft.id;
+      await route.fulfill({ status: 502, contentType: "text/html", body: "Bad gateway" });
+    } else {
+      expect(draft.id).toBe(admittedDraftId);
+      await route.fulfill({ response: saved });
+    }
+  });
+  await page.getByRole("button", { name: "Save and review" }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("temporarily unavailable");
+  await page.screenshot({ path: test.info().outputPath("recoverable-gateway-error.png"), fullPage: true });
   await page.getByRole("button", { name: "Save and review" }).click();
   await expect(page.getByRole("heading", { name: `E2E-${suffix}` })).toBeVisible();
+  expect(draftKeys).toHaveLength(2);
+  expect(draftKeys[0]).toBeTruthy();
+  expect(draftKeys[1]).toBe(draftKeys[0]);
+  expect(new URL(page.url()).pathname).toBe(`/deals/${admittedDraftId}`);
+  await page.unroute("**/api/v1/businesses/*/deals");
 
   await page.getByRole("button", { name: "Confirm and evaluate" }).click();
   await expect(page.getByText(/Saved evaluation operation: succeeded/i)).toBeVisible({ timeout: 30_000 });

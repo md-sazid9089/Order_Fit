@@ -46,8 +46,16 @@ TRANSACTION_TIMEOUTS = {
 
 
 def apply_timeouts(connection):
-    for name, value in TRANSACTION_TIMEOUTS.items():
-        connection.execute(text("SELECT set_config(:n,:v,true)"), {"n": name, "v": value})
+    # One network round trip; all settings remain transaction-local and precede
+    # session resolution/tenant locks exactly as before.
+    connection.execute(
+        text(
+            "SELECT set_config('lock_timeout',:lock_timeout,true),"
+            "set_config('statement_timeout',:statement_timeout,true),"
+            "set_config('idle_in_transaction_session_timeout',:idle_in_transaction_session_timeout,true)"
+        ),
+        TRANSACTION_TIMEOUTS,
+    )
 
 
 class Database:
@@ -66,22 +74,26 @@ class Database:
     @staticmethod
     def _runtime_checks(c, *, worker=False) -> tuple[bool, bool]:
         """(restricted non-owner login, schema revision current)."""
+        # One catalog snapshot and round trip; retain every role/inheritance and
+        # ownership check. A missing revision fails closed; multiple rows error.
         r = (
             c.execute(
                 text(
-                    "SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolcanlogin,pg_has_role(current_user,'orderfit_admin','MEMBER') AS admin,pg_has_role(current_user,'orderfit_app','USAGE') AS app,pg_has_role(current_user,'orderfit_worker','USAGE') AS worker FROM pg_roles r WHERE rolname=current_user"
-                )
+                    "SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolcanlogin,"
+                    "pg_has_role(current_user,'orderfit_admin','MEMBER') AS admin,"
+                    "pg_has_role(current_user,'orderfit_app','USAGE') AS app,"
+                    "pg_has_role(current_user,'orderfit_worker','USAGE') AS worker,"
+                    "(EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p') AND pg_has_role(current_user,c.relowner,'MEMBER')) "
+                    "OR EXISTS(SELECT FROM pg_database d WHERE d.datname=current_database() AND pg_has_role(current_user,d.datdba,'MEMBER')) "
+                    "OR EXISTS(SELECT FROM pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolcreaterole OR p.rolcreatedb OR p.rolreplication) AND pg_has_role(current_user,p.oid,'MEMBER'))) AS owns,"
+                    "(SELECT version_num FROM alembic_version)=:revision AS schema_current "
+                    "FROM pg_roles r WHERE rolname=current_user"
+                ),
+                {"revision": SCHEMA_REVISION},
             )
             .mappings()
             .one()
         )
-        owns = c.execute(
-            text(
-                "SELECT EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p') AND pg_has_role(current_user,c.relowner,'MEMBER')) "
-                "OR EXISTS(SELECT FROM pg_database d WHERE d.datname=current_database() AND pg_has_role(current_user,d.datdba,'MEMBER')) "
-                "OR EXISTS(SELECT FROM pg_roles p WHERE (p.rolsuper OR p.rolbypassrls OR p.rolcreaterole OR p.rolcreatedb OR p.rolreplication) AND pg_has_role(current_user,p.oid,'MEMBER'))"
-            )
-        ).scalar_one()
         restricted = not (
             r["rolsuper"]
             or r["rolbypassrls"]
@@ -90,12 +102,12 @@ class Database:
             or r["rolreplication"]
             or not r["rolcanlogin"]
             or r["admin"]
-            or owns
+            or r["owns"]
             or not r["app"]
             or (worker and not r["worker"])
             or (not worker and r["worker"])
         )
-        current = c.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == SCHEMA_REVISION
+        current = r["schema_current"] is True
         return restricted, current
 
     def validate_runtime(self, *, worker=False):
