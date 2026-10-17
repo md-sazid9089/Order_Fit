@@ -1,0 +1,13 @@
+{
+  "head": "ebaa8f9b97562a824ff72ede1c728e4daa966591",
+  "branch": "main",
+  "source_sha256": "d48301845a75335ce1ad95b8c1ad518d7b26c39aff329343f1c654de8a957bbf",
+  "frontend_sha256": "811a05e3624a400aea50dcaf3d36af0d84742b38693f3af62459c6b9adda1e20",
+  "tracked_diff_sha256": "bc2bc05f066d88926f1116faa56dc15fb4ee50f14443f13f3b88ff86544ebc54",
+  "source_files": 451,
+  "status": [
+    " M scripts/run-e2e.ps1",
+    "?? scripts/hackathon_snapshot.py"
+  ],
+  "identity_scope": "source includes tracked and nonignored untracked backend/web/scripts/CI/compose; docs excluded to avoid self-reference; diff hash covers tracked changes only"
+}

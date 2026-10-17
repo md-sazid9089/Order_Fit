@@ -1,6 +1,10 @@
 param(
     [switch]$SkipBuild,
-    [string]$TestPattern = ""
+    [string]$TestPattern = "",
+    [string]$EvidenceDirectory = "",
+    # Optional local review: after automated checks, retain this disposable stack
+    # until the caller removes the named file. Normal CI behavior is unchanged.
+    [string]$BrowserReviewGate = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +15,16 @@ $tempCompose = Join-Path ([System.IO.Path]::GetTempPath()) ("$project.compose.ym
 $apiImage = "${project}-api:local"
 $webImage = "${project}-web:local"
 $testOutput = Join-Path ([System.IO.Path]::GetTempPath()) ("$project-results")
+if ($EvidenceDirectory) {
+    $testOutput = [System.IO.Path]::GetFullPath($EvidenceDirectory)
+    New-Item -ItemType Directory -Path $testOutput -Force | Out-Null
+}
+if ($BrowserReviewGate) {
+    $BrowserReviewGate = [System.IO.Path]::GetFullPath($BrowserReviewGate)
+    if (Test-Path -LiteralPath $BrowserReviewGate) {
+        throw "Browser review gate already exists; choose a fresh run-specific file."
+    }
+}
 
 function New-Secret {
     $bytes = New-Object byte[] 32
@@ -91,6 +105,22 @@ try {
     } while ([DateTime]::UtcNow -lt $deadline)
     if (-not $ready -or -not $ready.connected -or -not $ready.ready) { throw "The isolated API did not become ready through the web proxy." }
 
+    # This manifest deliberately excludes environment values, login URLs and
+    # browser credentials. It identifies the running images rather than tags alone.
+    $imageEvidence = [ordered]@{}
+    foreach ($service in @("api", "worker", "web", "db")) {
+        $containerId = & docker compose @composeFiles --project-name $project --env-file $tempEnv ps -q $service
+        $imageEvidence[$service] = & docker inspect --format '{{.Image}}' $containerId
+    }
+    $manifest = [ordered]@{
+        project = $project
+        base_url = "http://localhost:$webPort"
+        head = (& git -C $root rev-parse HEAD)
+        images = $imageEvidence
+        llm_mode = "off"
+        evidence_directory = $testOutput
+    }
+
     $env:E2E_BASE_URL = "http://localhost:$webPort"
     Push-Location (Join-Path $root "web")
     try {
@@ -100,7 +130,18 @@ try {
         & npm run test:e2e -- @acceptanceTestArgs
         if ($LASTEXITCODE -ne 0) { throw "Playwright E2E failed. Evidence: $testOutput" }
     }
-    finally { Pop-Location }
+    finally {
+        Pop-Location
+        # Playwright clears its output directory at startup; write identity after
+        # it exits, including a failed run, so the evidence cannot lose its target.
+        $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $testOutput "environment.json") -Encoding utf8
+    }
+    if ($BrowserReviewGate) {
+        $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $BrowserReviewGate -Encoding utf8
+        Write-Output "Disposable browser review ready: http://localhost:$webPort"
+        Write-Output "Remove the run-specific review gate to finish and clean up: $BrowserReviewGate"
+        while (Test-Path -LiteralPath $BrowserReviewGate) { Start-Sleep -Seconds 2 }
+    }
 } catch {
     # Curated application events only: never dump container environment, raw
     # request headers, database statements, cookies or provider diagnostics.

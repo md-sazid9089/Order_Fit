@@ -39,7 +39,9 @@ def fork_snapshot(snapshot: ConfirmedInputV1, changes) -> ConfirmedInputV1:
         if kind == "deposit_pct":
             data["strategy_space"]["deposit_pcts"] = [change.value]
         elif kind == "supplier_extension":
-            eligible = {c.cost_key for c in snapshot.order.costs if c.is_deferrable}
+            eligible = {
+                c.cost_key for c in snapshot.order.costs if c.incremental and c.is_deferrable
+            }
             if set(change.eligible_cost_keys) != eligible or not eligible:
                 raise ApplicationError(422, "UNSUPPORTED_EXTENSION_SUBSET")
             extension = next(
@@ -209,12 +211,33 @@ _NEGATION = re.compile(
     r"without|neither|nor|if|unless|provided|subject to|would|might|may|could)\b|n't\b",
     re.I,
 )
+_QUALIFICATION = re.compile(
+    r"\b(?:but|except|pending|contingent|conditional|conditionally|provisional|provisionally|"
+    r"assuming|once|only\s+(?:after|when)|in\s+principle)\b",
+    re.I,
+)
+_EXACT_ACCEPTANCE = r"\b(accept the exact proposed terms)\b"
 
 
 def _qualified(body, match):
-    """True when the sentence fragment before the match negates or conditions it."""
+    """Reject conditions before or after an apparent exact acceptance.
+
+    Later sentences can qualify the acceptance too. This conservative parser may
+    require manual attestation for harmless prose; it must not discard a condition
+    and turn only the quoted acceptance phrase into evidence of unconditional assent.
+    Earlier unrelated sentences do not negate a later, explicit acceptance.
+    """
     start = max(body.rfind(c, 0, match.start()) for c in ".\n!?")
-    return bool(_NEGATION.search(body[start + 1 : match.start()]))
+    context = body[start + 1 : match.start()] + " " + body[match.end() :]
+    return bool(_NEGATION.search(context) or _QUALIFICATION.search(context))
+
+
+def has_exact_acceptance(body):
+    """Whether source text contains an unqualified exact-terms acceptance candidate."""
+    return any(
+        not _qualified(body, match)
+        for match in re.finditer(_EXACT_ACCEPTANCE, body, re.I)
+    )
 
 
 def reply_candidates(body):
@@ -231,7 +254,7 @@ def reply_candidates(body):
             "supplier_extension_days",
         ),
         (r"(?:financing draw(?: of| is)?\s+)([1-9]\d*)\s+minor units", "financing_draw_minor"),
-        (r"\b(accept the exact proposed terms)\b", "acceptance"),
+        (_EXACT_ACCEPTANCE, "acceptance"),
     ]
     for pattern, field in patterns:
         for match in re.finditer(pattern, body, re.I):

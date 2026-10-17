@@ -15,6 +15,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ValidationError
 
+from orderfit.agent.guards.source_budget import extraction_within_budget
 from orderfit.contracts.language import (
     Candidate,
     LanguageRequest,
@@ -96,21 +97,26 @@ def _to_parsed(
             )
         except ValidationError:
             return _unavailable("INVALID_OUTPUT", "invalid_output")
-    return LanguageResult(
-        result=ParsedLanguage(
-            kind="parsed",
-            proposal=Proposal(candidates=candidates, changes=[], sentences=[], findings=[]),
-            model=model,
-            response_id=response_id,
-            input_hash=request.input_hash,
-            prompt_version=request.prompt_version,
-            schema_version=SCHEMA_VERSION,
-            recorded_at=recorded_at,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            guard_findings=[],
+    try:
+        return LanguageResult(
+            result=ParsedLanguage(
+                kind="parsed",
+                proposal=Proposal(candidates=candidates, changes=[], sentences=[], findings=[]),
+                model=model,
+                response_id=response_id,
+                input_hash=request.input_hash,
+                prompt_version=request.prompt_version,
+                schema_version=SCHEMA_VERSION,
+                recorded_at=recorded_at,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                guard_findings=[],
+            )
         )
-    )
+    except ValidationError:
+        # Final aggregate limits and provider metadata are validated here too,
+        # not only each candidate. Live and recorded results share this boundary.
+        return _unavailable("INVALID_OUTPUT", "invalid_output")
 
 
 def recording_path(settings: LLMSettings, request: LanguageRequest) -> Path | None:
@@ -233,6 +239,10 @@ async def extract(request: LanguageRequest, settings: LLMSettings) -> LanguageRe
     """Propose candidates for ``request``; mode decides whether any network is used."""
     if settings.mode == "off":
         return _unavailable("AI_OFF")
+    if not extraction_within_budget(source.text for source in request.sources):
+        # This request cannot use automatic extraction. The durable handler emits
+        # DOCUMENT_TOO_LONG with split/manual guidance before reaching this guard.
+        return _unavailable("PROVIDER_UNAVAILABLE")
     if settings.mode == "recorded":
         return _recorded(request, settings)
     return await _live(request, settings)

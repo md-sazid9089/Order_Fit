@@ -143,7 +143,8 @@ class DocumentRepository:
     @staticmethod
     def storage(c, business_id, deal_id, doc_id):
         row = c.execute(
-            text("SELECT original_filename,mime_type FROM document WHERE business_id=:b AND deal_id=:d AND id=:id"),
+            text("SELECT original_filename,mime_type,content_hash,size_bytes FROM document "
+                 "WHERE business_id=:b AND deal_id=:d AND id=:id"),
             {"b": business_id, "d": deal_id, "id": doc_id},
         ).mappings().one_or_none()
         if row is None:

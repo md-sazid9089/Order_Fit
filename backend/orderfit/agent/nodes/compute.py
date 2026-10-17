@@ -166,7 +166,9 @@ def dated_commitment_events(result: Result, option_key: str) -> list[DatedEvent]
 
     A pure mapping of engine output (no arithmetic): customer receipts with their engine
     certainty, incremental costs including any extension surcharge, and fixed-term loan
-    draw/fee/interest/repayment. Baseline-scope events are excluded; decline has none.
+    draw/fee/interest/repayment. Exact zero residuals (full/rounded deposits or concessions)
+    are no cash movement and are omitted. Negative values still fail the positive-money
+    contract. Baseline-scope events are excluded; decline has none.
     """
     candidate = next((c for c in result.catalogue if c.strategy.id == option_key), None)
     if candidate is None:
@@ -185,7 +187,7 @@ def dated_commitment_events(result: Result, option_key: str) -> list[DatedEvent]
             certainty=e.certainty,
         )
         for e in candidate.events["base"]
-        if e.scope in {"order", "financing"}
+        if e.scope in {"order", "financing"} and e.amount != 0
     ]
     keys = [e.event_key for e in events]
     if len(set(keys)) != len(keys):
