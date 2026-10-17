@@ -8,13 +8,14 @@ permissions:
   contents: read
 
 jobs:
+  # Code scanning (the Security tab) needs GitHub Code Security for private personal repos, so results
+  # are not uploaded: each run keeps the SARIF report as an artifact and summarizes the result count.
   codeql:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       actions: read
-      security-events: write
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +32,26 @@ jobs:
       - uses: github/codeql-action/analyze@f051dc808ef3645eb0d08647ec751634ec2304ac # v4
         with:
           category: /language:${{ matrix.language }}
+          upload: never
+          output: ${{ runner.temp }}/codeql-results
+      - name: Summarize CodeQL results
+        if: always()
+        env:
+          LANGUAGE: ${{ matrix.language }}
+        run: |
+          count=$(jq -s '[.[].runs[].results[]] | length' "$RUNNER_TEMP"/codeql-results/*.sarif 2>/dev/null || echo unknown)
+          echo "### CodeQL $LANGUAGE: $count result(s); download the codeql-$LANGUAGE artifact for details" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$count" != "0" ] && [ "$count" != "unknown" ]; then
+            echo "::warning::CodeQL $LANGUAGE reported $count result(s); see the codeql-$LANGUAGE artifact"
+          fi
+      - name: Retain CodeQL report for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: codeql-${{ matrix.language }}
+          path: ${{ runner.temp }}/codeql-results
+          if-no-files-found: warn
+          retention-days: 14
 
   python-dependencies:
     runs-on: ubuntu-latest
