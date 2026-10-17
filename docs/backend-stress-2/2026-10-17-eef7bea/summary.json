@@ -1,0 +1,680 @@
+{
+  "experiments": {
+    "http": {
+      "requests": 72,
+      "statuses": {
+        "200": 71,
+        "transport_error": 1
+      },
+      "errors": {
+        "ReadError": 1
+      },
+      "stages": [
+        {
+          "stage": "ramp-1-2",
+          "started": 72,
+          "dropped": 0,
+          "seconds": 36.00990230000025,
+          "statuses": {
+            "200": 71,
+            "transport_error": 1
+          },
+          "worst_route_p95_ms": 95.51229999942734,
+          "route_p95_ms": {
+            "profile": 62.214,
+            "pipeline": 95.512,
+            "deal": 32.5,
+            "constraints": 66.932,
+            "customers": 22.465,
+            "notifications": 44.269,
+            "create": 64.001,
+            "replay": 62.884
+          },
+          "peak_api_mib": 105.59375,
+          "unexpected": [
+            {
+              "route": "replay",
+              "type": "ReadError"
+            }
+          ]
+        }
+      ],
+      "reconciled": [],
+      "last_event": "stage_end"
+    },
+    "http-final": {
+      "requests": 493,
+      "statuses": {
+        "200": 412,
+        "404": 40,
+        "422": 40,
+        "transport_error": 1
+      },
+      "errors": {
+        "ReadError": 1
+      },
+      "stages": [
+        {
+          "stage": "ramp-1-2",
+          "started": 120,
+          "dropped": 0,
+          "seconds": 60.010952100000395,
+          "statuses": {
+            "200": 100,
+            "404": 10,
+            "422": 10
+          },
+          "worst_route_p95_ms": 130.1661999996213,
+          "route_p95_ms": {
+            "profile": 29.154,
+            "pipeline": 95.026,
+            "deal": 23.485,
+            "constraints": 23.563,
+            "customers": 27.844,
+            "notifications": 20.459,
+            "create": 130.166,
+            "replay": 30.19,
+            "cross_tenant": 20.852,
+            "invalid_limit": 5.972
+          },
+          "peak_api_mib": 109.78515625,
+          "unexpected": []
+        },
+        {
+          "stage": "ramp-1-5",
+          "started": 300,
+          "dropped": 0,
+          "seconds": 60.01202530000046,
+          "statuses": {
+            "200": 240,
+            "404": 30,
+            "422": 30
+          },
+          "worst_route_p95_ms": 113.78930000046239,
+          "route_p95_ms": {
+            "profile": 64.686,
+            "pipeline": 113.789,
+            "deal": 34.272,
+            "constraints": 30.628,
+            "customers": 47.808,
+            "notifications": 83.373,
+            "create": 80.491,
+            "replay": 72.038,
+            "cross_tenant": 93.263,
+            "invalid_limit": 10.337
+          },
+          "peak_api_mib": 108.81640625,
+          "unexpected": []
+        },
+        {
+          "stage": "ramp-1-10",
+          "started": 73,
+          "dropped": 0,
+          "seconds": 7.314964399999553,
+          "statuses": {
+            "200": 72,
+            "transport_error": 1
+          },
+          "worst_route_p95_ms": 147.82689999992726,
+          "route_p95_ms": {
+            "profile": 48.097,
+            "pipeline": 147.827,
+            "deal": 54.858,
+            "constraints": 36.139,
+            "customers": 35.691,
+            "notifications": 27.176,
+            "create": 75.521,
+            "replay": 56.019
+          },
+          "peak_api_mib": 107.3515625,
+          "unexpected": [
+            {
+              "route": "replay",
+              "type": "ReadError"
+            }
+          ]
+        }
+      ],
+      "reconciled": [
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 0,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 1,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 2,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 3,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 4,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 5,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 6,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 7,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 8,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:55:17Z",
+          "tenant": 9,
+          "saved_deals": 105,
+          "new_creates": 5,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        }
+      ],
+      "last_event": "aborted"
+    },
+    "keepalive-5": {
+      "requests": 110,
+      "statuses": {
+        "200": 89,
+        "404": 10,
+        "422": 10,
+        "transport_error": 1
+      },
+      "errors": {
+        "RemoteProtocolError": 1
+      },
+      "stages": [
+        {
+          "stage": "ramp-1-2",
+          "started": 110,
+          "dropped": 0,
+          "seconds": 55.08238530000017,
+          "statuses": {
+            "200": 89,
+            "404": 10,
+            "422": 10,
+            "transport_error": 1
+          },
+          "worst_route_p95_ms": 98.93620000002556,
+          "route_p95_ms": {
+            "profile": 80.063,
+            "pipeline": 92.495,
+            "deal": 98.936,
+            "constraints": 25.131,
+            "customers": 95.84,
+            "notifications": 20.234,
+            "create": 42.797,
+            "replay": 97.194,
+            "cross_tenant": 43.876,
+            "invalid_limit": 7.215
+          },
+          "peak_api_mib": 105.6484375,
+          "unexpected": [
+            {
+              "route": "profile",
+              "type": "RemoteProtocolError"
+            }
+          ]
+        }
+      ],
+      "reconciled": [
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 0,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 1,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 2,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 3,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 4,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 5,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 6,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 7,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 8,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:46:40Z",
+          "tenant": 9,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        }
+      ],
+      "last_event": "aborted"
+    },
+    "keepalive-2": {
+      "requests": 120,
+      "statuses": {
+        "200": 100,
+        "404": 10,
+        "422": 10
+      },
+      "errors": {},
+      "stages": [
+        {
+          "stage": "ramp-1-2",
+          "started": 120,
+          "dropped": 0,
+          "seconds": 60.01185269999951,
+          "statuses": {
+            "200": 100,
+            "404": 10,
+            "422": 10
+          },
+          "worst_route_p95_ms": 121.54680000003282,
+          "route_p95_ms": {
+            "profile": 24.904,
+            "pipeline": 47.396,
+            "deal": 22.975,
+            "constraints": 30.11,
+            "customers": 19.278,
+            "notifications": 51.765,
+            "create": 68.25,
+            "replay": 121.547,
+            "cross_tenant": 30.673,
+            "invalid_limit": 3.442
+          },
+          "peak_api_mib": 111.609375,
+          "unexpected": []
+        }
+      ],
+      "reconciled": [
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 0,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 1,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 2,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 3,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 4,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 5,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 6,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 7,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 8,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:36Z",
+          "tenant": 9,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 0,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 1,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 2,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 3,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 4,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 5,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 6,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 7,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 8,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        },
+        {
+          "kind": "reconciled",
+          "utc": "2026-10-17T07:48:48Z",
+          "tenant": 9,
+          "saved_deals": 3,
+          "new_creates": 1,
+          "recovered_unknown_writes": 0,
+          "audit_chain": true
+        }
+      ],
+      "last_event": "complete"
+    }
+  },
+  "suites": {
+    "backend": {
+      "tests": "540",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "685.747"
+    },
+    "backend-final": {
+      "tests": "542",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "658.358"
+    },
+    "recovery-final": {
+      "tests": "23",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "83.579"
+    },
+    "resource-guards-final": {
+      "tests": "5",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "1.170"
+    }
+  },
+  "browser_bursts": [
+    {
+      "label": "mixed-tenant-profile-reads",
+      "count": 200,
+      "concurrency": 16,
+      "wall_ms": 1972.17,
+      "p50_ms": 137.27,
+      "p95_ms": 340.66,
+      "max_ms": 423.67
+    },
+    {
+      "label": "customer-write-same-key",
+      "count": 32,
+      "concurrency": 16,
+      "wall_ms": 415.76,
+      "p50_ms": 142.23,
+      "p95_ms": 314.83,
+      "max_ms": 317.84
+    },
+    {
+      "label": "malformed-customer-writes",
+      "count": 32,
+      "concurrency": 8,
+      "wall_ms": 90.08,
+      "p50_ms": 21.52,
+      "p95_ms": 26.31,
+      "max_ms": 30.19
+    }
+  ],
+  "browser_sustained": {
+    "count": 7459,
+    "concurrency": 8,
+    "seconds": 60.043954400000004,
+    "statuses": {
+      "200": 5593,
+      "404": 933,
+      "422": 933
+    },
+    "p50_ms": 56.922199999999066,
+    "p95_ms": 125.17599999999948,
+    "max_ms": 502.54559999999947
+  },
+  "browser_passed": true,
+  "application_files_verified_unchanged": 170,
+  "resource_abort": {
+    "reason": "Plan disk-space stop gate",
+    "drive": "C",
+    "free_bytes": 11431366656,
+    "free_percent": 7.147081693010049,
+    "minimum_percent": 15,
+    "docker_disk": "C:\\Users\\Administrator\\AppData\\Local\\Docker\\wsl\\disk\\docker_data.vhdx",
+    "owned_api_pids": [
+      11224,
+      24276
+    ],
+    "stopped_at": "2026-10-17T13:55:17.5299647+06:00",
+    "method": "Terminate only API descendants of exact http-final harness; allow harness DB reconciliation and fixture cleanup"
+  }
+}

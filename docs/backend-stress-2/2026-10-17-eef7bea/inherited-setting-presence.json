@@ -1,0 +1,18 @@
+[
+  {
+    "name": "DATABASE_URL",
+    "inherited_present": false
+  },
+  {
+    "name": "DATABASE_URL_DIRECT",
+    "inherited_present": false
+  },
+  {
+    "name": "WORKER_DATABASE_URL",
+    "inherited_present": false
+  },
+  {
+    "name": "OPENAI_API_KEY",
+    "inherited_present": false
+  }
+]

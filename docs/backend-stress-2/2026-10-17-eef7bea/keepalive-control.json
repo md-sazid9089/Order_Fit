@@ -1,0 +1,5 @@
+{
+  "client_5_seconds_exit": 1,
+  "client_5_seconds_error": "RemoteProtocolError",
+  "client_2_seconds_exit": 0
+}

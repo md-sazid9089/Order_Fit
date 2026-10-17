@@ -1707,3 +1707,45 @@ temporary directory recorded in the closure report. Final sustained HTTP run:
 - By design on main, `/api/v1/admin/*` is not mounted and the web console is gated
   off (`platformAdminEnabled()` returns false); passkeys need HTTPS
   `WEBAUTHN_RP_ID`/`WEBAUTHN_ORIGIN`. Production Neon and Azure were not touched.
+
+## 17 October 2026 — stress plan 2 execution, partial/blocked
+
+Application snapshot `eef7bea2f7d622dc293f8667a120222666fa0d29`, execution branch
+`backend/stress_test`, sole Alembic head `0019_merge_passkey_roles`. See the
+[detailed report](backend_stress_test_report_2.md) and
+[raw evidence](backend-stress-2/2026-10-17-eef7bea/summary.json). SHA256 checks
+confirmed all 170 manifest application/migration/lock files unchanged.
+
+Fresh final full suite: **542 passed, 3 warnings, 658.69 s**, using disposable
+PG17 and actual restricted runtime logins. Isolated affected recovery/race suite:
+**23 passed**; signed 32-way passkey finish admitted exactly one session/event.
+Reference22cases/0problems and independent selftest0failures. Fresh private
+production-image browser/proxy suite: **7 passed**, including the sandbox
+lifecycle, lost response and passkey journey; separate 60-second proxy probe
+handled7,459requests with expected200/404/422 and zero5xx. These runs overlap;
+their counts must not be summed.
+
+Added opt-in disposable HTTP runner, raw sanitized request metrics, same-intent
+abort reconciliation, explicit server limits, and actual Windows process liveness
+checks. Nonzero retained working-set counters caused early false cleanup
+failures; a direct probe showed zero live processes, correcting the premature
+leak diagnosis. Existing application behavior and financial expectations stayed
+unchanged. A five-second client/server idle-expiry comparison disconnected after
+110 attempts; the two-second-client control completed120attempts/60s. This remains
+an open transport compatibility finding, not a verified production fix.
+
+Final ten-business/100-seed-deal arrival run completed2req/s and5req/s windows
+of60seconds each without unexpected responses, before the disk gate stopped the
+10req/s stage. Docker's physical C: storage had **7.147% free**, below the plan's
+**15%** minimum; approximately13GB additional free space was needed. The deliberate
+API stop caused one read error; reconciliation retained all50acknowledged creates,
+1,050total deals and10valid audit chains, with no unknown writes or unscoped deal
+visibility. The owned DB container was confirmed removed. Added pre-provisioning
+disk guards; four new boundary/multi-volume cases plus the existing liveness test
+passed separately (**5 passed**), after the542-test run. Actual low-space CLI
+refused before provisioning. No full546-test result is claimed.
+
+User explicitly selected **“Finish with the blocked-gate report.”** No further
+load was run. Repeated five-minute ramps/warm-ups, capacity-knee confirmation,
+two-hour/eight-hour soak, full workload families, D2 datasets, complete resource
+telemetry and hosted Neon/Azure/Caddy/S3/provider/restore gates remain open.
