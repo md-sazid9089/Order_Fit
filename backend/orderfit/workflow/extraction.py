@@ -13,6 +13,7 @@ from uuid import UUID
 from sqlalchemy import text
 
 from orderfit.agent import llm
+from orderfit.agent.guards.source_budget import MAX_EXTRACTION_CHARS, extraction_within_budget
 from orderfit.contracts.language import LanguageRequest, ParsedLanguage, SourceExcerpt
 from orderfit.contracts.workflow import (
     BlockedResult,
@@ -21,6 +22,7 @@ from orderfit.contracts.workflow import (
 )
 from orderfit.services.documents import injection_flags, parse_cash_csv, quote_supports
 from orderfit.store.document_repository import preview_hash
+from orderfit.store.documents import DocumentIntegrityError, read_verified_document
 from orderfit.store.repositories import append_audit
 
 PROMPT_VERSION = "extract_order.v1"
@@ -101,6 +103,12 @@ def run_extract(operations, claim, job, runtime: Runtime):
         return failure("DOCUMENT_UNAVAILABLE")
     if parse_row["status"] != "parsed":
         return _needs_input("DOCUMENT_NOT_PARSED", "This document has no readable text. Enter the values manually.")
+    if not extraction_within_budget(_page_texts(parse_row["pages"])):
+        return _needs_input(
+            "DOCUMENT_TOO_LONG",
+            f"Automatic extraction supports at most {MAX_EXTRACTION_CHARS:,} text characters per document. "
+            "Split the document or enter the values manually.",
+        )
     if dropped_pages(parse_row["pages"]):
         return _needs_input(
             "DOCUMENT_TOO_LONG",
@@ -228,7 +236,13 @@ def handle_csv_preview(job, c, scope, runtime: Runtime):
         {"b": scope.business_id, "d": doc["id"]}).mappings().one_or_none()
     if parse_row is None or parse_row["status"] != "parsed" or doc["mime_type"] != "text/csv":
         return _needs_input("DOCUMENT_NOT_PARSED", "This document is not a readable CSV file.")
-    raw = runtime.documents.read(scope.business_id, doc["deal_id"], doc["id"]).decode("utf-8-sig")
+    try:
+        raw = read_verified_document(
+            runtime.documents, scope.business_id, doc["deal_id"], doc["id"],
+            content_hash=doc["content_hash"], size_bytes=doc["size_bytes"],
+        ).decode("utf-8-sig")
+    except DocumentIntegrityError:
+        return failure("DOCUMENT_INTEGRITY_FAILURE")
     from datetime import date
 
     as_of_text, currency = _csv_parameters(c, job.operation_id, scope.business_id)

@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from orderfit.api.deps import identity_service, mutation, session_token
 from orderfit.api.errors import ApplicationError
-from orderfit.contracts.primitives import ExpectedVersions, Page
+from orderfit.contracts.primitives import DTO, ExpectedVersions, HashHex, Page
 from orderfit.contracts.protocol import IdempotencyMaterial, canonical_hash
 from orderfit.contracts.resources import (
     CashEventView,
@@ -26,12 +26,23 @@ from orderfit.contracts.resources import (
 from orderfit.contracts.workflow import OperationAccepted, Review
 from orderfit.services.documents import UploadRejected, parse, sniff_mime
 from orderfit.store.document_repository import DocumentRepository
-from orderfit.store.documents import DocumentStorageUnavailable
+from orderfit.store.documents import (
+    DocumentIntegrityError,
+    DocumentStorageUnavailable,
+    read_verified_document,
+)
 from orderfit.store.repositories import DealRepository, IdempotencyRepository
 from orderfit.workflow.operations import Admission, Operations
 
 router = APIRouter(prefix="/api/v1/businesses/{business_id}")
 MAX_BYTES = 26214400
+
+
+class _UploadFingerprint(DTO):
+    metadata: DocumentUpload
+    filename: str
+    mime_type: str
+    content_hash: HashHex
 
 
 def _fingerprint(request, business_id, scope, body):
@@ -68,7 +79,7 @@ def upload_document(
     metadata: Annotated[str, Form()],
     file: Annotated[UploadFile, File()],
 ):
-    service, _key, _ = mutation(request)
+    service, idempotency_key, _ = mutation(request)
     try:
         meta = DocumentUpload.model_validate_json(metadata)
     except ValidationError:
@@ -85,6 +96,10 @@ def upload_document(
     if (meta.kind == "csv") != (mime == "text/csv"):
         raise ApplicationError(422, "KIND_MIME_MISMATCH")
     digest = hashlib.sha256(data).digest()
+    filename = _safe_name(file.filename)
+    command = _UploadFingerprint(metadata=meta, filename=filename, mime_type=mime,
+                                 content_hash=digest.hex())
+    path = str(request.url.path)
     # FastAPI has already received and spooled the multipart body before this function runs;
     # this route cannot prevent that. BodyLimit (api/main.py) admits a body above 1 MiB only
     # after its own database check of session, prepare membership and deal, and caps
@@ -92,8 +107,12 @@ def upload_document(
     # document parser runs: a non-member or a missing deal gets 404 without parsing. This
     # short read-only check holds no business write lock; the write transaction below
     # re-checks membership/role and versions after parsing.
-    with service.database.tenant(session_token(request), business_id, "prepare", readonly=True) as (c, _):
+    with service.database.tenant(session_token(request), business_id, "prepare", readonly=True) as (c, scope):
         DealRepository.get_deal(c, business_id, deal_id)
+        fingerprint = _fingerprint(request, business_id, scope, command)
+        cached = IdempotencyRepository.lookup(c, business_id, idempotency_key, path, fingerprint)
+        if cached is not None:
+            return DocumentView.model_validate(cached)
     try:
         parsed = parse(data, mime)
     except UploadRejected as exc:
@@ -101,8 +120,16 @@ def upload_document(
         # the caller can retry the same upload once a parser slot is available.
         raise ApplicationError(429, exc.code, "Document processing is busy. Try again shortly.") from None
     with service.database.tenant(session_token(request), business_id, "prepare") as (c, scope):
+        # Reserve only in the transaction that creates the evidence and success audit.
+        # The business lock serializes competing uploads, including those that both
+        # passed the read-only replay check before either command committed.
+        fingerprint = _fingerprint(request, business_id, scope, command)
+        cached = IdempotencyRepository.reserve(c, business_id, idempotency_key, path, fingerprint)
+        if cached is not None:
+            return DocumentView.model_validate(cached)
         existing = DocumentRepository.find_duplicate(c, business_id, deal_id, digest)
         if existing:
+            IdempotencyRepository.complete(c, business_id, idempotency_key, existing.model_dump(mode="json"))
             return existing
         doc_id = uuid4()
         try:
@@ -115,10 +142,12 @@ def upload_document(
             request.app.state.documents.discard(business_id, deal_id, doc_id)
             raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE")
         try:
-            return DocumentRepository.create(
-                c, scope, deal_id, meta, doc_id=doc_id, filename=_safe_name(file.filename),
+            result = DocumentRepository.create(
+                c, scope, deal_id, meta, doc_id=doc_id, filename=filename,
                 mime=mime, storage_key=key, digest=digest, size=size, parse=parsed,
             )
+            IdempotencyRepository.complete(c, business_id, idempotency_key, result.model_dump(mode="json"))
+            return result
         except Exception:
             # A rejected upload (stale versions, role, constraint) leaves no orphaned bytes.
             request.app.state.documents.discard(business_id, deal_id, doc_id)
@@ -158,9 +187,12 @@ def download_document(business_id: UUID, deal_id: UUID, document_id: UUID, reque
     with service.database.tenant(session_token(request), business_id, "read") as (c, _):
         meta = DocumentRepository.storage(c, business_id, deal_id, document_id)
     try:
-        content = request.app.state.documents.read(business_id, deal_id, document_id)
-    except (FileNotFoundError, ValueError):
+        content = read_verified_document(request.app.state.documents, business_id, deal_id, document_id,
+                                         content_hash=meta["content_hash"], size_bytes=meta["size_bytes"])
+    except FileNotFoundError:
         raise ApplicationError(404, "NOT_FOUND") from None
+    except DocumentIntegrityError:
+        raise _document_integrity_failure() from None
     except DocumentStorageUnavailable:
         raise ApplicationError(503, "DEPENDENCY_UNAVAILABLE") from None
     name = _safe_name(meta["original_filename"]).replace('"', "")
@@ -175,6 +207,11 @@ def download_document(business_id: UUID, deal_id: UUID, document_id: UUID, reque
             "Content-Security-Policy": "sandbox",
         },
     )
+
+
+def _document_integrity_failure():
+    return ApplicationError(503, "DOCUMENT_INTEGRITY_FAILURE",
+                            "This document failed its integrity check. Restore the original source before continuing.")
 
 
 @router.post(

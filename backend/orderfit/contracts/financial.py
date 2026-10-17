@@ -9,6 +9,7 @@ from pydantic import Field, StrictBool, model_validator
 from .primitives import (
     BIGINT_MAX,
     DTO,
+    MAX_MONEY,
     BigId,
     BizDate,
     Bps,
@@ -408,7 +409,8 @@ class ConfirmedInputV1(DTO):
         if work > self.analysis.max_work_units:
             raise ValueError("analysis work limit")
         # Conservative bound includes all cash, extension+stress costs, revenue, principal,
-        # interest and fees across the full grid. Python integers cannot overflow.
+        # interest and fees across the full grid. It must fit the service's HTTP money
+        # contract as well as SQL: a BIGINT-safe result can still exceed MoneyMinor.
         total = (
             abs(int(self.opening_cash_minor))
             + int(self.reserve_minor)
@@ -418,6 +420,8 @@ class ConfirmedInputV1(DTO):
         total += sum(int(o.max_minor) * 4 + int(o.fee_flat_minor) for o in self.offers)
         if total > BIGINT_MAX:
             raise ValueError("expanded aggregate exceeds BIGINT")
+        if total > MAX_MONEY:
+            raise ValueError("expanded aggregate exceeds service money bound")
         # Bound the complete possible horizon, including scan and late funding.
         delay = max(
             self.scenarios.downside.order_receipt_delay_days,

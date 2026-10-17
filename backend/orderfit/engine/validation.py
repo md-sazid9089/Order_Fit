@@ -108,7 +108,10 @@ def admit(case):
     total = abs(case["opening_balance"]) + case["reserve"] + order["revenue"] * 2
     total += sum(e["amount"] * 4 for e in case["baseline_events"] + order["costs"])
     total += sum(o["max"] * 4 + o["fee_flat"] for o in case["financing_offers"])
-    if total > 9223372036854775807:
+    # Input amounts, expanded movements, profit differences and daily balances
+    # share the supported minor-unit envelope. SQL BIGINT alone is too wide for
+    # the frozen application money contract; never discover that during storage.
+    if total > 9_000_000_000_000_000:
         raise AnalysisLimit("ANALYSIS_AGGREGATE_LIMIT")
     candidates = 1 + dimensions * (1 + 3 * len(space["offer_ids"]))
     if 0 not in space["deposit_pcts"] or not any(e["days"] == 0 for e in space["extensions"]):

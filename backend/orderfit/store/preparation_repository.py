@@ -24,6 +24,7 @@ from orderfit.services.preparation import (
     COURTESY,
     draft_text,
     fork_snapshot,
+    has_exact_acceptance,
     merge_changes,
     terms_hash,
     validate_message,
@@ -602,7 +603,8 @@ def review_reply(c, scope, deal_id, reply_id, command):
                             eligible_cost_keys=[
                                 cost.cost_key
                                 for cost in source.order.costs
-                                if cost.is_deferrable and cost.payee_id == ask.identity.party_id
+                                if cost.incremental and cost.is_deferrable
+                                and cost.payee_id == ask.identity.party_id
                             ],
                         )
                     )
@@ -720,7 +722,12 @@ def record_acceptance(c, scope, deal_id, command):
             "financing_draw_minor": item.identity.option.parameters.draw_minor,
             "acceptance": "accepted",
         }
-        if not any(x.field == "acceptance" for x in reply.candidates) or any(
+        # Recheck preserved source text, including historical candidate sets from
+        # before qualification handling changed. Immutable proposals are evidence,
+        # not authority to drop a condition when recording a fresh attestation.
+        if not has_exact_acceptance(reply.body) or not any(
+            x.field == "acceptance" for x in reply.candidates
+        ) or any(
             x.value != exact_values[x.field] for x in reply.candidates
         ):
             raise ApplicationError(409, "REPLY_NOT_EXACT_ACCEPTANCE")

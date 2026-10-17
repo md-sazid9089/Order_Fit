@@ -168,16 +168,52 @@ DATE_FIELDS = {"order_date", "invoice_date", "delivery_date"}
 BASIS_FIELDS = {"payment_basis"}
 # Group-separated (1,234 / 1,00,000) or plain numbers, never a fragment of a longer number.
 _NUMBER = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?![\d])")
+_MINUS = r"\-\u2212\u2012\u2013\u2014\ufe63\uff0d"
+_CURRENCY_MARKER = r"(?:\b(?:bdt|usd|eur|gbp)\b|[$€£৳])"
+_NEGATIVE_PREFIX = re.compile(
+    rf"(?:[{_MINUS}]\s*(?:{_CURRENCY_MARKER}\s*)?|\(\s*(?:{_CURRENCY_MARKER}\s*)?)$",
+    re.I,
+)
+_NEGATIVE_SUFFIX = re.compile(
+    rf"^\s*(?:{_CURRENCY_MARKER}\s*)?[{_MINUS}](?!\s*\d)", re.I,
+)
 
 
-def _numbers_in(quote: str) -> set[Decimal]:
-    return {Decimal(m.group().replace(",", "")) for m in _NUMBER.finditer(quote)}
+def _numbers_in(quote: str, page_text: str) -> set[Decimal]:
+    """Whole source tokens inside the quote, retaining signs/accounting brackets.
+
+    Read tokens from the original page, so a shortened quote cannot hide the
+    source sign or select only a numeric substring (100 from 1000, for example).
+    Whitespace/case normalization matches the existing quote-presence contract.
+    """
+    source, quoted = _norm(page_text), _norm(quote)
+    values: set[Decimal] = set()
+    tokens = iter(_NUMBER.finditer(source))
+    token = next(tokens, None)
+    for occurrence in re.finditer(re.escape(quoted), source):
+        # Both streams are ordered and quote occurrences do not overlap. Advance
+        # once through source numbers rather than rescanning a repeated page for
+        # every occurrence of a short quote.
+        while token is not None and token.start() < occurrence.start():
+            token = next(tokens, None)
+        while token is not None and token.start() < occurrence.end():
+            if token.end() <= occurrence.end():
+                value = Decimal(token.group().replace(",", ""))
+                prefix = source[max(0, token.start() - 64) : token.start()]
+                suffix = source[token.end() : token.end() + 32]
+                if _NEGATIVE_PREFIX.search(prefix) or _NEGATIVE_SUFFIX.search(suffix):
+                    value = -value
+                values.add(value)
+            token = next(tokens, None)
+        if token is None:
+            break
+    return values
 
 
 def quote_supports(field_name: str, value: str | None, quote: str, page_text: str) -> str:
     """Return 'ok', 'quote_mismatch' or 'ambiguous'. The quote must appear in the page text.
 
-    Numbers must match a whole numeric token of the quote exactly. Fields whose value this
+    Numbers must match a whole signed source token covered by the quote. Fields whose value this
     function cannot compare structurally (costs, offers, acceptance, bank changes) are never
     'ok': they stay 'ambiguous' so a person must review them against the cited quote.
     """
@@ -189,9 +225,9 @@ def quote_supports(field_name: str, value: str | None, quote: str, page_text: st
         if not value.isascii() or not value.isdigit():
             return "quote_mismatch"
         if field_name == "payment_days":
-            return "ok" if Decimal(value) in _numbers_in(quote) else "quote_mismatch"
+            return "ok" if Decimal(value) in _numbers_in(quote, page_text) else "quote_mismatch"
         # minor units: a quoted token must equal the major amount (value / 100) exactly
-        return "ok" if Decimal(value) / 100 in _numbers_in(quote) else "quote_mismatch"
+        return "ok" if Decimal(value) / 100 in _numbers_in(quote, page_text) else "quote_mismatch"
     if field_name in BASIS_FIELDS:
         words = re.sub(r"[\W_]+", " ", value.lower()).strip()
         found = re.search(rf"(?<!\w){re.escape(words)}(?!\w)", re.sub(r"[\W_]+", " ", quote.lower()))

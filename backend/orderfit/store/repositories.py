@@ -108,6 +108,26 @@ def append_audit(c, scope, action: str, *, deal_id=None, payload=None, outcome="
 
 class IdempotencyRepository:
     @staticmethod
+    def lookup(c, business_id, key, scope, request_hash):
+        """Read a live replay before expensive work, without reserving a command.
+
+        Admission must still call reserve() in the mutation transaction: a concurrent
+        command may complete after this read. No pending key is committed separately.
+        """
+        row = c.execute(
+            text("SELECT scope,request_hash,status,response FROM idempotency_key "
+                 "WHERE business_id=:b AND key=:k AND expires_at>clock_timestamp()"),
+            {"b": business_id, "k": key},
+        ).mappings().one_or_none()
+        if row is None:
+            return None
+        if bytes(row["request_hash"]) != request_hash or row["scope"] != scope:
+            raise ApplicationError(409, "IDEMPOTENCY_CONFLICT")
+        if row["status"] != "completed":
+            raise ApplicationError(409, "OPERATION_IN_PROGRESS")
+        return row["response"]
+
+    @staticmethod
     def reserve(c, business_id, key, scope, request_hash):
         if not key or not key.strip() or len(key) > 200:
             raise ApplicationError(422, "INVALID_IDEMPOTENCY_KEY")

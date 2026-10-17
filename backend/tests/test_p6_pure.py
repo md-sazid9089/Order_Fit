@@ -217,6 +217,140 @@ def test_dated_commitment_events_are_exact_engine_output():
     assert all(e.scope != "baseline" for e in events.values())  # rent stays a baseline event
 
 
+def _cash_boundary_snapshot(revenue="100", opening="100"):
+    from orderfit.contracts.financial import ConfirmedInputV1
+    from tests.contracts.examples import snapshot
+
+    raw = snapshot()
+    raw.update(opening_cash_minor=opening, reserve_minor="0", baseline_events=[], offers=[])
+    raw["order"].update(
+        order_value_minor=revenue, order_date="2026-11-02", invoice_date="2026-11-04",
+        delivery_date="2026-11-04", payment_days=0, deposit_discount_bps_per_10pct=0,
+    )
+    raw["order"]["costs"][0].update(amount_minor="20", event_date="2026-11-03")
+    raw["strategy_space"].update(
+        deposit_pcts=[0, 100], deposit_lead_days=0,
+        extensions=[{"days": 0, "surcharge_bps": 0}], offer_ids=[],
+    )
+    raw["analysis"]["scan_days"] = 2
+    for scenario in raw["scenarios"].values():
+        scenario.update(order_receipt_delay_days=0, ar_delay_days=0, cost_overrun_bps=0)
+    return ConfirmedInputV1.model_validate(raw)
+
+
+@pytest.mark.parametrize(
+    ("revenue", "deposit_pct", "concession", "expected"),
+    [
+        ("100", 100, 0, [("materials", "20", "out"), ("order_deposit", "100", "in")]),
+        ("1", 99, 0, [("materials", "20", "out"), ("order_deposit", "1", "in")]),
+        ("100", 100, 10000, [("materials", "20", "out")]),
+    ],
+)
+def test_zero_residual_receipts_are_not_cash_movements(revenue, deposit_pct, concession, expected):
+    from orderfit.agent.nodes.compute import compute, dated_commitment_events
+    from orderfit.contracts.financial import ConfirmedInputV1
+
+    raw = _cash_boundary_snapshot(revenue).model_dump(mode="json")
+    raw["strategy_space"]["deposit_pcts"] = [0, deposit_pct]
+    raw["order"]["deposit_discount_bps"] = concession
+    confirmed = ConfirmedInputV1.model_validate(raw)
+    result = compute(confirmed).result
+    option = next(c for c in result.catalogue if c.strategy.deposit_pct == deposit_pct)
+    # Independent values: 100% (or half-up rounding of 99% of one minor unit)
+    # leaves no final receipt. A 100% concession leaves only the 20-unit cost.
+    assert option.net_profit == (0 if concession else int(revenue)) - 20
+    assert option.scenarios["base"].final_balance == 100 + option.net_profit
+    events = dated_commitment_events(result, option.strategy.id)
+    assert [(e.source_id, e.amount_minor, e.direction) for e in events] == expected
+    assert all(int(e.amount_minor) > 0 for e in events)
+    assert all(e.event_date == date(2026, 11, 2) for e in events if e.source_id == "order_deposit")
+
+
+def test_negative_engine_movement_remains_a_projection_error():
+    from dataclasses import replace
+
+    from orderfit.agent.nodes.compute import compute, dated_commitment_events
+
+    result = compute(_cash_boundary_snapshot()).result
+    candidate = next(c for c in result.catalogue if c.strategy.deposit_pct == 100)
+    candidate.events["base"] = [replace(e, amount=-1) for e in candidate.events["base"]]
+    with pytest.raises(ValidationError, match="must be positive"):
+        dated_commitment_events(result, candidate.strategy.id)
+
+
+def test_zero_loan_fees_do_not_create_spurious_projection_rows():
+    from orderfit.agent.nodes.compute import compute, dated_commitment_events
+    from orderfit.contracts.financial import ConfirmedInputV1
+    from tests.contracts.examples import loan
+
+    raw = _cash_boundary_snapshot().model_dump(mode="json")
+    offer = loan()
+    offer.update(min_minor="1", max_minor="1", step_minor="1", lead_days=0, term_days=10,
+        interest_bps=0, fee_bps=0, fee_flat_minor="0")
+    raw["offers"] = [offer]
+    raw["strategy_space"]["offer_ids"] = [offer["offer_id"]]
+    result = compute(ConfirmedInputV1.model_validate(raw)).result
+    candidate = next(c for c in result.catalogue if c.strategy.deposit_pct == 100 and c.strategy.offer_id)
+    projected = dated_commitment_events(result, candidate.strategy.id)
+    assert {(e.source_id, e.amount_minor) for e in projected} == {
+        ("loan_draw", "1"), ("loan_repayment", "1"), ("order_deposit", "100"), ("materials", "20"),
+    }
+    assert candidate.financing_cost == 0 and candidate.net_profit == 80
+    assert candidate.scenarios["base"].final_balance == 180
+
+
+def test_expanded_money_bound_rejects_unrepresentable_output_before_publication():
+    from orderfit.agent.nodes.compute import compute_review, to_engine_input
+    from orderfit.contracts.financial import ConfirmedInputV1
+
+    valid = _cash_boundary_snapshot()
+    raw = valid.model_dump(mode="json")
+    raw.update(opening_cash_minor="9000000000000000")
+    raw["order"]["order_value_minor"] = "9000000000000000"
+    # Individual values fit, but even base closes exceed the frozen HTTP bound.
+    with pytest.raises(ValidationError, match="expanded aggregate exceeds service money bound"):
+        ConfirmedInputV1.model_validate(raw)
+    financial = to_engine_input(valid).model_dump(mode="python")
+    financial["opening_balance"] = 9_000_000_000_000_000
+    financial["order"]["revenue"] = 9_000_000_000_000_000
+    from orderfit.engine.models import EngineInput
+
+    result = compute_review(EngineInput.model_validate(financial))
+    assert result.decision == "analysis_limit"
+    assert result.catalogue == [] and result.recommended is None
+    assert result.diagnostics == {"reason": "ANALYSIS_AGGREGATE_LIMIT"}
+
+
+def test_expanded_money_bound_includes_extension_stress_and_loan_fees():
+    from orderfit.agent.nodes.compute import compute, compute_review, to_engine_input
+    from orderfit.contracts.financial import ConfirmedInputV1
+    from orderfit.services.evaluations import extract_series
+    from tests.contracts.examples import loan
+
+    raw = _cash_boundary_snapshot().model_dump(mode="json")
+    raw["strategy_space"]["extensions"] = [{"days": 0, "surcharge_bps": 0}, {"days": 1, "surcharge_bps": 10000}]
+    raw["scenarios"]["severe"]["cost_overrun_bps"] = 10000
+    raw["offers"] = [loan()]
+    raw["offers"][0].update(min_minor="1", max_minor="1", step_minor="1", fee_flat_minor="1")
+    raw["strategy_space"]["offer_ids"] = [raw["offers"][0]["offer_id"]]
+    # Expanded bound = abs(opening) + reserve + 2*100 + 4*20 + 4*1 + 1.
+    raw["opening_cash_minor"] = str(9_000_000_000_000_000 - 285)
+    confirmed = ConfirmedInputV1.model_validate(raw)
+    result = compute(confirmed).result
+    assert result.decision == "accept_as_is"
+    for candidate in result.catalogue:
+        for scenario in ("base", "downside", "severe"):
+            extract_series(result, confirmed, None, scenario, candidate.strategy.id)
+    raw["opening_cash_minor"] = str(int(raw["opening_cash_minor"]) + 1)
+    with pytest.raises(ValidationError, match="expanded aggregate exceeds service money bound"):
+        ConfirmedInputV1.model_validate(raw)
+    financial = to_engine_input(confirmed).model_dump(mode="python")
+    financial["opening_balance"] += 1
+    from orderfit.engine.models import EngineInput
+
+    assert compute_review(EngineInput.model_validate(financial)).decision == "analysis_limit"
+
+
 def test_classify_commitment_rejects_output_that_does_not_match_the_snapshot():
     from types import SimpleNamespace
 

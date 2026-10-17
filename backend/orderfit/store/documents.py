@@ -13,6 +13,25 @@ class DocumentStorageUnavailable(RuntimeError):
     """Private document storage could not complete an operation."""
 
 
+class DocumentIntegrityError(ValueError):
+    """Storage bytes do not match their immutable database evidence identity."""
+
+
+def read_verified_document(storage, business_id, deal_id, document_id, *, content_hash, size_bytes):
+    """Verify every source read against DB evidence, including a backend's own checksum.
+
+    Object metadata can be replaced with an object; only the immutable document row
+    supplies the authoritative content identity. Callers authorize before this read.
+    """
+    try:
+        content = storage.read(business_id, deal_id, document_id)
+    except ValueError:
+        raise DocumentIntegrityError("document integrity check failed") from None
+    if len(content) != size_bytes or hashlib.sha256(content).digest() != bytes(content_hash):
+        raise DocumentIntegrityError("document integrity check failed")
+    return content
+
+
 class PrivateDocuments:
     def __init__(self, root: str):
         if Path(root).is_symlink():
