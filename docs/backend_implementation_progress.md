@@ -1685,3 +1685,25 @@ claim is made by summing overlapping runs. Final production API/web image builds
 passed; private-runner cleanup completed; browser evidence retained in the unique
 temporary directory recorded in the closure report. Final sustained HTTP run:
 2820requests/60.20s, no5xx, p95371.87ms at concurrency8 under concurrent test load.
+
+## Main/Neon migration join — 17 October 2026
+
+- Production Neon is at `0017_merge_heads` (worker presence joined with
+  `0016_add_user_admin_roles` from `Ui-improve`). Main `7a5e378` had advanced to
+  `0017_platform_authority` -> `0018_passkey_mfa` without that join, so it could not
+  migrate Neon. Branch `fix/azure-backend-main-migrations` from `7a5e378` cherry-picks
+  the tested join (`d451441`) and adds SQL-free `0019_merge_passkey_roles`
+  (parents `0018_passkey_mfa`, `0017_merge_heads`). `SCHEMA_REVISION` follows it;
+  sole Alembic head verified. No applied migration edited.
+- Disposable PG17 focused run: migration merge (incl. Neon path with an existing
+  user), passkeys, admin security, session authority, foundation, RBAC, provisioner
+  and passkey configuration: **54 passed**. Ruff clean; contract check 112 operations.
+- Disposable container rehearsal (`d451441` image at `0017_merge_heads` -> one
+  `alembic upgrade head` -> branch image): applies exactly 0017_platform_authority,
+  0018_passkey_mfa, 0019_merge_passkey_roles. Pre-upgrade session stays valid;
+  password sign-in, wrong-password 401, sign-up, worker evaluation, `/health` and
+  `/ready` pass. Owner promotion revokes the old session and `/auth/me` then reports
+  `is_platform_admin=true`.
+- By design on main, `/api/v1/admin/*` is not mounted and the web console is gated
+  off (`platformAdminEnabled()` returns false); passkeys need HTTPS
+  `WEBAUTHN_RP_ID`/`WEBAUTHN_ORIGIN`. Production Neon and Azure were not touched.

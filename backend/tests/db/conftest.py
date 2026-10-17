@@ -179,8 +179,13 @@ def postgres():
             assert current.pop("deal_transition") == sorted(
                 old["deal_transition"] + [repr(("computing", "awaiting_confirm"))]
             )
+            # 0016_add_user_admin_roles adds exactly these reference rows and changes no others.
+            assert current.pop("app_role") == sorted(
+                old["app_role"]
+                + [repr(("user", "T0", "Standard user")), repr(("admin", "T4", "Administrator"))]
+            )
             assert current == {
-                table: rows for table, rows in old.items() if table != "deal_transition"
+                table: rows for table, rows in old.items() if table not in {"deal_transition", "app_role"}
             }
             runtime_pw, worker_pw = secrets.token_hex(24), secrets.token_hex(24)
             provision_login(c, "p1_runtime", runtime_pw)
