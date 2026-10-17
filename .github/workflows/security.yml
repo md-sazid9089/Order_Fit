@@ -33,7 +33,7 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: none
           config-file: ${{ matrix.config }}
-      - uses: github/codeql-action/analyze@f051dc808ef3645eb0d08647ec751634ec2304ac # v4
+      - uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           category: /language:${{ matrix.language }}
           upload: never
