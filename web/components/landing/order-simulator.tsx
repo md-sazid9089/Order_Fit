@@ -366,13 +366,13 @@ export function OrderSimulator() {
                 </div>
 
                 {/* Live Key Numbers Banner */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center">
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2 sm:gap-3">
+                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
                       Lowest Cash
                     </span>
                     <span
-                      className={`text-lg sm:text-xl font-bold font-neue-machina ${
+                      className={`text-base sm:text-lg md:text-xl font-bold font-neue-machina truncate block ${
                         simulation.lowestBalance < 0
                           ? "text-rose-600"
                           : simulation.isSafe
@@ -384,12 +384,12 @@ export function OrderSimulator() {
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center">
+                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
                       Example Headroom
                     </span>
                     <span
-                      className={`text-lg sm:text-xl font-bold font-neue-machina ${
+                      className={`text-base sm:text-lg md:text-xl font-bold font-neue-machina truncate block ${
                         simulation.headroom >= 0 ? "text-emerald-700" : "text-rose-600"
                       }`}
                     >
@@ -397,11 +397,11 @@ export function OrderSimulator() {
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center">
+                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
                     <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
                       Example Profit
                     </span>
-                    <span className="text-lg sm:text-xl font-bold font-neue-machina text-[#004D3B]">
+                    <span className="text-base sm:text-lg md:text-xl font-bold font-neue-machina text-[#004D3B] truncate block">
                       {formatUSD(simulation.netProfit)}
                     </span>
                   </div>
@@ -409,23 +409,23 @@ export function OrderSimulator() {
 
                 {/* Day-by-day Event Timeline Table */}
                 <div className="rounded-2xl border border-[#ECEAE4] overflow-hidden">
-                  <div className="bg-[#F7F6F5] px-4 py-2.5 text-xs font-bold text-[#526975] uppercase tracking-wider flex justify-between">
+                  <div className="bg-[#F7F6F5] px-4 py-2.5 text-xs font-bold text-[#526975] uppercase tracking-wider flex justify-between items-center">
                     <span>Day &amp; Financial Event</span>
-                    <span>Ending Balance</span>
+                    <span className="shrink-0 pl-2">Ending Balance</span>
                   </div>
                   <div className="divide-y divide-[#ECEAE4] max-h-56 overflow-y-auto text-xs font-mono">
                     {simulation.timelineData.map((ev, i) => (
                       <div
                         key={i}
-                        className={`px-4 py-2 flex justify-between items-center ${
+                        className={`px-4 py-2 flex justify-between items-center gap-2 ${
                           ev.balance < 0 ? "bg-rose-50/50" : ""
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#526975] w-12">Day {ev.day}:</span>
-                          <span className="text-[#1A1A1A] font-sans font-medium">{ev.name}</span>
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          <span className="text-[#526975] w-12 shrink-0">Day {ev.day}:</span>
+                          <span className="text-[#1A1A1A] font-sans font-medium truncate">{ev.name}</span>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <span
                             className={`font-bold ${
                               ev.balance < 0

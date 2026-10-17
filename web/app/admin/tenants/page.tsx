@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, getBusiness, listMembers } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
 import type { SessionView, BusinessView } from "@/lib/generated-api";
@@ -135,15 +136,19 @@ export default function AdminTenantsPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => void loadTenants()}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              <ThemeToggle variant="icon" />
+
+              <button
+                type="button"
+                onClick={() => void loadTenants()}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
           </div>
         </header>
 

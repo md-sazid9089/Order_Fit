@@ -85,6 +85,27 @@
   --radius: 0.75rem;
 }
 
+.dark {
+  --background: #1E2021;
+  --foreground: #F3F4F6;
+  --card: #181A1B;
+  --card-foreground: #F3F4F6;
+  --popover: #181A1B;
+  --popover-foreground: #F3F4F6;
+  --primary: #004D3B;
+  --primary-foreground: #FFFAEC;
+  --secondary: #222425;
+  --secondary-foreground: #F3F4F6;
+  --muted: #222425;
+  --muted-foreground: #A3A3A3;
+  --accent: #004D3B;
+  --accent-foreground: #B5F2C6;
+  --destructive: #991B1B;
+  --border: #2A2C2D;
+  --input: #2A2C2D;
+  --ring: #004D3B;
+}
+
 @layer base {
   * {
     border-color: var(--border);
@@ -94,6 +115,10 @@
     background-color: #F7F6F5;
     scroll-behavior: smooth;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+  html.dark {
+    background-color: #1E2021;
+    color-scheme: dark;
   }
   /* Lenis smooth scrolling performance overrides */
   html.lenis,
@@ -121,6 +146,10 @@
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  html.dark body {
+    background-color: #1E2021;
+    color: #F3F4F6;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -167,6 +196,18 @@
     animation-play-state: paused;
   }
 
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* OrderFit Unified Page Layout System: Matches /deals page width (1560px) and responsive margins */
   .orderfit-page-main {
     width: 100%;
@@ -195,5 +236,305 @@
     margin-left: auto;
     margin-right: auto;
     width: 100%;
+  }
+
+  /* Dark mode overrides inspired by the Sign In & Sign Up pages (#1E2021, #181A1B, #222425, #2A2C2D) */
+  html.dark .bg-\[\#F7F6F5\],
+  html.dark .bg-\[\#f7f6f5\] {
+    background-color: #1E2021 !important;
+  }
+
+  html.dark .bg-\[\#F7F6F5\]\/95 {
+    background-color: rgba(30, 32, 33, 0.95) !important;
+  }
+
+  html.dark .bg-\[\#F7F6F5\]\/85 {
+    background-color: rgba(30, 32, 33, 0.85) !important;
+  }
+
+  html.dark .bg-\[\#F7F6F5\]\/60 {
+    background-color: rgba(24, 26, 27, 0.6) !important;
+  }
+
+  html.dark .bg-\[\#FAF9F7\] {
+    background-color: #222425 !important;
+  }
+
+  html.dark .bg-\[\#F4F2ED\] {
+    background-color: #232526 !important;
+  }
+
+  html.dark .bg-\[\#EFECE6\],
+  html.dark .bg-\[\#ECEAE4\] {
+    background-color: #282A2B !important;
+  }
+
+  html.dark .bg-white:not(button):not(a):not(input) {
+    background-color: #181A1B !important;
+  }
+
+  html.dark .bg-white\/95 {
+    background-color: rgba(24, 26, 27, 0.95) !important;
+  }
+
+  /* High-contrast action buttons in dark mode (inspired by login/signup primary button) */
+  html.dark button.bg-white,
+  html.dark a.bg-white {
+    background-color: #F3F4F6 !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-white:hover,
+  html.dark a.bg-white:hover {
+    background-color: #FFFFFF !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-white svg,
+  html.dark a.bg-white svg {
+    color: #181A1B !important;
+  }
+
+  /* Primary dark-styled action buttons in light mode become high-contrast light buttons in dark mode */
+  html.dark button.bg-\[\#1E2021\],
+  html.dark button.bg-neutral-900,
+  html.dark a.bg-neutral-900,
+  html.dark a.bg-\[\#1E2021\]:not([aria-current="page"]):not([href="/admin"]):not([href="/"]) {
+    background-color: #F3F4F6 !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-\[\#1E2021\]:hover,
+  html.dark button.bg-neutral-900:hover,
+  html.dark a.bg-neutral-900:hover,
+  html.dark a.bg-\[\#1E2021\]:hover:not([aria-current="page"]) {
+    background-color: #FFFFFF !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-\[\#1E2021\] svg,
+  html.dark button.bg-neutral-900 svg,
+  html.dark a.bg-neutral-900 svg,
+  html.dark a.bg-\[\#1E2021\]:not([aria-current="page"]) svg {
+    color: #181A1B !important;
+  }
+
+  html.dark .bg-neutral-50,
+  html.dark .bg-neutral-100 {
+    background-color: #222425 !important;
+  }
+
+  html.dark .border-neutral-300,
+  html.dark .border-neutral-400 {
+    border-color: #373A3C !important;
+  }
+
+  /* Badges using dark bg */
+  html.dark span.bg-\[\#1E2021\] {
+    background-color: #2E3032 !important;
+    color: #F3F4F6 !important;
+    border: 1px solid #404244 !important;
+  }
+
+  /* Text Contrast Overrides */
+  html.dark .text-\[\#1A1A1A\],
+  html.dark .text-\[\#1E2021\],
+  html.dark .text-neutral-900,
+  html.dark .text-neutral-800,
+  html.dark .text-black {
+    color: #F3F4F6 !important;
+  }
+
+  html.dark .text-\[\#526975\],
+  html.dark .text-\[\#525252\],
+  html.dark .text-neutral-700,
+  html.dark .text-neutral-600 {
+    color: #D4D4D4 !important;
+  }
+
+  html.dark .text-\[\#737373\],
+  html.dark .text-neutral-500,
+  html.dark .text-neutral-400 {
+    color: #A3A3A3 !important;
+  }
+
+  html.dark .text-\[\#A3A3A3\] {
+    color: #A3A3A3 !important;
+  }
+
+  /* Brand Colors in Dark Mode */
+  html.dark .text-\[\#004D3B\],
+  html.dark .text-\[\#093A2F\] {
+    color: #34D399 !important;
+  }
+
+  /* Badges & Status Indicators */
+  /* Green Badges (Active, Evaluated, Operational, Verified) */
+  html.dark .bg-\[\#ECFDF5\],
+  html.dark .bg-\[\#D1FAE5\],
+  html.dark .bg-emerald-50,
+  html.dark .bg-green-50 {
+    background-color: rgba(5, 150, 105, 0.2) !important;
+    color: #6EE7B7 !important;
+    border-color: rgba(5, 150, 105, 0.4) !important;
+  }
+  html.dark .text-\[\#065F46\],
+  html.dark .text-\[\#059669\],
+  html.dark .text-emerald-800,
+  html.dark .text-green-800,
+  html.dark .text-green-900 {
+    color: #6EE7B7 !important;
+  }
+
+  /* Red Badges (Revoked, Suspended, Error, Critical) */
+  html.dark .bg-\[\#FEF2F2\],
+  html.dark .bg-\[\#FEE2E2\],
+  html.dark .bg-red-50 {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: #FCA5A5 !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+  }
+  html.dark .text-\[\#991B1B\],
+  html.dark .text-\[\#DC2626\],
+  html.dark .text-red-700,
+  html.dark .text-red-800,
+  html.dark .text-red-900 {
+    color: #FCA5A5 !important;
+  }
+
+  /* Amber Badges (Auditor, Pending, Warning, Medium Risk) */
+  html.dark .bg-\[\#FEF3C7\],
+  html.dark .bg-\[\#FFFBEB\],
+  html.dark .bg-amber-50 {
+    background-color: rgba(217, 119, 6, 0.2) !important;
+    color: #FCD34D !important;
+    border-color: rgba(217, 119, 6, 0.4) !important;
+  }
+  html.dark .text-\[\#92400E\],
+  html.dark .text-\[\#D97706\],
+  html.dark .text-amber-800,
+  html.dark .text-amber-900 {
+    color: #FCD34D !important;
+  }
+
+  /* Purple Badges (Risk Officer) */
+  html.dark .bg-\[\#EDE9FE\],
+  html.dark .bg-purple-50 {
+    background-color: rgba(139, 92, 246, 0.2) !important;
+    color: #C4B5FD !important;
+    border-color: rgba(139, 92, 246, 0.4) !important;
+  }
+  html.dark .text-\[\#5B21B6\],
+  html.dark .text-\[\#7C3AED\],
+  html.dark .text-purple-800 {
+    color: #C4B5FD !important;
+  }
+
+  /* Blue Badges (Nodes, Info) */
+  html.dark .bg-\[\#EFF6FF\],
+  html.dark .bg-blue-50 {
+    background-color: rgba(37, 99, 235, 0.2) !important;
+    color: #93C5FD !important;
+    border-color: rgba(37, 99, 235, 0.4) !important;
+  }
+  html.dark .text-\[\#2563EB\],
+  html.dark .text-blue-800 {
+    color: #93C5FD !important;
+  }
+
+  /* Neutral Badges (Viewer, Draft) */
+  html.dark .text-\[\#374151\] {
+    color: #D1D5DB !important;
+  }
+  html.dark .bg-\[\#F3F4F6\] {
+    background-color: #26282A !important;
+    color: #D1D5DB !important;
+  }
+
+  /* Borders & Dividers */
+  html.dark .border-\[\#E8E6E1\],
+  html.dark .border-\[\#ECEAE4\],
+  html.dark .border-\[\#E5EBEA\],
+  html.dark .border-\[\#DDD9D0\],
+  html.dark .border-\[\#F0EEEA\],
+  html.dark .border-\[\#F4F2ED\] {
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark .divide-\[\#F0EEEA\] > :not([hidden]) ~ :not([hidden]),
+  html.dark .divide-\[\#E8E6E1\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #2A2C2D !important;
+  }
+
+  /* Form Elements & Inputs */
+  html.dark input:not([type="checkbox"]):not([type="radio"]),
+  html.dark select,
+  html.dark textarea {
+    background-color: #222425 !important;
+    border-color: #2A2C2D !important;
+    color: #F3F4F6 !important;
+  }
+
+  html.dark select option {
+    background-color: #222425 !important;
+    color: #F3F4F6 !important;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #737373 !important;
+  }
+
+  html.dark input:focus,
+  html.dark select:focus,
+  html.dark textarea:focus {
+    border-color: #525252 !important;
+    background-color: #26282A !important;
+  }
+
+  /* Hover States */
+  html.dark .hover\:bg-\[\#F4F2ED\]:hover,
+  html.dark .hover\:bg-\[\#F7F6F5\]:hover,
+  html.dark .hover\:bg-neutral-100:hover,
+  html.dark .hover\:bg-\[\#FAF9F7\]:hover {
+    background-color: #262829 !important;
+  }
+
+  html.dark .hover\:border-\[\#1E2021\]:hover {
+    border-color: #525252 !important;
+  }
+
+  html.dark .group:hover .group-hover\:bg-\[\#1E2021\] {
+    background-color: #2E3032 !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Tables in Dark Mode */
+  html.dark table thead tr {
+    background-color: #222425 !important;
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark table thead th {
+    color: #A3A3A3 !important;
+  }
+
+  html.dark table tbody tr:hover {
+    background-color: rgba(38, 40, 42, 0.6) !important;
+  }
+
+  /* Modal Overlays */
+  html.dark .fixed.inset-0.bg-black\/40 {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+  }
+
+  html.dark aside[aria-label="Sidebar"] {
+    background-color: #181A1B !important;
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark .bg-\[\#EAF7EE\] {
+    background-color: #0A2E23 !important;
+    color: #B5F2C6 !important;
+  }
+
+  html.dark .border-\[\#B5F2C6\] {
+    border-color: #004D3B !important;
   }
 }

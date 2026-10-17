@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, getBusiness } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
 import type { SessionView, BusinessView } from "@/lib/generated-api";
@@ -178,6 +179,8 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <ThemeToggle variant="icon" />
+
               <button
                 type="button"
                 onClick={handleExportCsv}

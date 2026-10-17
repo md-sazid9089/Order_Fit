@@ -119,8 +119,12 @@ export function CompetitiveMatrix() {
 
         {/* Matrix Table Card */}
         <div className="rounded-3xl bg-white border border-[#ECEAE4] shadow-xs overflow-hidden">
+          <div className="md:hidden px-4 py-2 bg-[#FAF9F7] text-[11px] text-[#526975] border-b border-[#ECEAE4] flex items-center justify-between">
+            <span>Scroll sideways to compare all platforms</span>
+            <span className="font-semibold text-[#004D3B]">→</span>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <table className="w-full min-w-[720px] text-left text-xs sm:text-sm border-collapse">
               <thead>
                 <tr className="bg-[#FAF9F7] border-b border-[#ECEAE4] text-[#526975]">
                   <th className="py-4 px-5 font-semibold text-[#1A1A1A] w-1/3 font-sans">

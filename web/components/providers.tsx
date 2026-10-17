@@ -8,6 +8,7 @@ import { expiryRedirect } from "@/lib/session-expiry"
 import { resetSessionState } from "@/lib/session-reset"
 import { Toaster } from "@/components/ui/sonner"
 import { SmoothScrollProvider } from "@/components/layout/smooth-scroll-provider"
+import { ThemeProvider } from "@/components/theme-provider"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -22,13 +23,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionExpiryHandler queryClient={queryClient} />
-      <SmoothScrollProvider>
-        {children}
-      </SmoothScrollProvider>
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange={false}
+    >
+      <QueryClientProvider client={queryClient}>
+        <SessionExpiryHandler queryClient={queryClient} />
+        <SmoothScrollProvider>
+          {children}
+        </SmoothScrollProvider>
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }
 

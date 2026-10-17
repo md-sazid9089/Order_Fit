@@ -8,6 +8,7 @@ import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
 import { Eye, EyeOff } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const COMMON_TIMEZONES = [
   "Asia/Dhaka",
@@ -95,37 +96,38 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1E2021] text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-700 selection:text-white font-sans [&_:focus-visible]:outline-solid! [&_:focus-visible]:outline-2! [&_:focus-visible]:outline-white [&_:focus-visible]:outline-offset-2">
+    <div className="min-h-screen min-h-[100dvh] bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-300 dark:selection:bg-neutral-700 selection:text-neutral-900 dark:selection:text-white font-sans w-full max-w-full overflow-x-hidden">
       {/* Top Navigation Bar */}
-      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group outline-none">
-          <span className="font-display text-2xl font-bold tracking-tight text-white group-hover:text-neutral-300 transition-colors">
+          <span className="font-display text-2xl font-bold tracking-tight text-[#1E2021] dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
             OrderFit
           </span>
         </Link>
 
-        <div className="flex items-center gap-6 text-sm text-neutral-400 font-medium">
-          <Link href="/#products" className="hover:text-white transition-colors outline-none">
+        <div className="flex items-center gap-4 sm:gap-6 text-sm text-[#737373] dark:text-neutral-400 font-medium">
+          <ThemeToggle variant="pill" />
+          <Link href="/#products" className="hover:text-[#1E2021] dark:hover:text-white transition-colors outline-none">
             About
           </Link>
-          <Link href="/auth/signin" className="hover:text-white transition-colors outline-none">
+          <Link href="/auth/signin" className="hover:text-[#1E2021] dark:hover:text-white transition-colors outline-none">
             Log In
           </Link>
         </div>
       </header>
 
-      {/* Main Centered Signup Card - Flat, simple, borderless, zero shadows */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-[440px] bg-[#181A1B] rounded-2xl p-8 sm:p-10 border-0 shadow-none">
+      {/* Main Centered Signup Card - Stable, non-shifting, touch-optimized */}
+      <main className="flex-1 flex items-center justify-center px-4 py-4 sm:py-8 w-full max-w-full">
+        <div className="w-full max-w-[440px] bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-8 md:p-10 shadow-xs dark:shadow-none">
           {/* Card Title */}
-          <h1 className="text-2xl font-bold text-center text-white mb-6 font-display tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-center text-[#1E2021] dark:text-white mb-5 sm:mb-6 font-display tracking-tight">
             Create Account
           </h1>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <p role="alert" className="rounded-lg bg-red-950 p-3 text-sm text-red-100">
+              <p role="alert" className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-800 dark:text-red-100 border border-red-200 dark:border-red-800">
                 {error}
               </p>
             )}
@@ -142,7 +144,7 @@ export default function SignUpPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Full Name*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
               />
             </div>
 
@@ -158,7 +160,7 @@ export default function SignUpPage() {
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Business / Company Name*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
               />
             </div>
 
@@ -174,7 +176,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email*"
-                className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors"
+                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
               />
             </div>
 
@@ -192,12 +194,12 @@ export default function SignUpPage() {
                   minLength={12}
                   autoComplete="new-password"
                   placeholder="Password (min. 12 characters)*"
-                  className="w-full px-4 py-3 bg-[#222425] border-0 rounded-xl text-sm text-white placeholder-neutral-400 outline-none focus:outline-none ring-0 focus:ring-0 transition-colors pr-11"
+                  className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors p-1 border-0 outline-none focus:outline-none cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#737373] dark:text-neutral-500 hover:text-[#1E2021] dark:hover:text-white transition-colors p-1 border-0 outline-none focus:outline-none cursor-pointer"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -207,35 +209,35 @@ export default function SignUpPage() {
 
             {/* Currency and Timezone Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label htmlFor="currency" className="block text-xs font-medium text-neutral-400 mb-1.5">
+              <div className="min-w-0">
+                <label htmlFor="currency" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
                   Business currency
                 </label>
                 <select
                   id="currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[#222425] border-0 rounded-xl text-sm text-white outline-none focus:outline-none ring-0 focus:ring-0 transition-colors cursor-pointer"
+                  className="w-full min-w-0 max-w-full px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
                 >
-                  <option value="BDT" className="bg-[#222425] text-white">BDT (৳)</option>
-                  <option value="USD" className="bg-[#222425] text-white">USD ($)</option>
-                  <option value="EUR" className="bg-[#222425] text-white">EUR (€)</option>
-                  <option value="GBP" className="bg-[#222425] text-white">GBP (£)</option>
+                  <option value="BDT" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">BDT (৳)</option>
+                  <option value="USD" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">USD ($)</option>
+                  <option value="EUR" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">EUR (€)</option>
+                  <option value="GBP" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">GBP (£)</option>
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="timezone" className="block text-xs font-medium text-neutral-400 mb-1.5">
+              <div className="min-w-0">
+                <label htmlFor="timezone" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
                   Business timezone
                 </label>
                 <select
                   id="timezone"
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[#222425] border-0 rounded-xl text-sm text-white outline-none focus:outline-none ring-0 focus:ring-0 transition-colors cursor-pointer"
+                  className="w-full min-w-0 max-w-full truncate px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
                 >
                   {timezoneList.map((tz) => (
-                    <option key={tz} value={tz} className="bg-[#222425] text-white">
+                    <option key={tz} value={tz} className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">
                       {tz}
                     </option>
                   ))}
@@ -243,25 +245,25 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* Buttons Row - Clean, simple, no outlines, no shadows */}
+            {/* Buttons Row - Clean, simple, high-contrast in both modes */}
             <div className="pt-2 flex items-center gap-3">
               <Link
                 href="/auth/signin"
-                className="flex-1 text-center py-3 px-4 rounded-xl bg-[#232423] hover:bg-[#2B2D2C] border-0 text-sm font-medium text-white transition-colors outline-none focus:outline-none"
+                className="flex-1 text-center py-3 px-4 rounded-xl bg-[#FAF9F7] dark:bg-[#232423] hover:bg-[#F4F2ED] dark:hover:bg-[#2B2D2C] border border-[#E8E6E1] dark:border-0 text-sm font-medium text-[#1E2021] dark:text-white transition-colors outline-none focus:outline-none"
               >
                 Log in
               </Link>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-neutral-900 font-semibold text-sm transition-colors border-0 active:scale-[0.98] disabled:opacity-70 cursor-pointer outline-none focus:outline-none"
+                className="flex-1 py-3 px-4 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 font-semibold text-sm transition-colors border-0 disabled:opacity-70 cursor-pointer outline-none focus:outline-none"
               >
                 {isLoading ? "Creating..." : "Create account"}
               </button>
             </div>
 
             {/* Disclaimer */}
-            <div className="pt-2 text-center text-[11px] text-neutral-400 leading-relaxed">
+            <div className="pt-2 text-center text-[11px] text-[#737373] dark:text-neutral-400 leading-relaxed">
               Your account uses a password session. Financial assessments use reviewed manual inputs; outgoing actions are sandbox-only.
             </div>
           </form>
@@ -269,7 +271,7 @@ export default function SignUpPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 text-center text-xs text-neutral-400">
+      <footer className="w-full py-4 sm:py-6 text-center text-xs text-[#737373] dark:text-neutral-400">
         <div className="flex items-center justify-center gap-4">
           <span>OrderFit © 2026</span>
         </div>

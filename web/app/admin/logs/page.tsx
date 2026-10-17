@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, listAudit, getAuditExport } from "@/lib/p7-api";
 import { parseAuditRow, humanAction, type AuditEntry } from "@/lib/p7-model";
 import type { SessionView } from "@/lib/generated-api";
@@ -129,6 +130,8 @@ export default function AdminLogsPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <ThemeToggle variant="icon" />
+
               <button
                 type="button"
                 onClick={handleExportAudit}

@@ -38,7 +38,7 @@ export function OldVsNewWay() {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-              <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">
+              <div className="absolute bottom-3 sm:bottom-4 left-4 right-4 sm:left-6 sm:right-6 flex flex-wrap items-center justify-between gap-2 text-white">
                 <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-500/80 backdrop-blur-sm text-white">
                   Manual Excel &amp; Bank Guesswork
                 </span>
@@ -111,7 +111,7 @@ export function OldVsNewWay() {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#093A2F]/80 via-[#093A2F]/30 to-transparent" />
-              <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-white">
+              <div className="absolute bottom-3 sm:bottom-4 left-4 right-4 sm:left-6 sm:right-6 flex flex-wrap items-center justify-between gap-2 text-white">
                 <span className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-[#B5F2C6] text-[#004D3B] font-sans">
                   Automated OrderFeasibility
                 </span>

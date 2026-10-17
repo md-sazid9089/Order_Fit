@@ -7,6 +7,7 @@ import { getSession, getBusiness, listMembers } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppShellSkeleton } from "@/components/ui/skeleton";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Server,
   Activity,
@@ -223,6 +224,8 @@ export default function AdminOverviewPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <ThemeToggle variant="icon" />
+
               <button
                 type="button"
                 onClick={() => void handleRunHealthCheck()}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu, X, ShieldCheck, Layers, FileText, UserRound } from "lucide-react";
 import { useSmoothScroll } from "@/components/layout/smooth-scroll-provider";
 import { useCurrentSession } from "@/lib/use-session";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   const { session } = useCurrentSession();
@@ -193,6 +194,7 @@ export function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="hidden sm:flex items-center gap-4">
+            <ThemeToggle variant="pill" />
             {session ? (
               <Link
                 href="/deals"
@@ -235,7 +237,8 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex lg:hidden items-center gap-3">
+          <div className="flex lg:hidden items-center gap-2">
+            <ThemeToggle variant="icon" />
             {session ? (
               <Link
                 href="/deals"

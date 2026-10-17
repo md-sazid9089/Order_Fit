@@ -108,9 +108,8 @@ export function WorkflowSection() {
           })}
         </div>
 
-        {/* Re-validation Loop Notice */}
-        <div className="mt-10 rounded-2xl bg-[#093A2F]/5 border border-[#093A2F]/15 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-3">
+        <div className="mt-10 rounded-2xl bg-[#093A2F]/5 border border-[#093A2F]/15 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left">
+          <div className="flex items-start text-left gap-3">
             <div className="size-9 rounded-xl bg-[#093A2F] text-white flex items-center justify-center shrink-0">
               <RefreshCw className="size-4" />
             </div>

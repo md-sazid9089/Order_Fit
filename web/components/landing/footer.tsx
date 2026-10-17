@@ -185,7 +185,7 @@ export function Footer() {
             <span className="font-sans font-semibold uppercase tracking-wider text-[11px] text-[#B5F2C6]">
               Architected for Small &amp; Mid-Market Enterprises
             </span>
-            <div className="flex items-center gap-4 text-xs font-semibold text-white/90">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-semibold text-white/90">
               <span>Deterministic Engine</span>
               <span>·</span>
               <span>6 Core ADRs</span>
@@ -199,8 +199,8 @@ export function Footer() {
 
         {/* Copyright Bar */}
         <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E6F4F1]/50 gap-4">
-          <p>© 2026 OrderFit Inc. All rights reserved. International commercial software.</p>
-          <div className="flex items-center gap-6">
+          <p className="text-center sm:text-left">© 2026 OrderFit Inc. All rights reserved. International commercial software.</p>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <a href="#privacy" className="hover:text-white transition-colors">Privacy</a>
             <a href="#terms" className="hover:text-white transition-colors">Terms</a>
             <a href="#security" className="hover:text-white transition-colors">Security</a>
@@ -209,7 +209,7 @@ export function Footer() {
         </div>
 
         {/* Big Centered Orderfit Text */}
-        <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-white/5 flex justify-center items-center text-center">
+        <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-white/5 flex justify-center items-center text-center overflow-hidden">
           <Link
             href="/"
             onClick={(e) => {
@@ -218,9 +218,9 @@ export function Footer() {
                 scrollToTop(1.4);
               }
             }}
-            className="inline-block group cursor-pointer"
+            className="inline-block group cursor-pointer max-w-full"
           >
-            <span className="font-radio-grotesk text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[11rem] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors duration-300 select-none leading-none">
+            <span className="font-radio-grotesk text-[clamp(2.75rem,14vw,11rem)] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors duration-300 select-none leading-none inline-block max-w-full break-words">
               Orderfit
             </span>
           </Link>
