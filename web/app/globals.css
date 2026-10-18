@@ -551,3 +551,13 @@
     border-color: #004D3B !important;
   }
 }
+
+/* Original-language review text: cover Bengali, Devanagari, Simplified Chinese and Arabic script
+   from the platform's fonts (no web-font download). `lang` on the element selects shaping. */
+.script-text {
+  font-family: 'IBM Plex Sans', 'Noto Sans Bengali', 'Noto Sans Devanagari', 'Noto Sans SC', 'Noto Naskh Arabic',
+    'Nirmala UI', 'Vrinda', 'Mangal', 'Bangla Sangam MN', 'Devanagari Sangam MN', 'PingFang SC',
+    'Microsoft YaHei', 'Segoe UI', sans-serif;
+  line-height: 1.6;
+}
+.script-text:lang(zh-Hans) { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif; }
