@@ -5,14 +5,14 @@ import { ArrowUpRight, ShieldCheck } from "lucide-react";
 
 export function SectorsMarquee() {
   const supportedSectors = [
-    { name: "Precision Manufacturing", category: "B2B Hardware" },
-    { name: "Contract Packaging", category: "Supply Chain" },
-    { name: "Electronics Assembly", category: "OEM / ODM" },
-    { name: "Industrial Equipment", category: "Capital Goods" },
-    { name: "Apparel & Textiles", category: "Batch Production" },
-    { name: "Wholesale & Distribution", category: "Commercial B2B" },
-    { name: "Consumer Goods", category: "Packaged Products" },
-    { name: "Specialty Components", category: "Fabrication" },
+    "Precision Manufacturing",
+    "Contract Packaging",
+    "Electronics Assembly",
+    "Industrial Equipment",
+    "Apparel & Textiles",
+    "Wholesale & Distribution",
+    "Consumer Goods",
+    "Specialty Components",
   ];
 
   return (
@@ -46,17 +46,14 @@ export function SectorsMarquee() {
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-white to-transparent" />
 
         <div className="flex w-max animate-marquee items-center gap-6 md:gap-8 text-[#526975] hover:[animation-play-state:paused]">
-          {[...supportedSectors, ...supportedSectors].map((sector, i) => (
+          {[...supportedSectors, ...supportedSectors].map((sectorName, i) => (
             <div
-              key={`${sector.name}-${i}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F7F6F5] select-none shrink-0"
+              key={`${sectorName}-${i}`}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F7F6F5] select-none shrink-0"
             >
               <span className="size-1.5 rounded-full bg-[#004D3B]" />
               <span className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
-                {sector.name}
-              </span>
-              <span className="text-[10px] font-mono text-[#526975] uppercase px-1.5 py-0.5 rounded bg-white">
-                {sector.category}
+                {sectorName}
               </span>
             </div>
           ))}

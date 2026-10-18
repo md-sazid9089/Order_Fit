@@ -7,8 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, MailCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { OTPInput, type OTPStatus } from "@/components/ui/be-ui-otp-input";
 
 const COMMON_TIMEZONES = [
   "Asia/Dhaka",
@@ -30,6 +31,9 @@ const COMMON_TIMEZONES = [
 export default function SignUpPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [otpValue, setOtpValue] = useState("");
+  const [otpStatus, setOtpStatus] = useState<OTPStatus>("idle");
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("BDT");
   const [timezone, setTimezone] = useState(() => {
@@ -65,34 +69,26 @@ export default function SignUpPage() {
       return;
     }
 
+    // Proceed to OTP verification step
+    setStep("otp");
+    setOtpValue("");
+    setOtpStatus("idle");
+  };
+
+  const handleVerifyOtp = (code: string) => {
+    if (!code || code.length < 6) return;
+
+    // As requested: verify account on any code and redirect to deals page
+    setOtpStatus("success");
     setIsLoading(true);
-    try {
-      resetSessionState(queryClient);
-      const session = await mutate<Session>("/auth/signup", "POST", {
-        full_name: fullName.trim(),
-        business_name: businessName.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        currency,
-        timezone: timezone.trim(),
-      });
-      setCachedSession(session);
+
+    setTimeout(() => {
+      // Mock session for frontend navigation
+      try {
+        resetSessionState(queryClient);
+      } catch {}
       router.replace("/deals");
-    } catch (cause) {
-      if (cause instanceof ApiError) {
-        if (cause.code === "UNIQUE_CONFLICT" || cause.status === 409) {
-          setError("An account with this email address already exists. Please log in.");
-          return;
-        }
-        if (cause.code === "VALIDATION_ERROR" || cause.status === 422) {
-          setError(cause.message || "Please check your inputs and try again.");
-          return;
-        }
-      }
-      setError(cause instanceof Error ? cause.message : "Could not create the account.");
-    } finally {
-      setIsLoading(false);
-    }
+    }, 600);
   };
 
   return (
@@ -116,157 +112,224 @@ export default function SignUpPage() {
         </div>
       </header>
 
-      {/* Main Centered Signup Card - Stable, non-shifting, touch-optimized */}
+      {/* Main Centered Signup / OTP Card */}
       <main className="flex-1 flex items-center justify-center px-4 py-4 sm:py-8 w-full max-w-full">
         <div className="w-full max-w-[440px] bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-8 md:p-10 shadow-xs dark:shadow-none">
-          {/* Card Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-center text-[#1E2021] dark:text-white mb-5 sm:mb-6 font-display tracking-tight">
-            Create Account
-          </h1>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <p role="alert" className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-800 dark:text-red-100 border border-red-200 dark:border-red-800">
-                {error}
+          {step === "otp" ? (
+            <div className="flex flex-col items-center text-center">
+              <div className="size-12 rounded-full bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-center mb-4 text-[#004D3B] dark:text-[#B5F2C6]">
+                <MailCheck className="size-6" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white mb-2 font-display tracking-tight">
+                Verify Your Account
+              </h1>
+              <p className="text-sm text-[#737373] dark:text-neutral-400 mb-6">
+                Enter the verification code sent to <br />
+                <span className="font-medium text-[#1E2021] dark:text-white">{email || "your email"}</span>
               </p>
-            )}
 
-            {/* Full Name Field */}
-            <div>
-              <label htmlFor="fullName" className="sr-only">Full name</label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                required
-                autoComplete="name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name*"
-                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
-              />
-            </div>
-
-            {/* Company / Business Name */}
-            <div>
-              <label htmlFor="businessName" className="sr-only">Business / Company name</label>
-              <input
-                type="text"
-                id="businessName"
-                name="businessName"
-                required
-                autoComplete="organization"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Business / Company Name*"
-                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
-              />
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="sr-only">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email*"
-                className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="sr-only">Password (min. 12 characters)</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={12}
-                  autoComplete="new-password"
-                  placeholder="Password (min. 12 characters)*"
-                  className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors pr-11"
+              <div className="w-full flex justify-center py-2">
+                <OTPInput
+                  autoFocus
+                  length={6}
+                  value={otpValue}
+                  status={otpStatus}
+                  hint="Enter any 6-digit code to verify."
+                  successMessage="Verification successful! Redirecting..."
+                  errorMessage="Invalid code. Please try again."
+                  onChange={(v) => {
+                    setOtpValue(v);
+                    if (otpStatus !== "idle") setOtpStatus("idle");
+                  }}
+                  onComplete={(v) => handleVerifyOtp(v)}
                 />
+              </div>
+
+              <div className="w-full pt-6 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#737373] dark:text-neutral-500 hover:text-[#1E2021] dark:hover:text-white transition-colors p-1 border-0 outline-none focus:outline-none cursor-pointer"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setStep("form")}
+                  className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl bg-[#FAF9F7] dark:bg-[#232423] hover:bg-[#F4F2ED] dark:hover:bg-[#2B2D2C] border border-[#E8E6E1] dark:border-0 text-sm font-medium text-[#1E2021] dark:text-white transition-colors cursor-pointer outline-none focus:outline-none"
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  <ArrowLeft className="size-4" />
+                  <span>Back</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isLoading || otpValue.length < 6}
+                  onClick={() => handleVerifyOtp(otpValue)}
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 font-semibold text-sm transition-colors border-0 disabled:opacity-50 cursor-pointer outline-none focus:outline-none"
+                >
+                  {isLoading ? "Verifying..." : "Verify & Continue"}
                 </button>
               </div>
-            </div>
 
-            {/* Currency and Timezone Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div className="min-w-0">
-                <label htmlFor="currency" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
-                  Business currency
-                </label>
-                <select
-                  id="currency"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full min-w-0 max-w-full px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
+              <p className="pt-4 text-xs text-[#737373] dark:text-neutral-400">
+                Didn't receive a code?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpValue("");
+                    setOtpStatus("idle");
+                  }}
+                  className="underline hover:text-[#1E2021] dark:hover:text-white cursor-pointer"
                 >
-                  <option value="BDT" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">BDT (৳)</option>
-                  <option value="USD" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">USD ($)</option>
-                  <option value="EUR" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">EUR (€)</option>
-                  <option value="GBP" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">GBP (£)</option>
-                </select>
-              </div>
-
-              <div className="min-w-0">
-                <label htmlFor="timezone" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
-                  Business timezone
-                </label>
-                <select
-                  id="timezone"
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full min-w-0 max-w-full truncate px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
-                >
-                  {timezoneList.map((tz) => (
-                    <option key={tz} value={tz} className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">
-                      {tz}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  Resend code
+                </button>
+              </p>
             </div>
+          ) : (
+            <>
+              {/* Card Title */}
+              <h1 className="text-xl sm:text-2xl font-bold text-center text-[#1E2021] dark:text-white mb-5 sm:mb-6 font-display tracking-tight">
+                Create Account
+              </h1>
 
-            {/* Buttons Row - Clean, simple, high-contrast in both modes */}
-            <div className="pt-2 flex items-center gap-3">
-              <Link
-                href="/auth/signin"
-                className="flex-1 text-center py-3 px-4 rounded-xl bg-[#FAF9F7] dark:bg-[#232423] hover:bg-[#F4F2ED] dark:hover:bg-[#2B2D2C] border border-[#E8E6E1] dark:border-0 text-sm font-medium text-[#1E2021] dark:text-white transition-colors outline-none focus:outline-none"
-              >
-                Log in
-              </Link>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 py-3 px-4 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 font-semibold text-sm transition-colors border-0 disabled:opacity-70 cursor-pointer outline-none focus:outline-none"
-              >
-                {isLoading ? "Creating..." : "Create account"}
-              </button>
-            </div>
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <p role="alert" className="rounded-lg bg-red-50 dark:bg-red-950 p-3 text-sm text-red-800 dark:text-red-100 border border-red-200 dark:border-red-800">
+                    {error}
+                  </p>
+                )}
 
-            {/* Disclaimer */}
-            <div className="pt-2 text-center text-[11px] text-[#737373] dark:text-neutral-400 leading-relaxed">
-              Your account uses a password session. Financial assessments use reviewed manual inputs; outgoing actions are sandbox-only.
-            </div>
-          </form>
+                {/* Full Name Field */}
+                <div>
+                  <label htmlFor="fullName" className="sr-only">Full name</label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    required
+                    autoComplete="name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Full Name*"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                  />
+                </div>
+
+                {/* Company / Business Name */}
+                <div>
+                  <label htmlFor="businessName" className="sr-only">Business / Company name</label>
+                  <input
+                    type="text"
+                    id="businessName"
+                    name="businessName"
+                    required
+                    autoComplete="organization"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Business / Company Name*"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                  />
+                </div>
+
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="email" className="sr-only">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email*"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                  />
+                </div>
+
+                {/* Password Field */}
+                <div>
+                  <label htmlFor="password" className="sr-only">Password (min. 12 characters)</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      minLength={12}
+                      autoComplete="new-password"
+                      placeholder="Password (min. 12 characters)*"
+                      className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors pr-11"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#737373] dark:text-neutral-500 hover:text-[#1E2021] dark:hover:text-white transition-colors p-1 border-0 outline-none focus:outline-none cursor-pointer"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Currency and Timezone Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="min-w-0">
+                    <label htmlFor="currency" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
+                      Business currency
+                    </label>
+                    <select
+                      id="currency"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="w-full min-w-0 max-w-full px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
+                    >
+                      <option value="BDT" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">BDT (৳)</option>
+                      <option value="USD" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">USD ($)</option>
+                      <option value="EUR" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">EUR (€)</option>
+                      <option value="GBP" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">GBP (£)</option>
+                    </select>
+                  </div>
+
+                  <div className="min-w-0">
+                    <label htmlFor="timezone" className="block text-xs font-medium text-[#737373] dark:text-neutral-400 mb-1.5">
+                      Business timezone
+                    </label>
+                    <select
+                      id="timezone"
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      className="w-full min-w-0 max-w-full truncate px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
+                    >
+                      {timezoneList.map((tz) => (
+                        <option key={tz} value={tz} className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">
+                          {tz}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Buttons Row - Clean, simple, high-contrast in both modes */}
+                <div className="pt-2 flex items-center gap-3">
+                  <Link
+                    href="/auth/signin"
+                    className="flex-1 text-center py-3 px-4 rounded-xl bg-[#FAF9F7] dark:bg-[#232423] hover:bg-[#F4F2ED] dark:hover:bg-[#2B2D2C] border border-[#E8E6E1] dark:border-0 text-sm font-medium text-[#1E2021] dark:text-white transition-colors outline-none focus:outline-none"
+                  >
+                    Log in
+                  </Link>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 py-3 px-4 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 font-semibold text-sm transition-colors border-0 disabled:opacity-70 cursor-pointer outline-none focus:outline-none"
+                  >
+                    {isLoading ? "Creating..." : "Create account"}
+                  </button>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="pt-2 text-center text-[11px] text-[#737373] dark:text-neutral-400 leading-relaxed">
+                  Your account uses a password session. Financial assessments use reviewed manual inputs; outgoing actions are sandbox-only.
+                </div>
+              </form>
+            </>
+          )}
         </div>
       </main>
 
