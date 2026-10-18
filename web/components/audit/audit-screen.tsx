@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getAuditExport, listAudit, saveBlob } from "@/lib/p7-api";
-import { AUDIT_EXPORT_LIMITS, auditExportFileName, auditRange, can, humanAction, parseAuditRow } from "@/lib/p7-model";
+import { AUDIT_EXPORT_LIMITS, auditExportFileName, auditRange, can, auditActorLabel, humanAction, parseAuditRow } from "@/lib/p7-model";
 import type { AuditExport } from "@/lib/generated-api";
 import { Alert, Loading, NotPermitted, PageFrame, QueryError, button, field, panel, primary, useCommand, useScoped, when } from "@/components/p7/common";
 
@@ -16,7 +16,7 @@ export function AuditScreen() {
 }
 
 function Log() {
-  const { businessId, key } = useScoped();
+  const { businessId, key, session } = useScoped();
   const log = useInfiniteQuery({ queryKey: key("audit"), queryFn: ({ pageParam }) => listAudit(businessId, pageParam), initialPageParam: null as string | null, getNextPageParam: last => last.next_cursor, retry: false });
   const rows = (log.data?.pages.flatMap(p => p.items) ?? []).map(parseAuditRow);
   return <section className={panel} aria-labelledby="log-heading">
@@ -25,7 +25,7 @@ function Log() {
     {log.isError && <QueryError error={log.error} retry={() => void log.refetch()} retrying={log.isFetching} />}
     {log.isSuccess && !rows.length && <p className="text-sm text-neutral-600">No entries recorded yet.</p>}
     <ul className="divide-y">{rows.map(r => <li key={r.sequence} className="space-y-1 py-2 text-sm">
-      <div className="flex flex-wrap items-baseline gap-x-3"><span className="font-mono text-xs text-neutral-500">#{r.sequence}</span><strong className="capitalize">{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-neutral-600" : "font-semibold text-amber-800"}>{r.outcome}</span><span className="text-neutral-600">by {r.actor} ({r.tier})</span><span className="ml-auto text-xs text-neutral-500">{r.at ? when(r.at) : ""}</span></div>
+      <div className="flex flex-wrap items-baseline gap-x-3"><span className="font-mono text-xs text-neutral-500">#{r.sequence}</span><strong className="capitalize">{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-neutral-600" : "font-semibold text-amber-800"}>{r.outcome}</span><span className="text-neutral-600">by {auditActorLabel(r, session.user_id)} ({r.tier})</span><span className="ml-auto text-xs text-neutral-500">{r.at ? when(r.at) : ""}</span></div>
       <details><summary className="cursor-pointer text-xs text-neutral-600">Details and hashes</summary>
         <dl className="mt-2 grid gap-1 text-xs sm:grid-cols-[8rem_1fr]">
           {r.entity && <><dt>Entity</dt><dd>{r.entity}</dd></>}{r.dealId && <><dt>Order id</dt><dd className="break-all font-mono">{r.dealId}</dd></>}

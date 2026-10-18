@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { archivePayee, createAccount, getBusiness, listAccounts, revokeAccount, verifyAccount } from "@/lib/p7-api";
-import { accountActions, accountNumberValid, accountStatusText, buildAccountCreate, buildAccountVerification, buildRevocation, can, maskedAccount, reasonValid } from "@/lib/p7-model";
+import { accountActions, accountNumberValid, accountStatusText, buildAccountCreate, buildAccountVerification, buildRevocation, can, maskedAccount, memberLabel, reasonValid } from "@/lib/p7-model";
 import type { AccountView, PayeeView } from "@/lib/generated-api";
 import { ArchiveAction } from "@/components/p7/archive-action";
 import { Alert, Loading, PageFrame, QueryError, button, danger, field, panel, primary, RevisionNotice, useBusinessRevision, useCommand, useScoped, when } from "@/components/p7/common";
@@ -77,12 +77,14 @@ function AddAccount({ payeeId, onAdded }: { payeeId: string; onAdded: () => void
     <p id="account-help" className="text-xs text-neutral-600">4 to 64 letters or digits. Only the last four characters will ever be displayed. Adding an account changes the business record, so existing evaluations may need re-evaluation.</p>
     <RevisionNotice revision={revision} error={revisionError} />
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-    <button className={primary} disabled={busy || revision === undefined || !bank.trim() || !accountNumberValid(number)}>Add account</button>
+    {(() => { const why = busy ? "" : revision === undefined ? "Waiting for the current business revision to load." : !bank.trim() ? "Enter the bank name to continue." : !accountNumberValid(number) ? "Enter an account number of 4 to 64 letters or digits to continue." : ""; return <>
+      <button className={primary} disabled={busy || !!why} aria-describedby={why ? "add-account-why" : undefined}>Add account</button>
+      {why && <p id="add-account-why" className="text-xs text-neutral-600">{why}</p>}</>; })()}
   </form>;
 }
 
 function AccountRow({ account, payeeId, manage, onChanged }: { account: AccountView; payeeId: string; manage: boolean; onChanged: () => void }) {
-  const { businessId } = useScoped();
+  const { businessId, session } = useScoped();
   const { revision } = useBusinessRevision();
   const { busy, error, notice, run } = useCommand({ onConflict: onChanged });
   const [mode, setMode] = useState<"" | "verify" | "revoke">("");
@@ -91,7 +93,7 @@ function AccountRow({ account, payeeId, manage, onChanged }: { account: AccountV
   const done = () => { setMode(""); setText(""); onChanged(); };
   return <li className="space-y-2 py-3 text-sm">
     <div className="flex flex-wrap items-center gap-3"><span className="min-w-0 flex-1"><strong>{account.bank_name}</strong> · {maskedAccount(account)}</span><span className={`rounded px-2 py-0.5 text-xs font-semibold uppercase ${STATUS_STYLE[account.status]}`}>{account.status}</span></div>
-    <p className="text-neutral-700">{accountStatusText(account)}{account.verified_by ? ` Recorded by member ${account.verified_by.slice(0, 8)}${account.verified_at ? ` at ${when(account.verified_at)}` : ""}.` : ""}</p>
+    <p className="text-neutral-700">{accountStatusText(account)}{account.verified_by ? ` Recorded by ${memberLabel(account.verified_by, session.user_id)}${account.verified_at ? ` at ${when(account.verified_at)}` : ""}.` : ""}</p>
     {manage && (actions.verify || actions.revoke) && <div className="flex gap-3">
       {actions.verify && <button type="button" className={button} disabled={busy} onClick={() => { setMode(mode === "verify" ? "" : "verify"); setText(""); }}>{mode === "verify" ? "Cancel" : "Record verification"}</button>}
       {actions.revoke && <button type="button" className={danger} disabled={busy} onClick={() => { setMode(mode === "revoke" ? "" : "revoke"); setText(""); }}>{mode === "revoke" ? "Cancel" : "Revoke"}</button>}
