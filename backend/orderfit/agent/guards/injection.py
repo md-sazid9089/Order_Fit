@@ -10,6 +10,8 @@ PATTERNS = {
     "APPROVAL_CLAIM": r"\b(auto[- ]?approve|approved by (the )?owner|skip (the )?(review|approval))\b",
     "EXFILTRATE": r"\b(send|email|post) .{0,40}(password|api key|token|secret)\b",
     "SET_VALUE": r"\b(set|change|update) (the )?(order value|amount|reserve|bank account)\b",
+    "OVERRIDE_INSTRUCTIONS_MULTILINGUAL": r"忽略.{0,12}(指令|规则)|পূর্ববর্তী.{0,12}(নির্দেশ|নিয়ম)|पिछले.{0,12}(निर्देश|नियम)",
+    "APPROVAL_CLAIM_MULTILINGUAL": r"自动批准|স্বয়ংক্রিয়.{0,8}অনুমোদন|स्वतः.{0,8}अनुमोदन",
 }
 
 
