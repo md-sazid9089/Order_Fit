@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Calendar, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Calendar, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Deal, Evaluation } from "@/lib/orderfit-api";
-import { loadPipeline, PIPELINE_PAGE_SIZE as PAGE_SIZE, type PipelineData } from "@/lib/pipeline-data";
+import { loadPipeline, type PipelineData } from "@/lib/pipeline-data";
 import { formatMinor } from "@/lib/approval-model";
 import { PIPELINE_TABS, tabOf, verdictOf, worstTrough, type PipelineTab, type Tone } from "@/lib/pipeline-model";
 import { useScope } from "@/components/layout/scope";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
+
+const PAGE_SIZE = 10;
 
 
 const TONE: Record<Tone, string> = {
@@ -37,7 +39,7 @@ export default function DealsPage() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    loadPipeline(businessId, offset, controller.signal)
+    loadPipeline(businessId, offset, controller.signal, PAGE_SIZE)
       .then(result => { if (active) setData(result); })
       .catch(e => {
         controller.abort();
@@ -99,25 +101,24 @@ export default function DealsPage() {
           <div className={CARD}>
             <div><div className={LABEL}><span>Opening Cash Balance</span><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${TONE.neutral}`}>{data.baseline ? "Saved" : "Not set"}</span></div>
               <div className={VALUE}>{data.baseline ? money(data.baseline.balance.opening_cash_minor) : "—"}</div></div>
-            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400">{data.baseline ? `As of ${data.baseline.balance.opening_date}` : <Link className="underline" href={`/deals/new${query}`}>Set the cash baseline</Link>}</div>
+            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400 truncate" title={data.baseline ? `As of ${data.baseline.balance.opening_date}` : "Set the cash baseline"}>{data.baseline ? `As of ${data.baseline.balance.opening_date}` : <Link className="underline" href={`/deals/new${query}`}>Set the cash baseline</Link>}</div>
           </div>
           <div className={CARD}>
             <div><div className={LABEL}><span>Default cash reserve</span><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${TONE.neutral}`}>Policy</span></div>
               <div className={VALUE}>{money(reserve)}</div></div>
-            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400">Orders can pin different reserves. The engine compares against each day&apos;s baseline.</div>
+            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400 truncate" title="Orders compare against each day's baseline">Orders compare against each day&apos;s baseline</div>
           </div>
           <div className={CARD}>
             <div><div className={LABEL}><span>Lowest evaluated order trough</span>{trough.headroom !== null && <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${safe ? TONE.ok : TONE.bad}`}>{safe ? "Above reserve" : "Below reserve"}</span>}</div>
               <div className={VALUE}>{trough.trough !== null ? money(trough.trough) : "—"}</div></div>
-            <div className={`mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs font-medium ${trough.headroom === null ? "text-[#737373] dark:text-neutral-400" : safe ? "text-[#004D3B] dark:text-[#B5F2C6]" : "text-[#991B1B] dark:text-rose-400"}`}>
-              {trough.headroom === null ? "No current evaluation yet" : <>{money(trough.headroom)} headroom <span className="text-[#737373] dark:text-neutral-400 font-normal">({trough.troughDeal}, base scenario)</span></>}
-              <p className="mt-1 font-normal text-[#737373] dark:text-neutral-400">Single-order scenarios; not combined affordability.</p>
+            <div className={`mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs font-medium truncate ${trough.headroom === null ? "text-[#737373] dark:text-neutral-400" : safe ? "text-[#004D3B] dark:text-[#B5F2C6]" : "text-[#991B1B] dark:text-rose-400"}`} title={trough.headroom === null ? "No current evaluation yet" : `${money(trough.headroom)} headroom (${trough.troughDeal}, base scenario)`}>
+              {trough.headroom === null ? "No current evaluation yet" : <>{money(trough.headroom)} headroom <span className="text-[#737373] dark:text-neutral-400 font-normal">({trough.troughDeal})</span></>}
             </div>
           </div>
           <div className={CARD}>
             <div><div className={LABEL}><span>Loaded order alerts</span>{attention.length > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${TONE.bad}`}>Action Required</span>}</div>
               <div className={`${VALUE} flex items-center gap-2`}><AlertTriangle className="size-5 lg:size-6 text-[#525252] dark:text-neutral-300 shrink-0" /><span>{attention.length ? `${attention.length} Need Review` : "No loaded alerts"}</span></div></div>
-            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400">{attention.length ? "Open each order for missing inputs, stale results or operation progress." : "No action flagged on this page. This is not a system health check."}</div>
+            <div className="mt-2.5 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400 truncate" title={attention.length ? "Missing inputs, stale results or pending progress" : "No action flagged on this page"}>{attention.length ? "Missing inputs, stale results or pending progress" : "No action flagged on this page"}</div>
           </div>
         </div>
 
@@ -174,10 +175,59 @@ export default function DealsPage() {
             </tbody>
           </table>
         </div>
-        <nav aria-label="Order pages" className="flex gap-4 text-sm">
-          <button type="button" className="underline disabled:opacity-40" disabled={offset === 0} onClick={() => reload(Math.max(0, offset - PAGE_SIZE))}>Previous orders</button>
-          <button type="button" className="underline disabled:opacity-40" disabled={!data.more} onClick={() => reload(offset + PAGE_SIZE)}>Older orders</button>
-        </nav>
+        {/* Pagination Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          <div className="text-xs text-[#737373] dark:text-neutral-400 font-medium">
+            {rows.length > 0 ? (
+              <>
+                Showing <span className="font-semibold text-[#1E2021] dark:text-white">{offset + 1}</span> to{" "}
+                <span className="font-semibold text-[#1E2021] dark:text-white">{offset + visible.length}</span> of orders
+                {data.more ? " (more available)" : ""}
+              </>
+            ) : (
+              "No orders found"
+            )}
+          </div>
+
+          <nav aria-label="Order pagination" className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={offset === 0}
+              onClick={() => reload(Math.max(0, offset - PAGE_SIZE))}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-xs font-semibold text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+            >
+              <ChevronLeft className="size-3.5" />
+              <span>Previous</span>
+            </button>
+
+            {/* Current Page Pill */}
+            <span className="min-w-8 h-8 px-2.5 rounded-xl flex items-center justify-center text-xs font-bold bg-[#004D3B] dark:bg-[#B5F2C6] text-[#FFFAEC] dark:text-[#004D3B] shadow-xs">
+              {Math.floor(offset / PAGE_SIZE) + 1}
+            </span>
+
+            {/* Next Page Preview Button if more available */}
+            {data.more && (
+              <button
+                type="button"
+                onClick={() => reload(offset + PAGE_SIZE)}
+                className="size-8 rounded-xl flex items-center justify-center text-xs font-medium border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#525252] dark:text-neutral-300 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] transition-colors"
+                title={`Go to page ${Math.floor(offset / PAGE_SIZE) + 2}`}
+              >
+                {Math.floor(offset / PAGE_SIZE) + 2}
+              </button>
+            )}
+
+            <button
+              type="button"
+              disabled={!data.more}
+              onClick={() => reload(offset + PAGE_SIZE)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-xs font-semibold text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+            >
+              <span>Next</span>
+              <ChevronRight className="size-3.5" />
+            </button>
+          </nav>
+        </div>
       </div>
     </main>
   );
