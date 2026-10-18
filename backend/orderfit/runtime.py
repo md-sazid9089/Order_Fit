@@ -44,6 +44,8 @@ def process_environment(values, inherited, *, worker=False):
         if not values.get("WORKER_DATABASE_URL"):
             raise ValueError("WORKER_DATABASE_URL is required for the worker")
         environment["DATABASE_URL"] = values["WORKER_DATABASE_URL"]
+    if environment.get("LLM_PROVIDER") == "freellmpool":
+        environment.pop("OPENAI_API_KEY", None)
     return environment
 
 

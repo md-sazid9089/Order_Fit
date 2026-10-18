@@ -15,7 +15,7 @@ _UNITS = (
     "fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy "
     "eighty ninety hundred thousand million billion dozen lakh crore"
 ).split()
-WRITTEN = re.compile(r"\b(?:" + "|".join(_UNITS) + r")\b", re.I)
+WRITTEN = re.compile(r"\b(?:" + "|".join(_UNITS) + r")\b|[একদুইতিনচারপাঁচছয়সাতআটনয়দশশতহাজারলক্ষকোটি]+|[एकदोतिनचारपाँचछसातआठनौदससौहजारलाखकरोड़]+|[一二三四五六七八九十百千万亿两]+", re.I)
 _GROUPED = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?")
 
 
@@ -74,6 +74,7 @@ def allowed_values(result, terms) -> set:
 
 def check(text: str, allowed: set) -> list[str]:
     """Return the offending fragments; empty list means pass."""
-    return [token for token in NUMBER.findall(text) if canonical(token) not in allowed] + [
+    native_digits = [char for char in text if char.isdecimal() and not char.isascii()]
+    return native_digits + [token for token in NUMBER.findall(text) if canonical(token) not in allowed] + [
         word for word in WRITTEN.findall(text) if word.lower() not in allowed
     ]
