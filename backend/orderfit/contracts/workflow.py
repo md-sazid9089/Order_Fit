@@ -60,6 +60,7 @@ class Finding(DTO):
     # `flag_id` path parameter of flag_resolve. Null for findings computed from inputs, which are
     # cleared by correcting the input, never by flag_resolve.
     flag_id: BigId | None = None
+    related_event_ids: list[BigId] = Field(default_factory=list, max_length=200)
 
 
 class Review(DTO):
@@ -257,6 +258,9 @@ class ErrorDetail(DTO):
     current_version: Version | None = None
     expected_input_version: Version | None = None
     current_input_version: Version | None = None
+    matching_event_ids: list[BigId] = Field(default_factory=list, max_length=200)
+    source_row: int | None = None
+    matching_source_rows: list[int] = Field(default_factory=list, max_length=200)
 
 
 class SafeError(DTO):

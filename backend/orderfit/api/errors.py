@@ -16,9 +16,11 @@ from orderfit.contracts.workflow import ErrorDetail, ErrorEnvelope, SafeError
 
 class ApplicationError(Exception):
     def __init__(
-        self, status: int, code: str, message: str = "The request could not be completed."
+        self, status: int, code: str, message: str = "The request could not be completed.",
+        *, details: ErrorDetail | None = None,
     ):
         self.status, self.code, self.message = status, code, message
+        self.details = details or ErrorDetail()
 
 
 # Outcomes worth an immutable security_event row. Everything else (anonymous probes,
@@ -119,7 +121,7 @@ def install_errors(app):
                 code=code,
                 message=message,
                 request_id=request_id,
-                details=ErrorDetail(),
+                details=exc.details if isinstance(exc, ApplicationError) else ErrorDetail(),
                 retryable=status in {429, 503},
             )
         )

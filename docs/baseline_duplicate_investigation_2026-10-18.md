@@ -1,5 +1,12 @@
 # Baseline-event duplicate investigation
 
+Follow-up: backend remediation is now implemented in the checkout. See the
+[backend/database handoff](baseline_duplicates_backend_database_handoff.md) and
+[frontend handoff](baseline_duplicates_frontend_handoff.md). The characterization
+probe was replaced by `backend/tests/db/test_baseline_duplicates.py`; the findings,
+command and JUnit evidence below describe the **pre-fix** investigation snapshot.
+No Neon migration has been performed.
+
 Investigated 18 October 2026 against checkout `7461aa6` (clean before investigation). No application behavior or schema was changed. Added executable characterization probes and their JUnit evidence.
 
 ## Finding

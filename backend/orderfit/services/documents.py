@@ -453,6 +453,8 @@ def parse_cash_csv(text: str, as_of: date) -> CsvOutcome:
         key = f"{event_date}|{minor}|{row['direction']}|{kind}|{row.get('invoice_ref', '')}"
         if key in seen:
             dupes.append(key)
+            errors.append(_err("CSV-POSSIBLE-DUPLICATE", n,
+                "This row matches another row in the file. Correct the file, or enter distinct obligations separately with a duplicate review."))
             continue
         seen.add(key)
         events.append(
