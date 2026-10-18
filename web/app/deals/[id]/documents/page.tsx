@@ -11,6 +11,7 @@ import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listField
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, textDirection } from "@/lib/provenance-model";
+import { ArrowLeft, ChevronRight, CheckCircle2, Landmark, History, Layers } from "lucide-react";
 
 const ROLES: Record<string, string[]> = { po: ["customer_order"], quote: ["customer_sales_quote", "supplier_cost_quote"], bills: ["baseline", "supplier_cost_quote"], financing: ["financing"], csv: ["baseline"], other: ["other"] };
 
@@ -100,8 +101,61 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <Link href={`/deals/${scope.dealId}?businessId=${scope.businessId}`} className="text-sm underline">← Order</Link>
-    <h1 className="text-xl font-semibold">Source documents</h1>
+        {/* Stepper Header */}
+        <div className="bg-white border border-[#ECEAE4] rounded-xl p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+            <Link href={`/deals/new?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">1</span>
+              <span>Ingest</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/new/validate?businessId=${scope.businessId}&poNumber=${deal?.public_ref || scope.dealId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">2</span>
+              <span>Validate</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/${scope.dealId}/confirm?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">3</span>
+              <span>Confirm</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/${scope.dealId}?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">4</span>
+              <span>Compute</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/${scope.dealId}/negotiate?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">5</span>
+              <span>Approve</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Navigation Toolbar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/deals/${scope.dealId}?businessId=${scope.businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Back to Step 4: Compute Engine</span>
+          </Link>
+          <Link
+            href={`/deals/${scope.dealId}/negotiate?businessId=${scope.businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <span>Proceed to Step 5: What-If &amp; Approval →</span>
+          </Link>
+          <Link
+            href={`/deals?businessId=${scope.businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <Layers className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Deals Pipeline</span>
+          </Link>
+        </div>
+
+        <h1 className="text-xl font-semibold">Source documents &amp; OCR Verification</h1>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}{message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-900">{message}</p>}
     <form onSubmit={upload} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Upload</h2>
       <div className="flex flex-wrap gap-3 text-sm"><label>Type<select className="ml-2 rounded border p-1" value={kind} onChange={e => { setKind(e.target.value); setRole(ROLES[e.target.value][0]); }}>{Object.keys(ROLES).map(k => <option key={k}>{k}</option>)}</select></label>

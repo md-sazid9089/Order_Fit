@@ -102,7 +102,7 @@ export function CompetitiveMatrix() {
 
   return (
     <section className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A] border-t border-[#ECEAE4]">
-      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">

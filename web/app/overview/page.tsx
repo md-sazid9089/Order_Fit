@@ -1,289 +1,1035 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  TrendingUp,
+  TrendingDown,
+  Layers,
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  Filter,
+  ChevronRight,
+  Info,
+  DollarSign,
+  Activity,
+} from "lucide-react";
 import { useScope } from "@/components/layout/scope";
-import { ApiError, get } from "@/lib/orderfit-api";
-import type { BusinessOverviewView, OverviewRecentSettlement } from "@/lib/generated-api";
+import {
+  getOverview,
+  type BusinessOverviewView,
+  type OverviewTimeframe,
+} from "@/lib/orderfit-api";
 import { formatMinor } from "@/lib/approval-model";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 
-type Timeframe = "30d" | "90d" | "6m" | "1y";
-const TIMEFRAMES: readonly Timeframe[] = ["30d", "90d", "6m", "1y"];
-const STATUS_TONE: Record<string, string> = {
-  safe: "bg-[#EAF7EE] text-[#004D3B] dark:bg-emerald-950/60 dark:text-emerald-300",
-  breach: "bg-[#FEF2F2] text-[#991B1B] dark:bg-red-950/60 dark:text-red-300",
-  warning: "bg-[#FFF7E6] text-[#8A5A00] dark:bg-amber-950/60 dark:text-amber-300",
-};
-const card = "rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] p-5 shadow-xs";
-
-/** Messages for the warning codes the contract documents; unknown codes stay visible as a generic notice. */
-const WARNINGS: Record<string, string> = {
-  BASELINE_NOT_CONFIGURED: "No cash baseline is recorded yet, so balances, headroom and cash flow show zero and no safety verdict is given. Set the baseline first.",
-  BASELINE_COVERAGE_INCOMPLETE: "The recorded baseline does not cover the whole horizon, so reserve-safe results are shown as warnings.",
-  PAST_EVENTS_REQUIRE_RECONCILIATION: "Some scheduled events are dated before the baseline and need reconciliation; they were not replayed.",
-  SINGLE_CURRENCY_BASELINE_ONLY: "Only one currency is tracked; there is no multi-currency ledger or FX conversion.",
-  RECENT_SETTLEMENTS_ARE_EVALUATIONS: "Recent evaluations are saved assessments, not proof that funds were received.",
-  PROJECTIONS_ARE_SANDBOX: "Projections include sandbox commitments only; no real payment has been made.",
-  SPLIT_MILESTONES_UNSUPPORTED: "Split-milestone strategies are not supported yet.",
-  VERDICT_DISTRIBUTION_EXCLUDES_DECLINED_AND_UNCLASSIFIED: "The outcome mix excludes declined and unclassified results.",
-  RECENT_STATUS_REQUIRES_REVIEW: "Some recent evaluations need a review of revised terms; that is not a financial decline.",
-  NEGATIVE_BALANCE_NOT_REPRESENTABLE_IN_CURRENCY_ALLOCATION: "The recorded balance is negative, so no allocation is shown.",
-};
-const HISTORY_CODES = new Set(["BALANCE_HISTORY_UNAVAILABLE", "PENDING_HISTORY_UNAVAILABLE", "HEADROOM_HISTORY_UNAVAILABLE", "VOLUME_CHANGE_UNDEFINED_FROM_ZERO"]);
-
-/** Chart coordinates only; every displayed amount stays an exact minor-unit string. */
-const scaled = (minor: string) => Number(minor) / 100;
-
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div className={card}>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">{label}</div>
-      <div className="mt-1 text-xl font-bold font-display text-[#1E2021] dark:text-white">{value}</div>
-      {note && <div className="mt-1 text-[11px] text-[#737373] dark:text-neutral-400">{note}</div>}
-    </div>
-  );
-}
-
-function statusBadge(item: OverviewRecentSettlement) {
-  const tone = item.status === "safe" ? STATUS_TONE.safe : item.status === "declined" ? STATUS_TONE.breach : STATUS_TONE.warning;
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>{item.status_label}</span>;
-}
-
 export default function OverviewPage() {
   const { businessId } = useScope();
-  const [timeframe, setTimeframe] = useState<Timeframe>("30d");
-  const [state, setState] = useState<{ key: string; data?: BusinessOverviewView; error?: string }>({ key: "" });
-  const [attempt, setAttempt] = useState(0);
-  const [picked, setPicked] = useState(0);
-  const key = `${businessId}|${timeframe}|${attempt}`;
+  const [data, setData] = useState<BusinessOverviewView | null>(null);
+  const [error, setError] = useState("");
+  const [activeTimeframe, setActiveTimeframe] = useState<OverviewTimeframe>("30d");
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number>(0);
+  const [secondaryGraphTab, setSecondaryGraphTab] = useState<"sensitivity" | "verdicts">("sensitivity");
+  const [selectedDelayIndex, setSelectedDelayIndex] = useState<number>(0);
 
   useEffect(() => {
+    let active = true;
     const controller = new AbortController();
-    get<BusinessOverviewView>(`/businesses/${businessId}/overview?timeframe=${timeframe}`, { signal: controller.signal })
-      .then((data) => {
-        if (!controller.signal.aborted) setState({ key, data });
+
+    // Immediately clear previous-business/stale data on businessId or timeframe change
+    setData(null);
+    setError("");
+    setSelectedPointIndex(0);
+    setSelectedDelayIndex(0);
+
+    getOverview(businessId, activeTimeframe, undefined, { signal: controller.signal })
+      .then(res => {
+        if (active) {
+          setData(res);
+          // Default selection to middle point or 0 once data loads
+          if (res.cashflow.timeline.length > 0) {
+            setSelectedPointIndex(Math.min(res.cashflow.timeline.length - 1, Math.floor(res.cashflow.timeline.length / 2)));
+          }
+        }
       })
-      .catch((e) => {
-        if (!controller.signal.aborted) setState({ key, error: e instanceof ApiError || e instanceof Error ? e.message : "Could not load the overview." });
+      .catch(e => {
+        if (!active) return;
+        if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
+          return;
+        }
+        setError(e instanceof Error ? e.message : "Could not load overview data.");
       });
-    return () => controller.abort();
-  }, [businessId, timeframe, key]);
 
-  // Results for another business or timeframe are never shown while the current request is in flight.
-  const current = state.key === key ? state : null;
-  const data = current?.data;
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [businessId, activeTimeframe]);
+
   const query = `?businessId=${businessId}`;
-  const money = (minor: string) => formatMinor(minor, data?.primary_currency ?? "");
-  const hasHistoryGap = !!data?.data_warnings.some((w) => HISTORY_CODES.has(w));
-  const unknownWarnings = data?.data_warnings.filter((w) => !WARNINGS[w] && !HISTORY_CODES.has(w)) ?? [];
-  const knownWarnings = data?.data_warnings.filter((w) => WARNINGS[w]) ?? [];
+  const currency = data?.primary_currency ?? "BDT";
 
-  return (
-    <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white">Overview</h1>
-          {data && (
-            <p className="text-xs text-[#737373] dark:text-neutral-400">
-              Recorded as of {data.as_of} · amounts in {data.primary_currency}
-            </p>
-          )}
-        </div>
-        <div role="group" aria-label="Cash-flow timeframe" className="flex rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] p-1 text-xs font-semibold">
-          {TIMEFRAMES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              aria-pressed={t === timeframe}
-              onClick={() => {
-                setTimeframe(t);
-                setPicked(0);
-              }}
-              className={`px-3 py-1 rounded-lg cursor-pointer ${t === timeframe ? "bg-[#1E2021] text-white dark:bg-white dark:text-[#1E2021]" : "text-[#737373] dark:text-neutral-400"}`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
+  const formatMoney = (minor: string | bigint | number | null | undefined) => {
+    if (minor === null || minor === undefined) return "—";
+    return formatMinor(minor.toString(), currency);
+  };
 
-      {!current && <SkeletonDashboard />}
-      {current?.error && (
-        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-          {current.error}{" "}
-          <button type="button" className="ml-2 underline font-semibold cursor-pointer" onClick={() => setAttempt((a) => a + 1)}>
+  const warnings = useMemo(() => new Set(data?.data_warnings ?? []), [data]);
+
+  // Clamp selection indices against current timeline and delay scenarios
+  const timeline = data?.cashflow.timeline ?? [];
+  const safePointIndex = timeline.length > 0
+    ? Math.min(Math.max(0, selectedPointIndex), timeline.length - 1)
+    : 0;
+  const selectedPoint = timeline[safePointIndex] ?? null;
+
+  const delayScenarios = data?.delay_sensitivity ?? [];
+  const safeDelayIndex = delayScenarios.length > 0
+    ? Math.min(Math.max(0, selectedDelayIndex), delayScenarios.length - 1)
+    : 0;
+  const activeDelayScenario = delayScenarios[safeDelayIndex] ?? null;
+
+  const reserveFloorMinor = data ? BigInt(data.reserve_floor_minor) : BigInt(0);
+
+  // Growth / Comparison indicators respecting handoff warning rules
+  const renderBalanceChange = () => {
+    if (warnings.has("BALANCE_HISTORY_UNAVAILABLE")) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+          History unavailable
+        </span>
+      );
+    }
+    const val = data?.kpis.total_balance_change_pct ?? 0;
+    const isUp = val >= 0;
+    return (
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
+        {Math.abs(val).toFixed(1)}%
+      </span>
+    );
+  };
+
+  const renderVolumeChange = () => {
+    if (warnings.has("VOLUME_CHANGE_UNDEFINED_FROM_ZERO")) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+          History unavailable
+        </span>
+      );
+    }
+    const val = data?.kpis.volume_30d_change_pct ?? 0;
+    const isUp = val >= 0;
+    return (
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
+        {Math.abs(val).toFixed(1)}%
+      </span>
+    );
+  };
+
+  const renderPendingReviewsChange = () => {
+    if (warnings.has("PENDING_HISTORY_UNAVAILABLE")) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+          History unavailable
+        </span>
+      );
+    }
+    const val = data?.kpis.pending_reviews_change_pct ?? 0;
+    const isUp = val >= 0;
+    return (
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
+        {Math.abs(val).toFixed(1)}%
+      </span>
+    );
+  };
+
+  const renderHeadroomChange = () => {
+    if (warnings.has("HEADROOM_HISTORY_UNAVAILABLE")) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+          History unavailable
+        </span>
+      );
+    }
+    const val = data?.kpis.protected_headroom_change_pct ?? 0;
+    const isUp = val >= 0;
+    return (
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
+        {Math.abs(val).toFixed(1)}%
+      </span>
+    );
+  };
+
+  const statusBadge = (status: "safe" | "warning" | "breach") => {
+    switch (status) {
+      case "safe":
+        return <span className="font-medium text-[#004D3B] dark:text-[#B5F2C6]">Safe</span>;
+      case "warning":
+        return <span className="font-medium text-[#8A5A00] dark:text-amber-300">Warning</span>;
+      case "breach":
+        return <span className="font-medium text-[#991B1B] dark:text-red-300">Breach</span>;
+    }
+  };
+
+  const recentStatusBadge = (status: "safe" | "deposit" | "split" | "financing" | "declined" | "review", label: string) => {
+    if (status === "review") {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF7E6] dark:bg-amber-950/60 text-[#8A5A00] dark:text-amber-300 border border-[#F2DDA6] dark:border-amber-800">
+          {label}
+        </span>
+      );
+    }
+    if (status === "safe") {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EAF7EE] dark:bg-emerald-950/60 text-[#004D3B] dark:text-emerald-300 border border-[#B5F2C6] dark:border-emerald-800">
+          {label}
+        </span>
+      );
+    }
+    if (status === "declined") {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEF2F2] dark:bg-red-950/60 text-[#991B1B] dark:text-red-300 border border-[#F6CACA] dark:border-red-800">
+          {label}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] text-[#525252] dark:text-neutral-300 border border-[#E8E6E1] dark:border-[#2A2C2D]">
+        {label}
+      </span>
+    );
+  };
+
+  if (error) {
+    return (
+      <main className="p-6">
+        <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950 p-4 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">
+          <p className="font-semibold text-sm">Failed to load overview data</p>
+          <p className="text-xs mt-1">{error}</p>
+          <button
+            type="button"
+            onClick={() => setActiveTimeframe(tf => tf)}
+            className="mt-3 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+          >
             Retry
           </button>
         </div>
-      )}
+      </main>
+    );
+  }
 
-      {data && (
-        <>
-          {(knownWarnings.length > 0 || unknownWarnings.length > 0 || hasHistoryGap) && (
-            <div role="status" className="space-y-1 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-              <div className="flex items-center gap-2 font-semibold">
-                <AlertTriangle className="size-4" />
-                Data notes
+  if (!data) {
+    return (
+      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+        <div className="max-w-[1560px] mx-auto w-full">
+          <SkeletonDashboard />
+        </div>
+      </main>
+    );
+  }
+
+  // SVG dimensions for cashflow chart
+  const svgW = 1000;
+  const svgH = 260;
+  const padY = 24;
+  const chartH = svgH - padY * 2;
+
+  // Compute scaled chart coordinates (only for visual presentation; financial totals use exact strings)
+  const timelineBigInts = timeline.map(p => ({
+    inflow: BigInt(p.inflow_minor),
+    outflow: BigInt(p.outflow_minor),
+    net: BigInt(p.net_minor),
+  }));
+
+  let maxValMinor = BigInt(1);
+  for (const b of timelineBigInts) {
+    if (b.inflow > maxValMinor) maxValMinor = b.inflow;
+    if (b.outflow > maxValMinor) maxValMinor = b.outflow;
+    if (b.net > maxValMinor) maxValMinor = b.net;
+  }
+  const maxValNum = Math.max(100, Number(maxValMinor) / 100);
+
+  const getCoordinates = (amountMinor: bigint, index: number, total: number) => {
+    const x = total > 1 ? ((index + 0.5) / total) * svgW : svgW / 2;
+    const val = Number(amountMinor) / 100;
+    const clamped = Math.max(0, Math.min(val, maxValNum));
+    const y = padY + chartH - (clamped / maxValNum) * chartH;
+    return { x, y };
+  };
+
+  const inflowPoints = timelineBigInts.map((b, i) => getCoordinates(b.inflow, i, timeline.length));
+  const outflowPoints = timelineBigInts.map((b, i) => getCoordinates(b.outflow, i, timeline.length));
+  const netPoints = timelineBigInts.map((b, i) => getCoordinates(b.net, i, timeline.length));
+
+  const createSmoothPath = (rawPts: { x: number; y: number }[]) => {
+    if (rawPts.length === 0) return "";
+    if (rawPts.length === 1) return `M 0 ${rawPts[0].y} L ${svgW} ${rawPts[0].y}`;
+    const firstY = rawPts[0].y;
+    const lastY = rawPts[rawPts.length - 1].y;
+    const pts = [
+      { x: 0, y: firstY },
+      ...rawPts,
+      { x: svgW, y: lastY },
+    ];
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i === 0 ? 0 : i - 1];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+    return d;
+  };
+
+  const inflowPath = createSmoothPath(inflowPoints);
+  const outflowPath = createSmoothPath(outflowPoints);
+  const netPath = createSmoothPath(netPoints);
+
+  const selectedPt = inflowPoints[safePointIndex] ?? null;
+
+  return (
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+        {/* Top Breadcrumb & Header Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-1">
+              <span className="font-medium text-[#1E2021] dark:text-white">Dashboard</span>
+              <ChevronRight className="size-3.5 text-[#A3A3A3]" />
+              <span className="font-semibold text-[#004D3B] dark:text-[#B5F2C6]">Overview</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              Overview
+            </h1>
+            <p className="text-xs sm:text-sm text-[#737373] dark:text-neutral-400 mt-0.5">
+              Financial posture, liquidity stress tests, and order evaluations as of {data.as_of}
+            </p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex items-center flex-wrap gap-2.5">
+            <Link
+              href={`/deals/new${query}`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#004D3B] hover:bg-[#00382B] text-white text-xs font-semibold shadow-xs transition-colors"
+            >
+              <span>+ New Order</span>
+            </Link>
+            <Link
+              href={`/deals${query}`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Layers className="size-3.5 text-[#004D3B] dark:text-[#B5F2C6]" />
+              <span>Explore Deals</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Data warnings banner when warnings exist */}
+        {warnings.has("BASELINE_NOT_CONFIGURED") && (
+          <div role="status" className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+            <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-sm">Opening cash baseline not configured</p>
+              <p>
+                Your business baseline opening balance is not yet saved. Projections and cashflow reflect zero baseline obligations. Order counts and evaluations remain available.
+              </p>
+              <Link
+                href={`/deals/sources${query}`}
+                className="inline-block mt-1 font-semibold text-[#004D3B] dark:text-[#B5F2C6] underline"
+              >
+                Configure baseline balance &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {(warnings.has("BASELINE_COVERAGE_INCOMPLETE") || warnings.has("PAST_EVENTS_REQUIRE_RECONCILIATION")) && (
+          <div role="status" className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+            <Info className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-sm">Data quality notice</p>
+              <p>
+                {warnings.has("BASELINE_COVERAGE_INCOMPLETE") && "Scheduled projection horizon extends past your confirmed baseline coverage date. Scenarios are conservatively flagged as warnings. "}
+                {warnings.has("PAST_EVENTS_REQUIRE_RECONCILIATION") && "Some scheduled baseline events fall prior to the opening date and require reconciliation."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 4 Top Metric KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Opening cash balance */}
+          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                    <DollarSign className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                    Opening cash balance
+                  </span>
+                </div>
+                {renderBalanceChange()}
               </div>
-              <ul className="list-disc pl-5">
-                {knownWarnings.map((w) => (
-                  <li key={w}>{WARNINGS[w]}</li>
+
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+                {formatMoney(data.kpis.total_balance_minor)}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+              <span>As of {data.as_of}</span>
+              <span className="font-medium text-[#1E2021] dark:text-neutral-200">
+                {warnings.has("BASELINE_NOT_CONFIGURED") ? "Not configured" : "Recorded"}
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Evaluated Volume (30d) */}
+          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                    <Activity className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                    Volume (30d)
+                  </span>
+                </div>
+                {renderVolumeChange()}
+              </div>
+
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+                {formatMoney(data.kpis.volume_30d_minor)}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+              <span>Orders stress-tested</span>
+              <span className="font-medium text-[#1E2021] dark:text-neutral-200">{data.kpis.total_orders_tested} Total</span>
+            </div>
+          </div>
+
+          {/* Card 3: Pending Order Reviews */}
+          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                    <Clock className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                    Pending reviews
+                  </span>
+                </div>
+                {renderPendingReviewsChange()}
+              </div>
+
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+                {data.kpis.pending_reviews_count}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+              <span>Awaiting owner confirmation</span>
+              <span className="font-medium text-[#1E2021] dark:text-neutral-200">
+                {data.kpis.pending_reviews_count > 0 ? "Action required" : "Up to date"}
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Protected Headroom */}
+          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                    <ShieldCheck className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                    Protected Headroom
+                  </span>
+                </div>
+                {renderHeadroomChange()}
+              </div>
+
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+                {formatMoney(data.kpis.protected_headroom_minor)}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+              <span>Buffer above cash reserve</span>
+              {statusBadge(data.kpis.protected_headroom_status)}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Graph: Cash Flow */}
+        <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs">
+          {/* Header & Legend */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-lg font-bold text-[#1E2021] dark:text-white font-display">
+                  Cash Flow
+                </h2>
+                <div className="flex items-center gap-3 text-xs flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 text-[#1E2021] dark:text-white font-semibold">
+                    <span className="size-2 rounded-full bg-[#1E2021] dark:bg-white" />
+                    Inflow {formatMoney(data.cashflow.total_inflow_minor)}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[#737373] dark:text-neutral-400 font-semibold">
+                    <span className="size-2 rounded-full bg-[#737373]" />
+                    Outflow {formatMoney(data.cashflow.total_outflow_minor)}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[#004D3B] dark:text-[#B5F2C6] font-semibold">
+                    <span className="size-2 rounded-full bg-[#004D3B] dark:bg-[#B5F2C6]" />
+                    Net {formatMoney(data.cashflow.total_net_minor)}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-[#737373] dark:text-neutral-400">
+                Forward scheduled baseline events and committed order projections from {data.as_of}. Uncommitted hypothetical orders are excluded.
+              </p>
+            </div>
+
+            {/* Timeframe Scrubber Pills */}
+            <div className="flex items-center gap-2">
+              <div className="inline-flex p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl text-xs font-semibold">
+                {(["30d", "90d", "6m", "1y"] as const).map(tf => (
+                  <button
+                    key={tf}
+                    type="button"
+                    onClick={() => setActiveTimeframe(tf)}
+                    className={`px-3 py-1 rounded-lg uppercase transition-all ${
+                      activeTimeframe === tf
+                        ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
+                        : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                    }`}
+                  >
+                    {tf}
+                  </button>
                 ))}
-                {hasHistoryGap && <li>Comparisons with earlier periods are unavailable because no history is stored.</li>}
-                {unknownWarnings.map((w) => (
-                  <li key={w}>Data-quality notice: {w}</li>
-                ))}
-              </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Chart Canvas */}
+          <div className="relative pt-6 pb-2">
+            {timeline.length === 0 ? (
+              <div className="py-16 text-center text-xs text-[#737373] dark:text-neutral-400">
+                No scheduled cash events recorded in this timeframe window.
+              </div>
+            ) : (
+              <>
+                {/* Tooltip Card floating above selected point */}
+                {selectedPt && selectedPoint && (
+                  <div
+                    className="absolute z-10 -translate-x-1/2 -top-1 pointer-events-none transition-all duration-200"
+                    style={{ left: `${(selectedPt.x / svgW) * 100}%` }}
+                  >
+                    <div className="bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] px-3 py-1.5 rounded-xl shadow-lg text-center whitespace-nowrap">
+                      <div className="text-xs font-bold font-display tracking-tight text-white dark:text-[#1E2021]">
+                        Net: {formatMoney(selectedPoint.net_minor)}
+                      </div>
+                      <div className="text-[10px] text-neutral-300 dark:text-neutral-600 font-mono">
+                        {selectedPoint.date_range}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SVG Chart with Splines */}
+                <div className="w-full overflow-hidden">
+                  <svg
+                    viewBox={`0 0 ${svgW} ${svgH}`}
+                    preserveAspectRatio="none"
+                    className="w-full h-48 sm:h-64 lg:h-72 select-none"
+                  >
+                    {/* Horizontal Guide Lines */}
+                    {[0.2, 0.4, 0.6, 0.8].map(ratio => {
+                      const y = padY + chartH * ratio;
+                      return (
+                        <line
+                          key={ratio}
+                          x1={0}
+                          y1={y}
+                          x2={svgW}
+                          y2={y}
+                          stroke="currentColor"
+                          className="text-[#F0EFEA] dark:text-[#2A2C2D]"
+                          strokeWidth="1"
+                          strokeDasharray="4 4"
+                        />
+                      );
+                    })}
+
+                    {/* Selected vertical indicator line */}
+                    {selectedPt && (
+                      <line
+                        x1={selectedPt.x}
+                        y1={padY}
+                        x2={selectedPt.x}
+                        y2={svgH - padY}
+                        stroke="#3B82F6"
+                        strokeWidth="1.5"
+                        strokeDasharray="3 3"
+                      />
+                    )}
+
+                    {/* Spline Lines */}
+                    <path d={inflowPath} fill="none" stroke="#E05D52" strokeWidth="2.8" strokeLinecap="round" />
+                    <path d={outflowPath} fill="none" stroke="#3B82F6" strokeWidth="2.8" strokeLinecap="round" />
+                    <path d={netPath} fill="none" stroke="#004D3B" strokeWidth="3" strokeLinecap="round" className="dark:stroke-[#B5F2C6]" />
+
+                    {/* Interactive Points */}
+                    {timeline.map((d, i) => {
+                      const pt = inflowPoints[i];
+                      if (!pt) return null;
+                      const isSelected = i === safePointIndex;
+                      return (
+                        <g key={d.period_key} className="cursor-pointer" onClick={() => setSelectedPointIndex(i)}>
+                          {isSelected && (
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r="8"
+                              fill="#3B82F6"
+                              fillOpacity="0.25"
+                            />
+                          )}
+                          <circle
+                            cx={pt.x}
+                            cy={pt.y}
+                            r={isSelected ? "5" : "3.5"}
+                            fill={isSelected ? "#3B82F6" : "#E05D52"}
+                            stroke="#FFFFFF"
+                            strokeWidth="2"
+                            className="transition-all hover:r-6"
+                          />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+
+                {/* Bottom Timeline Axis */}
+                <div
+                  className="grid gap-1 pt-2 text-center text-xs font-mono text-[#737373] dark:text-neutral-400"
+                  style={{ gridTemplateColumns: `repeat(${timeline.length}, minmax(0, 1fr))` }}
+                >
+                  {timeline.map((d, i) => {
+                    const isSelected = i === safePointIndex;
+                    return (
+                      <button
+                        key={d.period_key}
+                        type="button"
+                        onClick={() => setSelectedPointIndex(i)}
+                        className={`py-1 px-0.5 rounded-md truncate transition-colors text-[10px] sm:text-xs ${
+                          isSelected
+                            ? "font-bold text-[#1E2021] dark:text-white bg-[#F4F2ED] dark:bg-[#222425]"
+                            : "hover:text-[#1E2021]"
+                        }`}
+                        title={d.date_range}
+                      >
+                        <span>{d.period_key}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active Window Snapshot Callout */}
+                {selectedPoint && (
+                  <div className="mt-4 p-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[#1E2021] dark:text-white font-display">
+                        {selectedPoint.date_range}:
+                      </span>
+                      <span className="text-[#525252] dark:text-neutral-300">
+                        {selectedPoint.highlight_note ?? "Scheduled baseline & commitment balance window"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 font-mono font-medium text-[#1E2021] dark:text-neutral-200">
+                      <span>In: +{formatMoney(selectedPoint.inflow_minor)}</span>
+                      <span className="text-[#737373]">Out: -{formatMoney(selectedPoint.outflow_minor)}</span>
+                      <span className="font-bold text-[#004D3B] dark:text-[#B5F2C6]">
+                        Net: {formatMoney(selectedPoint.net_minor)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary Section: Order Feasibility & Delay Sensitivity Stress Test */}
+        <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-md bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] flex items-center justify-center">
+                  <ShieldCheck className="size-3.5" />
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-[#1E2021] dark:text-white font-display">
+                  Order Feasibility &amp; Delay Sensitivity Stress Test
+                </h2>
+              </div>
+              <p className="text-xs text-[#737373] dark:text-neutral-400 mt-0.5">
+                Stress-test customer payment delays (0 to 60 days) against your policy cash reserve floor to evaluate absolute liquidity resilience.
+              </p>
+            </div>
+
+            {/* Mode Switcher */}
+            <div className="inline-flex p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl text-xs font-semibold self-start md:self-auto">
+              <button
+                type="button"
+                onClick={() => setSecondaryGraphTab("sensitivity")}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  secondaryGraphTab === "sensitivity"
+                    ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
+                    : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                }`}
+              >
+                Delay Sensitivity Cliff
+              </button>
+              <button
+                type="button"
+                onClick={() => setSecondaryGraphTab("verdicts")}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  secondaryGraphTab === "verdicts"
+                    ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
+                    : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                }`}
+              >
+                Verdict Distribution
+              </button>
+            </div>
+          </div>
+
+          {secondaryGraphTab === "sensitivity" ? (
+            <div className="space-y-4">
+              {/* Delay Scenarios Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+                {delayScenarios.map((sc, i) => {
+                  const isSelected = i === safeDelayIndex;
+                  const troughVal = BigInt(sc.projected_trough_minor);
+                  const reserveVal = BigInt(sc.reserve_floor_minor);
+                  const headroom = troughVal - reserveVal;
+                  const isSafe = headroom >= BigInt(0);
+
+                  return (
+                    <div
+                      key={sc.label}
+                      onClick={() => setSelectedDelayIndex(i)}
+                      className={`cursor-pointer p-3.5 rounded-xl border transition-all text-left flex flex-col justify-between ${
+                        isSelected
+                          ? "border-[#1E2021] dark:border-white bg-[#FAF9F7] dark:bg-[#222425] shadow-xs ring-1 ring-[#1E2021] dark:ring-white"
+                          : "border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] hover:border-[#737373]"
+                      }`}
+                    >
+                      <div>
+                        <div className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400">
+                          {sc.label}
+                        </div>
+                        <div className="mt-2 text-base font-bold font-mono text-[#1E2021] dark:text-white">
+                          {formatMoney(sc.projected_trough_minor)}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between text-[11px]">
+                        <span className="font-mono text-[#1E2021] dark:text-neutral-200">
+                          {isSafe ? `+${formatMoney(headroom)}` : `-${formatMoney(-headroom)}`}
+                        </span>
+                        <span className="text-[10px] text-[#737373] dark:text-neutral-400">
+                          {statusBadge(sc.status)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Sensitivity Cliff Visual Chart */}
+              {activeDelayScenario && (
+                <div className="p-4 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="font-semibold text-[#1E2021] dark:text-white flex items-center gap-1.5">
+                      <span>Scenario: {activeDelayScenario.label}</span>
+                    </div>
+                    <span className="text-[#737373] dark:text-neutral-400 font-mono">
+                      Policy Reserve Floor: {formatMoney(reserveFloorMinor)}
+                    </span>
+                  </div>
+
+                  {/* Progress bar showing projected trough relative to reserve */}
+                  <div className="space-y-1.5">
+                    <div className="h-2 w-full bg-[#E8E6E1] dark:bg-[#2A2C2D] rounded-full overflow-hidden flex">
+                      <div
+                        className="h-full bg-[#1E2021] dark:bg-white rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            Math.max(
+                              5,
+                              reserveFloorMinor > BigInt(0)
+                                ? (Number(BigInt(activeDelayScenario.projected_trough_minor)) / Number(reserveFloorMinor * BigInt(2))) * 100
+                                : 50
+                            )
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-[#737373] dark:text-neutral-400 font-mono">
+                      <span>{currency} 0 Floor</span>
+                      <span>Reserve Baseline</span>
+                      <span>200% Target Safety</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#525252] dark:text-neutral-300 bg-white dark:bg-[#181A1B] p-3 rounded-lg border border-[#E8E6E1] dark:border-[#2A2C2D]">
+                    <strong className="text-[#1E2021] dark:text-white">Recommendation: </strong>
+                    {activeDelayScenario.recommendation}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              {/* Verdict Distribution breakdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
+                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Feasible As-Is</span>
+                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                    {data.verdict_distribution.feasible_as_is_pct.toFixed(0)}%
+                  </div>
+                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                    {data.verdict_distribution.feasible_as_is_count} deals
+                  </p>
+                </div>
+                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
+                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Deposit Required</span>
+                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                    {data.verdict_distribution.deposit_required_pct.toFixed(0)}%
+                  </div>
+                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                    {data.verdict_distribution.deposit_required_count} deals
+                  </p>
+                </div>
+                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
+                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Split Milestones</span>
+                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                    {data.verdict_distribution.split_milestones_pct.toFixed(0)}%
+                  </div>
+                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                    {data.verdict_distribution.split_milestones_count} deals (split disabled)
+                  </p>
+                </div>
+                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
+                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Financing Needed</span>
+                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                    {data.verdict_distribution.financing_needed_pct.toFixed(0)}%
+                  </div>
+                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                    {data.verdict_distribution.financing_needed_count} deals
+                  </p>
+                </div>
+              </div>
+
+              {/* Stacked visualization bar */}
+              <div className="h-3 w-full rounded-full overflow-hidden flex bg-[#E8E6E1] dark:bg-[#2A2C2D]">
+                <div
+                  className="h-full bg-[#1E2021] dark:bg-white"
+                  style={{ width: `${data.verdict_distribution.feasible_as_is_pct}%` }}
+                  title={`Feasible As-Is (${data.verdict_distribution.feasible_as_is_pct.toFixed(0)}%)`}
+                />
+                <div
+                  className="h-full bg-[#525252] dark:bg-neutral-400"
+                  style={{ width: `${data.verdict_distribution.deposit_required_pct}%` }}
+                  title={`Deposit Required (${data.verdict_distribution.deposit_required_pct.toFixed(0)}%)`}
+                />
+                <div
+                  className="h-full bg-[#8C8C8C] dark:bg-neutral-600"
+                  style={{ width: `${data.verdict_distribution.split_milestones_pct}%` }}
+                  title={`Split Milestones (${data.verdict_distribution.split_milestones_pct.toFixed(0)}%)`}
+                />
+                <div
+                  className="h-full bg-[#B8B6B0] dark:bg-neutral-700"
+                  style={{ width: `${data.verdict_distribution.financing_needed_pct}%` }}
+                  title={`Financing Needed (${data.verdict_distribution.financing_needed_pct.toFixed(0)}%)`}
+                />
+              </div>
+
+              {warnings.has("VERDICT_DISTRIBUTION_EXCLUDES_DECLINED_AND_UNCLASSIFIED") && (
+                <p className="text-[11px] text-[#737373] dark:text-neutral-400">
+                  Note: Declined and extension-only orders are excluded from this classified distribution.
+                </p>
+              )}
             </div>
           )}
+        </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Stat label="Opening cash balance" value={money(data.kpis.total_balance_minor)} note="Recorded, not a verified bank balance" />
-            <Stat label="Protected headroom" value={money(data.kpis.protected_headroom_minor)} note={`Reserve floor ${money(data.reserve_floor_minor)}`} />
-            <Stat label="Evaluated volume (30d)" value={money(data.kpis.volume_30d_minor)} />
-            <Stat label="Orders tested / pending review" value={`${data.kpis.total_orders_tested} / ${data.kpis.pending_reviews_count}`} />
-          </div>
-
-          <section className={card} aria-labelledby="cf-h">
-            <h2 id="cf-h" className="font-bold font-display">
-              Scheduled cash flow
-            </h2>
-            <p className="text-xs text-[#737373] dark:text-neutral-400">
-              Forward scheduled events from the baseline and committed orders. Inflow {money(data.cashflow.total_inflow_minor)} · outflow {money(data.cashflow.total_outflow_minor)} · net {money(data.cashflow.total_net_minor)}
-            </p>
-            {data.cashflow.timeline.length === 0 ? (
-              <p className="mt-3 text-sm text-[#737373]">No scheduled cash events in this window.</p>
-            ) : (
-              (() => {
-                const max = Math.max(1, ...data.cashflow.timeline.flatMap((p) => [scaled(p.inflow_minor), scaled(p.outflow_minor)]));
-                const sel = data.cashflow.timeline[Math.min(picked, data.cashflow.timeline.length - 1)];
-                return (
-                  <>
-                    <div className="mt-4 flex items-end gap-1 h-32" role="list" aria-label="Cash flow by period">
-                      {data.cashflow.timeline.map((p, i) => (
-                        <button
-                          key={p.period_key}
-                          role="listitem"
-                          type="button"
-                          aria-label={`${p.date_range}: inflow ${money(p.inflow_minor)}, outflow ${money(p.outflow_minor)}`}
-                          onClick={() => setPicked(i)}
-                          className={`flex-1 flex items-end gap-px h-full cursor-pointer rounded ${p === sel ? "bg-[#F4F2ED] dark:bg-[#222425]" : ""}`}
-                        >
-                          <span className="flex-1 bg-emerald-600/80" style={{ height: `${(scaled(p.inflow_minor) / max) * 100}%` }} />
-                          <span className="flex-1 bg-red-500/80" style={{ height: `${(scaled(p.outflow_minor) / max) * 100}%` }} />
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-2 text-xs">
-                      <strong>{sel.date_range}</strong>: inflow {money(sel.inflow_minor)}, outflow {money(sel.outflow_minor)}, net {money(sel.net_minor)}
-                      {sel.highlight_note ? ` · ${sel.highlight_note}` : ""}
-                    </p>
-                  </>
-                );
-              })()
-            )}
-          </section>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <section className={card} aria-labelledby="ds-h">
-              <h2 id="ds-h" className="font-bold font-display">
-                Customer-delay sensitivity
-              </h2>
-              <ul className="mt-3 divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D] text-xs">
-                {data.delay_sensitivity.map((s) => (
-                  <li key={s.delay_days} className="py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold">{s.label}</span>
-                      <span className="font-mono">{money(s.projected_trough_minor)}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_TONE[s.status]}`}>{s.status}</span>
-                    </div>
-                    <p className="text-[#737373] dark:text-neutral-400">{s.recommendation}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={card} aria-labelledby="re-h">
-              <div className="flex items-center justify-between">
-                <h2 id="re-h" className="font-bold font-display">
-                  Recent evaluations
-                </h2>
-                <Link href={`/deals${query}`} className="text-xs font-semibold hover:underline">
-                  View all
+        {/* Bottom Section: 2 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Recent Evaluations */}
+          <div className="lg:col-span-7 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                    Recent evaluations
+                  </h2>
+                  <p className="text-xs text-[#737373] dark:text-neutral-400">
+                    Latest evaluated purchase orders and recommended strategy options (not proof of funds received)
+                  </p>
+                </div>
+                <Link
+                  href={`/deals${query}`}
+                  className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
+                >
+                  View All
                 </Link>
               </div>
-              {data.recent_settlements.length === 0 ? (
-                <p className="mt-3 text-sm text-[#737373]">No orders have been evaluated yet.</p>
-              ) : (
-                <ul className="mt-3 divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D] text-xs">
-                  {data.recent_settlements.map((r) => (
-                    <li key={r.id} className="py-2">
-                      <Link href={`/deals/${r.deal_id}${query}`} className="flex items-center justify-between gap-2 hover:underline">
-                        <span className="min-w-0">
-                          <span className="block font-semibold truncate">{r.customer_name}</span>
-                          <span className="block font-mono text-[#737373] dark:text-neutral-400">
-                            {r.order_no ?? r.public_ref} · {r.terms}
+
+              {/* List of recent settlements */}
+              <div className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
+                {data.recent_settlements.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[#737373] dark:text-neutral-400">
+                    No order evaluations recorded yet.
+                  </div>
+                ) : (
+                  data.recent_settlements.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/deals/${item.deal_id}${query}`}
+                      className="py-3.5 flex items-center justify-between gap-3 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] -mx-2 px-2 rounded-xl transition-colors block"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-9 rounded-full bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center font-bold text-xs shrink-0 font-display">
+                          {item.customer_name ? item.customer_name.charAt(0) : "D"}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-[#1E2021] dark:text-white truncate font-display">
+                            {item.customer_name || "Unassigned Customer"}
+                          </div>
+                          <div className="text-[11px] text-[#737373] dark:text-neutral-400 font-mono">
+                            {item.order_no ? `${item.order_no} • ` : ""}{item.public_ref}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                        <div className="text-xs font-bold font-mono text-[#1E2021] dark:text-white">
+                          {formatMoney(item.amount_minor)}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {recentStatusBadge(item.status, item.status_label)}
+                          <span className="text-[10px] text-[#737373] dark:text-neutral-400">
+                            {item.terms}
                           </span>
-                        </span>
-                        <span className="shrink-0 text-right">
-                          <span className="block font-mono">{money(r.amount_minor)}</span>
-                          {statusBadge(r)}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link href={`/deals/new${query}`} className="mt-4 inline-flex items-center gap-1 text-xs font-semibold hover:underline">
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between text-xs text-[#737373] dark:text-neutral-400">
+              <span>{data.recent_settlements.length} recent evaluations shown</span>
+              <Link href={`/deals/new${query}`} className="font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline flex items-center gap-1">
                 Evaluate next order <ArrowRight className="size-3" />
               </Link>
-            </section>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <section className={card} aria-labelledby="vd-h">
-              <h2 id="vd-h" className="font-bold font-display">
-                Evaluation outcomes
-              </h2>
-              <ul className="mt-3 space-y-1 text-xs">
-                {(
-                  [
-                    ["Feasible as offered", data.verdict_distribution.feasible_as_is_count, data.verdict_distribution.feasible_as_is_pct],
-                    ["Deposit required", data.verdict_distribution.deposit_required_count, data.verdict_distribution.deposit_required_pct],
-                    ["Financing needed", data.verdict_distribution.financing_needed_count, data.verdict_distribution.financing_needed_pct],
-                  ] as const
-                ).map(([label, count, pct]) => (
-                  <li key={label} className="flex justify-between">
-                    <span>{label}</span>
-                    <span className="font-mono">
-                      {count} ({pct.toFixed(0)}%)
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section className={card} aria-labelledby="cb-h">
-              <h2 id="cb-h" className="font-bold font-display">
-                Recorded balance
-              </h2>
-              {data.currency_balances.length === 0 ? (
-                <p className="mt-3 text-sm text-[#737373]">No positive balance is recorded.</p>
-              ) : (
-                <ul className="mt-3 space-y-1 text-xs">
-                  {data.currency_balances.map((b) => (
-                    <li key={b.code} className="flex justify-between">
-                      <span>{b.name}</span>
-                      <span className="font-mono">{money(b.amount_minor)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+          {/* Right Column: Balance by currency / Reserve Status */}
+          <div className="lg:col-span-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                    Balance by currency
+                  </h2>
+                  <p className="text-xs text-[#737373] dark:text-neutral-400">
+                    Recorded primary opening balance (single operating baseline)
+                  </p>
+                </div>
+                <Link
+                  href={`/deals/sources${query}`}
+                  className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
+                >
+                  Manage
+                </Link>
+              </div>
+
+              {/* Currency Account Cards */}
+              <div className="space-y-4 pt-3">
+                {data.currency_balances.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-[#737373] dark:text-neutral-400">
+                    {warnings.has("NEGATIVE_BALANCE_NOT_REPRESENTABLE_IN_CURRENCY_ALLOCATION")
+                      ? "Negative opening balance cannot be allocated in percentage breakdown."
+                      : "No baseline balance recorded."}
+                  </div>
+                ) : (
+                  data.currency_balances.map(c => (
+                    <div key={c.code} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="size-6 rounded-md bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 font-bold flex items-center justify-center text-[11px] font-mono">
+                            {c.symbol}
+                          </div>
+                          <span className="font-semibold text-[#1E2021] dark:text-white">{c.name}</span>
+                        </div>
+                        <span className="font-bold font-mono text-[#1E2021] dark:text-white">
+                          {formatMoney(c.amount_minor)}
+                        </span>
+                      </div>
+
+                      <div className="h-2 w-full bg-[#F4F2ED] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#1E2021] dark:bg-neutral-300"
+                          style={{ width: `${c.pct_allocation}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Cash Floor Policy Indicator */}
+            <div className="mt-5 p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs space-y-1.5">
+              <div className="flex items-center justify-between font-semibold">
+                <span className="text-[#1E2021] dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="size-4 text-[#004D3B] dark:text-[#B5F2C6]" />
+                  Active Cash Floor Policy
+                </span>
+                <span className="text-[#004D3B] dark:text-[#B5F2C6] font-mono">
+                  {formatMoney(reserveFloorMinor)}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-neutral-400 leading-normal">
+                OrderFit checks every prospective order against this daily floor to prevent unfunded payroll or supplier defaults.
+              </p>
+            </div>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </main>
   );
 }
