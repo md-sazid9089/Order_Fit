@@ -79,3 +79,31 @@ Preparation history returns compact comparison summaries; full snapshots, catalo
 and series load only on explicit inspection. Historical messages remain readable if
 a party is archived, with stale status. Preparation expiry is no later than the
 selected offer's inclusive final day in the business timezone or 24 hours.
+
+## AI advisory additions (18 October 2026)
+
+All additions are proposal-only; none changes confirmed inputs, figures or approvals.
+
+- **Reply reading.** `ReplyView` adds `conditions`, `unsupported_clauses` (verbatim reply
+  quotes), `model_stance`, deterministic `baseline_stance`, `stance_disagreement` and
+  `language_script`. Conditions, unsupported clauses or a reject/partial model stance remove
+  any acceptance candidate (a hold); a model can never add acceptance or clear a hold.
+  Unsupported/mixed reply languages stay a review hold.
+- **What-if clarification.** `ForkView`/`ForkSummary.clarification` carries one short
+  figure-free question when the request was unclear; no change is run.
+- **Slot explanations.** `POST /deals/{deal_id}/explanations` (operation kind `advisory`, task
+  `explanation`) stores model wording built from `{slot}` placeholders resolved from engine
+  facts. `GET /evaluations/{id}/explanation` serves the newest stored text for that exact
+  option, otherwise the deterministic template. `Explanation` adds `provenance` (`template`,
+  `recorded`, `live`), `model` and `response_id`.
+- **Clause assessments.** `POST /deals/{deal_id}/clause-assessments` (task `clause`) stores
+  typed readings (`payment_basis`, `payment_days`, verbatim quote, generated label), each
+  evaluated on an isolated fork through `agent/nodes/compute.py`, plus the as-confirmed
+  baseline. `question` exists only when the evaluable readings disagree on the decision or the
+  recommended option. `GET /clause-assessments/{id}`; `PreparationState.clause_assessments`.
+  `hypotheses_only` and `canonical_changed` are literal.
+- **Extraction provenance.** `ExtractionCandidateView` adds `provenance` (`recorded`/`live`),
+  `model`, `page_language`, `page_script` and a reviewer-only `gloss_en` (never evidence).
+- Schema: migration `0020_ai_workflow` adds the three candidate columns, the immutable
+  `ai_advisory` table (FORCE RLS, `orderfit_app` SELECT/INSERT only) and the `advisory`
+  operation kind.

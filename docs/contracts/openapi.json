@@ -597,6 +597,56 @@
         "title": "ActionView",
         "type": "object"
       },
+      "AdvisoryExplainRequest": {
+        "additionalProperties": false,
+        "description": "Ask for a model-worded explanation of one stored option (slots resolved by facts).",
+        "properties": {
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "option_key": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Option Key",
+            "type": "string"
+          },
+          "task": {
+            "const": "explanation",
+            "default": "explanation",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "evaluation_id",
+          "option_key"
+        ],
+        "title": "AdvisoryExplainRequest",
+        "type": "object"
+      },
       "AnalysisConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1737,6 +1787,19 @@
             "title": "Field",
             "type": "string"
           },
+          "gloss_en": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gloss En"
+          },
           "normalized_value": {
             "anyOf": [
               {
@@ -2110,6 +2173,251 @@
           "event"
         ],
         "title": "CashEventWrite",
+        "type": "object"
+      },
+      "ClauseAssessment": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_changed": {
+            "const": false,
+            "default": false,
+            "title": "Canonical Changed",
+            "type": "boolean"
+          },
+          "clause_text": {
+            "title": "Clause Text",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Code"
+          },
+          "confirmed": {
+            "$ref": "#/components/schemas/ReadingOutcome"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "decision_changes": {
+            "title": "Decision Changes",
+            "type": "boolean"
+          },
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "hypotheses_only": {
+            "const": true,
+            "default": true,
+            "title": "Hypotheses Only",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Hash"
+          },
+          "is_stale": {
+            "default": false,
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "provenance": {
+            "enum": [
+              "template",
+              "recorded",
+              "live"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Question"
+          },
+          "readings": {
+            "items": {
+              "$ref": "#/components/schemas/ReadingOutcome"
+            },
+            "maxItems": 4,
+            "title": "Readings",
+            "type": "array"
+          },
+          "response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Response Id"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "evaluation_id",
+          "clause_text",
+          "confirmed",
+          "readings",
+          "decision_changes",
+          "provenance"
+        ],
+        "title": "ClauseAssessment",
+        "type": "object"
+      },
+      "ClauseReading": {
+        "additionalProperties": false,
+        "description": "A typed hypothesis. The label is generated from the typed fields, never by a model.",
+        "properties": {
+          "label": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Label",
+            "type": "string"
+          },
+          "payment_basis": {
+            "enum": [
+              "order",
+              "invoice",
+              "delivery"
+            ],
+            "title": "Payment Basis",
+            "type": "string"
+          },
+          "payment_days": {
+            "maximum": 365,
+            "minimum": 0,
+            "title": "Payment Days",
+            "type": "integer"
+          },
+          "quote": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payment_basis",
+          "payment_days",
+          "quote",
+          "label"
+        ],
+        "title": "ClauseReading",
+        "type": "object"
+      },
+      "ClauseRequest": {
+        "additionalProperties": false,
+        "description": "Ask whether an ambiguous payment clause could change the recommendation.",
+        "properties": {
+          "clause_text": {
+            "maxLength": 2000,
+            "minLength": 3,
+            "pattern": "\\S",
+            "title": "Clause Text",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "format": "uuid",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_input_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Input Version",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "task": {
+            "const": "clause",
+            "default": "clause",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_input_version",
+          "expected_financial_revision",
+          "evaluation_id",
+          "clause_text"
+        ],
+        "title": "ClauseRequest",
         "type": "object"
       },
       "CommitmentItem": {
@@ -4570,15 +4878,43 @@
             "title": "Is Stale",
             "type": "boolean"
           },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
           "option_key": {
             "title": "Option Key",
             "type": "string"
           },
           "provenance": {
-            "const": "template",
             "default": "template",
+            "enum": [
+              "template",
+              "recorded",
+              "live"
+            ],
             "title": "Provenance",
             "type": "string"
+          },
+          "response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Response Id"
           },
           "sentences": {
             "items": {
@@ -4798,10 +5134,78 @@
             "title": "Flags",
             "type": "array"
           },
+          "gloss_en": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gloss En"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "page_language": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Page Language"
+          },
+          "page_script": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Page Script"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "enum": [
+                  "recorded",
+                  "live"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provenance"
           },
           "source_page": {
             "anyOf": [
@@ -5295,6 +5699,19 @@
             "title": "Changes",
             "type": "array"
           },
+          "clarification": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Clarification"
+          },
           "deal_id": {
             "format": "uuid",
             "title": "Deal Id",
@@ -5400,6 +5817,19 @@
             },
             "title": "Changes",
             "type": "array"
+          },
+          "clarification": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Clarification"
           },
           "deal_id": {
             "format": "uuid",
@@ -6637,7 +7067,8 @@
               "whatif",
               "reply",
               "execute",
-              "csv_preview"
+              "csv_preview",
+              "advisory"
             ],
             "title": "Kind",
             "type": "string"
@@ -8494,6 +8925,14 @@
             "title": "Acceptances",
             "type": "array"
           },
+          "clause_assessments": {
+            "items": {
+              "$ref": "#/components/schemas/ClauseAssessment"
+            },
+            "maxItems": 20,
+            "title": "Clause Assessments",
+            "type": "array"
+          },
           "deal_id": {
             "format": "uuid",
             "title": "Deal Id",
@@ -8966,6 +9405,88 @@
         "title": "Readiness",
         "type": "object"
       },
+      "ReadingOutcome": {
+        "additionalProperties": false,
+        "description": "Engine result of one isolated fork (or the as-confirmed baseline).",
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Code"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "evaluable": {
+            "title": "Evaluable",
+            "type": "boolean"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClauseReading"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommended_option_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Option Key"
+          },
+          "recommended_profit_minor": {
+            "anyOf": [
+              {
+                "maxLength": 17,
+                "pattern": "^(0|-?[1-9][0-9]*)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Profit Minor"
+          }
+        },
+        "required": [
+          "reading",
+          "evaluable",
+          "decision",
+          "recommended_option_key",
+          "recommended_profit_minor"
+        ],
+        "title": "ReadingOutcome",
+        "type": "object"
+      },
       "ReasonCommand": {
         "additionalProperties": false,
         "properties": {
@@ -9246,6 +9767,17 @@
             "title": "Bank Change",
             "type": "boolean"
           },
+          "baseline_stance": {
+            "default": "unclear",
+            "enum": [
+              "accept",
+              "reject",
+              "partial",
+              "unclear"
+            ],
+            "title": "Baseline Stance",
+            "type": "string"
+          },
           "body": {
             "title": "Body",
             "type": "string"
@@ -9255,6 +9787,16 @@
               "$ref": "#/components/schemas/ReplyTerm"
             },
             "title": "Candidates",
+            "type": "array"
+          },
+          "conditions": {
+            "items": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Conditions",
             "type": "array"
           },
           "deal_id": {
@@ -9282,6 +9824,78 @@
             ],
             "title": "Language Code"
           },
+          "language_input_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Input Hash"
+          },
+          "language_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Model"
+          },
+          "language_response_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Response Id"
+          },
+          "language_script": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language Script"
+          },
+          "language_supported": {
+            "default": false,
+            "title": "Language Supported",
+            "type": "boolean"
+          },
+          "model_stance": {
+            "anyOf": [
+              {
+                "enum": [
+                  "accept",
+                  "reject",
+                  "partial",
+                  "unclear"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model Stance"
+          },
           "party_id": {
             "format": "uuid",
             "title": "Party Id",
@@ -9299,6 +9913,21 @@
           "reviewed": {
             "title": "Reviewed",
             "type": "boolean"
+          },
+          "stance_disagreement": {
+            "default": false,
+            "title": "Stance Disagreement",
+            "type": "boolean"
+          },
+          "unsupported_clauses": {
+            "items": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Unsupported Clauses",
+            "type": "array"
           }
         },
         "required": [
@@ -16111,6 +16740,157 @@
         ]
       }
     },
+    "/api/v1/businesses/{business_id}/clause-assessments/{assessment_id}": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "clause_assessment_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assessment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClauseAssessment"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "read",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "ai_advisory"
+        ]
+      }
+    },
     "/api/v1/businesses/{business_id}/constraints": {
       "get": {
         "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
@@ -19231,6 +20011,187 @@
         ]
       }
     },
+    "/api/v1/businesses/{business_id}/deals/{deal_id}/clause-assessments": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "clause_assessment_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClauseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationAccepted"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "prepare",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "operation",
+          "ai_advisory"
+        ]
+      }
+    },
     "/api/v1/businesses/{business_id}/deals/{deal_id}/close": {
       "post": {
         "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
@@ -21430,6 +22391,187 @@
           "operation",
           "deal",
           "idempotency_key"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/deals/{deal_id}/explanations": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "explanation_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "deal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationAccepted"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P5"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "preparation",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P5",
+        "x-permission": "prepare",
+        "x-service-owner": "preparation",
+        "x-storage-owner": [
+          "operation",
+          "ai_advisory"
         ]
       }
     },
