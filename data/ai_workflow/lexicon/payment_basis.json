@@ -1,0 +1,6 @@
+{
+  "en": {"invoice": ["invoice"], "delivery": ["delivery"], "order": ["order"]},
+  "bn": {"invoice": ["চালান", "ইনভয়েস"], "delivery": ["ডেলিভারি", "সরবরাহ"], "order": ["অর্ডার", "ক্রয়াদেশ"]},
+  "hi": {"invoice": ["चालान", "इनवॉइस"], "delivery": ["डिलीवरी", "वितरण"], "order": ["ऑर्डर", "आदेश"]},
+  "zh-Hans": {"invoice": ["发票"], "delivery": ["交付", "送达"], "order": ["订单", "采购单"]}
+}

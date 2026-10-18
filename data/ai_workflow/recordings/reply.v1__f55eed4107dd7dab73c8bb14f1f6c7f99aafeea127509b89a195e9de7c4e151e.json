@@ -1,0 +1,17 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "payment_days",
+    "value": "45",
+    "quote": "payment within 45 days"
+   }
+  ],
+  "conditions": [],
+  "unsupported_clauses": [
+   "a 2% handling fee applies"
+  ],
+  "stance": "partial"
+ }
+}

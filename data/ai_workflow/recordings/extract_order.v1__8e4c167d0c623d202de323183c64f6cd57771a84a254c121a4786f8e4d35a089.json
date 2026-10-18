@@ -1,0 +1,32 @@
+{
+ "model": "synthetic-weak-model",
+ "candidates": [
+  {
+   "document_id": "c6e42d48-984b-53c2-ac5e-89469f8d504a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_date",
+   "normalized_value": "2026-04-03",
+   "status": "extracted",
+   "exact_quote": "Order date: 03/04/2026"
+  },
+  {
+   "document_id": "c6e42d48-984b-53c2-ac5e-89469f8d504a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "20",
+   "status": "extracted",
+   "exact_quote": "Payment within 20 days after delivery."
+  },
+  {
+   "document_id": "c6e42d48-984b-53c2-ac5e-89469f8d504a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "delivery",
+   "status": "extracted",
+   "exact_quote": "Payment within 20 days after delivery."
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "model": "synthetic-weak-model",
+ "candidates": [
+  {
+   "document_id": "b5dfacb6-2ae0-566a-bfae-d9373c963db8",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_value_minor",
+   "normalized_value": "100000",
+   "status": "extracted",
+   "exact_quote": "Order value BDT 1,000.00"
+  },
+  {
+   "document_id": "b5dfacb6-2ae0-566a-bfae-d9373c963db8",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_value_minor",
+   "normalized_value": "120000",
+   "status": "extracted",
+   "exact_quote": "order value BDT 1,200.00"
+  },
+  {
+   "document_id": "b5dfacb6-2ae0-566a-bfae-d9373c963db8",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "15",
+   "status": "extracted",
+   "exact_quote": "Payment within 15 days after delivery."
+  },
+  {
+   "document_id": "b5dfacb6-2ae0-566a-bfae-d9373c963db8",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "delivery",
+   "status": "extracted",
+   "exact_quote": "Payment within 15 days after delivery."
+  }
+ ]
+}

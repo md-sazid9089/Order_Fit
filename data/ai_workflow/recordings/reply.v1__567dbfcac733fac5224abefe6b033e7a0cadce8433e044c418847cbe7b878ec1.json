@@ -1,0 +1,11 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [],
+  "conditions": [
+   "provided our board approves"
+  ],
+  "unsupported_clauses": [],
+  "stance": "partial"
+ }
+}

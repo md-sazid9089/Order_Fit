@@ -1,0 +1,7 @@
+{
+ "model": "synthetic-recording",
+ "intent": {
+  "changes": [],
+  "clarification": "A new lender cannot be modelled. Should only the deposit change be tested?"
+ }
+}

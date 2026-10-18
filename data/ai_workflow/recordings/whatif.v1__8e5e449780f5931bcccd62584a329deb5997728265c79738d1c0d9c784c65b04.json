@@ -1,0 +1,7 @@
+{
+ "model": "synthetic-recording",
+ "intent": {
+  "changes": [],
+  "clarification": "Which risk should be tested: customer delay, receivables delay or cost overrun?"
+ }
+}

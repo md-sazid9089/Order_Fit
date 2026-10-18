@@ -1,0 +1,32 @@
+{
+ "model": "synthetic-recording",
+ "candidates": [
+  {
+   "document_id": "2e0739a7-eadd-59af-a3c2-dc982bb9c58a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_value_minor",
+   "normalized_value": "200000",
+   "status": "extracted",
+   "exact_quote": "মোট মূল্য: ২,০০০.০০ টাকা"
+  },
+  {
+   "document_id": "2e0739a7-eadd-59af-a3c2-dc982bb9c58a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "30",
+   "status": "extracted",
+   "exact_quote": "পেমেন্ট ৩০ দিনের মধ্যে।"
+  },
+  {
+   "document_id": "2e0739a7-eadd-59af-a3c2-dc982bb9c58a",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "invoice",
+   "status": "extracted",
+   "exact_quote": "পেমেন্ট ৩০ দিনের মধ্যে।"
+  }
+ ]
+}

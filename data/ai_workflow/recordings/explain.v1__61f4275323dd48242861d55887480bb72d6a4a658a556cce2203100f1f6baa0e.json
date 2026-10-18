@@ -1,0 +1,9 @@
+{
+ "model": "synthetic-recording",
+ "explanation": {
+  "sentences": [
+   "Your priorities are {goal_priorities}, and cash is tightest in the {tightest_scenario} scenario.",
+   "This option has incremental profit of {base_profit} and headroom of {headroom_severe} in the severe case."
+  ]
+ }
+}
