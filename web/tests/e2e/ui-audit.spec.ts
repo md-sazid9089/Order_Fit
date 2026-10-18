@@ -57,12 +57,12 @@ test("mobile workspace fits the viewport and recovers an expired CSRF challenge"
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("link", { name: "Cash & Financing", exact: true }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
-  await expect(page.getByRole("heading", { name: "Business cash and financing" })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { name: "Cash & Financing" })).toBeVisible();
 
   // Retain the synthetic account's live session while simulating just the shorter CSRF expiry.
   await context.clearCookies({ name: "orderfit_csrf" });
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Business cash and financing" })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { name: "Cash & Financing" })).toBeVisible();
   await expect(page.getByText("Checking your session…")).not.toBeVisible();
   await expect(page.getByRole("main").getByRole("alert")).not.toBeVisible();
 

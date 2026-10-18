@@ -2,36 +2,27 @@
 
 import React, { useState } from "react";
 import {
-  ChevronDown,
-  ChevronRight,
   TrendingDown,
-  Shield,
   Activity,
   Layers,
   FileCode,
   Copy,
   Check,
-  Calendar,
   AlertCircle,
   HelpCircle,
-  Info,
-  SlidersHorizontal,
-  Table,
 } from "lucide-react";
-import type { EvaluationResultV1 as Evaluation, Finding } from "@/lib/generated-api";
+import type { EvaluationResultV1 as Evaluation } from "@/lib/generated-api";
 import { formatMinor } from "@/lib/approval-model";
 import { fieldClass } from "@/components/manual-order-inputs";
 import { get } from "@/lib/orderfit-api";
 
 interface DealEvaluationInspectorProps {
   evaluation: Evaluation;
-  businessId: string;
   currency: string;
 }
 
 export function DealEvaluationInspector({
   evaluation,
-  businessId,
   currency,
 }: DealEvaluationInspectorProps) {
   const [copied, setCopied] = useState(false);
@@ -508,15 +499,22 @@ export function DealCashSeriesViewer({
 
   React.useEffect(() => {
     let active = true;
-    setLoading(true);
-    setSeriesError("");
-    setSeriesPoints([]);
-    const query = new URLSearchParams({ scenario, option_key: option });
-    get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(
-      `/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`
-    )
+    const load = async () => {
+      // Schedule state changes from the asynchronous work, rather than while
+      // React is processing the effect itself.
+      await Promise.resolve();
+      if (!active) return;
+      setLoading(true);
+      setSeriesError("");
+      setSeriesPoints([]);
+      const query = new URLSearchParams({ scenario, option_key: option });
+      return get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(
+        `/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`
+      );
+    };
+    void load()
       .then((series) => {
-        if (active) {
+        if (active && series) {
           setSeriesPoints(series.points || []);
           setLoading(false);
         }

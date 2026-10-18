@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { ArrowRight, Calculator, ShieldAlert, Users, TrendingUp } from "lucide-react";
 
 export function FeaturePillars() {
@@ -29,7 +30,9 @@ export function FeaturePillars() {
             <div>
               {/* Real Photography Header: Financial Runway Analytics */}
               <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
-                <img
+                <Image
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
                   src="/images/financial-charts.jpg"
                   alt="Real-time financial charts and cash trajectory analytics"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -60,7 +63,9 @@ export function FeaturePillars() {
             <div>
               {/* Real Photography Header: Precision Manufacturing & Component Ingestion */}
               <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
-                <img
+                <Image
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
                   src="/images/precision-parts.jpg"
                   alt="Precision engineering and manufacturing component inspection"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -91,7 +96,9 @@ export function FeaturePillars() {
             <div>
               {/* Real Photography Header: Commercial Fulfillment & Warehouse Logistics */}
               <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
-                <img
+                <Image
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
                   src="/images/warehouse-cargo.jpg"
                   alt="Commercial warehouse inventory fulfillment and logistics"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

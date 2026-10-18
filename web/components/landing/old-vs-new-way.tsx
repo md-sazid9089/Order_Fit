@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { X, Check } from "lucide-react";
 
 export function OldVsNewWay() {
@@ -28,7 +29,9 @@ export function OldVsNewWay() {
           <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] shadow-xs hover:shadow-md transition-all">
             {/* Real Photography Header: Manual Spreadsheets & Paperwork Chaos */}
             <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
-              <img
+              <Image
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 src="/images/manual-spreadsheets.jpg"
                 alt="Manual spreadsheets and paperwork on an office desk"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -90,7 +93,9 @@ export function OldVsNewWay() {
           <div className="flex flex-col justify-between overflow-hidden rounded-4xl bg-white dark:bg-[#1E2021] border-2 border-[#004D3B]/40 dark:border-[#34D399]/40 shadow-xs hover:shadow-md transition-all">
             {/* Real Photography Header: Modern Digital Analytics & Feasibility */}
             <div className="relative h-48 sm:h-56 w-full overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
-              <img
+              <Image
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 src="/images/capital-growth.jpg"
                 alt="Modern financial growth analytics dashboard on laptop screen"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

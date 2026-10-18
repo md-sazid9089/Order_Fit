@@ -328,7 +328,6 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         {/* Beautiful Interactive Evaluation Inspector replacing raw JSON block */}
         <DealEvaluationInspector
           evaluation={evaluation}
-          businessId={businessId}
           currency={deal.currency}
         />
 

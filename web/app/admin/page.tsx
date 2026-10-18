@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatMinor } from "@/lib/approval-model";
@@ -16,15 +16,10 @@ import {
   Package,
   Building2,
   Cpu,
-  ShieldCheck,
   ShieldAlert,
   Terminal,
   ArrowRight,
-  ArrowLeft,
   CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  Database,
   DollarSign,
   X,
 } from "lucide-react";
@@ -48,7 +43,7 @@ export default function AdminOverviewPage() {
   const [telemetry, setTelemetry] = useState<DatabaseTelemetry | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const sess = await getSession();
       const admin = Boolean(sess.is_platform_admin === true);
@@ -84,7 +79,6 @@ export default function AdminOverviewPage() {
       let userCount = 0;
       let orderCount = 0;
       const pipelineByCurrency = new Map<string, bigint>();
-      let unreadTenants = 0;
 
       await Promise.all(
         memberships.map(async (m) => {
@@ -95,7 +89,6 @@ export default function AdminOverviewPage() {
               getBusiness(m.business_id).catch(() => null),
             ]);
 
-            if (!membersRes || !dealsRes) unreadTenants += 1;
             if (membersRes?.items) {
               userCount += membersRes.items.length;
             }
@@ -126,12 +119,12 @@ export default function AdminOverviewPage() {
     } catch {
       router.replace("/auth/signin");
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     const initial = setTimeout(() => { void loadData(); }, 0);
     return () => clearTimeout(initial);
-  }, [router]);
+  }, [router, loadData]);
 
   const handleRunHealthCheck = async () => {
     setIsVerifying(true);

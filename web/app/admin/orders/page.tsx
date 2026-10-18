@@ -8,20 +8,17 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatMinor } from "@/lib/approval-model";
 import { getSession, getBusiness } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
-import type { SessionView, BusinessView } from "@/lib/generated-api";
+import type { SessionView } from "@/lib/generated-api";
 import {
   Package,
   ArrowLeft,
   Search,
   CheckCircle2,
-  AlertTriangle,
   Download,
   Building2,
   DollarSign,
-  ArrowRight,
   RefreshCw,
   Sliders,
-  AlertOctagon,
   X,
   ExternalLink,
 } from "lucide-react";
@@ -40,7 +37,7 @@ interface DatabaseOrder {
 
 export default function AdminOrdersPage() {
   const router = useRouter();
-  const [session, setSession] = useState<SessionView | null>(null);
+  const [, setSession] = useState<SessionView | null>(null);
   const [orders, setOrders] = useState<DatabaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

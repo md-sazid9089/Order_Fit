@@ -61,7 +61,7 @@ export function WorkflowSection() {
 
         {/* 4-Step Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((s, idx) => {
+          {steps.map((s) => {
             const Icon = s.icon;
             return (
               <div

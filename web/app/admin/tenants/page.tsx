@@ -7,17 +7,13 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, getBusiness, listMembers } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
-import type { SessionView, BusinessView } from "@/lib/generated-api";
 import {
   Building2,
   ArrowLeft,
   Search,
   CheckCircle2,
-  DollarSign,
-  Layers,
   ArrowRight,
   RefreshCw,
-  Sliders,
   X,
   Users,
   Package,
@@ -38,11 +34,6 @@ export default function AdminTenantsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
 
   const loadTenants = useCallback(async () => {
     setLoading(true);

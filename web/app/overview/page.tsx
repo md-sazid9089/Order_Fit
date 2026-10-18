@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   Clock,
-  Filter,
   Info,
   DollarSign,
   Activity,
@@ -37,11 +36,16 @@ export default function OverviewPage() {
     let active = true;
     const controller = new AbortController();
 
-    // Immediately clear previous-business/stale data on businessId or timeframe change
-    setData(null);
-    setError("");
-    setSelectedPointIndex(0);
-    setSelectedDelayIndex(0);
+    // Defer the visual reset so an effect never synchronously schedules a
+    // second render; the active flag keeps a replaced request from changing
+    // the next business's screen.
+    queueMicrotask(() => {
+      if (!active) return;
+      setData(null);
+      setError("");
+      setSelectedPointIndex(0);
+      setSelectedDelayIndex(0);
+    });
 
     getOverview(businessId, activeTimeframe, undefined, { signal: controller.signal })
       .then(res => {

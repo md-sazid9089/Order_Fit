@@ -21,7 +21,7 @@ export function useScoped() {
   return { session, businessId, membership, role: membership?.role, businessName: membership?.business_name ?? "", key, roleText: roleLabel(membership?.role) };
 }
 
-export function PageFrame({ title, intro: _intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function PageFrame({ title, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">

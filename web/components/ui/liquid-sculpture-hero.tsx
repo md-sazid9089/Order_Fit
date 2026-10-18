@@ -21,6 +21,7 @@
 
 
 import * as React from "react"
+import NextImage from "next/image"
 
 
 
@@ -2786,23 +2787,23 @@ export default function SculptureHero(props: SculptureHeroProps) {
 
   const layout = React.useRef({ scale: sculptureScale, mobileScale: mobileSculptureScale, x: sculptureX, y: sculptureY })
 
-  layout.current = {
-
-    scale: clamp(sculptureScale, 0.3, 3),
-
-    mobileScale: clamp(mobileSculptureScale, 0.3, 3),
-
-    x: sculptureX,
-
-    y: sculptureY,
-
-  }
+  React.useEffect(() => {
+    layout.current = {
+      scale: clamp(sculptureScale, 0.3, 3),
+      mobileScale: clamp(mobileSculptureScale, 0.3, 3),
+      x: sculptureX,
+      y: sculptureY,
+    }
+  }, [mobileSculptureScale, sculptureScale, sculptureX, sculptureY])
 
 
 
   const [mode, setMode] = React.useState<"light" | "dark">(theme)
 
-  React.useEffect(() => setMode(theme), [theme])
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => setMode(theme), 0)
+    return () => window.clearTimeout(timer)
+  }, [theme])
 
   const background = mode === "dark" ? darkBackground : lightBackground
 
@@ -2884,7 +2885,9 @@ export default function SculptureHero(props: SculptureHeroProps) {
 
   const optsRef = React.useRef(engineOpts)
 
-  optsRef.current = engineOpts
+  React.useEffect(() => {
+    optsRef.current = engineOpts
+  })
 
 
 
@@ -3314,7 +3317,7 @@ export default function SculptureHero(props: SculptureHeroProps) {
 
       <div ref={stageRef} className="sh-stage" aria-hidden="true">
 
-        <img ref={imgRef} className="sh-fallback" src={activeSrc} alt="" crossOrigin="anonymous" draggable={false} />
+        <NextImage ref={imgRef} className="sh-fallback" src={activeSrc} alt="" fill sizes="100vw" crossOrigin="anonymous" draggable={false} />
 
       </div>
 
