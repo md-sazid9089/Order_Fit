@@ -10,7 +10,7 @@ import { Alert, Loading, NotPermitted, PageFrame, QueryError, button, danger, fi
 /** Member roles, revocation and one-time invitations. Only owners hold the permission; the API decides on every call. */
 export function UsersScreen() {
   const { role } = useScoped();
-  return <PageFrame title="Users" intro="Members of this business, their roles and invitations. Revoking access stops new requests and queued actions; it does not rewrite past approvals.">
+  return <PageFrame title="User Management" intro="Members of this business, their roles and invitations. Revoking access stops new requests and queued actions; it does not rewrite past approvals.">
     {can(role, "manage_members") ? <Members /> : <NotPermitted what="manage members" needs="Only an owner can view or change membership." />}
   </PageFrame>;
 }

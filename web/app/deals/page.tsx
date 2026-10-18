@@ -78,9 +78,22 @@ export default function DealsPage() {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#737373]">
-          <p role="status">Showing {data.deals.length} saved orders{offset ? ` from position ${offset + 1}` : ""}. Filters, counts and summaries cover this page only.{data.more ? " More orders may exist." : ""}</p>
-          <button type="button" className="underline" onClick={() => reload()}>Refresh saved state</button>
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              Deals Pipeline
+            </h1>
+          </div>
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              type="button"
+              onClick={() => reload()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className={CARD}>
