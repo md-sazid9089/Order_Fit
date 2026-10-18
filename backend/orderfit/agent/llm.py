@@ -10,6 +10,7 @@ proposes candidates and never authoritative figures.
 import asyncio
 import hashlib
 import json
+import random
 import re
 import threading
 import time
@@ -77,6 +78,7 @@ class LLMSettings(BaseModel):
     timeout_seconds: int = 30
     max_output_tokens: int = 2048
     concurrency: int = 2
+    max_attempts: Annotated[int, Field(ge=1, le=3)] = 2
     recordings_dir: Path | None = None
     free_state_dir: Path = Path("var/freellmpool")
     free_min_interval_seconds: Annotated[int, Field(ge=0, le=60)] = 35
@@ -91,6 +93,7 @@ class LLMSettings(BaseModel):
             timeout_seconds=config.provider_timeout_seconds,
             max_output_tokens=config.provider_max_output_tokens,
             concurrency=config.provider_concurrency,
+            max_attempts=config.provider_max_attempts,
             recordings_dir=Path(config.llm_recordings_dir) if config.llm_recordings_dir else None,
             free_state_dir=Path(config.freellmpool_state_dir),
             free_min_interval_seconds=config.freellmpool_min_interval_seconds,
@@ -343,38 +346,129 @@ def _status_unavailable(exc) -> LanguageResult:
     return _unavailable("PROVIDER_UNAVAILABLE", retryable=retryable)
 
 
+MAX_PROMPT_CHARS = 250_000  # system + user text; extraction's own budget is 100k source characters
+_QUEUE_WAIT_SECONDS = 20.0  # longest a request waits for a provider slot before failing as retryable
+_BACKOFF_BASE_SECONDS = 1.0
+_BACKOFF_CAP_SECONDS = 8.0
+_TRANSIENT_CODES = {"TIMEOUT", "RATE_LIMIT", "PROVIDER_UNAVAILABLE"}
+
+
+class _CircuitBreaker:
+    """Process-wide: repeated transient failures fail fast instead of burning every timeout."""
+
+    def __init__(self, threshold: int = 5, cooldown_seconds: float = 30.0):
+        self._lock = threading.Lock()
+        self._threshold, self._cooldown = threshold, cooldown_seconds
+        self._failures, self._open_until = 0, 0.0
+
+    def allow(self) -> bool:
+        with self._lock:  # after the cooldown one failure re-opens it (half-open probe)
+            return time.monotonic() >= self._open_until
+
+    def record(self, reachable: bool) -> None:
+        with self._lock:
+            if reachable:
+                self._failures = 0
+                return
+            self._failures += 1
+            if self._failures >= self._threshold:
+                self._open_until = time.monotonic() + self._cooldown
+
+
+_breaker = _CircuitBreaker()
+
+# Provider slots are process-wide: workers call asyncio.run() per job, so a loop-scoped
+# asyncio.Semaphore would not bound requests across threads.
+_limiters: dict[int, threading.BoundedSemaphore] = {}
+_limiters_lock = threading.Lock()
+
+
+async def _acquire_slot(concurrency: int, wait_seconds: float) -> threading.BoundedSemaphore | None:
+    with _limiters_lock:
+        limiter = _limiters.setdefault(concurrency, threading.BoundedSemaphore(concurrency))
+    deadline = time.monotonic() + wait_seconds
+    while not limiter.acquire(blocking=False):
+        if time.monotonic() >= deadline:
+            return None
+        await asyncio.sleep(0.05)
+    return limiter
+
+
+def _retry_after(exc) -> float | None:
+    try:
+        value = float(exc.response.headers.get("retry-after"))
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return value if 0 <= value else None
+
+
 async def _structured_call(system: str, user_content: str, output_type, settings: LLMSettings):
     """One live structured boundary for every provider and proposal task.
 
     The return deliberately contains no business interpretation: callers validate
     schema-specific output and decide their deterministic fallback.
     """
+    if len(system) + len(user_content) > MAX_PROMPT_CHARS:  # bound cost before any provider work
+        return _unavailable("PROVIDER_UNAVAILABLE").result
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user_content}]
     if settings.provider == "freellmpool":
         return await _freellmpool_parse(messages, output_type, settings)
     if not settings.api_key or not settings.model:
         return _unavailable("PROVIDER_UNAVAILABLE").result
+    if not _breaker.allow():
+        return _unavailable("PROVIDER_UNAVAILABLE", retryable=True).result
     import openai  # sole provider import
     client = openai.AsyncOpenAI(
         api_key=settings.api_key, max_retries=0, timeout=settings.timeout_seconds
     )
+    deadline = time.monotonic() + settings.timeout_seconds * 2
     try:
-        async with _semaphore(settings.concurrency):
-            response = await asyncio.wait_for(
-                client.responses.parse(
-                    model=settings.model,
-                    input=messages,
-                    text_format=output_type,
-                    max_output_tokens=settings.max_output_tokens,
-                    store=False,
-                ),
-                timeout=settings.timeout_seconds + 1,
-            )
+        for attempt in range(1, settings.max_attempts + 1):
+            limiter = await _acquire_slot(settings.concurrency, _QUEUE_WAIT_SECONDS)
+            if limiter is None:  # local saturation says nothing about provider health
+                return _unavailable("RATE_LIMIT", retryable=True).result
+            hint: dict = {}
+            try:
+                result = await _openai_once(client, messages, output_type, settings, hint)
+            finally:
+                limiter.release()
+            transient = isinstance(result, UnavailableLanguage) and result.code in _TRANSIENT_CODES
+            if not (isinstance(result, UnavailableLanguage) and result.code == "QUOTA"):
+                _breaker.record(reachable=not transient)
+            if not transient or attempt == settings.max_attempts or not result.retryable:
+                return result
+            delay = hint.get("retry_after", _BACKOFF_BASE_SECONDS * 2 ** (attempt - 1))
+            if delay > _BACKOFF_CAP_SECONDS:  # the provider asked for longer than we will wait in-call
+                return result
+            delay += random.uniform(0, delay / 4)  # jitter so workers do not retry in lockstep
+            if time.monotonic() + delay >= deadline or not _breaker.allow():
+                return result
+            await asyncio.sleep(delay)
+    finally:
+        await client.close()
+
+
+async def _openai_once(client, messages, output_type, settings: LLMSettings, hint: dict):
+    """One bounded Responses attempt. ``hint['retry_after']`` carries a server back-off request."""
+    import openai
+    try:
+        response = await asyncio.wait_for(
+            client.responses.parse(
+                model=settings.model,
+                input=messages,
+                text_format=output_type,
+                max_output_tokens=settings.max_output_tokens,
+                store=False,
+            ),
+            timeout=settings.timeout_seconds + 1,
+        )
     except (TimeoutError, openai.APITimeoutError):
         return _unavailable("TIMEOUT", retryable=True).result
     except openai.RateLimitError as exc:
         if getattr(exc, "code", None) == "insufficient_quota":
             return _unavailable("QUOTA").result
+        if (wait := _retry_after(exc)) is not None:
+            hint["retry_after"] = wait
         return _unavailable("RATE_LIMIT", retryable=True).result
     except openai.LengthFinishReasonError:
         return _unavailable("INCOMPLETE", "incomplete", True).result
@@ -385,9 +479,9 @@ async def _structured_call(system: str, user_content: str, output_type, settings
     except openai.APIConnectionError:
         return _unavailable("PROVIDER_UNAVAILABLE", retryable=True).result
     except openai.APIStatusError as exc:
+        if (wait := _retry_after(exc)) is not None:
+            hint["retry_after"] = wait
         return _status_unavailable(exc).result
-    finally:
-        await client.close()
     if response.status == "incomplete":
         return _unavailable("INCOMPLETE", "incomplete", True).result
     for item in response.output:
