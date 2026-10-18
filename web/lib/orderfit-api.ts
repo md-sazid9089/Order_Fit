@@ -2,8 +2,9 @@ import { API_URL } from "./api";
 
 const ROOT = `${API_URL.replace(/\/$/, "")}/api/v1`;
 
+import type { BusinessOverviewView } from "./generated-api";
 export type { MembershipView as Membership, SessionView as Session, BusinessView as Business, ConstraintsView as Constraints, CustomerView as Customer, DealView as Deal, Review, Operation, EvaluationResultV1 as Evaluation } from "./generated-api";
-export type { DraftInputs, CostInput, Evidence, BaselineView, ConstraintsView, OfferView, PayeeView, TermLoanTerms, ExportView } from "./generated-api";
+export type { DraftInputs, CostInput, Evidence, BaselineView, ConstraintsView, OfferView, PayeeView, TermLoanTerms, ExportView, BusinessOverviewView, OverviewKPISummary, OverviewCashflowSummary, OverviewCashflowPoint, OverviewDelayScenario, OverviewVerdictDistribution, OverviewRecentSettlement, OverviewCurrencyBalance } from "./generated-api";
 export type Envelope = { error?: { code?: string; message?: string; details?: { current_version?: number } } };
 export class ApiError extends Error { constructor(message: string, readonly code: string, readonly status: number) { super(message); this.name = "ApiError"; } }
 
@@ -125,4 +126,19 @@ export function manualEvidence(sourceRole: "baseline" | "supplier_cost_quote" | 
 /** Remove credentials left by the remote JWT client; this backend uses HttpOnly cookies. */
 export function clearStoredToken() {
   try { localStorage.removeItem("orderfit.token"); sessionStorage.removeItem("orderfit.token"); } catch { /* Storage may be disabled. */ }
+}
+
+export type OverviewTimeframe = "30d" | "90d" | "6m" | "1y";
+
+export async function getOverview(
+  businessId: string,
+  timeframe: OverviewTimeframe = "30d",
+  currency?: "BDT" | "USD" | "EUR" | "GBP",
+  options: Pick<RequestInit, "signal"> = {}
+): Promise<BusinessOverviewView> {
+  const params = new URLSearchParams();
+  if (timeframe) params.set("timeframe", timeframe);
+  if (currency) params.set("currency", currency);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return get<BusinessOverviewView>(`/businesses/${businessId}/overview${qs}`, options);
 }

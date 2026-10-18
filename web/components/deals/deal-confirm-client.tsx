@@ -88,9 +88,13 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
             3. Confirm
           </span>
           <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">4. Compute</span>
+          <Link href={`/deals/${id}${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+            4. Compute
+          </Link>
           <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">5. Approve</span>
+          <Link href={`/deals/${id}/negotiate${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+            5. Approve
+          </Link>
         </div>
       </div>
 
