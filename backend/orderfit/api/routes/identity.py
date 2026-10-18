@@ -91,6 +91,7 @@ IMPLEMENTED = {
     "message_get", "draft_edit", "reply_create", "reply_review", "reply_get",
     "acceptances", "acceptance_create", "evaluation_catalogue", "evaluation_explanation",
     "preparation_state", "preparation_review", "preparation_settings_reset",
+    "explanation_create", "clause_assessment_create", "clause_assessment_get",
     # P6-A exact-bundle approval
     "bundle_prepare", "bundle_get", "approval_create", "approval_get", "approval_revoke",
     # P6-B sandbox execution, commitment projection and compensation

@@ -314,7 +314,7 @@ class OperationAccepted(DTO):
 class Operation(OperationAccepted):
     version: Version
     kind: Literal[
-        "extract", "evaluate", "explain", "draft", "whatif", "reply", "execute", "csv_preview"
+        "extract", "evaluate", "explain", "draft", "whatif", "reply", "execute", "csv_preview", "advisory"
     ]
     subphase: Text
     queued_at: UTCInstant

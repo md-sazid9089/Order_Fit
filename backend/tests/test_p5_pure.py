@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from orderfit.agent.llm import LLMSettings, propose_intent
+from orderfit.agent.llm import LLMSettings, propose_intent, read_reply
 from orderfit.agent.nodes.compute import compute, compute_review
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.financial import ConfirmedInputV1
@@ -16,6 +16,7 @@ from orderfit.contracts.workflow import DepositChange, ExtensionChange, Financin
 from orderfit.services.evaluations import build_evaluation_dto
 from orderfit.services.preparation import (
     bank_change,
+    deterministic_intent,
     draft_text,
     fork_snapshot,
     reply_candidates,
@@ -121,6 +122,31 @@ def test_recorded_intents_no_live_fallthrough(tmp_path, monkeypatch):
     result = asyncio.run(propose_intent("deposit 30%", "a" * 64, settings))
     assert result.code == "INVALID_OUTPUT"
     forbidden.assert_not_called()
+
+
+def test_recorded_reply_reader_preserves_quote_and_never_accepts_conditionally(tmp_path):
+    digest = "b" * 64
+    body = "We can offer payment within 45 calendar days, subject to board approval."
+    (tmp_path / f"reply.v1__{digest}.json").write_text(json.dumps({
+        "reading": {"terms": [{"field": "payment_days", "value": "45", "quote": "payment within 45 calendar days"}],
+                    "conditions": ["subject to board approval"], "unsupported_clauses": [], "stance": "partial"},
+        "model": "recorded-synthetic",
+    }))
+    reading = asyncio.run(read_reply(body, digest, LLMSettings(mode="recorded", recordings_dir=tmp_path)))
+    assert reading.provenance == "recorded" and reading.code is None and reading.model == "recorded-synthetic"
+    assert [(term.field, term.value, term.quote) for term in reading.terms] == [
+        ("payment_days", "45", "payment within 45 calendar days")
+    ]
+    invalid = asyncio.run(read_reply("We accept only conditionally.", digest, LLMSettings(mode="recorded", recordings_dir=tmp_path)))
+    assert invalid.provenance == "template" and invalid.code == "INVALID_OUTPUT"
+
+
+def test_combined_whatif_fallback_requires_each_change_to_be_explicit():
+    changes = deterministic_intent("What if the deposit is 25% and customer pays 12 days late?")
+    assert [(change.kind, change.value) for change in changes] == [
+        ("deposit_pct", 25), ("customer_delay_days", 12)
+    ]
+    assert deterministic_intent("deposit 25% and borrow 100000 from a new lender") == []
 
 
 @pytest.mark.parametrize(

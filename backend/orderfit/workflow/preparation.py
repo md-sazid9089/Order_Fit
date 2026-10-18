@@ -5,19 +5,20 @@ import asyncio
 from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import text
 
-from orderfit.agent.llm import LLMSettings, propose_intent
+from orderfit.agent.llm import LLMSettings, propose_intent, read_reply
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.preparation import (
     DraftPreparationRequest,
     ForkRequest,
     ForkView,
     ReplyIntake,
+    ReplyReading,
     ReplyView,
 )
 from orderfit.contracts.protocol import canonical_hash
 from orderfit.contracts.workflow import BlockedResult, CompletedResult, Finding, OperationResult
 from orderfit.services.evaluations import build_evaluation_dto, extract_series
-from orderfit.services.preparation import bank_change, fork_snapshot, reply_candidates
+from orderfit.services.preparation import bank_change, fork_snapshot, merge_reply, reply_candidates
 from orderfit.store.preparation_repository import (
     current_evaluation,
     get_prepared,
@@ -28,7 +29,7 @@ from orderfit.store.preparation_repository import (
 from orderfit.store.repositories import append_audit
 
 
-def blocked(code, outcome="needs_input"):
+def blocked(code, outcome="needs_input", message=None):
     return BlockedResult(
         kind="blocked",
         outcome=outcome,
@@ -36,7 +37,7 @@ def blocked(code, outcome="needs_input"):
             Finding(
                 code=code.replace("_", "-"),
                 field=None,
-                message="Review the proposed changes and current source terms before continuing.",
+                message=message or "Review the proposed changes and current source terms before continuing.",
                 blocking=True,
                 resolution="correct_input",
             )
@@ -124,7 +125,9 @@ def run_preparation(operations, claim, job, runtime=None):
     fork = None
     lang_code = None
     provenance = "typed"
+    clarification = None
     intent = None
+    reply_reading = None
     if job.kind == "whatif":
         changes = data.changes
         if data.instruction:
@@ -136,7 +139,11 @@ def run_preparation(operations, claim, job, runtime=None):
                 )
             )
             changes, provenance, lang_code = intent.changes, intent.provenance, intent.code
+            clarification = intent.clarification if not intent.changes else None
         try:
+            if clarification:
+                # The model asks instead of guessing; nothing is run or changed.
+                raise ApplicationError(422, "WHATIF-CLARIFICATION")
             if not changes or len({x.kind for x in changes}) != len(changes):
                 raise ApplicationError(422, "UNRESOLVED-WHATIF")
             fork = fork_snapshot(snapshot, changes)
@@ -159,7 +166,15 @@ def run_preparation(operations, claim, job, runtime=None):
                     for scenario in ("base", "downside", "severe")
                 ]
         except (ValidationError, ApplicationError) as exc:
-            outcome, series = blocked(getattr(exc, "code", "INVALID-FORK")), []
+            code = getattr(exc, "code", "INVALID-FORK")
+            outcome = blocked(code, message=clarification if code == "WHATIF-CLARIFICATION" else None)
+            series = []
+    elif job.kind == "reply":
+        # Provider work happens before the publication transaction.  The model can
+        # propose terms, never suppress deterministic bank/injection holds.
+        reply_reading = asyncio.run(
+            read_reply(data.body, canonical_hash(data), runtime.llm if runtime else LLMSettings())
+        )
     # Publication and operation_finish commit together. Fencing/auth are rechecked
     # by Database.job and operation_finish; a lost lease rolls back all evidence.
     with operations.database.job(claim["id"], claim["lease_token"]) as (c, scope):
@@ -183,6 +198,7 @@ def run_preparation(operations, claim, job, runtime=None):
                 language_model=intent.model if intent else None,
                 language_response_id=intent.response_id if intent else None,
                 language_input_hash=canonical_hash(data) if intent else None,
+                clarification=clarification,
             )
             c.execute(
                 text(
@@ -215,6 +231,15 @@ def run_preparation(operations, claim, job, runtime=None):
             )
         else:
             candidates, injection = reply_candidates(data.body)
+            from orderfit.services.language import detect
+            language_code, _script, language_supported = detect(data.body)
+            # An unsupported/unknown reply may contain a payment destination or a
+            # qualifying term that the bounded parser cannot safely interpret.
+            # Treat it as a review hold; model output can never clear it.
+            language_hold = not language_supported
+            reading = reply_reading or ReplyReading(provenance="template", code="AI_OFF")
+            candidates, baseline, disagreement = merge_reply(data.body, candidates, reading)
+            provenance = reading.provenance
             saved = ReplyView(
                 id=claim["id"],
                 deal_id=job.deal_id,
@@ -223,9 +248,19 @@ def run_preparation(operations, claim, job, runtime=None):
                 body=data.body,
                 candidates=candidates,
                 bank_change=bank_change(data.body),
-                injection_flagged=injection,
-                provenance="template",
-                language_code=None,
+                injection_flagged=injection or language_hold,
+                provenance=provenance,
+                language_code=language_code,
+                language_supported=language_supported,
+                language_model=reading.model,
+                language_response_id=reading.response_id,
+                language_input_hash=canonical_hash(data) if provenance != "template" else None,
+                language_script=_script,
+                conditions=reading.conditions,
+                unsupported_clauses=reading.unsupported_clauses,
+                model_stance=reading.stance,
+                baseline_stance=baseline,
+                stance_disagreement=disagreement,
                 reviewed=False,
             )
             c.execute(

@@ -8,9 +8,11 @@ from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import bindparam, text
 
 from orderfit.api.errors import ApplicationError
+from orderfit.contracts.advisory import ClauseAssessment
 from orderfit.contracts.financial import ConfirmedInputV1
 from orderfit.contracts.preparation import (
     AcceptanceEvidence,
+    Explanation,
     ForkSummary,
     ForkView,
     PreparationIdentity,
@@ -463,6 +465,7 @@ def get_fork_summary(c, business_id, fork_id):
     )
     data = row["metadata"]
     keys = {key: data[key] for key in ("id", "deal_id", "changes", "provenance", "language_code")}
+    keys["clarification"] = data.get("clarification")
     return ForkSummary(
         **keys, outcome=row["outcome"], source_result=row["source"], is_stale=row["stale"]
     )
@@ -781,3 +784,56 @@ def record_acceptance(c, scope, deal_id, command):
         payload={"acceptance_id": str(evidence.id), "terms_hash": evidence.terms_hash},
     )
     return evidence
+
+
+# ------------------------------------------------------------------ AI advisory evidence
+def save_advisory(c, scope, *, kind, deal_id, evaluation_id, option_key, operation_id, payload):
+    """One immutable row per advisory operation; the operation id is its identity."""
+    c.execute(
+        text(
+            "INSERT INTO ai_advisory(id,business_id,deal_id,kind,evaluation_id,option_key,operation_id,payload)"
+            " VALUES(:id,:b,:d,:k,:e,:o,:id,CAST(:p AS jsonb))"
+        ),
+        dict(id=operation_id, b=scope.business_id, d=deal_id, k=kind, e=evaluation_id,
+             o=option_key, p=payload),
+    )
+
+
+def latest_explanation(c, business_id, evaluation_id, option_key):
+    """The newest model-worded explanation for a stored option, or None (template applies)."""
+    row = c.execute(
+        text(
+            "SELECT payload FROM ai_advisory WHERE business_id=:b AND evaluation_id=:e"
+            " AND kind='explanation' AND option_key=:o ORDER BY created_at DESC, id DESC LIMIT 1"
+        ),
+        dict(b=business_id, e=evaluation_id, o=option_key),
+    ).mappings().one_or_none()
+    return None if row is None else Explanation.model_validate(row["payload"])
+
+
+_CLAUSE_SELECT = """SELECT a.payload,
+  (o.input_version<>d.input_version OR o.financial_revision<>b.financial_revision
+   OR e.superseded_at IS NOT NULL) AS stale, a.created_at
+  FROM ai_advisory a JOIN operation o ON o.business_id=a.business_id AND o.id=a.operation_id
+  JOIN deal d ON d.business_id=a.business_id AND d.id=a.deal_id
+  JOIN business b ON b.id=a.business_id
+  JOIN evaluation e ON e.business_id=a.business_id AND e.id=a.evaluation_id
+  WHERE a.business_id=:b AND a.kind='clause_assessment' AND """
+
+
+def _clause_view(row):
+    return ClauseAssessment.model_validate(row["payload"]).model_copy(
+        update={"is_stale": row["stale"], "created_at": row["created_at"]}
+    )
+
+
+def get_clause_assessment(c, business_id, assessment_id):
+    return _clause_view(one(c, _CLAUSE_SELECT + "a.id=:id", b=business_id, id=assessment_id))
+
+
+def list_clause_assessments(c, business_id, deal_id, limit=20):
+    rows = c.execute(
+        text(_CLAUSE_SELECT + "a.deal_id=:d ORDER BY a.created_at DESC, a.id DESC LIMIT :n"),
+        dict(b=business_id, d=deal_id, n=limit),
+    ).mappings().all()
+    return [_clause_view(row) for row in rows]
