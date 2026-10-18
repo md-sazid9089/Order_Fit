@@ -101,6 +101,10 @@ def build_openapi():
                 parameters[-2] = {"name": "offset", "in": "query", "required": False,
                                   "schema": {"type": "integer", "minimum": 0, "default": 0}}
         queries = {
+            "business_overview_get": {
+                "timeframe": {"type": "string", "enum": ["30d", "90d", "6m", "1y"], "default": "30d"},
+                "currency": {"type": "string", "enum": ["BDT", "USD", "EUR", "GBP"]},
+            },
             "constraints_list": {"default_only": {"type": "boolean", "default": False}},
             "deals": {
                 "search": {"type": "string", "maxLength": 100},
@@ -310,10 +314,12 @@ def artifacts():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--backend-only", action="store_true", help="Export/check docs contracts without changing browser source declarations.")
     args = parser.parse_args()
     generated = {DEST / name: content for name, content in artifacts().items()}
     # Keep the browser's checked declaration inside its Docker build context.
-    generated[DEST.parents[1] / "web" / "lib" / "generated-api.d.ts"] = generated[DEST / "frontend-api.d.ts"]
+    if not args.backend_only:
+        generated[DEST.parents[1] / "web" / "lib" / "generated-api.d.ts"] = generated[DEST / "frontend-api.d.ts"]
     for path, content in generated.items():
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != content:

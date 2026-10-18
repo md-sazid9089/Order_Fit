@@ -46,6 +46,98 @@ from .primitives import (
 )
 from .workflow import Finding, Strategy, WhatIfChange
 
+OverviewTimeframe = Literal["30d", "90d", "6m", "1y"]
+OverviewStatus = Literal["safe", "warning", "breach"]
+OverviewPercent = Annotated[float, Field(allow_inf_nan=False)]
+OverviewCount = Annotated[int, Field(strict=True, ge=0)]
+
+
+class OverviewKPISummary(DTO):
+    total_balance_minor: MoneyMinor
+    total_balance_change_pct: OverviewPercent
+    volume_30d_minor: MoneyMinor
+    volume_30d_change_pct: OverviewPercent
+    total_orders_tested: OverviewCount
+    pending_reviews_count: OverviewCount
+    pending_reviews_change_pct: OverviewPercent
+    protected_headroom_minor: MoneyMinor
+    protected_headroom_status: OverviewStatus
+    protected_headroom_change_pct: OverviewPercent
+
+
+class OverviewCashflowPoint(DTO):
+    period_key: str
+    date_range: str
+    inflow_minor: NonnegativeMoney
+    outflow_minor: NonnegativeMoney
+    net_minor: MoneyMinor
+    highlight_note: str | None
+
+
+class OverviewCashflowSummary(DTO):
+    total_inflow_minor: NonnegativeMoney
+    total_outflow_minor: NonnegativeMoney
+    total_net_minor: MoneyMinor
+    timeline: list[OverviewCashflowPoint]
+
+
+class OverviewDelayScenario(DTO):
+    delay_days: Literal[0, 15, 30, 45, 60]
+    label: str
+    projected_trough_minor: MoneyMinor
+    reserve_floor_minor: NonnegativeMoney
+    status: OverviewStatus
+    recommendation: str
+
+
+class OverviewVerdictDistribution(DTO):
+    feasible_as_is_pct: OverviewPercent
+    deposit_required_pct: OverviewPercent
+    split_milestones_pct: OverviewPercent
+    financing_needed_pct: OverviewPercent
+    feasible_as_is_count: OverviewCount
+    deposit_required_count: OverviewCount
+    split_milestones_count: OverviewCount
+    financing_needed_count: OverviewCount
+
+
+class OverviewRecentSettlement(DTO):
+    id: str
+    deal_id: UUID
+    customer_name: str
+    public_ref: str
+    order_no: str | None
+    amount_minor: NonnegativeMoney
+    terms: str
+    status: Literal["safe", "deposit", "split", "financing", "declined", "review"]
+    status_label: str
+    evaluated_at: UTCInstant
+
+
+class OverviewCurrencyBalance(DTO):
+    code: Currency
+    name: str
+    symbol: str
+    amount_minor: NonnegativeMoney
+    pct_allocation: Annotated[OverviewPercent, Field(ge=0, le=100)]
+    tag: str
+
+
+class BusinessOverviewView(DTO):
+    schema_version: Literal["overview.v1"] = "overview.v1"
+    business_id: UUID
+    primary_currency: Currency
+    as_of: BizDate
+    reserve_floor_minor: NonnegativeMoney
+    kpis: OverviewKPISummary
+    cashflow: OverviewCashflowSummary
+    delay_sensitivity: list[OverviewDelayScenario]
+    verdict_distribution: OverviewVerdictDistribution
+    recent_settlements: list[OverviewRecentSettlement]
+    currency_balances: list[OverviewCurrencyBalance]
+    # Capability/data gaps must be visible instead of invented account/history data.
+    data_warnings: list[str]
+
 
 def valid_timezone(value: str) -> str:
     try:
