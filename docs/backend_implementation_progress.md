@@ -2363,3 +2363,27 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   contract generation passed; frontend typecheck passed. PDFs, page provenance,
   glosses, per-language model recordings/evaluation and language qualification
   remain open, so no non-English language is marked fully supported.
+
+### 18 October 2026 — Docker runtime lexicon packaging repair
+
+- Reproduced successful API/web image builds followed by failed Compose startup:
+  API and worker crashed importing `services/documents.py`, which tried to read
+  `/data/ai_workflow/lexicon/payment_basis.json`. The repository-relative path
+  was unavailable in the image; the worker also has no demo-data mount.
+- Moved the unchanged reviewed lexicon into
+  `backend/orderfit/services/payment_basis.json` and loaded it through
+  `importlib.resources`. Hatch includes it in the existing wheel package;
+  runtime validation no longer depends on repository layout or demo mounts.
+- Added `tests/test_runtime_resources.py`, importing a copied package in an
+  isolated Python process without the checkout data directory. Focused resource,
+  multilingual, AI-workflow, document, audit-repair and architecture checks:
+  **75 passed**. Ruff and `git diff --check` passed. The initial test invocation
+  hit Windows temp-directory permissions; rerunning with a fresh workspace
+  `--basetemp` passed.
+- Rebuilt the backend image. A network-disabled container running Python `-I`
+  from `/tmp` verified the lexicon and API/worker imports from the installed
+  `/opt/venv` wheel, without repository mounts. Compose startup passed: API and
+  web healthy, worker running; browser-facing `/api/health` returned
+  `connected=true`, `ready=true`, `database=true`.
+- Used the existing configured Neon overlay; no migrations or provisioning ran.
+  No full browser workflow, model-quality evaluation or capacity test was run.
