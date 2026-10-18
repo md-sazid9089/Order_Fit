@@ -17,7 +17,7 @@ export function HeroSection() {
         style={{ background: "radial-gradient(circle, rgba(62, 134, 114, 0.08) 0%, rgba(247, 246, 245, 0) 70%)" }}
       />
 
-      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Main Hero Header */}
         <div className="text-center max-w-6xl mx-auto mb-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.75rem] xl:text-[4.25rem] tracking-tight leading-[1.12] mb-6">

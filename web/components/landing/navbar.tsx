@@ -78,7 +78,7 @@ export function Navbar() {
           : "bg-[#F7F6F5]/85 backdrop-blur-sm"
       }`}
     >
-      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Settle-Style Logo with Smooth Scroll to Top */}
           <Link
