@@ -7,9 +7,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
-import { Eye, EyeOff, ArrowLeft, MailCheck } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { OTPInput, type OTPStatus } from "@/components/ui/be-ui-otp-input";
 
 const COMMON_TIMEZONES = [
   "Asia/Dhaka",
@@ -31,9 +30,6 @@ const COMMON_TIMEZONES = [
 export default function SignUpPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<"form" | "otp">("form");
-  const [otpValue, setOtpValue] = useState("");
-  const [otpStatus, setOtpStatus] = useState<OTPStatus>("idle");
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState("BDT");
   const [timezone, setTimezone] = useState(() => {
@@ -69,26 +65,24 @@ export default function SignUpPage() {
       return;
     }
 
-    // Proceed to OTP verification step
-    setStep("otp");
-    setOtpValue("");
-    setOtpStatus("idle");
-  };
-
-  const handleVerifyOtp = (code: string) => {
-    if (!code || code.length < 6) return;
-
-    // As requested: verify account on any code and redirect to deals page
-    setOtpStatus("success");
     setIsLoading(true);
-
-    setTimeout(() => {
-      // Mock session for frontend navigation
-      try {
-        resetSessionState(queryClient);
-      } catch {}
-      router.replace("/overview");
-    }, 600);
+    try {
+      resetSessionState(queryClient);
+      const session = await mutate<Session>("/auth/signup", "POST", {
+        email: email.trim().toLowerCase(),
+        password,
+        full_name: fullName.trim(),
+        business_name: businessName.trim(),
+        currency,
+        timezone,
+      });
+      setCachedSession(session);
+      router.replace("/deals");
+    } catch (cause) {
+      setError(cause instanceof ApiError || cause instanceof Error ? cause.message : "Sign up failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -112,73 +106,10 @@ export default function SignUpPage() {
         </div>
       </header>
 
-      {/* Main Centered Signup / OTP Card */}
+      {/* Main Centered Signup Card */}
       <main className="flex-1 flex items-center justify-center px-4 py-4 sm:py-8 w-full max-w-full">
         <div className="w-full max-w-[440px] bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-8 md:p-10 shadow-xs dark:shadow-none">
-          {step === "otp" ? (
-            <div className="flex flex-col items-center text-center">
-              <div className="size-12 rounded-full bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-center mb-4 text-[#004D3B] dark:text-[#B5F2C6]">
-                <MailCheck className="size-6" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white mb-2 font-display tracking-tight">
-                Verify Your Account
-              </h1>
-              <p className="text-sm text-[#737373] dark:text-neutral-400 mb-6">
-                Enter the verification code sent to <br />
-                <span className="font-medium text-[#1E2021] dark:text-white">{email || "your email"}</span>
-              </p>
-
-              <div className="w-full flex justify-center py-2">
-                <OTPInput
-                  autoFocus
-                  length={6}
-                  value={otpValue}
-                  status={otpStatus}
-                  hint="Enter any 6-digit code to verify."
-                  successMessage="Verification successful! Redirecting..."
-                  errorMessage="Invalid code. Please try again."
-                  onChange={(v) => {
-                    setOtpValue(v);
-                    if (otpStatus !== "idle") setOtpStatus("idle");
-                  }}
-                  onComplete={(v) => handleVerifyOtp(v)}
-                />
-              </div>
-
-              <div className="w-full pt-6 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep("form")}
-                  className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl bg-[#FAF9F7] dark:bg-[#232423] hover:bg-[#F4F2ED] dark:hover:bg-[#2B2D2C] border border-[#E8E6E1] dark:border-0 text-sm font-medium text-[#1E2021] dark:text-white transition-colors cursor-pointer outline-none focus:outline-none"
-                >
-                  <ArrowLeft className="size-4" />
-                  <span>Back</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isLoading || otpValue.length < 6}
-                  onClick={() => handleVerifyOtp(otpValue)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-neutral-900 font-semibold text-sm transition-colors border-0 disabled:opacity-50 cursor-pointer outline-none focus:outline-none"
-                >
-                  {isLoading ? "Verifying..." : "Verify & Continue"}
-                </button>
-              </div>
-
-              <p className="pt-4 text-xs text-[#737373] dark:text-neutral-400">
-                Didn't receive a code?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOtpValue("");
-                    setOtpStatus("idle");
-                  }}
-                  className="underline hover:text-[#1E2021] dark:hover:text-white cursor-pointer"
-                >
-                  Resend code
-                </button>
-              </p>
-            </div>
-          ) : (
+          {(
             <>
               {/* Card Title */}
               <h1 className="text-xl sm:text-2xl font-bold text-center text-[#1E2021] dark:text-white mb-5 sm:mb-6 font-display tracking-tight">
@@ -205,7 +136,7 @@ export default function SignUpPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Full Name*"
-                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#6B6B6B] dark:placeholder-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
                   />
                 </div>
 
@@ -221,7 +152,7 @@ export default function SignUpPage() {
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="Business / Company Name*"
-                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#6B6B6B] dark:placeholder-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
                   />
                 </div>
 
@@ -237,7 +168,7 @@ export default function SignUpPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email*"
-                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
+                    className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#6B6B6B] dark:placeholder-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors"
                   />
                 </div>
 
@@ -255,7 +186,7 @@ export default function SignUpPage() {
                       minLength={12}
                       autoComplete="new-password"
                       placeholder="Password (min. 12 characters)*"
-                      className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#A3A3A3] dark:placeholder-neutral-400 outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors pr-11"
+                      className="w-full px-4 py-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white placeholder-[#6B6B6B] dark:placeholder-neutral-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors pr-11"
                     />
                     <button
                       type="button"
@@ -278,7 +209,7 @@ export default function SignUpPage() {
                       id="currency"
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full min-w-0 max-w-full px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
+                      className="w-full min-w-0 max-w-full px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
                     >
                       <option value="BDT" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">BDT (৳)</option>
                       <option value="USD" className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">USD ($)</option>
@@ -295,7 +226,7 @@ export default function SignUpPage() {
                       id="timezone"
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
-                      className="w-full min-w-0 max-w-full truncate px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white outline-none focus:outline-none focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
+                      className="w-full min-w-0 max-w-full truncate px-3 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-base sm:text-sm text-[#1E2021] dark:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E2021] dark:focus-visible:outline-white focus:border-[#1E2021] dark:focus:border-neutral-500 transition-colors cursor-pointer"
                     >
                       {timezoneList.map((tz) => (
                         <option key={tz} value={tz} className="bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white">

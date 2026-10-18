@@ -1,32 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession } from "@/lib/p7-api";
-import {
-  ShieldAlert,
-  ShieldCheck,
-  ArrowLeft,
-  KeyRound,
-  CheckCircle2,
-  Lock,
-  Play,
-  RotateCcw,
-  AlertTriangle,
-  Server,
-  Layers,
-  Terminal,
-  Check,
-  X
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function AdminSecurityPage() {
   const router = useRouter();
-  const [isRunningTests, setIsRunningTests] = useState(false);
-  const [testResult, setTestResult] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -43,20 +26,6 @@ export default function AdminSecurityPage() {
     }
     void checkAuth();
   }, [router]);
-
-  const handleRunSecuritySuite = async () => {
-    setIsRunningTests(true);
-    setTestResult(null);
-    try {
-      const res = await fetch("/api/health");
-      const data = await res.json().catch(() => ({}));
-      setIsRunningTests(false);
-      setTestResult(`Security boundary check passed: ${data.status || "healthy"}. T0-T4 permission gates & cryptographic isolation verified.`);
-    } catch {
-      setIsRunningTests(false);
-      setTestResult("All 20 adversarial attack vectors (ADV-01..20) successfully blocked. T0-T4 permission gates fully intact.");
-    }
-  };
 
   const TIERS = [
     { tier: "T0", name: "Intake & Extraction", auth: "Autonomous (Zero-Trust Sandbox)", risk: "LOW", desc: "PDF & OCR text parsing, contract field extraction, prompt injection filtering." },
@@ -98,31 +67,11 @@ export default function AdminSecurityPage() {
             <div className="flex items-center gap-2.5">
               <ThemeToggle variant="icon" />
 
-              <button
-                type="button"
-                onClick={handleRunSecuritySuite}
-                disabled={isRunningTests}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
-              >
-                <Play className={`size-3.5 ${isRunningTests ? "animate-spin text-white" : ""}`} />
-                <span>{isRunningTests ? "Executing Red-Team..." : "Run Security Red-Team"}</span>
-              </button>
             </div>
           </div>
         </header>
 
         <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
-          {testResult && (
-            <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg">
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck className="size-4 text-white shrink-0" />
-                <span>{testResult}</span>
-              </div>
-              <button onClick={() => setTestResult(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/70">
-                <X className="size-3.5" />
-              </button>
-            </div>
-          )}
 
           {/* T0-T4 Permission Gate Table */}
           <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs space-y-4">
@@ -172,35 +121,14 @@ export default function AdminSecurityPage() {
             </div>
           </div>
 
-          {/* Adversarial Red-Team Status */}
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1]">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="size-4 text-[#1E2021]" />
-                <h3 className="text-sm font-bold text-[#1E2021]">Scene 4 Adversarial Injection Defense Matrix</h3>
-              </div>
-              <span className="text-xs font-mono font-bold text-[#1E2021]">20 / 20 Vectors Blocked (100%)</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] space-y-1">
-                <div className="font-bold text-[#1E2021]">ADV-01..10: Prompt Injections</div>
-                <p className="text-[#525252]">PO remarks attempting system role override or unconditional auto-approval are neutralized before ingestion.</p>
-                <div className="pt-2 text-[10px] font-mono text-[#1E2021] font-semibold">✓ 10/10 Neutralized</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] space-y-1">
-                <div className="font-bold text-[#1E2021]">ADV-11..15: Value Manipulation</div>
-                <p className="text-[#525252]">Contradictory header sums vs itemized lines trigger mandatory owner confirmation pause (Scene 1 & OF-08).</p>
-                <div className="pt-2 text-[10px] font-mono text-[#1E2021] font-semibold">✓ 5/5 Intercepted</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#FAF9F7] border border-[#E8E6E1] space-y-1">
-                <div className="font-bold text-[#1E2021]">ADV-16..20: Signature Bypasses</div>
-                <p className="text-[#525252]">SHA-256 payload tampering or altered payment milestones invalidate downstream dispatch requests.</p>
-                <div className="pt-2 text-[10px] font-mono text-[#1E2021] font-semibold">✓ 5/5 Tamper-Proof</div>
-              </div>
-            </div>
+          {/* Evidence note: no live security test runner exists in the console */}
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs space-y-2 text-xs text-[#525252]">
+            <h3 className="text-sm font-bold text-[#1E2021]">Security evidence</h3>
+            <p>
+              This console does not run security tests. Injection, tamper and approval controls are enforced in the
+              backend and verified by the repository&apos;s automated test suites and the security acceptance reports
+              under docs/security. Results shown there are the source of truth, not this page.
+            </p>
           </div>
         </main>
       </div>
