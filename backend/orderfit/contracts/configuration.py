@@ -60,6 +60,8 @@ class RuntimeConfiguration(BaseSettings):
     provider_timeout_seconds: Annotated[int, Field(ge=1, le=30)] = 30
     provider_concurrency: Annotated[int, Field(ge=1, le=2)] = 2
     provider_max_output_tokens: Annotated[int, Field(ge=1, le=16384)] = 2048
+    # In-call attempts per provider request (transient failures only); durable job retries sit on top.
+    provider_max_attempts: Annotated[int, Field(ge=1, le=3)] = 2
     job_attempts: Annotated[int, Field(ge=1, le=3)] = 3
     lease_seconds: Literal[60] = 60
     heartbeat_seconds: Literal[15] = 15

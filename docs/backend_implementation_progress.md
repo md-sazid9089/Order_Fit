@@ -2387,3 +2387,32 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   `connected=true`, `ready=true`, `database=true`.
 - Used the existing configured Neon overlay; no migrations or provisioning ran.
   No full browser workflow, model-quality evaluation or capacity test was run.
+
+### 18 October 2026 — OpenAI boundary reliability hardening
+
+- `orderfit/agent/llm.py` (still the only provider boundary): bounded in-call
+  retries (`PROVIDER_MAX_ATTEMPTS`, default 2, max 3) for transient failures only
+  (timeout, non-quota 429, 5xx/connection), exponential backoff with jitter,
+  `Retry-After` honoured up to an 8 s cap (longer requests return retryable
+  `RATE_LIMIT` to the durable job instead of sleeping), and a total in-call
+  deadline of twice the per-attempt timeout. Quota, refusal, incomplete and
+  invalid output are never retried.
+- Process-wide provider slots (`threading.BoundedSemaphore`) replace the
+  loop-scoped semaphore on the OpenAI path: workers call `asyncio.run()` per job,
+  so the old limit did not bound threads. Slot starvation (20 s) fails as
+  retryable `RATE_LIMIT` without a provider call and does not count as provider
+  ill-health.
+- Process-wide circuit breaker (5 consecutive transient failures, 30 s cooldown,
+  half-open probe) fails fast as retryable `PROVIDER_UNAVAILABLE`. Invalid output,
+  refusal and quota do not trip it. `tests/conftest.py` resets it per test.
+- Prompt size cap (`MAX_PROMPT_CHARS`, 250k) applied to every live task before any
+  client is created; previously only extraction had a source budget.
+- Checks run now: `tests/agent` (new `test_provider_reliability.py`, mocked
+  transport), architecture, FreeLLMPool, AI-eval, P4/P5/P6 pure, AI workflow/advisory
+  pure, contracts and runtime suites: **261 passed** plus 109 in the first
+  agent/architecture/eval run; Ruff passed.
+- Not run: live OpenAI calls, DB-backed workflow suites, capacity/load tests.
+- Limitations: the client is still created per call because each job uses its own
+  event loop, so no HTTP connection reuse; limits and breaker are per process, not
+  cluster-wide; no per-business token/cost budget yet; the FreeLLMPool path keeps
+  its existing pacing and is not covered by the breaker.
