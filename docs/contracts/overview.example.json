@@ -1,0 +1,138 @@
+{
+  "schema_version": "overview.v1",
+  "business_id": "40441264-85e3-475c-b5fc-80c2d3d01e7d",
+  "primary_currency": "BDT",
+  "as_of": "2026-10-18",
+  "reserve_floor_minor": "100",
+  "kpis": {
+    "total_balance_minor": "1000",
+    "total_balance_change_pct": 0.0,
+    "volume_30d_minor": "0",
+    "volume_30d_change_pct": 0.0,
+    "total_orders_tested": 0,
+    "pending_reviews_count": 0,
+    "pending_reviews_change_pct": 0.0,
+    "protected_headroom_minor": "900",
+    "protected_headroom_status": "safe",
+    "protected_headroom_change_pct": 0.0
+  },
+  "cashflow": {
+    "total_inflow_minor": "0",
+    "total_outflow_minor": "0",
+    "total_net_minor": "0",
+    "timeline": [
+      {
+        "period_key": "2026-10-18",
+        "date_range": "2026-10-18/2026-10-24",
+        "inflow_minor": "0",
+        "outflow_minor": "0",
+        "net_minor": "0",
+        "highlight_note": null
+      },
+      {
+        "period_key": "2026-10-25",
+        "date_range": "2026-10-25/2026-10-31",
+        "inflow_minor": "0",
+        "outflow_minor": "0",
+        "net_minor": "0",
+        "highlight_note": null
+      },
+      {
+        "period_key": "2026-11-01",
+        "date_range": "2026-11-01/2026-11-07",
+        "inflow_minor": "0",
+        "outflow_minor": "0",
+        "net_minor": "0",
+        "highlight_note": null
+      },
+      {
+        "period_key": "2026-11-08",
+        "date_range": "2026-11-08/2026-11-14",
+        "inflow_minor": "0",
+        "outflow_minor": "0",
+        "net_minor": "0",
+        "highlight_note": null
+      },
+      {
+        "period_key": "2026-11-15",
+        "date_range": "2026-11-15/2026-11-16",
+        "inflow_minor": "0",
+        "outflow_minor": "0",
+        "net_minor": "0",
+        "highlight_note": null
+      }
+    ]
+  },
+  "delay_sensitivity": [
+    {
+      "delay_days": 0,
+      "label": "On-Time (Base)",
+      "projected_trough_minor": "1000",
+      "reserve_floor_minor": "100",
+      "status": "safe",
+      "recommendation": "Recorded obligations remain above the reserve floor."
+    },
+    {
+      "delay_days": 15,
+      "label": "+15d Customer Delay",
+      "projected_trough_minor": "1000",
+      "reserve_floor_minor": "100",
+      "status": "safe",
+      "recommendation": "Recorded obligations remain above the reserve floor."
+    },
+    {
+      "delay_days": 30,
+      "label": "+30d Customer Delay",
+      "projected_trough_minor": "1000",
+      "reserve_floor_minor": "100",
+      "status": "safe",
+      "recommendation": "Recorded obligations remain above the reserve floor."
+    },
+    {
+      "delay_days": 45,
+      "label": "+45d Customer Delay",
+      "projected_trough_minor": "1000",
+      "reserve_floor_minor": "100",
+      "status": "safe",
+      "recommendation": "Recorded obligations remain above the reserve floor."
+    },
+    {
+      "delay_days": 60,
+      "label": "+60d Customer Delay",
+      "projected_trough_minor": "1000",
+      "reserve_floor_minor": "100",
+      "status": "safe",
+      "recommendation": "Recorded obligations remain above the reserve floor."
+    }
+  ],
+  "verdict_distribution": {
+    "feasible_as_is_pct": 0.0,
+    "deposit_required_pct": 0.0,
+    "split_milestones_pct": 0.0,
+    "financing_needed_pct": 0.0,
+    "feasible_as_is_count": 0,
+    "deposit_required_count": 0,
+    "split_milestones_count": 0,
+    "financing_needed_count": 0
+  },
+  "recent_settlements": [],
+  "currency_balances": [
+    {
+      "code": "BDT",
+      "name": "Bangladeshi Taka",
+      "symbol": "৳",
+      "amount_minor": "1000",
+      "pct_allocation": 100.0,
+      "tag": "Opening baseline"
+    }
+  ],
+  "data_warnings": [
+    "BALANCE_HISTORY_UNAVAILABLE",
+    "PENDING_HISTORY_UNAVAILABLE",
+    "HEADROOM_HISTORY_UNAVAILABLE",
+    "SINGLE_CURRENCY_BASELINE_ONLY",
+    "SPLIT_MILESTONES_UNSUPPORTED",
+    "RECENT_SETTLEMENTS_ARE_EVALUATIONS",
+    "PROJECTIONS_ARE_SANDBOX"
+  ]
+}
