@@ -16,13 +16,13 @@ export function SectorsMarquee() {
   ];
 
   return (
-    <section className="bg-white border-y border-[#ECEAE4] py-7 overflow-hidden">
+    <section className="bg-white py-7 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5">
         {/* Architectural Principle Ticker */}
         <div className="flex items-center justify-center">
           <a
             href="#workflow"
-            className="group inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F7F6F5] hover:bg-[#ECEAE4] border border-[#ECEAE4] text-xs sm:text-sm text-[#1A1A1A] transition-colors"
+            className="group inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F7F6F5] hover:bg-[#ECEAE4] text-xs sm:text-sm text-[#1A1A1A] transition-colors"
           >
             <span className="font-semibold text-[#004D3B] font-mono flex items-center gap-1.5 text-xs">
               <ShieldCheck className="size-4 text-[#004D3B]" />
@@ -49,13 +49,13 @@ export function SectorsMarquee() {
           {[...supportedSectors, ...supportedSectors].map((sector, i) => (
             <div
               key={`${sector.name}-${i}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF9F7] border border-[#ECEAE4] select-none shrink-0"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F7F6F5] select-none shrink-0"
             >
               <span className="size-1.5 rounded-full bg-[#004D3B]" />
               <span className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-sans">
                 {sector.name}
               </span>
-              <span className="text-[10px] font-mono text-[#526975] uppercase px-1.5 py-0.5 rounded bg-white border border-[#ECEAE4]">
+              <span className="text-[10px] font-mono text-[#526975] uppercase px-1.5 py-0.5 rounded bg-white">
                 {sector.category}
               </span>
             </div>
