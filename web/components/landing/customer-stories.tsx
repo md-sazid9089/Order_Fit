@@ -86,7 +86,7 @@ export function CustomerStories() {
 
   return (
     <section id="customer-stories" className="w-full bg-white dark:bg-[#121314] py-20 md:py-28 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">

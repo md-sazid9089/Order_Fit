@@ -29,6 +29,7 @@ export const can = (role: string | null | undefined, permission: Permission): bo
 
 export type NavItem = { href: string; label: string; needs?: Permission };
 export const NAV: readonly NavItem[] = [
+  { href: "/overview", label: "Overview" },
   { href: "/deals", label: "Orders" },
   { href: "/deals/new", label: "New order", needs: "prepare" },
   { href: "/deals/customers", label: "Customers" },

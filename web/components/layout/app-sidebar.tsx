@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Layers, LineChart, CreditCard, Users, ShieldCheck, ShieldAlert, Settings, Building2,
   PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet, Menu, LogOut,
-  Activity, Cpu, Terminal, Server, ArrowLeft, Package,
+  Activity, Cpu, Terminal, Server, ArrowLeft, Package, LayoutDashboard,
 } from "lucide-react";
 import type { NavItem } from "@/lib/p7-model";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -26,6 +26,7 @@ export const ADMIN_NAVIGATION_ITEMS: readonly NavItem[] = [
 ];
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "/overview": LayoutDashboard,
   "/deals": Layers,
   "/deals/new": FilePlus2,
   "/deals/customers": UserRound,
@@ -48,6 +49,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const LABELS: Record<string, string> = {
+  "/overview": "Overview",
   "/deals": "Deals Pipeline",
   "/cash-flow": "Cash Flow Baseline",
   "/deals/sources": "Cash & Financing",
@@ -80,6 +82,18 @@ export type AppSidebarProps = {
 };
 
 /** Collapsible left rail. Links come from the role-aware nav so it never offers a route the role cannot open. */
+const SIDEBAR_PINNED_STORAGE_KEY = "orderfit_sidebar_pinned";
+
+let cachedSidebarPinned = true;
+if (typeof window !== "undefined") {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY);
+    if (saved !== null) {
+      cachedSidebarPinned = saved === "true";
+    }
+  } catch {}
+}
+
 export function AppSidebar({
   links,
   current,
@@ -93,10 +107,47 @@ export function AppSidebar({
   isAdmin: isAdminProp,
 }: AppSidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isPinned, setIsPinned] = useState(() => cachedSidebarPinned);
   const [isHovered, setIsHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isExpanded = !isCollapsed || isHovered;
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY);
+      if (saved !== null) {
+        const val = saved === "true";
+        setIsPinned(val);
+        cachedSidebarPinned = val;
+      }
+    } catch {}
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === SIDEBAR_PINNED_STORAGE_KEY && e.newValue !== null) {
+        const val = e.newValue === "true";
+        setIsPinned(val);
+        cachedSidebarPinned = val;
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const isExpanded = isPinned || isHovered;
+
+  const togglePin = () => {
+    setIsPinned((prev) => {
+      const next = !prev;
+      cachedSidebarPinned = next;
+      try {
+        localStorage.setItem(SIDEBAR_PINNED_STORAGE_KEY, String(next));
+      } catch {}
+      return next;
+    });
+    // When switching from pinned to auto-collapse, clear hovered so moving cursor out collapses immediately
+    if (isPinned) {
+      setIsHovered(false);
+    }
+  };
 
   // Read session dynamically if available to ensure live database attributes are displayed
   const [liveSession, setLiveSession] = useState(() => getCachedSession());
@@ -196,10 +247,14 @@ export function AppSidebar({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setIsCollapsed(true); setIsHovered(false); }}
-                    className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425] transition-colors shrink-0"
-                    title="Collapse sidebar"
-                    aria-label="Collapse sidebar"
+                    onClick={togglePin}
+                    className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                      isPinned
+                        ? "text-[#1E2021] dark:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
+                        : "text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
+                    }`}
+                    title={isPinned ? "Click to collapse on hover out" : "Click to lock sidebar open"}
+                    aria-label={isPinned ? "Click to collapse on hover out" : "Click to lock sidebar open"}
                   >
                     <PanelLeftClose className="size-4" />
                   </button>
@@ -209,10 +264,10 @@ export function AppSidebar({
               <div className="flex items-center justify-center w-full">
                 <button
                   type="button"
-                  onClick={() => setIsCollapsed(false)}
+                  onClick={togglePin}
                   className="size-10 rounded-xl text-[#1E2021] dark:text-[#F3F4F6] hover:bg-[#F4F2ED] dark:hover:bg-[#222425] flex items-center justify-center transition-colors"
-                  title="Expand sidebar"
-                  aria-label="Expand sidebar"
+                  title="Expand and lock sidebar open"
+                  aria-label="Expand and lock sidebar open"
                 >
                   <PanelLeft className="size-5" />
                 </button>
@@ -365,17 +420,17 @@ export function AppSidebar({
       {/* Desktop Spacer Rail */}
       <div
         className={`hidden lg:block shrink-0 transition-[width] duration-300 ease-in-out ${
-          isCollapsed ? "w-[72px]" : "w-64"
+          isPinned ? "w-64" : "w-[72px]"
         }`}
       />
 
       {/* Desktop Sidebar */}
       <aside
         aria-label="Sidebar"
-        onMouseEnter={() => isCollapsed && setIsHovered(true)}
-        onMouseLeave={() => isCollapsed && setIsHovered(false)}
+        onMouseEnter={() => !isPinned && setIsHovered(true)}
+        onMouseLeave={() => !isPinned && setIsHovered(false)}
         className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-white dark:bg-[#181A1B] border-r border-[#E8E6E1] dark:border-[#2A2C2D] flex-col justify-between transition-[width] duration-300 ease-in-out ${
-          isCollapsed ? (isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30") : "w-64 z-30"
+          isPinned ? "w-64 z-30" : isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30"
         }`}
       >
         {renderSidebarContent(false)}

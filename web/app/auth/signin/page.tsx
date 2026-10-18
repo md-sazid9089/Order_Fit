@@ -42,7 +42,7 @@ export default function SignInPage() {
         session = await signInWithPasskey(normalizedEmail, password);
       }
       setCachedSession(session);
-      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/deals");
+      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/overview");
     } catch (cause) {
       if (cause instanceof ApiError && (cause.code === "INVALID_CREDENTIALS" || cause.status === 401)) {
         setError("Invalid email or password.");
@@ -57,7 +57,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-300 dark:selection:bg-neutral-700 selection:text-neutral-900 dark:selection:text-white font-sans w-full max-w-full overflow-x-hidden">
       {/* Top Navigation Bar */}
-      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
+      <header className="w-full max-w-[1560px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group outline-none">
           <span className="font-display text-2xl font-bold tracking-tight text-[#1E2021] dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
             OrderFit

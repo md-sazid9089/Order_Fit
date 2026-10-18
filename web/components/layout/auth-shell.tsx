@@ -157,7 +157,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         {error && <p role="alert" className="mx-4 mt-3 rounded-lg bg-red-50 p-3 text-red-800 sm:mx-6 lg:mx-8">{error}</p>}
-        {businessId ? <div key={businessId} className="flex-1 min-w-0">{children}</div> : <main className="p-6"><p className="rounded-xl bg-white p-5">Your account has no business membership, so there is nothing to show yet.</p></main>}
+        {businessId ? <div key={businessId} className="flex-1 min-w-0">{children}</div> : <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><p className="rounded-xl bg-white p-5 max-w-[1560px] mx-auto">Your account has no business membership, so there is nothing to show yet.</p></main>}
       </div>
     </div>
   </ScopeContext.Provider>;

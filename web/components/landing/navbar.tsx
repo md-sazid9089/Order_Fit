@@ -78,7 +78,7 @@ export function Navbar() {
           : "bg-[#F7F6F5]/85 backdrop-blur-sm"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Settle-Style Logo with Smooth Scroll to Top */}
           <Link
@@ -197,7 +197,7 @@ export function Navbar() {
             <ThemeToggle variant="pill" />
             {session ? (
               <Link
-                href="/deals"
+                href="/overview"
                 className="flex items-center gap-2.5 pl-2.5 pr-4 py-1.5 rounded-full bg-[#EAF7EE] hover:bg-[#D5EFE0] border border-[#B5F2C6] text-[#004D3B] transition-all group shadow-xs cursor-pointer"
                 title={`Signed in as ${session.profile?.full_name || session.email} — Go to Dashboard`}
                 aria-label="Go to Dashboard"
@@ -321,7 +321,7 @@ export function Navbar() {
           <div className="pt-2 flex flex-col gap-3">
             {session ? (
               <Link
-                href="/deals"
+                href="/overview"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full flex items-center justify-center gap-2.5 py-3 rounded-full bg-[#004D3B] text-[#FFFAEC] hover:bg-[#00382B] font-semibold uppercase text-xs tracking-wider shadow-xs font-sans transition-colors"
               >

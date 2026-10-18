@@ -48,7 +48,13 @@ export default function SourcesPage() {
     void run(() => mutate(`/businesses/${businessId}/financing-offers`, "POST", { expected_financial_revision: business.financial_revision, terms }), "Offer saved. Select it below and save the policy to include it in evaluations.");
   }
   function savePolicy(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business || !policy) return; const data = new FormData(e.currentTarget); const { constraints_id: _id, version: _version, ...owner } = policy.owner; void _id; void _version; void run(() => mutate(`/businesses/${businessId}/constraints`, "POST", { expected_financial_revision: business.financial_revision, reserve_minor: text(data, "reserve"), owner, scenarios: policy.scenarios, strategy_space: { ...policy.strategy_space, offer_ids: selected }, make_default: true }), "New default policy saved. Select this policy on new orders, or update the policy in an existing order's input editor."); }
-  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-3xl space-y-5"><Link className="underline" href={`/deals?businessId=${businessId}`}>Saved orders</Link><h1 className="text-2xl font-semibold">Business cash and financing</h1>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}{error.startsWith("Saved, but") && <> <button type="button" className="underline" onClick={() => { setError(""); reload(); }}>Reload</button></>}</p>}{message && <p role="status" className="rounded-lg bg-green-50 p-3">{message}</p>}
+  return (
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+        <Link className="underline" href={`/deals?businessId=${businessId}`}>Saved orders</Link>
+        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Business cash and financing</h1>
+        {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}{error.startsWith("Saved, but") && <> <button type="button" className="underline" onClick={() => { setError(""); reload(); }}>Reload</button></>}</p>}
+        {message && <p role="status" className="rounded-lg bg-green-50 p-3">{message}</p>}
     {!business && !error && (
       <div role="status" aria-busy="true" className="space-y-4">
         <span className="sr-only">Loading business cash and financing sources…</span>
@@ -65,5 +71,6 @@ export default function SourcesPage() {
       {offers.map(o => <div key={o.id} className="flex flex-wrap items-center gap-3 border-b py-2 text-sm"><span className="min-w-0 flex-1">{o.name} · {o.archived_at ? "archived" : o.status.replaceAll("_", " ")}</span><ArchiveAction noun="offer" permission="manage_finance" record={o} financialRevision={business.financial_revision} archive={body => archiveOffer(businessId, o.id, body)} onChanged={reload} consequence="An archived offer is closed and can no longer be selected for evaluation." /></div>)}
       {payees.filter(p => p.payee.kind === "lender").map(p => <div key={p.id} className="flex flex-wrap items-center gap-3 border-b py-2 text-sm"><span className="min-w-0 flex-1">Lender {p.payee.name}{p.archived_at ? " · archived" : ""}</span><ArchiveAction noun="lender" permission="manage_finance" record={p} financialRevision={business.financial_revision} archive={body => archivePayee(businessId, p.id, body)} onChanged={reload} consequence="An archived lender can no longer be chosen for new offers." /></div>)}</section>}
     <Link className="inline-block underline" href={`/deals/new?businessId=${businessId}`}>Create an order with saved sources</Link></>}
-  </div></main>;
+  </div></main>
+  );
 }

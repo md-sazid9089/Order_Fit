@@ -446,7 +446,7 @@ function PageLoadingSkeleton({
 }: PageLoadingSkeletonProps) {
   return (
     <main
-      className={cn("mx-auto max-w-5xl space-y-5 p-6 w-full", className)}
+      className={cn("mx-auto max-w-[1560px] space-y-6 px-4 sm:px-6 lg:px-8 py-6 w-full", className)}
       role="status"
       aria-busy="true"
       {...props}
