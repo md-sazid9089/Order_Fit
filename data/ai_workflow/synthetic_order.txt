@@ -1,0 +1,6 @@
+Synthetic purchase order PO-AI-TEST.
+Order value: BDT 1,000.00.
+Order date: 2026-11-02.
+Invoice date: 2026-12-14.
+Delivery date: 2026-12-14.
+Payment is due 30 calendar days after invoice.

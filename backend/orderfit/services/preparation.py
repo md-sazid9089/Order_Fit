@@ -181,6 +181,9 @@ _BANK_TERMS = re.compile(
     r"sort\s*code|ifsc|ach|aba|wire|wiring|remit|remits|remitted|remittance|wallet|"
     r"bkash|nagad|rocket|payee|payment\s+(?:details|instructions?|info|information)|"
     r"pay\s+(?:to|into)|transfer\s+(?:to|into)|new\s+(?:details|payee|bank|account)"
+    r"|ব্যাংক|হিসাব|অ্যাকাউন্ট|প্রাপক|রেমিট|বিকাশ|নগদ|রকেট"
+    r"|बैंक|खाता|लाभार्थी|भुगतान|प्रेषण"
+    r"|银行|账户|收款人|汇款|转账|付款"
     r")(?![a-z0-9])"
 )
 _SPACED_LETTERS = re.compile(r"(?<![a-z0-9])(?:[a-z][\s.\-_*]+){2,}[a-z](?![a-z0-9])")

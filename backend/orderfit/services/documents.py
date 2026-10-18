@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -160,6 +161,8 @@ def parse_pdf_child(data: bytes) -> ParseResult:
 
 # ---------------------------------------------------------------- candidate validation
 def _norm(value: str) -> str:
+    value = unicodedata.normalize("NFKC", value)
+    value = "".join(ch for ch in value if unicodedata.category(ch) != "Cf")
     return re.sub(r"\s+", " ", value).strip().lower()
 
 
@@ -168,6 +171,17 @@ DATE_FIELDS = {"order_date", "invoice_date", "delivery_date"}
 BASIS_FIELDS = {"payment_basis"}
 # Group-separated (1,234 / 1,00,000) or plain numbers, never a fragment of a longer number.
 _NUMBER = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?![\d])")
+
+
+def _ascii_numerals(value: str) -> str:
+    """Normalize decimal digits and full-width/Arabic separators without guessing locale."""
+    output = []
+    for char in unicodedata.normalize("NFKC", value):
+        try:
+            output.append(str(unicodedata.decimal(char)))
+        except ValueError:
+            output.append({"٫": ".", "٬": ","}.get(char, char))
+    return "".join(output)
 _MINUS = r"\-\u2212\u2012\u2013\u2014\ufe63\uff0d"
 _CURRENCY_MARKER = r"(?:\b(?:bdt|usd|eur|gbp)\b|[$€£৳])"
 _NEGATIVE_PREFIX = re.compile(
@@ -186,7 +200,7 @@ def _numbers_in(quote: str, page_text: str) -> set[Decimal]:
     source sign or select only a numeric substring (100 from 1000, for example).
     Whitespace/case normalization matches the existing quote-presence contract.
     """
-    source, quoted = _norm(page_text), _norm(quote)
+    source, quoted = _ascii_numerals(_norm(page_text)), _ascii_numerals(_norm(quote))
     values: set[Decimal] = set()
     tokens = iter(_NUMBER.finditer(source))
     token = next(tokens, None)

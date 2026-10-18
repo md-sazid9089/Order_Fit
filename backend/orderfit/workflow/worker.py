@@ -303,21 +303,11 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     config = RuntimeConfiguration()
     documents = create_document_store(config)
-    from pathlib import Path
-
     from orderfit.agent.llm import LLMSettings
     from orderfit.workflow.extraction import Runtime
 
     runtime = Runtime(
-        llm=LLMSettings(
-            mode=config.llm_mode,
-            model=config.openai_model,
-            api_key=config.openai_api_key.get_secret_value() if config.openai_api_key else None,
-            timeout_seconds=config.provider_timeout_seconds,
-            max_output_tokens=config.provider_max_output_tokens,
-            concurrency=config.provider_concurrency,
-            recordings_dir=Path(config.llm_recordings_dir) if config.llm_recordings_dir else None,
-        ),
+        llm=LLMSettings.from_runtime(config),
         documents=documents,
         job_attempts=config.job_attempts,
     )

@@ -143,7 +143,10 @@ def run_extract(operations, claim, job, runtime: Runtime):
                 "op": claim["id"], "mode": runtime.llm.mode,
                 "model": result.model if result.kind == "parsed" else runtime.llm.model,
                 "prompt": PROMPT_VERSION,
-                "ph": hashlib.sha256((llm.PROMPTS / "extract_order.md").read_bytes()).digest(),
+                "ph": hashlib.sha256(
+                    (llm.PROMPTS / "extract_order.md").read_bytes()
+                    + (llm.PROMPTS / "extract_order.system.md").read_bytes()
+                ).digest(),
                 "schema": llm.SCHEMA_VERSION, "ih": bytes.fromhex(request.input_hash),
                 "status": "completed" if result.kind == "parsed" else "unavailable",
                 "err": None if result.kind == "parsed" else result.code,

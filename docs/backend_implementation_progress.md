@@ -2202,3 +2202,103 @@ Verification:
 No hosted latency/capacity claim, frontend/browser acceptance or deployment is
 established by these checks. Next integration gate belongs to the frontend owner
 following the handoff; historical/account capabilities require separate contracts.
+### 18 October 2026 — AI-role assessment and fresh FreeLLMPool probes
+
+Reviewed `main` at `abf2c5fc85ff3c774e28268400db64aa958b3eac` for the user's
+AI-scope analysis and live-provider status questions. Findings and proposed
+capabilities are consolidated in [the AI workflow plan](AI_WORKFLOW_PLAN.md); no
+architecture proposal was adopted and no application implementation changed.
+
+The configured backend environment had `LLM_MODE=off` and no pool base URL.
+The previous loopback gateway was unavailable, as was the Docker engine.
+An isolated native FreeLLMPool 0.13.0 test sent only synthetic text and used no
+provider credentials: `pollinations/openai-fast` returned the exact test marker
+in 10.89 seconds; `llm7/default` timed out after 12.14 seconds. Four subsequent
+calls through the actual OrderFit LLM boundary and temporary loopback proxies
+produced no usable structured output. Two used a short timeout; two repeated
+with the normal 30-second application budget returned TIMEOUT. What-if results
+had template provenance. Instrumentation and installed-source inspection also
+confirmed missing Responses `text.format` schema forwarding in the proxy shim;
+that gap is separate from the observed upstream read timeouts.
+
+Temporary proxies were shut down. Probe scripts remain outside Git in the
+task-specific system temporary directory. No app configuration, database,
+container deployment or paid-provider credentials were changed or used.
+Documentation link/whitespace checks are appropriate; no application-suite
+pass is claimed. Next gate remains usable structured output and independent
+language/extraction quality evaluation. No phase-completion claim follows.
+
+### 18 October 2026 — AI workflow Tier 0 boundary and local-provider guard
+
+- Implemented the first three Tier 0 foundations only. `agent/llm.py` now has one
+  private `_structured_call` live-provider boundary used by extraction and what-if
+  proposals. It uses `responses.parse` with `store=False` and `max_retries=0` for
+  OpenAI, delegates FreeLLMPool to the existing typed adapter, preserves provider
+  model provenance, and maps missing parsed output to `INVALID_OUTPUT` rather than
+  a refusal.
+- Added identical provider-neutral system-prompt files for extraction and what-if.
+  `workflow/extraction.py` now hashes both the task prompt and its system-prompt
+  bytes. Prompt versions were intentionally not bumped: recordings are keyed by the
+  existing version and no recording migration was performed.
+- Configuration now rejects a live FreeLLMPool selection when any allowed origin is
+  non-loopback or document storage is S3. There is no override. This preserves the
+  adapter's synthetic/local-only role.
+- Fresh focused verification: `uv run --frozen ruff check orderfit/agent/llm.py
+  orderfit/contracts/configuration.py orderfit/workflow/extraction.py
+  tests/test_freellmpool.py tests/contracts/test_contracts.py` passed; `uv run
+  --frozen pytest tests/test_freellmpool.py tests/contracts/test_contracts.py -q`
+  passed (**103 passed in 13.58s**). The P4/P5 combined focused invocation emitted
+  progress before the execution window ended and has no final result to claim.
+
+Remaining: F4 evaluation harness/cases, F5 UI provenance, all Tier 1 workflow
+capabilities, DB-backed acceptance, frontend checks, recorded evaluation, and any
+live OpenAI evaluation. No paid OpenAI call was made.
+
+### 18 October 2026 — native FreeLLMPool workflow acceptance for local testing
+
+User authorized making the free provider work for AI testing. Added pinned
+FreeLLMPool0.13.0 and provider/model/state/pacing runtime settings, native typed
+JSON handling inside agent/llm.py, credential/catalog isolation, one bounded
+HTTP attempt, response/token limits and real provider provenance. OpenAI Responses
+remains separate. Runtime launcher drops paid keys for free mode;worker/Compose
+honor the provider instead of forcing it off. Added a repeatable synthetic smoke
+command, sample upload, focused provider/DB regression assertions and deployment
+contract/guide. Concurrent shared-call/system-prompt/local-only and multilingual
+changes were preserved and included in the final recheck.
+
+Final focused run:207passed in62.39seconds, one existing Starlette/httpx warning.
+Ruff,uv lock --check,contracts112operations and whitespace checks pass;sole schema
+head remains0019_merge_passkey_roles. Two paced smoke runs passed4/4live tasks.
+Provider-free and real live persisted same-order assertions passed on verified
+isolated native PG16.11;the live flow passed again on current shared source.
+It covers upload/extract/human amount review/supply missing dates/confirm/evaluate/
+what-if,six calculated series,saved live response identity and unchanged canonical
+deal state after the fork. Exact IDs and distinctions are in
+[the evidence report](freellmpool_integration_2026-10-18.md).
+
+Isolated API8000 and worker were refreshed from current source with ignored
+backend/.env.freellmpool. Existing web3000 proxies to this separate test DB;
+final readiness/storage/schema/worker and web health checks pass with zero backlog.
+Native test data/manifests remain under backend/var/free-workflow-214868a0e8.
+Main DB,existing.env,PostgreSQL5432 and web process were not changed. No paid
+call/private document/hosted deployment/stress campaign was used. Optional combined
+cleanup/helper generation was rejected by automatic review;old stopped setup
+folders remain. Full-suite,PG17 image and complete browser-journey acceptance were
+not rerun. General model-quality and remaining release gates stay open.
+
+### 18 October 2026 — C6 deterministic multilingual safety primitives (partial)
+
+- Added dependency-free conservative Unicode-script detection (`en`, `bn`, `hi`,
+  `zh-Hans`, `other`, `unknown`) and native-decimal normalization for deterministic
+  numeric quote grounding. Quote normalization now also applies NFKC and strips
+  format/zero-width characters.
+- Expanded fail-closed bank-change and injection signals with Bengali, Hindi and
+  Simplified Chinese vocabulary. The generated-text number guard now rejects native
+  Bengali/Devanagari numerals and CJK numeric characters/words.
+- Fresh focused checks: Ruff passed; `tests/test_multilingual_pure.py` and
+  `tests/test_architecture.py` passed (**7 passed**). The requested broad baseline
+  did not finish within the execution window, so no baseline total is claimed.
+
+This is not full C6: contracts/persistence/API provenance, language-specific payment
+basis/date lexicons, reply holds, prompt revisions, evaluation cases/PDF tests, web
+badges/fonts, and live/recorded multilingual qualification remain unimplemented.

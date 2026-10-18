@@ -15,6 +15,17 @@ historical balance comparisons or actual settlement evidence is invented. Use
 Verification:634full backend tests pass;103final focused tests pass after DTO
 refinement. Browser contract sync remains pending. Details are in the overview
 entry in the backend progress file.
+18 October native FreeLLMPool integration atop `abf2c5f`:207 focused tests pass
+after reconciling concurrent Tier0/multilingual work. Four synthetic live smoke
+tasks and repeated persisted same-order extraction/review/confirm/evaluate/what-if
+flows pass on isolated native PG16.11;Docker/PG17 were unavailable. API8000 and
+worker run from ignored `backend/.env.freellmpool`;web3000 is ready against that
+separate synthetic DB. Main DB/existing.env are unchanged. Free mode is local-only,
+uses a pinned keyless route and35-second request spacing, and has no paid fallback.
+See [evidence](../../../docs/freellmpool_integration_2026-10-18.md) for the retained
+test target, checks and limits. General live-model quality and main OpenAI
+evaluation remain open. Broader assistant work is tracked in the
+[AI workflow plan](../../../docs/AI_WORKFLOW_PLAN.md).
 
 17 October AI-assisted website review from `47289ad`: malformed live JSON now
 maps to INVALID_OUTPUT in extraction/what-if; mobile pipeline skeleton overflow
