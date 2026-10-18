@@ -195,6 +195,43 @@ def dated_commitment_events(result: Result, option_key: str) -> list[DatedEvent]
     return sorted(events, key=lambda e: e.event_key)
 
 
+NOT_EVALUABLE = {"needs_input", "unsupported_escalate", "blocked_data_conflict", "analysis_limit"}
+
+
+@dataclass(frozen=True)
+class ForkOutcome:
+    """Plain summary of one isolated engine run; a hypothesis, never a confirmed input."""
+
+    evaluable: bool
+    decision: str
+    recommended_key: str | None
+    profit_minor: int | None
+
+
+def outcome_of(result: Result) -> ForkOutcome:
+    """Pure mapping of an engine Result (no arithmetic)."""
+    if result.decision in NOT_EVALUABLE:
+        return ForkOutcome(False, result.decision, None, None)
+    chosen = next((c for c in result.catalogue if c.strategy.id == result.recommended), None)
+    return ForkOutcome(True, result.decision, result.recommended, None if chosen is None else chosen.net_profit)
+
+
+def evaluate_forks(forks: list[ConfirmedInputV1], run=None) -> list[ForkOutcome]:
+    """Evaluate each isolated fork with this module's engine call (or a bounded ``run``).
+
+    ``run`` lets the durable worker substitute its resource-limited wrapper; either way the
+    engine is reached only through ``compute``. A fork that fails validation or the
+    engine's own checks is reported as not evaluable instead of raising.
+    """
+    outcomes = []
+    for fork in forks:
+        try:
+            outcomes.append(outcome_of((run or compute)(fork).result))
+        except (ValueError, KeyError):
+            outcomes.append(ForkOutcome(False, "invalid_fork", None, None))
+    return outcomes
+
+
 async def run(state: dict) -> dict:
     snapshot = state.get("confirmed_input")
     if not isinstance(snapshot, ConfirmedInputV1):

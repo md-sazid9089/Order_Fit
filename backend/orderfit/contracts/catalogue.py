@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace
 
+from . import advisory as a
 from . import preparation as p
 from . import resources as r
 from . import workflow as w
@@ -1337,6 +1338,12 @@ for method, path, name, req, response, permission, storage in [
     ("GET", "deals/{deal_id}/preparation", "preparation_state", None, p.PreparationState, "read", "whatif_run,prepared_message,reply_candidate_set,party_acceptance"),
     ("POST", "messages/{message_id}/review", "preparation_review", p.PreparationReview, p.PreparedMessage, "prepare", "preparation_review"),
     ("GET", "replies/{reply_id}", "reply_get", None, p.ReplyView, "read", "reply_candidate_set"),
+]:
+    add(method, path, name, req, response, permission, "preparation", storage, "P5", "V09")
+for method, path, name, req, response, permission, storage in [
+    ("POST", "deals/{deal_id}/explanations", "explanation_create", a.AdvisoryExplainRequest, w.OperationAccepted, "prepare", "operation,ai_advisory"),
+    ("POST", "deals/{deal_id}/clause-assessments", "clause_assessment_create", a.ClauseRequest, w.OperationAccepted, "prepare", "operation,ai_advisory"),
+    ("GET", "clause-assessments/{assessment_id}", "clause_assessment_get", None, a.ClauseAssessment, "read", "ai_advisory"),
 ]:
     add(method, path, name, req, response, permission, "preparation", storage, "P5", "V09")
 add("POST", "deals/{deal_id}/preparation-settings/reset", "preparation_settings_reset", ExpectedVersions, w.Review,

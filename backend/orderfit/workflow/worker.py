@@ -199,6 +199,10 @@ def run_once(operations, worker, handlers, runtime=None):
         if owned is not None and getattr(owned, "owns_transactions", False):
             owned(operations, claim, job, runtime)
             return True
+        if job.kind == "advisory" and "advisory" not in handlers:
+            from orderfit.workflow.advisory import run_advisory
+            run_advisory(operations, claim, job, runtime)
+            return True
         if job.kind in {"whatif", "draft", "reply"} and job.kind not in handlers:
             from orderfit.workflow.preparation import run_preparation
             run_preparation(operations, claim, job, runtime)

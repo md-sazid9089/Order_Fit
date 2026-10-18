@@ -4,7 +4,7 @@ import re
 import unicodedata
 from uuid import uuid4
 
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from orderfit.agent.guards import numbers, terms
 from orderfit.agent.guards.injection import scan
@@ -78,7 +78,11 @@ def fork_snapshot(snapshot: ConfirmedInputV1, changes) -> ConfirmedInputV1:
 
 
 def deterministic_intent(instruction):
-    """Small explicit fallback grammar. Unrecognized prose remains unavailable."""
+    """Small explicit fallback grammar. Unrecognized prose remains unavailable.
+
+    Multiple independently explicit changes may be combined with ``and``.  This
+    never guesses an offer, recipient, financing amount, or omitted selector.
+    """
     patterns = [
         (r"(?:what if )?(?:the )?deposit(?: is| of| at)? (\d{1,3})\s*%[?.]?", "deposit_pct"),
         (
@@ -93,7 +97,27 @@ def deterministic_intent(instruction):
             return TypeAdapter(list[WhatIfChange]).validate_python(
                 [dict(kind=kind, value=int(match[1]))]
             )
-    return []
+    combined = [
+        (r"(?:the )?deposit(?: is| of| at)?\s+(\d{1,3})\s*(?:%|percent)", "deposit_pct"),
+        (r"(?:the )?(?:customer|buyer|payment) (?:delay(?: is| of)?\s+|pays?\s+)(\d{1,3})\s+days?(?:\s+late)?", "customer_delay_days"),
+        (r"(?:the )?ar delay(?: is| of)?\s+(\d{1,3})\s+days?", "ar_delay_days"),
+        (r"(?:the )?cost overrun(?: is| of)?\s+(\d{1,5})\s+(?:bps|basis points?)", "cost_overrun_bps"),
+    ]
+    remainder = instruction.strip().lower()
+    extracted = []
+    for pattern, kind in combined:
+        for match in list(re.finditer(pattern, remainder, re.I)):
+            extracted.append((kind, int(match[1])))
+        remainder = re.sub(pattern, " ", remainder, flags=re.I)
+    remainder = re.sub(r"\b(?:what|if|explore|try|assume|model|set|use|and|with|a|an|the)\b|[?.,;:]", " ", remainder)
+    if remainder.strip() or not extracted or len({kind for kind, _ in extracted}) != len(extracted):
+        return []
+    try:
+        return TypeAdapter(list[WhatIfChange]).validate_python(
+            [dict(kind=kind, value=value) for kind, value in extracted]
+        )
+    except ValidationError:
+        return []
 
 
 class TermsIdentity(DTO):
@@ -182,8 +206,8 @@ _BANK_TERMS = re.compile(
     r"bkash|nagad|rocket|payee|payment\s+(?:details|instructions?|info|information)|"
     r"pay\s+(?:to|into)|transfer\s+(?:to|into)|new\s+(?:details|payee|bank|account)"
     r"|ব্যাংক|হিসাব|অ্যাকাউন্ট|প্রাপক|রেমিট|বিকাশ|নগদ|রকেট"
-    r"|बैंक|खाता|लाभार्थी|भुगतान|प्रेषण"
-    r"|银行|账户|收款人|汇款|转账|付款"
+    r"|बैंक|खाता|खाते|लाभार्थी|भुगतान\s+(?:विवरण|जानकारी|निर्देश)|प्रेषण"
+    r"|银行|账户|账号|收款人|收款账|汇款|转账|付款(?:信息|详情|账户|方式)"
     r")(?![a-z0-9])"
 )
 _SPACED_LETTERS = re.compile(r"(?<![a-z0-9])(?:[a-z][\s.\-_*]+){2,}[a-z](?![a-z0-9])")
@@ -270,3 +294,38 @@ def reply_candidates(body):
                 continue
             result.append(ReplyTerm(id=uuid4(), field=field, value=value, quote=match[0]))
     return result[:20], bool(scan(body))
+
+
+_REJECTION = re.compile(
+    r"\b(?:decline[sd]?|reject(?:s|ed)?|refuse[sd]?)\b|"
+    r"\b(?:do(?:es)? not|don't|doesn't|cannot|can't|unable to)\s+(?:accept|agree|approve)\b",
+    re.I,
+)
+
+
+def baseline_stance(body, candidates):
+    """Deterministic English stance used only to display reviewer disagreement."""
+    if has_exact_acceptance(body):
+        return "accept"
+    if _REJECTION.search(body):
+        return "reject"
+    if any(term.field != "acceptance" for term in candidates):
+        return "partial"
+    return "unclear"
+
+
+def merge_reply(body, baseline, reading):
+    """Combine regex baseline candidates with a validated model reading.
+
+    The model contributes extra supported terms and review attention only. Conditions,
+    unsupported clauses or a reject/partial stance remove any acceptance candidate
+    (a hold); nothing the model says can add acceptance or clear a deterministic flag.
+    Returns (candidates, baseline_stance, stance_disagreement).
+    """
+    seen = {(t.field, t.value, t.quote) for t in baseline}
+    merged = list(baseline) + [t for t in reading.terms if (t.field, t.value, t.quote) not in seen]
+    if reading.conditions or reading.unsupported_clauses or reading.stance in {"reject", "partial"}:
+        merged = [t for t in merged if t.field != "acceptance"]
+    stance = baseline_stance(body, baseline)
+    disagreement = reading.stance is not None and reading.stance != stance
+    return merged[:20], stance, disagreement

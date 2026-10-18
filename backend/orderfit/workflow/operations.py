@@ -18,7 +18,7 @@ from orderfit.store.tables import operation
 
 class Admission(DTO):
     kind: Literal[
-        "extract", "evaluate", "explain", "draft", "whatif", "reply", "execute", "csv_preview"
+        "extract", "evaluate", "explain", "draft", "whatif", "reply", "execute", "csv_preview", "advisory"
     ]
     deal_id: UUID | None
     expected_version: Version | None
@@ -143,6 +143,9 @@ class Operations:
             if command.kind in {"whatif", "draft", "reply"}:
                 from orderfit.workflow.preparation import validate_admission
                 validate_admission(c, scope, command, operation_id)
+            elif command.kind == "advisory":
+                from orderfit.workflow.advisory import validate_admission as validate_advisory
+                validate_advisory(c, scope, command)
             c.execute(
                 text(
                     "INSERT INTO operation(id,business_id,deal_id,actor_user_id,session_id,kind,request_hash,input_version,financial_revision,snapshot_id,source_document_id,config_version,parameters) VALUES(:id,:b,:d,:u,:s,:kind,:hash,:iv,:fr,:snapshot,:document,:config,CAST(:params AS jsonb))"

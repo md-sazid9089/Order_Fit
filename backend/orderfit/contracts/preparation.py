@@ -1,10 +1,11 @@
 """P5 preparation only. Hashes identify content; none authorizes an outgoing effect."""
 
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from .advisory import ClauseAssessment
 from .financial import ConfirmedInputV1
 from .primitives import DTO, ExpectedVersions, HashHex, MoneyMinor, Text, UTCInstant, Version
 from .workflow import (
@@ -48,6 +49,8 @@ class ForkView(DTO):
     language_response_id: str | None = None
     language_input_hash: HashHex | None = None
     language_prompt_version: Literal["whatif.v1"] = "whatif.v1"
+    # A short model-proposed question when the request was unclear; never a change.
+    clarification: str | None = Field(default=None, max_length=300)
     is_stale: bool
     canonical_changed: Literal[False] = False
 
@@ -130,6 +133,24 @@ class ReplyTerm(DTO):
     quote: str = Field(min_length=1, max_length=2000)
 
 
+Stance = Literal["accept", "reject", "partial", "unclear"]
+Quote = Annotated[str, Field(min_length=1, max_length=1000)]
+Provenance = Literal["template", "recorded", "live"]
+
+
+class ReplyReading(DTO):
+    """Validated, proposal-only reading of a reply. The stance is advisory evidence."""
+
+    terms: list[ReplyTerm] = Field(default_factory=list, max_length=20)
+    conditions: list[Quote] = Field(default_factory=list, max_length=20)
+    unsupported_clauses: list[Quote] = Field(default_factory=list, max_length=20)
+    stance: Stance | None = None
+    provenance: Provenance
+    code: str | None = None
+    model: str | None = None
+    response_id: str | None = None
+
+
 class ReplyView(DTO):
     id: UUID
     deal_id: UUID
@@ -141,6 +162,17 @@ class ReplyView(DTO):
     injection_flagged: bool
     provenance: Literal["template", "recorded", "live"]
     language_code: str | None
+    language_supported: bool = False
+    language_model: str | None = None
+    language_response_id: str | None = None
+    language_input_hash: HashHex | None = None
+    language_script: str | None = None
+    # Verbatim reply quotes. A model may add review attention here; it can never clear a hold.
+    conditions: list[Quote] = Field(default_factory=list, max_length=20)
+    unsupported_clauses: list[Quote] = Field(default_factory=list, max_length=20)
+    model_stance: Stance | None = None
+    baseline_stance: Stance = "unclear"
+    stance_disagreement: bool = False
     reviewed: bool
 
 
@@ -182,7 +214,9 @@ class Explanation(DTO):
     option_key: str
     sentences: list[str]
     fact_ids: list[str]
-    provenance: Literal["template"] = "template"
+    provenance: Literal["template", "recorded", "live"] = "template"
+    model: str | None = None
+    response_id: str | None = None
     is_stale: bool
 
 
@@ -204,6 +238,7 @@ class ForkSummary(DTO):
     source_result: ComparisonResult
     provenance: Literal["typed", "template", "recorded", "live"]
     language_code: str | None
+    clarification: str | None = Field(default=None, max_length=300)
     is_stale: bool
 
 
@@ -213,6 +248,7 @@ class PreparationState(DTO):
     messages: list[PreparedMessage]
     replies: list[ReplyView]
     acceptances: list[AcceptanceEvidence]
+    clause_assessments: list[ClauseAssessment] = Field(default_factory=list, max_length=20)
     operations: list[Operation]
     # This is a bounded page. Older immutable evidence remains addressable by ID.
     has_more: bool
@@ -229,7 +265,16 @@ class ExplainRequest(DTO):
 
 
 class ModelIntent(DTO):
-    changes: list[WhatIfChange] = Field(min_length=1, max_length=10)
+    """Supported changes, or no change (optionally with one clarifying question) - never both."""
+
+    changes: list[WhatIfChange] = Field(default_factory=list, max_length=10)
+    clarification: str | None = Field(default=None, min_length=1, max_length=300)
+
+    @model_validator(mode="after")
+    def one_outcome(self):
+        if self.changes and self.clarification:
+            raise ValueError("a clarification replaces changes; never both")
+        return self
 
 
 class IntentResult(DTO):
@@ -238,3 +283,4 @@ class IntentResult(DTO):
     code: str | None
     model: str | None = None
     response_id: str | None = None
+    clarification: str | None = Field(default=None, max_length=300)

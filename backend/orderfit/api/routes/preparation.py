@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request, Response
 
 from orderfit.api.deps import identity_service, mutation, session_token
+from orderfit.contracts.advisory import AdvisoryExplainRequest, ClauseAssessment, ClauseRequest
 from orderfit.contracts.preparation import (
     AcceptanceEvidence,
     DraftPreparationRequest,
@@ -150,6 +151,11 @@ def explain(
     ):
         result = EvaluationRepository.get_evaluation(c, business_id, evaluation_id)
         option = repo.option_for(result, option_key, require_feasible=False)
+        # A model-worded explanation is shown only when a stored one exists for this exact
+        # evaluation/option; otherwise (and always when off) the deterministic template applies.
+        stored = repo.latest_explanation(c, business_id, evaluation_id, option_key)
+        if stored is not None:
+            return stored.model_copy(update={"is_stale": result.is_stale})
         return Explanation(
             evaluation_id=result.id,
             option_key=option_key,
@@ -380,7 +386,7 @@ def preparation_state(
         operations = (
             c.execute(
                 text(
-                    "SELECT * FROM operation WHERE business_id=:b AND deal_id=:d AND kind IN ('whatif','draft','reply') ORDER BY queued_at DESC,id DESC LIMIT 50"
+                    "SELECT * FROM operation WHERE business_id=:b AND deal_id=:d AND kind IN ('whatif','draft','reply','advisory') ORDER BY queued_at DESC,id DESC LIMIT 50"
                 ),
                 dict(b=business_id, d=deal_id),
             )
@@ -388,4 +394,46 @@ def preparation_state(
             .all()
         )
         results["operations"] = [operation_dto(row) for row in operations]
+        results["clause_assessments"] = repo.list_clause_assessments(c, business_id, deal_id)
         return PreparationState(deal_id=deal_id, **results, has_more=more)
+
+
+@router.post(
+    "/deals/{deal_id}/explanations",
+    response_model=OperationAccepted,
+    status_code=202,
+    operation_id="explanation_create",
+)
+def explanation_create(
+    business_id: UUID, deal_id: UUID, data: AdvisoryExplainRequest, request: Request, response: Response
+):
+    accepted = admit(request, business_id, deal_id, data, "advisory")
+    response.headers["Location"] = accepted.poll_url
+    return accepted
+
+
+@router.post(
+    "/deals/{deal_id}/clause-assessments",
+    response_model=OperationAccepted,
+    status_code=202,
+    operation_id="clause_assessment_create",
+)
+def clause_assessment_create(
+    business_id: UUID, deal_id: UUID, data: ClauseRequest, request: Request, response: Response
+):
+    accepted = admit(request, business_id, deal_id, data, "advisory")
+    response.headers["Location"] = accepted.poll_url
+    return accepted
+
+
+@router.get(
+    "/clause-assessments/{assessment_id}",
+    response_model=ClauseAssessment,
+    operation_id="clause_assessment_get",
+)
+def clause_assessment_get(business_id: UUID, assessment_id: UUID, request: Request):
+    with identity_service(request).database.tenant(session_token(request), business_id, "read") as (
+        c,
+        _,
+    ):
+        return repo.get_clause_assessment(c, business_id, assessment_id)
