@@ -46,6 +46,8 @@ class Candidate(DTO):
     status: Literal["extracted", "ambiguous", "missing", "conflicting"]
     source: SourceExcerpt
     exact_quote: str = Field(max_length=4000)
+    # Optional reviewer aid for a non-English quote; never evidence and never used for grounding.
+    gloss_en: str | None = Field(default=None, max_length=300)
     # normalized_value remains a candidate; canonical submission uses typed DTOs.
 
 

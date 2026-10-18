@@ -23,3 +23,9 @@ def test_multilingual_bank_and_generated_number_guards_fail_closed():
         assert bank_change(text)
     bad = numbers.check("金额为十二，বাংলা ১২, हिंदी १२", set())
     assert "十" in "".join(bad) and "১" in bad and "२" in bad
+
+
+def test_reviewed_payment_basis_lexicons_ground_only_supported_terms():
+    assert quote_supports("payment_basis", "invoice", "চালান পাওয়ার ৩০ দিন পরে", "চালান পাওয়ার ৩০ দিন পরে") == "ok"
+    assert quote_supports("payment_basis", "delivery", "交付后30天付款", "交付后30天付款") == "ok"
+    assert quote_supports("payment_basis", "invoice", "付款将在30天内完成", "付款将在30天内完成") == "ambiguous"

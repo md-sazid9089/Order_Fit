@@ -740,6 +740,13 @@ class ExtractionCandidateView(DTO):
     confidence: Annotated[float, Field(ge=0, le=1)]
     source_role: SourceRole | None
     flags: list[str]
+    # Provenance of the proposal: the extraction run's mode/model, the detected language and
+    # script of the source page, and an optional reviewer-only English gloss (never evidence).
+    provenance: Literal["recorded", "live"] | None = None
+    model: str | None = Field(default=None, max_length=128)
+    page_language: str | None = Field(default=None, max_length=16)
+    page_script: str | None = Field(default=None, max_length=16)
+    gloss_en: str | None = Field(default=None, max_length=300)
 
 
 class ExtractedFieldView(DTO):

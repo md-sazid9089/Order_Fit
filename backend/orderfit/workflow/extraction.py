@@ -21,6 +21,7 @@ from orderfit.contracts.workflow import (
     Finding,
 )
 from orderfit.services.documents import injection_flags, parse_cash_csv, quote_supports
+from orderfit.services.language import detect_page, quote_needs_language_review
 from orderfit.store.document_repository import preview_hash
 from orderfit.store.documents import DocumentIntegrityError, read_verified_document
 from orderfit.store.repositories import append_audit
@@ -163,6 +164,10 @@ def run_extract(operations, claim, job, runtime: Runtime):
             if verdict == "quote_mismatch" and cand.status != "missing":
                 continue  # unsupported claim is dropped, never stored as evidence
             status = "ambiguous" if verdict == "ambiguous" else cand.status
+            page_language, page_script, _supported = detect_page(page_text)
+            if status == "extracted" and quote_needs_language_review(cand.exact_quote):
+                # An unreviewed language/script: still shown, but a person must look first.
+                status = "ambiguous"
             flags = injection_flags([cand.exact_quote])
             value = json.dumps(cand.normalized_value)
             quote = cand.exact_quote or None
@@ -172,14 +177,17 @@ def run_extract(operations, claim, job, runtime: Runtime):
                 status = "ambiguous"  # injection-like quote: a person must look before it counts
             cid = c.execute(
                 text(
-                    "INSERT INTO extraction_candidate(business_id,deal_id,document_id,run_id,field,value,source_page,source_quote,confidence,status,source_role)"
-                    " VALUES(:b,:d,:doc,:run,:f,CAST(:v AS jsonb),:p,:q,:conf,:s,:role) RETURNING id"
+                    "INSERT INTO extraction_candidate(business_id,deal_id,document_id,run_id,field,value,source_page,source_quote,confidence,status,source_role,page_language,page_script,gloss_en)"
+                    " VALUES(:b,:d,:doc,:run,:f,CAST(:v AS jsonb),:p,:q,:conf,:s,:role,:lang,:script,:gloss) RETURNING id"
                 ),
                 {
                     "b": claim["business_id"], "d": op["deal_id"], "doc": doc["id"], "run": run_id,
                     "f": cand.field, "v": value, "p": cand.source.page,
                     "q": quote, "conf": 0.5 if status != "extracted" else 0.8,
                     "s": status, "role": doc["source_role"],
+                    "lang": page_language, "script": page_script,
+                    # The gloss is a reviewer aid for the quote; it is dropped with a missing value.
+                    "gloss": cand.gloss_en if quote else None,
                 },
             ).scalar_one()
             stored += 1
