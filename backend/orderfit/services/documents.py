@@ -14,7 +14,7 @@ import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
+from importlib.resources import files
 from threading import BoundedSemaphore
 
 from orderfit.agent.guards.injection import scan
@@ -171,8 +171,10 @@ def _norm(value: str) -> str:
 NUMERIC_FIELDS = {"order_value_minor", "opening_cash_minor", "payment_days"}
 DATE_FIELDS = {"order_date", "invoice_date", "delivery_date"}
 BASIS_FIELDS = {"payment_basis"}
-_LEXICON_PATH = Path(__file__).parents[3] / "data" / "ai_workflow" / "lexicon" / "payment_basis.json"
-PAYMENT_BASIS_LEXICON = json.loads(_LEXICON_PATH.read_text(encoding="utf-8"))
+# Required runtime data ships in the wheel, independently of checkout/demo mounts.
+PAYMENT_BASIS_LEXICON = json.loads(
+    files("orderfit.services").joinpath("payment_basis.json").read_text(encoding="utf-8")
+)
 # Group-separated (1,234 / 1,00,000) or plain numbers, never a fragment of a longer number.
 _NUMBER = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?![\d])")
 
