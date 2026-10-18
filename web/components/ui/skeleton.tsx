@@ -4,6 +4,7 @@ import { cn } from "cn";
 /**
  * Base atomic skeleton block matching OrderFit/Settle design tokens.
  * Uses a subtle pulse animation that gracefully respects prefers-reduced-motion.
+ * Harmonized for both Light and Dark themes.
  */
 function Skeleton({
   className,
@@ -15,7 +16,7 @@ function Skeleton({
       data-slot="skeleton"
       aria-hidden={ariaHidden}
       className={cn(
-        "animate-pulse motion-reduce:animate-none rounded-md bg-[#ECEAE4]/90",
+        "animate-pulse motion-reduce:animate-none rounded-md bg-[#ECEAE4]/90 dark:bg-[#2A2C2D]/90",
         className
       )}
       {...props}
@@ -142,7 +143,7 @@ function SkeletonBadge({
 }
 
 /**
- * Metric or feature card placeholder matching OrderFit card styling.
+ * Metric or feature card placeholder matching OrderFit card styling in light/dark mode.
  */
 interface SkeletonCardProps extends React.ComponentProps<"div"> {
   hasHeader?: boolean;
@@ -160,7 +161,7 @@ function SkeletonCard({
     <div
       data-slot="skeleton-card"
       className={cn(
-        "p-5 bg-white border border-[#E8E6E1] rounded-2xl shadow-xs flex flex-col justify-between",
+        "p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs flex flex-col justify-between",
         className
       )}
       {...props}
@@ -169,7 +170,10 @@ function SkeletonCard({
         <>
           {hasHeader && (
             <div className="flex items-center justify-between mb-3">
-              <Skeleton className="h-3.5 w-28" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-7 rounded-lg" />
+                <Skeleton className="h-3.5 w-24" />
+              </div>
               <SkeletonBadge />
             </div>
           )}
@@ -178,7 +182,7 @@ function SkeletonCard({
             <Skeleton className="h-3 w-48" />
           </div>
           {hasFooter && (
-            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] flex items-center justify-between">
+            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-3 w-16" />
             </div>
@@ -209,11 +213,14 @@ function SkeletonTable({
   return (
     <div
       data-slot="skeleton-table"
-      className={cn("w-full overflow-hidden rounded-xl border border-[#E8E6E1] bg-white", className)}
+      className={cn(
+        "w-full overflow-hidden rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] shadow-xs",
+        className
+      )}
       {...props}
     >
       {hasHeader && (
-        <div className="bg-[#FAF9F7] px-4 py-3 border-b border-[#E8E6E1] flex items-center justify-between gap-4">
+        <div className="bg-[#FAF9F7] dark:bg-[#222425] px-4 py-3 border-b border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between gap-4">
           {Array.from({ length: columns }).map((_, c) => (
             <Skeleton
               key={c}
@@ -222,7 +229,7 @@ function SkeletonTable({
           ))}
         </div>
       )}
-      <div className="divide-y divide-[#F4F2ED]">
+      <div className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
         {Array.from({ length: rows }).map((_, r) => (
           <div
             key={r}
@@ -261,7 +268,7 @@ function SkeletonList({
   return (
     <div
       data-slot="skeleton-list"
-      className={cn("divide-y divide-[#F4F2ED]", className)}
+      className={cn("divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]", className)}
       {...props}
     >
       {Array.from({ length: items }).map((_, i) => (
@@ -297,7 +304,10 @@ function SkeletonForm({
   return (
     <div
       data-slot="skeleton-form"
-      className={cn("space-y-4 p-5 bg-white border border-[#E8E6E1] rounded-2xl", className)}
+      className={cn(
+        "space-y-4 p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs",
+        className
+      )}
       {...props}
     >
       <div className="space-y-1.5 mb-2">
@@ -340,25 +350,26 @@ function SkeletonChart({
     <div
       data-slot="skeleton-chart"
       className={cn(
-        "p-5 bg-white border border-[#E8E6E1] rounded-2xl shadow-xs space-y-4",
+        "p-5 sm:p-6 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs space-y-4",
         className
       )}
       {...props}
     >
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-7 w-24" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="space-y-1.5">
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-3.5 w-64 max-w-full" />
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-7 w-16 rounded-full" />
-          <Skeleton className="h-7 w-16 rounded-full" />
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+          <Skeleton className="h-7 w-12 rounded-lg" />
+          <Skeleton className="h-7 w-12 rounded-lg" />
+          <Skeleton className="h-7 w-12 rounded-lg" />
         </div>
       </div>
 
       {/* Simulated chart bars / timeline line */}
-      <div className={cn("w-full flex items-end justify-between gap-2 pt-6 pb-2 px-2 border-b border-[#ECEAE4]", height)}>
-        {[40, 65, 30, 80, 55, 90, 70, 45, 85, 60, 75, 50].map((h, i) => (
+      <div className={cn("w-full flex items-end justify-between gap-2 pt-6 pb-2 px-2 border-b border-[#ECEAE4] dark:border-[#2A2C2D]", height)}>
+        {[40, 65, 30, 80, 55, 90, 70, 45, 85, 60, 75, 50, 70, 95].map((h, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
             <Skeleton
               className="w-full rounded-t-sm"
@@ -373,12 +384,22 @@ function SkeletonChart({
 }
 
 /**
- * Complete Dashboard / Pipeline overview skeleton (cards + status banner + table).
+ * Complete Deals Pipeline skeleton matching the exact page layout:
+ * Header + 4 Metric KPI Cards + Critical Status Banner + Tabs & Search + 10-Row Order Table + Pagination Bar.
  */
 function SkeletonDashboard({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const tableHeaders = [
+    "Order Reference",
+    "Financials",
+    "Timeline & Terms",
+    "Engine Verdict",
+    "Decision Status",
+    "Action",
+  ];
+
   return (
     <div
       data-slot="skeleton-dashboard"
@@ -389,10 +410,14 @@ function SkeletonDashboard({
     >
       <span className="sr-only">Loading pipeline data…</span>
 
-      {/* Top Controls Bar */}
+      {/* Top Header Controls Bar */}
       <div className="flex items-center justify-between gap-4">
-        <Skeleton className="h-4 w-64" />
-        <Skeleton className="h-4 w-28" />
+        <div>
+          <Skeleton className="h-8 w-44 rounded-xl" />
+        </div>
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-8 w-20 rounded-xl" />
+        </div>
       </div>
 
       {/* 4 Summary Metric Cards */}
@@ -404,27 +429,196 @@ function SkeletonDashboard({
       </div>
 
       {/* Status Alert Banner */}
-      <div className="p-4 rounded-xl bg-white border border-[#E8E6E1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1.5 flex-1 min-w-0 max-w-full">
-          <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-3 w-80 max-w-full" />
+          <Skeleton className="h-4 w-52" />
+          <Skeleton className="h-3.5 w-96 max-w-full" />
         </div>
-        <Skeleton className="h-8 w-28 rounded-lg shrink-0" />
+        <Skeleton className="h-9 w-36 rounded-xl shrink-0" />
       </div>
 
       {/* Tabs and Search Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-8 w-16 rounded-full" />
-          <Skeleton className="h-8 w-24 rounded-full" />
-          <Skeleton className="h-8 w-32 rounded-full" />
-          <Skeleton className="h-8 w-20 rounded-full" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5 p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl">
+          <Skeleton className="h-7 w-20 rounded-lg" />
+          <Skeleton className="h-7 w-28 rounded-lg" />
+          <Skeleton className="h-7 w-32 rounded-lg" />
+          <Skeleton className="h-7 w-24 rounded-lg" />
         </div>
-        <Skeleton className="h-9 w-64 rounded-full" />
+        <Skeleton className="h-9 w-full md:w-80 rounded-xl" />
       </div>
 
-      {/* Data Table */}
-      <SkeletonTable rows={6} columns={6} />
+      {/* Actual 10-Row Deals Data Table */}
+      <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-xs">
+          <thead>
+            <tr className="border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
+              {tableHeaders.map((h, i) => (
+                <th key={i} className="px-4 py-3 font-semibold">
+                  <Skeleton className="h-3 w-20" />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
+            {Array.from({ length: 10 }).map((_, r) => (
+              <tr key={r} className="align-top">
+                {/* Col 1: Order Reference + Customer */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-36" />
+                </td>
+
+                {/* Col 2: Order Value + Profit */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </td>
+
+                {/* Col 3: Delivery + Terms */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-3 w-20" />
+                </td>
+
+                {/* Col 4: Engine Verdict */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-3.5 w-48" />
+                </td>
+
+                {/* Col 5: Decision Status Pill */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </td>
+
+                {/* Col 6: Action Button */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-8 w-28 rounded-xl" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Actual Pagination Bar Skeleton */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <Skeleton className="h-4 w-44" />
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-8 w-20 rounded-xl" />
+          <Skeleton className="size-8 rounded-xl" />
+          <Skeleton className="size-8 rounded-xl" />
+          <Skeleton className="h-8 w-16 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Overview Page loading skeleton matching the exact Overview structure and theme:
+ * Header + 4 KPI Cards + Cashflow Trajectory Chart + Recent Evaluations (left) & Balance Allocations (right).
+ */
+function SkeletonOverview({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="skeleton-overview"
+      className={cn("space-y-6 w-full", className)}
+      role="status"
+      aria-busy="true"
+      {...props}
+    >
+      <span className="sr-only">Loading overview dashboard…</span>
+
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-8 w-36 rounded-xl" />
+        <Skeleton className="h-8 w-32 rounded-xl" />
+      </div>
+
+      {/* 4 Top Metric KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+
+      {/* Cashflow Trajectory Chart Skeleton */}
+      <SkeletonChart height="h-64" />
+
+      {/* Bottom 2-Column Grid: Recent Evaluations & Currency Allocations */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column (7 cols): Recent Evaluations */}
+        <div className="lg:col-span-7 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-3.5 w-20" />
+            </div>
+
+            <div className="space-y-3 pt-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="py-2.5 px-3 flex items-center justify-between gap-3 rounded-xl hover:bg-[#FAF9F7] dark:hover:bg-[#222425]">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Skeleton className="size-9 rounded-full shrink-0" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3.5 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-5 w-14 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-3.5 w-32" />
+          </div>
+        </div>
+
+        {/* Right Column (5 cols): Currency Allocation & Policy Floor */}
+        <div className="lg:col-span-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-3.5 w-16" />
+            </div>
+
+            <div className="space-y-4 pt-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="size-6 rounded-md" />
+                      <Skeleton className="h-3.5 w-24" />
+                    </div>
+                    <Skeleton className="h-3.5 w-16" />
+                  </div>
+                  <Skeleton className="h-1.5 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Policy Reserve Floor Box */}
+          <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Skeleton className="size-4 rounded-md" />
+              <Skeleton className="h-3.5 w-28" />
+            </div>
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -478,7 +672,7 @@ function AppShellSkeleton({
   return (
     <div
       className={cn(
-        "min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row",
+        "min-h-screen bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] font-sans flex flex-row",
         className
       )}
       role="status"
@@ -488,10 +682,10 @@ function AppShellSkeleton({
       <span className="sr-only">Loading application shell…</span>
 
       {/* Sidebar Silhouette */}
-      <aside className="w-64 border-r border-[#ECEAE4] bg-[#FAF9F7] p-5 hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0">
+      <aside className="w-64 border-r border-[#ECEAE4] dark:border-[#2E3235] bg-[#FAF9F7] dark:bg-[#181A1B] p-5 hidden md:flex flex-col justify-between shrink-0 h-screen sticky top-0">
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <Skeleton className="size-6 rounded-md bg-[#004D3B]/20" />
+            <Skeleton className="size-6 rounded-md bg-[#004D3B]/20 dark:bg-[#B5F2C6]/20" />
             <Skeleton className="h-5 w-24" />
           </div>
           <div className="space-y-2 pt-4">
@@ -502,7 +696,7 @@ function AppShellSkeleton({
             <Skeleton className="h-8 w-full rounded-lg" />
           </div>
         </div>
-        <div className="pt-4 border-t border-[#ECEAE4] flex items-center gap-3">
+        <div className="pt-4 border-t border-[#ECEAE4] dark:border-[#2E3235] flex items-center gap-3">
           <SkeletonAvatar size="sm" />
           <div className="space-y-1 flex-1">
             <Skeleton className="h-3.5 w-24" />
@@ -513,7 +707,7 @@ function AppShellSkeleton({
 
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-[#ECEAE4] bg-white px-6 flex items-center justify-between">
+        <header className="h-16 border-b border-[#ECEAE4] dark:border-[#2E3235] bg-white dark:bg-[#181A1B] px-6 flex items-center justify-between">
           <Skeleton className="h-5 w-40" />
           <div className="flex items-center gap-3">
             <Skeleton className="size-8 rounded-full" />
@@ -551,6 +745,7 @@ export {
   SkeletonForm,
   SkeletonChart,
   SkeletonDashboard,
+  SkeletonOverview,
   PageLoadingSkeleton,
   AppShellSkeleton,
 };
