@@ -17,7 +17,7 @@ export function SectorsMarquee() {
 
   return (
     <section className="bg-white py-7 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 mb-5">
         {/* Architectural Principle Ticker */}
         <div className="flex items-center justify-center">
           <a

@@ -102,31 +102,38 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   if (!deal) {
     if (error) {
       return (
-        <main className="p-8">
-          <Link href="/deals">Saved orders</Link>
-          <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-red-800">{error}</p>
+        <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+          <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+            <Link href="/deals">Saved orders</Link>
+            <p role="alert" className="mt-4 rounded bg-red-50 p-3 text-red-800">{error}</p>
+          </div>
         </main>
       );
     }
     return (
-      <main className="mx-auto max-w-5xl space-y-5 p-6" role="status" aria-busy="true">
-        <span className="sr-only">Loading saved preparation…</span>
-        <Skeleton className="h-4 w-52" />
-        <Skeleton className="h-8 w-80" />
-        <div className="space-y-3 rounded-xl border border-[#ECEAE4] bg-white p-5">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-10 w-full" />
-          <div className="space-y-2 pt-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full" role="status" aria-busy="true">
+        <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+          <span className="sr-only">Loading saved preparation…</span>
+          <Skeleton className="h-4 w-52" />
+          <Skeleton className="h-8 w-80" />
+          <div className="space-y-3 rounded-xl border border-[#ECEAE4] bg-white p-5">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-2 pt-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
           </div>
         </div>
       </main>
     );
   }
-  return <main className="mx-auto max-w-5xl space-y-5 p-6">
-    <Link className="underline" href={`/deals/${dealId}?businessId=${businessId}`}>Back to order review and evaluation</Link>
-    <h1 className="text-2xl font-semibold">Negotiation preparation · {deal.public_ref}</h1><p>All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>
+  return (
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+        <Link className="underline" href={`/deals/${dealId}?businessId=${businessId}`}>Back to order review and evaluation</Link>
+        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Negotiation preparation · {deal.public_ref}</h1>
+        <p>All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>
     {error && <p role="alert" className="rounded bg-red-50 p-3">{error}</p>}{notice && <p role="status">{notice}</p>}
     {operation && <div className={panel}><p>Operation: {operation.status} · {operation.subphase}</p>{operation.result && operation.result.kind !== "completed" && <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(operation.result, null, 2)}</pre>}</div>}
     {!!state?.operations.length && <details className={panel}><summary>Saved operations and response recovery</summary>{state.operations.map(op => <article key={op.operation_id}><p>{op.kind} · {op.status} · {op.operation_id}</p>{["queued", "running"].includes(op.status) && <button className={button} disabled={!!operationId} onClick={() => saveOperation(op.operation_id)}>Resume saved operation polling</button>}{op.result && op.result.kind !== "completed" && <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(op.result, null, 2)}</pre>}</article>)}</details>}
@@ -152,7 +159,9 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
     <section className={panel}><h2 className="text-lg font-semibold">Party acceptance evidence</h2><p>Human attestations only; agreement does not establish receipt of cash or funding.</p>{!state?.acceptances.length && <p>No recorded acceptances.</p>}{state?.acceptances.map(a => <article key={a.id} className="border-t pt-3"><p>{a.party_role} · {a.is_stale ? "stale" : "current"} · expires {a.valid_until}</p><p>{a.attestation}</p><code className="break-all text-xs">Terms {a.terms_hash}</code></article>)}</section>
     <ApprovalWorkflow key={`${businessId}:${deal.id}`} businessId={businessId} deal={deal} evaluation={evaluation} option={catalogue?.options.find(o => o.option_key === option)} messages={state?.messages ?? []} canPrepare={canPrepare} onChanged={refresh} />
     <CollectionPages query={payeePages} noun="payees" /><div className="flex flex-wrap gap-3"><button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))}>Previous history</button><button className={button} disabled={!state?.has_more} onClick={() => setOffset(offset+50)}>More history</button><button className={button} onClick={() => void command(refresh)}>Refresh saved preparation</button></div>
-  </main>;
+      </div>
+    </main>
+  );
 }
 
 function ForkCard({ fork, businessId, disabled, apply }: { fork: ForkSummary; businessId: string; disabled: boolean; apply: () => Promise<void> }) {

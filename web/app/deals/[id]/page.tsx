@@ -100,18 +100,18 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
   } catch (e) { setError(e instanceof Error ? e.message : "Could not evaluate this order."); await refresh(); } finally { setBusy(false); } }
   if (!route) {
     return (
-      <main className="min-h-screen bg-[#f7f6f5] p-6">
-        <div className="mx-auto max-w-4xl space-y-5">
+      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+        <div className="max-w-[1560px] mx-auto space-y-6 w-full">
           <Skeleton className="h-4 w-28 mb-3" />
           <DealDetailSkeleton />
         </div>
       </main>
     );
   }
-  if (!businessId) return <main className="p-8">This order link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
+  if (!businessId) return <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><div className="max-w-[1560px] mx-auto">This order link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</div></main>;
   return (
-    <main className="min-h-screen bg-[#f7f6f5] p-6">
-      <div className="mx-auto max-w-4xl space-y-5">
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
         <Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
         <button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>

@@ -8,7 +8,7 @@ export function Footer() {
   const { scrollToTop } = useSmoothScroll();
   return (
     <footer className="bg-[#093A2F] py-14 text-[#E6F4F1] md:py-20 xl:py-24 border-t border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Navigation Columns */}
         <nav className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 pb-14">

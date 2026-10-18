@@ -22,7 +22,16 @@ export function useScoped() {
 }
 
 export function PageFrame({ title, intro: _intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
-  return <main className="mx-auto max-w-5xl space-y-5 p-6"><header className="space-y-1"><h1 className="text-2xl font-semibold">{title}</h1></header>{children}</main>;
+  return (
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-bold font-display text-[#1E2021]">{title}</h1>
+        </header>
+        {children}
+      </div>
+    </main>
+  );
 }
 
 export function Alert({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "ok" | "info" | "warn" }) {

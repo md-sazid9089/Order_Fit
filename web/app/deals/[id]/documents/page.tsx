@@ -74,9 +74,9 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
   const download = (doc: DocumentView) => scope && void run(async () => { await downloadDocument(scope.businessId, doc); setMessage(`Downloaded ${doc.original_filename} as a file. It is untrusted source material and is not opened here.`); });
   if (!scope) {
     return (
-      <main className="min-h-screen bg-[#f7f6f5] p-6" role="status" aria-busy="true">
+      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full" role="status" aria-busy="true">
         <span className="sr-only">Loading order scope…</span>
-        <div className="mx-auto max-w-4xl space-y-5">
+        <div className="max-w-[1560px] mx-auto space-y-6 w-full">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-7 w-48" />
           <div className="space-y-4 rounded-2xl border border-[#ECEAE4] bg-white p-5 shadow-sm">
@@ -93,10 +93,12 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
       </main>
     );
   }
-  if (!scope.businessId) return <main className="p-8">This link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
+  if (!scope.businessId) return <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><div className="max-w-[1560px] mx-auto">This link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</div></main>;
   const docById = new Map(docs.map(d => [d.id, d]));
-  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5">
-    <Link href={`/deals/${scope.dealId}?businessId=${scope.businessId}`} className="text-sm underline">← Order</Link>
+  return (
+    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+        <Link href={`/deals/${scope.dealId}?businessId=${scope.businessId}`} className="text-sm underline">← Order</Link>
     <h1 className="text-xl font-semibold">Source documents</h1>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}{message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-900">{message}</p>}
     <form onSubmit={upload} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Upload</h2>
@@ -112,5 +114,6 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
       {preview.errors.length > 0 && <ul className="list-disc pl-5 text-sm text-red-800">{preview.errors.map((x, i) => <li key={i}>{x.message}</li>)}</ul>}
       <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || preview.errors.length > 0} onClick={csvConfirm}>Confirm import</button></section>}
     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Extracted values</h2>{fields.length === 0 ? <p className="text-sm">Nothing extracted.</p> : <ul className="space-y-3 text-sm">{fields.map(f => { const c = f.candidates.find(x => x.id === f.candidate_id); return <li key={f.field_id} className="rounded-lg border p-3"><p><span className="font-medium">{f.field}</span>: {f.value ?? "missing"} <span className="rounded bg-neutral-100 px-1">{f.status}</span></p>{c?.source_quote && <blockquote className="mt-1 border-l-2 pl-2 text-neutral-700">“{c.source_quote}” {c.source_page ? `(page ${c.source_page})` : ""}</blockquote>}{["extracted", "ambiguous", "conflicting"].includes(f.status) && f.value !== null && <button className="mt-2 rounded border px-2 py-1" disabled={busy} onClick={() => confirm(f, docById.get(f.document_id))}>Confirm against source</button>}</li>; })}</ul>}</section>
-  </div></main>;
+  </div></main>
+  );
 }

@@ -17,14 +17,14 @@ export function HeroSection() {
         style={{ background: "radial-gradient(circle, rgba(62, 134, 114, 0.08) 0%, rgba(247, 246, 245, 0) 70%)" }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Main Hero Header */}
-        <div className="text-center max-w-5xl mx-auto mb-10">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-tight leading-[1.12] mb-6">
-            <span className="block font-sans font-medium text-[#1A1A1A] dark:text-[#F3F4F6]">
+        <div className="text-center max-w-6xl mx-auto mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.75rem] xl:text-[4.25rem] tracking-tight leading-[1.12] mb-6">
+            <span className="block font-sans font-medium text-[#1A1A1A] dark:text-[#F3F4F6] sm:whitespace-nowrap">
               Stress-test orders, protect cash flow,
             </span>
-            <span className="block font-serif italic font-normal text-[#1A1A1A] dark:text-[#F3F4F6] tracking-tight sm:tracking-normal mt-1 sm:mt-2">
+            <span className="block font-serif italic font-normal text-[#1A1A1A] dark:text-[#F3F4F6] tracking-tight sm:tracking-normal mt-1 sm:mt-2 sm:whitespace-nowrap">
               negotiate safe terms.
             </span>
           </h1>
@@ -36,7 +36,8 @@ export function HeroSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8">
             {session ? (
               <Link
-                href="/deals"
+                href="/overview"
+                data-pipeline="/deals"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-8 h-12 bg-[#004D3B] text-[#FFFAEC] hover:bg-[#00382B] font-sans font-semibold tracking-wider uppercase text-xs sm:text-sm transition-all shadow-xs active:scale-98"
               >
                 <span>Go to Dashboard</span>
