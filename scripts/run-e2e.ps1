@@ -28,8 +28,13 @@ if ($BrowserReviewGate) {
 
 function New-Secret {
     $bytes = New-Object byte[] 32
-    [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-    return [Convert]::ToHexString($bytes).ToLowerInvariant()
+    # RandomNumberGenerator.Fill is unavailable in Windows PowerShell 5/.NET
+    # Framework, while Create().GetBytes works in both Windows PowerShell and
+    # PowerShell 7. The E2E runner must be runnable from either shell.
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($bytes) }
+    finally { $rng.Dispose() }
+    return [BitConverter]::ToString($bytes).Replace("-", "").ToLowerInvariant()
 }
 
 function Get-FreePort {

@@ -8,7 +8,7 @@ import { archiveOffer, getBusiness } from "@/lib/p7-api";
 import { bpsText } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import { ArchiveAction } from "@/components/p7/archive-action";
-import { Alert, Loading, PageFrame, QueryError, panel, useScoped } from "@/components/p7/common";
+import { Loading, PageFrame, QueryError, panel, useScoped } from "@/components/p7/common";
 
 /** Saved financing offers, read-only. Only fixed-term loans can be selected for evaluation; other kinds are informational. */
 export function FinancingScreen() {

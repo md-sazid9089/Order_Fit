@@ -191,7 +191,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(compensation.getByText(/Settled \(compensate\)/)).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("sandbox-compensation.png"), fullPage: true });
 
-  await page.getByRole("link", { name: "Back to order review and evaluation" }).click();
+  await page.getByRole("link", { name: "Back to Step 4: Order Review & Engine Evaluation" }).click();
   await expect(page.getByRole("heading", { name: `E2E-${suffix}` })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 

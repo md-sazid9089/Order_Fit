@@ -115,15 +115,6 @@ export function AppSidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(SIDEBAR_PINNED_STORAGE_KEY);
-      if (saved !== null) {
-        const val = saved === "true";
-        setIsPinned(val);
-        cachedSidebarPinned = val;
-      }
-    } catch {}
-
     const handleStorage = (e: StorageEvent) => {
       if (e.key === SIDEBAR_PINNED_STORAGE_KEY && e.newValue !== null) {
         const val = e.newValue === "true";

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Play, AlertTriangle, CheckCircle2, Factory } from "lucide-react";
+import { ArrowRight, Play, CheckCircle2, Factory } from "lucide-react";
 import { useCurrentSession } from "@/lib/use-session";
 
 export function HeroSection() {

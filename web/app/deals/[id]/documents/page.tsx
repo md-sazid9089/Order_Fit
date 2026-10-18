@@ -11,7 +11,7 @@ import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listField
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, textDirection } from "@/lib/provenance-model";
-import { ArrowLeft, ChevronRight, CheckCircle2, Landmark, History, Layers } from "lucide-react";
+import { ArrowLeft, ChevronRight, Layers } from "lucide-react";
 
 const ROLES: Record<string, string[]> = { po: ["customer_order"], quote: ["customer_sales_quote", "supplier_cost_quote"], bills: ["baseline", "supplier_cost_quote"], financing: ["financing"], csv: ["baseline"], other: ["other"] };
 
@@ -162,7 +162,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
         <label>Meaning<select className="ml-2 rounded border p-1" value={role} onChange={e => setRole(e.target.value)}>{ROLES[kind].map(r => <option key={r}>{r}</option>)}</select></label>
         <input key={fileKey} type="file" accept=".pdf,.txt,.csv,.json" onChange={e => setFile(e.target.files?.[0] ?? null)} aria-label="Document file" /></div>
       <p className="text-xs text-neutral-600">PDF with a text layer, text, CSV or JSON, up to 25 MiB. Document text is treated as data, never instructions.</p>
-      <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || !file}>Upload</button></form>
+      <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || !file || !deal}>Upload</button></form>
     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Documents</h2><CollectionPages query={documentPages} noun="documents" />{docs.length === 0 && !documentPages.isPending && !documentPages.isError ? <p className="text-sm">No documents yet. You can still enter values manually.</p> : <ul className="space-y-2 text-sm">{docs.map(d => <li key={d.id} className="flex flex-wrap items-center gap-3"><span className="font-medium">{d.original_filename}</span><span>{d.source_role} · {d.parse_status === "ocr_required" ? "scanned, no text layer" : d.parse_status}</span>
       <button className="rounded border px-2 py-1" disabled={busy} onClick={() => download(d)}>Download original</button>{d.kind === "csv" ? <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => csvPreview(d)}>Preview import</button> : <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => extract(d)}>Extract values</button>}</li>)}</ul>}</section>
     {docs.some(d => d.kind === "csv") && deal && <div className="space-y-1 rounded-2xl border bg-white p-5 text-sm"><label className="block">As-of date for CSV import<input type="date" min="2000-01-01" max="2100-12-31" className="ml-2 rounded border p-1" value={asOf || deal.start_date} onChange={e => { setAsOf(e.target.value); setPreview(null); }} /></label><p className="text-xs text-neutral-600">The as-of date tells the preview which day the imported balances describe. It starts as this order&apos;s start date ({deal.start_date}); change it if the file describes another day.</p></div>}

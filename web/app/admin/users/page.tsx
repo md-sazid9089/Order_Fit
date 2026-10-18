@@ -7,26 +7,20 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, listMembers, changeRole, createInvitation, revokeMember, getBusiness } from "@/lib/p7-api";
 import { ROLES, buildInvitation, buildRevocation, buildRoleChange, describeP7Error, invitationLink, roleLabel, type Role } from "@/lib/p7-model";
-import type { Member, SessionView } from "@/lib/generated-api";
+import type { SessionView } from "@/lib/generated-api";
 import {
   Users,
   ArrowLeft,
   Search,
   Plus,
   ShieldCheck,
-  ShieldAlert,
-  KeyRound,
-  Filter,
   CheckCircle2,
-  AlertTriangle,
   Download,
-  UserCheck,
   UserX,
   RefreshCw,
   Mail,
   Building2,
   X,
-  Lock,
 } from "lucide-react";
 
 interface DatabaseUser {

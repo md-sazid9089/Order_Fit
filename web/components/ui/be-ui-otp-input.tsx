@@ -107,7 +107,10 @@ export function OTPInput({
 
   const joined = slots.join("");
   const joinedRef = useRef(joined);
-  joinedRef.current = joined;
+
+  useEffect(() => {
+    joinedRef.current = joined;
+  }, [joined]);
 
   useEffect(() => {
     if (!controlled) return;

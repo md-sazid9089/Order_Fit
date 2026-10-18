@@ -9,17 +9,12 @@ import { getSession, listAudit, getAuditExport } from "@/lib/p7-api";
 import { parseAuditRow, humanAction, type AuditEntry } from "@/lib/p7-model";
 import type { SessionView } from "@/lib/generated-api";
 import {
-  Terminal,
   ArrowLeft,
   CheckCircle2,
   Download,
   RefreshCw,
   Search,
-  Filter,
-  Check,
   X,
-  Building2,
-  ShieldCheck,
 } from "lucide-react";
 
 export default function AdminLogsPage() {
