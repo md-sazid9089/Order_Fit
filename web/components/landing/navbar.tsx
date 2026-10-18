@@ -74,8 +74,8 @@ export function Navbar() {
         isVisible ? "translate-y-0" : "-translate-y-full"
       } ${
         isScrolled
-          ? "bg-[#F7F6F5]/95 backdrop-blur-md border-b border-[#ECEAE4] shadow-xs"
-          : "bg-[#F7F6F5]/85 backdrop-blur-sm border-b border-[#ECEAE4]/60"
+          ? "bg-[#F7F6F5]/95 backdrop-blur-md shadow-xs"
+          : "bg-[#F7F6F5]/85 backdrop-blur-sm"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

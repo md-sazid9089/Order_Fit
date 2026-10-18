@@ -82,121 +82,103 @@ export function HeroSection() {
         {/* Hero Mockup Container: Purchase Order & Cash Gap Card (Minimal, Monochromatic & Clean) */}
         <div className="relative mx-auto w-full mt-12">
           <div className="rounded-3xl bg-white text-[#1A1A1A] p-5 sm:p-8 md:p-10 shadow-xl border border-[#ECEAE4] relative overflow-hidden">
-            <p className="mb-4 text-xs text-[#526975]">Illustration only. Names, figures and plans below are invented; saved assessments use the backend engine.</p>
-
-            {/* Top Bar: Clear Order Summary */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="relative size-12 rounded-xl bg-gradient-to-br from-[#004D3B] via-[#023327] to-[#011C15] dark:from-[#005A45] dark:to-[#01261D] border border-[#004D3B]/30 dark:border-[#34D399]/20 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(52,211,153,0.25),transparent_70%)]" />
-                  <Factory className="size-6 text-[#FFFAEC] relative z-10" />
-                  <span className="absolute bottom-1 right-1 size-2 rounded-full bg-[#34D399] ring-2 ring-white dark:ring-[#1E2021] z-20" />
+            {/* Top Bar: Clean Company Header */}
+            <div className="flex items-center justify-between pb-5 border-b border-[#ECEAE4]">
+              <div className="flex items-center gap-3">
+                <div className="size-11 rounded-xl bg-[#004D3B] text-[#FFFAEC] flex items-center justify-center shrink-0 shadow-xs">
+                  <Factory className="size-5 text-[#FFFAEC]" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base sm:text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
-                      Apex Precision Products
-                    </h2>
-                    <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#F7F6F5] text-[#526975] border border-[#ECEAE4] font-sans">
-                      PO #4892 · $120,000 Order
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#526975] mt-0.5 font-sans">
-                    Customer: Global Turbine Corp · Payment due in 45 days (Net 45)
+                  <h2 className="text-base sm:text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
+                    Apex Precision Products
+                  </h2>
+                  <p className="text-xs text-[#526975] font-sans">
+                    Live Cash Runway &amp; Order Evaluation
                   </p>
                 </div>
               </div>
-
-              {/* Status Pill: OrderFit Feasibility Verdict */}
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#EAF7EE] text-[#004D3B] border border-[#B5F2C6] font-sans">
-                  <CheckCircle2 className="size-3.5 text-[#004D3B] shrink-0" />
-                  <span>Feasible via Sized Terms</span>
-                </span>
-              </div>
             </div>
 
-            {/* 4 Clean, Unified Cards: In vs Out vs Problem vs Solution */}
+            {/* 4 Clean Metric Cards */}
             <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 my-6">
-
               {/* Card 1: Incoming */}
-              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between min-w-0">
+              <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#526975] uppercase tracking-wider font-sans">
                       1. Customer Pays
                     </span>
-                    <span className="text-[10px] font-semibold text-[#004D3B] bg-[#EAF7EE] px-1.5 py-0.5 rounded border border-[#B5F2C6]/60">
+                    <span className="text-[10px] font-semibold text-[#004D3B] bg-[#EAF7EE] px-1.5 py-0.5 rounded">
                       In
                     </span>
                   </div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight truncate">
+                  <div className="text-xl sm:text-2xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight">
                     $120,000
                   </div>
                 </div>
                 <span className="text-[11px] text-[#526975] block mt-2 font-sans">
-                  Arrives in 45 days (Net 45)
+                  Arrives in 45 days
                 </span>
               </div>
 
               {/* Card 2: Outgoing */}
-              <div className="p-4 rounded-2xl bg-[#F7F6F5]/60 border border-[#ECEAE4] shadow-xs flex flex-col justify-between min-w-0">
+              <div className="p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#526975] uppercase tracking-wider font-sans">
                       2. Supplier Cost
                     </span>
-                    <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                    <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">
                       Out
                     </span>
                   </div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight truncate">
+                  <div className="text-xl sm:text-2xl font-bold text-[#1A1A1A] tabular-nums font-heading tracking-tight">
                     $75,000
                   </div>
                 </div>
                 <span className="text-[11px] text-[#526975] block mt-2 font-sans">
-                  Must pay in 15 days
+                  Due in 15 days
                 </span>
               </div>
 
-              {/* Card 3: The Problem (Without Plan) */}
-              <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/80 shadow-xs flex flex-col justify-between min-w-0">
+              {/* Card 3: The Gap */}
+              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70 flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-rose-800 uppercase tracking-wider font-sans">
                       3. Cash Gap
                     </span>
-                    <span className="text-[10px] font-semibold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200">
-                      Risk
+                    <span className="text-[10px] font-semibold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">
+                      Deficit
                     </span>
                   </div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-700 tabular-nums font-heading tracking-tight truncate">
+                  <div className="text-xl sm:text-2xl font-bold text-rose-700 tabular-nums font-heading tracking-tight">
                     -$30,000
                   </div>
                 </div>
                 <span className="text-[11px] text-rose-800/80 block mt-2 font-sans">
-                  Without plan (Day 35 deficit)
+                  Shortfall at Day 35 without plan
                 </span>
               </div>
 
-              {/* Card 4: The OrderFit Fix */}
-              <div className="p-4 rounded-2xl bg-[#EAF7EE]/60 border border-[#B5F2C6] shadow-xs flex flex-col justify-between min-w-0">
+              {/* Card 4: With OrderFit */}
+              <div className="p-4 rounded-2xl bg-[#EAF7EE]/70 border border-[#B5F2C6] flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[11px] font-semibold text-[#004D3B] uppercase tracking-wider font-sans">
                       4. With OrderFit
                     </span>
-                    <span className="text-[10px] font-semibold text-[#004D3B] bg-[#B5F2C6] px-1.5 py-0.5 rounded border border-[#004D3B]/20">
+                    <span className="text-[10px] font-semibold text-[#004D3B] bg-[#B5F2C6] px-1.5 py-0.5 rounded">
                       Safe
                     </span>
                   </div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#004D3B] tabular-nums font-heading tracking-tight truncate">
+                  <div className="text-xl sm:text-2xl font-bold text-[#004D3B] tabular-nums font-heading tracking-tight">
                     {selectedPlan === "deposit" ? "+$32,000" : selectedPlan === "split" ? "+$14,000" : "+$22,000"}
                   </div>
                 </div>
                 <span className="text-[11px] text-[#004D3B] block mt-2 font-sans flex items-center gap-1 font-medium">
-                  <CheckCircle2 className="size-3 text-[#004D3B] inline shrink-0" />
-                  Cash runway protected
+                  <CheckCircle2 className="size-3 text-[#004D3B] shrink-0" />
+                  Runway protected
                 </span>
               </div>
             </div>
@@ -221,9 +203,9 @@ export function HeroSection() {
                   <path
                     d="M 0,45 L 150,88 L 300,95 L 450,15 L 600,15"
                     fill="none"
-                    stroke="#E5E7EB"
+                    stroke="#D1D5DB"
                     strokeWidth="1.5"
-                    strokeDasharray="2 2"
+                    strokeDasharray="3 3"
                   />
 
                   {/* Selected Plan Active Curve */}
@@ -255,18 +237,18 @@ export function HeroSection() {
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-[#526975] mt-2 pt-2 border-t border-[#ECEAE4]/80 gap-2">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                   <span className="flex items-center gap-1.5">
                     <span className="size-2 rounded-full bg-[#004D3B]" />
-                    <span className="font-medium text-[#1A1A1A]">Evaluated Plan</span>
+                    <span className="font-medium text-[#1A1A1A]">With OrderFit</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-0.5 bg-[#C97D18] inline-block" />
-                    <span>$20K Min Reserve Floor</span>
+                    <span>$20K Min Reserve</span>
                   </span>
                   <span className="flex items-center gap-1.5 text-neutral-400">
                     <span className="w-3 h-0.5 border-t border-dashed border-neutral-400 inline-block" />
-                    <span>Unplanned Deficit</span>
+                    <span>Without Plan (Deficit)</span>
                   </span>
                 </div>
                 <span className="font-mono text-[#004D3B] font-semibold shrink-0">
@@ -275,149 +257,84 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Solution Selector: Settle-Inspired Solution Picker */}
-            <div className="bg-[#FAF9F7] rounded-2xl p-5 sm:p-6 border border-[#ECEAE4] shadow-xs">
-              <div className="pb-4 border-b border-[#ECEAE4] space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                  <div>
-                    <span className="text-[11px] font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">
-                      OrderFit Ranked Counter-Offers
-                    </span>
-                    <h3 className="text-sm sm:text-base font-semibold text-[#1A1A1A] font-heading">
-                      Select a structured plan to make this order safe to accept:
-                    </h3>
-                  </div>
-                  <span className="text-[11px] text-[#526975]">
-                    Compare 3 feasible alternatives
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setSelectedPlan("deposit")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-center cursor-pointer ${
-                      selectedPlan === "deposit"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
-                        : "bg-white border border-[#ECEAE4] text-[#526975] hover:text-[#1A1A1A] hover:bg-[#F7F6F5]"
-                    }`}
-                  >
-                    1. 35% Customer Deposit
-                  </button>
-                  <button
-                    onClick={() => setSelectedPlan("split")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-center cursor-pointer ${
-                      selectedPlan === "split"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
-                        : "bg-white border border-[#ECEAE4] text-[#526975] hover:text-[#1A1A1A] hover:bg-[#F7F6F5]"
-                    }`}
-                  >
-                    2. Net 30 Supplier Terms
-                  </button>
-                  <button
-                    onClick={() => setSelectedPlan("credit")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-center cursor-pointer ${
-                      selectedPlan === "credit"
-                        ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
-                        : "bg-white border border-[#ECEAE4] text-[#526975] hover:text-[#1A1A1A] hover:bg-[#F7F6F5]"
-                    }`}
-                  >
-                    3. $40K Working Capital
-                  </button>
+            {/* Simplified Solution Selector */}
+            <div className="bg-[#FAF9F7] rounded-2xl p-4 sm:p-5 border border-[#ECEAE4]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#1A1A1A] font-heading">
+                  Choose a solution to eliminate the cash gap:
+                </h3>
+                <div className="flex items-center gap-1.5 text-[#004D3B] font-semibold text-xs">
+                  <CheckCircle2 className="size-3.5 text-[#004D3B]" />
+                  <span>Safe to Accept Order</span>
                 </div>
               </div>
 
-              {/* Dynamic Solution Details */}
-              <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="space-y-2">
-                  {selectedPlan === "deposit" && (
-                    <>
-                      <div className="text-sm sm:text-base font-semibold text-[#1A1A1A] font-sans">
-                        Ask customer for a 35% deposit ($42,000) upon purchase order signature.
-                      </div>
-                      <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
-                        Customer covers raw material costs before manufacturing starts. Completely eliminates cash gap with $0 financing fee and 100% late-payment resilience.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
-                          Cost: $0 Free
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          Cash Deficit: Eliminated
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          Equity Dilution: 0%
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {selectedPlan === "split" && (
-                    <>
-                      <div className="text-sm sm:text-base font-semibold text-[#1A1A1A] font-sans">
-                        Negotiate Net 30 milestone terms with your supplier instead of upfront cash.
-                      </div>
-                      <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
-                        Shifts supplier payment past product delivery so you pay them only after your customer pays you. Zero cash out of pocket and no interest debt.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
-                          Cost: $0 Free
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          Cash Deficit: Eliminated
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          Upfront Outlay: $0
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {selectedPlan === "credit" && (
-                    <>
-                      <div className="text-sm sm:text-base font-semibold text-[#1A1A1A] font-sans">
-                        Draw a $40,000 flexible working capital advance for 30 days.
-                      </div>
-                      <p className="text-xs sm:text-sm text-[#526975] font-sans max-w-xl leading-relaxed">
-                        Pays suppliers immediately without asking customer or supplier to change terms. Repaid automatically upon invoice settlement.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs font-sans">
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#004D3B] font-semibold">
-                          Fee: 2.45% Flat ($980)
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          No Equity Dilution
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white border border-[#ECEAE4] text-[#526975]">
-                          Instant Funding
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("deposit")}
+                  className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-left cursor-pointer flex flex-col gap-0.5 ${
+                    selectedPlan === "deposit"
+                      ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                      : "bg-white border border-[#ECEAE4] text-[#1A1A1A] hover:bg-[#F7F6F5]"
+                  }`}
+                >
+                  <span className="font-bold">1. 35% Customer Deposit</span>
+                  <span className={`text-[11px] ${selectedPlan === "deposit" ? "text-[#FFFAEC]/80" : "text-[#526975]"}`}>
+                    $42,000 upfront · $0 fee
+                  </span>
+                </button>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#ECEAE4]">
-                  <div className="text-left md:text-right">
-                    <div className="flex items-center md:justify-end gap-1.5 text-[#004D3B] font-bold text-xs sm:text-sm font-sans">
-                      <CheckCircle2 className="size-4 shrink-0 text-[#004D3B]" />
-                      <span>Safe to Accept Order</span>
-                    </div>
-                    <span className="text-[11px] text-[#526975] block font-sans">
-                      60+ Days Protected Runway
-                    </span>
-                  </div>
-                  <a
-                    href="#simulator"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 bg-[#004D3B] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#00382B] transition-colors font-sans shadow-xs active:scale-98"
-                  >
-                    <span>Try Simulator</span>
-                    <ArrowRight className="size-3.5" />
-                  </a>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("split")}
+                  className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-left cursor-pointer flex flex-col gap-0.5 ${
+                    selectedPlan === "split"
+                      ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                      : "bg-white border border-[#ECEAE4] text-[#1A1A1A] hover:bg-[#F7F6F5]"
+                  }`}
+                >
+                  <span className="font-bold">2. Net 30 Supplier Terms</span>
+                  <span className={`text-[11px] ${selectedPlan === "split" ? "text-[#FFFAEC]/80" : "text-[#526975]"}`}>
+                    Pay supplier later · $0 fee
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("credit")}
+                  className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold font-sans transition-all text-left cursor-pointer flex flex-col gap-0.5 ${
+                    selectedPlan === "credit"
+                      ? "bg-[#004D3B] text-[#FFFAEC] shadow-xs"
+                      : "bg-white border border-[#ECEAE4] text-[#1A1A1A] hover:bg-[#F7F6F5]"
+                  }`}
+                >
+                  <span className="font-bold">3. $40K Working Capital</span>
+                  <span className={`text-[11px] ${selectedPlan === "credit" ? "text-[#FFFAEC]/80" : "text-[#526975]"}`}>
+                    30-day bridge advance
+                  </span>
+                </button>
+              </div>
+
+              {/* Simple 1-line detail + CTA */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#ECEAE4]">
+                <p className="text-xs text-[#526975] font-sans">
+                  {selectedPlan === "deposit" && "Customer covers material costs upfront. Completely eliminates the cash deficit."}
+                  {selectedPlan === "split" && "Shifts supplier payment terms so you pay suppliers only after your customer payment arrives."}
+                  {selectedPlan === "credit" && "Quick 30-day working capital bridge. Pays suppliers immediately without asking customer to change terms."}
+                </p>
+
+                <a
+                  href="#simulator"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2 bg-[#004D3B] text-[#FFFAEC] text-xs font-semibold uppercase tracking-wider hover:bg-[#00382B] transition-colors font-sans shadow-xs shrink-0"
+                >
+                  <span>Try Simulator</span>
+                  <ArrowRight className="size-3.5" />
+                </a>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </section>
   );
