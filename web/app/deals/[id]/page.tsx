@@ -124,6 +124,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
             <h1 className="text-2xl font-semibold">{deal.public_ref}</h1>
             <p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>
             {deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}
+            {operation && <p role="status" className="mt-2 text-sm text-neutral-600">Saved evaluation operation: {operation.status}. Reloading this link recovers the operation from the server.</p>}
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <button

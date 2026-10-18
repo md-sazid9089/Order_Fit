@@ -35,6 +35,7 @@ test("older saved customer is selectable after a recoverable continuation failur
     await result.dispose();
   }
   await page.reload();
+  await page.getByRole("button", { name: "Manual Order Form" }).click();
   const customer = page.getByRole("combobox", { name: "Customer", exact: true });
   await expect(customer.locator("option")).toHaveCount(51); // placeholder plus 50
   await expect(customer.locator(`option[value="${oldest}"]`)).toHaveCount(0);
