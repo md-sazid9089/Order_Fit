@@ -2488,3 +2488,54 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   event loop, so no HTTP connection reuse; limits and breaker are per process, not
   cluster-wide; no per-business token/cost budget yet; the FreeLLMPool path keeps
   its existing pacing and is not covered by the breaker.
+
+
+### 18 October 2026 — Baseline duplicate integrity repair (backend only)
+
+- Implemented the investigation's backend remediation atop `9ed213e`.
+  `store/baseline_duplicates.py` owns one persisted-candidate policy for manual
+  create/edit, CSV confirmation and canonical order review. Unknown counterparties
+  match conservatively; same-kind/direction date+amount or normalized-invoice
+  matches require an exact matching-ID set and an explicit distinct-obligation
+  reason. Matching committed projections participate without loosening projection
+  immutability. Reviewed entries remain separately counted.
+- Added read-only duplicate inspection and finance-authorized, idempotent saved-pair
+  review endpoints. Reviews bind both event versions, store actor/time/reason and
+  bump financial revision. Existing unresolved pairs block canonical confirmation
+  via `BASELINE_DUPLICATE_UNRESOLVED` and structured `related_event_ids`.
+- CSV confirmation preflights saved-ledger and intra-file candidates before inserts;
+  intra-file resolutions use earlier source row numbers, never IDs from rolled-back
+  writes. Exact repeated parser keys are now blocking preview errors. Immutable
+  file-hash/row claims reject repeated source imports even after voiding. Prior
+  confirmed-preview history also protects legacy rows with edited/lost attribution.
+- Added forward revision `0022_baseline_duplicates` (after `0021_admin_reads`):
+  tenant-aware source/review tables, FORCE RLS, insert-only grants/immutability,
+  source/pair keys, candidate/history indexes, legacy source backfill, and an
+  audited one-time financial-revision cutover for businesses with live baseline
+  data. All financial rows and historical evaluations are preserved. Runtime
+  requires the new head; no schema autogeneration or application-only unique rule.
+- Updated backend DTOs/catalogue and regenerated `docs/contracts/` using
+  `contracts.export --backend-only`. No browser source declarations or frontend
+  implementation changed. Replaced the pre-fix characterization probes with
+  rejection/review regressions; updated schema-count/migration assertions and two
+  collection/export fixtures that previously relied on unreviewed equal payments.
+- Final focused checks on disposable PG17: **118 passed / 5 deprecation warnings /
+  52.42 s**, including real concurrent writes, source uniqueness, history
+  immutability, viewer permissions, tenant isolation, legitimate installments,
+  known/unknown counterparties, seeded pre-migration backfill/cutover, CSV/doc flows,
+  migration graph, contracts and architecture. Ruff and backend-only contract drift
+  checks pass. Broader regression: **766 passed / 1 live deselected / 5 warnings /
+  831.80 s**. That run began before the final legacy-confirmation fallback/index;
+  the 118-test final focused run covers that delta. A final 82-contract-test run
+  passes after aligning generated cash-event create success to the mounted HTTP
+  200 response. No second whole-suite pass is claimed for those last deltas.
+  Local evidence: `D:\Kam 2\baseline-fix-frozen-full.xml` and
+  `D:\Kam 2\baseline-fix-acceptance.xml` (matching console logs retained).
+- Handoffs: `docs/baseline_duplicates_backend_database_handoff.md` (includes the
+  database owner's rollout) and `docs/baseline_duplicates_frontend_handoff.md`.
+- **No Neon connection/migration, shared-data cleanup, deployment or hosted/browser
+  acceptance was performed.** Database owner must verify target/graph/backup,
+  rehearse/apply the migration, coordinate active runs and API/worker restart, and
+  reconcile legacy candidates. Frontend owner must implement the review flow.
+  Matching is a deterministic candidate policy, not universal semantic identity;
+  synchronous row-iterative CSV validation bounds are not a capacity guarantee.

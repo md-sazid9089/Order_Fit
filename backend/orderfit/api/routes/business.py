@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 
+from orderfit.api.commands import command, read
 from orderfit.api.deps import identity_service, mutation, session_token
 from orderfit.contracts.primitives import Currency, Page, RevisionReason
 from orderfit.contracts.protocol import IdempotencyMaterial, canonical_hash
@@ -13,6 +14,8 @@ from orderfit.contracts.resources import (
     BusinessOverviewView,
     BusinessView,
     CashEventCreate,
+    CashEventDuplicateReview,
+    CashEventDuplicates,
     CashEventView,
     CashEventWrite,
     ConstraintsView,
@@ -41,6 +44,21 @@ from orderfit.store.repositories import (
 )
 
 router = APIRouter(prefix="/api/v1/businesses/{business_id}")
+
+
+@router.get("/cash-events/{event_id}/duplicates", response_model=CashEventDuplicates,
+            operation_id="cash_event_duplicates")
+def cash_event_duplicates(business_id: UUID, event_id: int, request: Request):
+    return read(request, business_id, "read",
+                lambda c, scope, _: CashEventRepository.duplicate_candidates(c, scope, event_id))
+
+
+@router.post("/cash-events/{event_id}/duplicate-review", response_model=CashEventDuplicates,
+             operation_id="cash_event_duplicate_review")
+def cash_event_duplicate_review(business_id: UUID, event_id: int,
+                                data: CashEventDuplicateReview, request: Request):
+    return command(request, business_id, data, "manage_finance",
+                   lambda c, scope, _: CashEventRepository.review_duplicates(c, scope, event_id, data))
 
 
 @router.get("/overview", response_model=BusinessOverviewView, operation_id="business_overview_get")

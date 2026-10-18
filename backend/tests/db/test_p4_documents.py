@@ -208,7 +208,7 @@ def test_csv_preview_confirm_and_replay(postgres, accounts, config):
         assert op["result"]["kind"] == "completed", op["result"]
         preview = s.read(f"/cash-events/csv-previews/{op['result']['resource_id']}")
         assert [e["amount_minor"] for e in preview["events"]] == ["12000000", "4500050"]
-        assert len(preview["duplicate_keys"]) == 1 and len(preview["errors"]) == 1
+        assert len(preview["duplicate_keys"]) == 1 and len(preview["errors"]) == 2
         assert preview["canonical_changed"] is False
         # an invalid row blocks confirmation until the file is corrected
         r = s.write("POST", "/cash-events/csv-confirm", dict(

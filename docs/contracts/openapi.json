@@ -2057,6 +2057,14 @@
       "CSVConfirm": {
         "additionalProperties": false,
         "properties": {
+          "duplicate_reviews": {
+            "items": {
+              "$ref": "#/components/schemas/CSVRowDuplicateReview"
+            },
+            "maxItems": 2000,
+            "title": "Duplicate Reviews",
+            "type": "array"
+          },
           "expected_financial_revision": {
             "maximum": 2147483647,
             "minimum": 1,
@@ -2181,6 +2189,36 @@
           "as_of"
         ],
         "title": "CSVPreviewRequest",
+        "type": "object"
+      },
+      "CSVRowDuplicateReview": {
+        "additionalProperties": false,
+        "properties": {
+          "duplicate_review": {
+            "$ref": "#/components/schemas/DuplicateReview"
+          },
+          "matching_source_rows": {
+            "items": {
+              "maximum": 2001,
+              "minimum": 2,
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Matching Source Rows",
+            "type": "array"
+          },
+          "row_number": {
+            "maximum": 2001,
+            "minimum": 2,
+            "title": "Row Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_number",
+          "duplicate_review"
+        ],
+        "title": "CSVRowDuplicateReview",
         "type": "object"
       },
       "CancelOperation": {
@@ -2425,6 +2463,17 @@
       "CashEventCreate": {
         "additionalProperties": false,
         "properties": {
+          "duplicate_review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DuplicateReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "event": {
             "$ref": "#/components/schemas/CashEventInput"
           },
@@ -2440,6 +2489,211 @@
           "event"
         ],
         "title": "CashEventCreate",
+        "type": "object"
+      },
+      "CashEventDuplicateMatch": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          },
+          "deal_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deal Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "direction": {
+            "enum": [
+              "in",
+              "out"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "event_date": {
+            "format": "date",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 19,
+            "pattern": "^[1-9][0-9]*$",
+            "title": "Id",
+            "type": "string"
+          },
+          "invoice_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Ref"
+          },
+          "kind": {
+            "enum": [
+              "payroll",
+              "rent",
+              "tax",
+              "ap_payment",
+              "ar_collection",
+              "loan_installment",
+              "supplier_payment",
+              "labour",
+              "freight",
+              "subcontract",
+              "existing_inventory",
+              "order_deposit",
+              "order_receipt",
+              "order_final_receipt",
+              "order_stage_receipt",
+              "loan_draw",
+              "loan_fee",
+              "loan_interest",
+              "loan_repayment",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "payee_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payee Id"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "event_date",
+          "amount_minor",
+          "direction",
+          "kind",
+          "description",
+          "invoice_ref",
+          "customer_id",
+          "payee_id",
+          "deal_id"
+        ],
+        "title": "CashEventDuplicateMatch",
+        "type": "object"
+      },
+      "CashEventDuplicateReview": {
+        "additionalProperties": false,
+        "properties": {
+          "duplicate_review": {
+            "$ref": "#/components/schemas/DuplicateReview"
+          },
+          "expected_financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Financial Revision",
+            "type": "integer"
+          },
+          "expected_version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_version",
+          "expected_financial_revision",
+          "duplicate_review"
+        ],
+        "title": "CashEventDuplicateReview",
+        "type": "object"
+      },
+      "CashEventDuplicates": {
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/CashEventDuplicateMatch"
+          },
+          "event_id": {
+            "maxLength": 19,
+            "pattern": "^[1-9][0-9]*$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "financial_revision": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Financial Revision",
+            "type": "integer"
+          },
+          "matching_events": {
+            "items": {
+              "$ref": "#/components/schemas/CashEventDuplicateMatch"
+            },
+            "maxItems": 200,
+            "title": "Matching Events",
+            "type": "array"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "version",
+          "financial_revision",
+          "event",
+          "matching_events"
+        ],
+        "title": "CashEventDuplicates",
         "type": "object"
       },
       "CashEventInput": {
@@ -2639,6 +2893,17 @@
       "CashEventWrite": {
         "additionalProperties": false,
         "properties": {
+          "duplicate_review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DuplicateReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "event": {
             "$ref": "#/components/schemas/CashEventInput"
           },
@@ -4587,6 +4852,33 @@
         "title": "DraftRevisionRequest",
         "type": "object"
       },
+      "DuplicateReview": {
+        "additionalProperties": false,
+        "properties": {
+          "matching_event_ids": {
+            "items": {
+              "maxLength": 19,
+              "pattern": "^[1-9][0-9]*$",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Matching Event Ids",
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 12,
+            "pattern": "\\S",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "DuplicateReview",
+        "type": "object"
+      },
       "EffectView": {
         "additionalProperties": false,
         "description": "Locally simulated sandbox effect; no external delivery or payment occurred.",
@@ -4717,6 +5009,24 @@
             "default": null,
             "title": "Field"
           },
+          "matching_event_ids": {
+            "items": {
+              "maxLength": 19,
+              "pattern": "^[1-9][0-9]*$",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Matching Event Ids",
+            "type": "array"
+          },
+          "matching_source_rows": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Matching Source Rows",
+            "type": "array"
+          },
           "reason": {
             "anyOf": [
               {
@@ -4728,6 +5038,18 @@
             ],
             "default": null,
             "title": "Reason"
+          },
+          "source_row": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Row"
           }
         },
         "title": "ErrorDetail",
@@ -5982,6 +6304,16 @@
             "pattern": "\\S",
             "title": "Message",
             "type": "string"
+          },
+          "related_event_ids": {
+            "items": {
+              "maxLength": 19,
+              "pattern": "^[1-9][0-9]*$",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Related Event Ids",
+            "type": "array"
           },
           "resolution": {
             "enum": [
@@ -17398,7 +17730,7 @@
           "required": true
         },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -18388,6 +18720,342 @@
           "cash_event",
           "business",
           "operation_log"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/cash-events/{event_id}/duplicate-review": {
+      "post": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "cash_event_duplicate_review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "maxLength": 19,
+              "pattern": "^[1-9][0-9]*$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Tenant-global scope; replay requires same actor/method/path/canonical body. Auth routes use restricted identity scope before a business exists.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashEventDuplicateReview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashEventDuplicates"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P3"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "baseline.review_duplicates",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P3",
+        "x-permission": "manage_finance",
+        "x-service-owner": "baseline.review_duplicates",
+        "x-storage-owner": [
+          "cash_event_duplicate_review",
+          "business",
+          "operation_log"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/cash-events/{event_id}/duplicates": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "cash_event_duplicates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "maxLength": 19,
+              "pattern": "^[1-9][0-9]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashEventDuplicates"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P3"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "baseline.duplicates",
+        "x-acceptance-test": "V09",
+        "x-implementation-phase": "P3",
+        "x-permission": "read",
+        "x-service-owner": "baseline.duplicates",
+        "x-storage-owner": [
+          "cash_event",
+          "cash_event_duplicate_review"
         ]
       }
     },

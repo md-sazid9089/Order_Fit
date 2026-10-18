@@ -70,7 +70,8 @@ def test_csv_rules():
     )
     out = parse_cash_csv(text, date(2026, 10, 15))
     assert [e["amount_minor"] for e in out.events] == ["1000"]
-    assert len(out.duplicate_keys) == 1 and len(out.errors) == 2
+    assert len(out.duplicate_keys) == 1 and len(out.errors) == 3
+    assert any(e["code"] == "CSV-POSSIBLE-DUPLICATE" for e in out.errors)
     assert parse_cash_csv("a,b\n1,2\n", date(2026, 10, 15)).errors[0]["code"] == "CSV-HEADER"
 
 

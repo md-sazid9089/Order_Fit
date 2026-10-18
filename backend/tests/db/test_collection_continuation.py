@@ -33,7 +33,7 @@ def test_supporting_collections_have_signed_scoped_accurate_continuation(postgre
             s.write("POST", "/constraints", dict(expected_financial_revision=revision(), reserve_minor=policy["reserve_minor"],
                 owner=owner_settings, scenarios=policy["scenarios"], strategy_space=policy["strategy_space"], make_default=False))
             s.write("POST", "/cash-events", dict(expected_financial_revision=revision(), event=dict(
-                deal_id=None, event_date="2026-11-01", amount_minor="100", direction="out", kind="rent",
+                deal_id=None, event_date="2026-11-01", amount_minor=str(100 + i), direction="out", kind="rent",
                 certainty="confirmed", description=f"Paged cost {i}", invoice_ref=None, is_deferrable=False,
                 incremental=False, customer_id=None, payee_id=None, evidence=evidence)))
             s.write("POST", "/deals", dict(public_ref="PAGE-"+uuid4().hex, start_date="2026-10-15",

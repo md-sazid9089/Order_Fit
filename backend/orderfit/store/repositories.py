@@ -32,6 +32,8 @@ from orderfit.contracts.resources import (
     BusinessProfile,
     BusinessView,
     CashEventCreate,
+    CashEventDuplicateMatch,
+    CashEventDuplicates,
     CashEventInput,
     CashEventView,
     CashEventWrite,
@@ -64,6 +66,7 @@ from orderfit.contracts.workflow import (
     SnapshotConfirmed,
 )
 from orderfit.services.evaluations import extract_series
+from orderfit.store import baseline_duplicates
 from orderfit.store.collection_page import collection_page
 from orderfit.store.tables import (
     app_user,
@@ -1170,6 +1173,12 @@ class CashEventRepository:
             raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
         ev = req.event
         _validate_manual_cash_event(ev)
+        duplicate_rows = []
+        if ev.deal_id is None:
+            duplicate_rows = baseline_duplicates.matches(c, scope.business_id, ev)
+            baseline_duplicates.require_review(duplicate_rows, req.duplicate_review)
+        elif req.duplicate_review is not None:
+            raise ApplicationError(422, "UNEXPECTED_DUPLICATE_REVIEW")
         doc_id = ev.evidence.document_id
         quote = ev.evidence.quote
         eid = c.execute(
@@ -1202,6 +1211,7 @@ class CashEventRepository:
                 "evidence": json.dumps([ev.evidence.model_dump(mode="json")]),
             },
         ).scalar_one()
+        baseline_duplicates.record_review(c, scope, eid, 1, duplicate_rows, req.duplicate_review)
         append_audit(c, scope, "create_cash_event", payload={"event_id": eid})
         updated_rev = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
@@ -1233,6 +1243,12 @@ class CashEventRepository:
         if ev.deal_id != row["deal_id"]:
             raise ApplicationError(422, "IMMUTABLE_EVENT_SCOPE")
         _validate_manual_cash_event(ev)
+        duplicate_rows = []
+        if ev.deal_id is None and row["voided_at"] is None:
+            duplicate_rows = baseline_duplicates.matches(c, scope.business_id, ev, exclude_id=event_id)
+            baseline_duplicates.require_review(duplicate_rows, req.duplicate_review)
+        elif req.duplicate_review is not None:
+            raise ApplicationError(422, "UNEXPECTED_DUPLICATE_REVIEW")
         doc_id = ev.evidence.document_id
         quote = ev.evidence.quote
         c.execute(
@@ -1263,12 +1279,51 @@ class CashEventRepository:
                 "b": scope.business_id,
             },
         )
+        baseline_duplicates.record_review(c, scope, event_id, row["version"] + 1,
+                                          duplicate_rows, req.duplicate_review)
         append_audit(c, scope, "update_cash_event", payload={"event_id": event_id})
         updated = c.execute(select(cash_event).where(cash_event.c.id == event_id)).mappings().one()
         updated_rev = c.execute(
             text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
         ).scalar_one()
         return _row_to_cash_event(updated, updated_rev)
+
+    @staticmethod
+    def duplicate_candidates(c, scope, event_id: int) -> CashEventDuplicates:
+        row = c.execute(text("SELECT * FROM cash_event WHERE business_id=:b AND id=:id AND voided_at IS NULL AND "
+                             + baseline_duplicates.EFFECTIVE.format(alias="cash_event")),
+                        {"b": scope.business_id, "id": event_id}).mappings().one_or_none()
+        if row is None:
+            raise ApplicationError(404, "NOT_FOUND")
+        revision = c.execute(text("SELECT financial_revision FROM business WHERE id=:b"),
+                             {"b": scope.business_id}).scalar_one()
+        rows = baseline_duplicates.matches(c, scope.business_id, row, exclude_id=event_id,
+                                           unresolved=True, event_version=row["version"])
+
+        def candidate(r):
+            return CashEventDuplicateMatch(**{
+                key: str(r[key]) if key in {"id", "amount_minor"} else r[key]
+                for key in CashEventDuplicateMatch.model_fields})
+
+        return CashEventDuplicates(event_id=str(event_id), version=row["version"],
+                                   financial_revision=revision, event=candidate(row),
+                                   matching_events=[candidate(r) for r in rows])
+
+    @staticmethod
+    def review_duplicates(c, scope, event_id, req) -> CashEventDuplicates:
+        revision = c.execute(text("SELECT financial_revision FROM business WHERE id=:b FOR UPDATE"),
+                             {"b": scope.business_id}).scalar_one()
+        if revision != req.expected_financial_revision:
+            raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
+        current = CashEventRepository.duplicate_candidates(c, scope, event_id)
+        if current.version != req.expected_version:
+            raise ApplicationError(409, "STALE_VERSION")
+        rows = [r.model_dump() | {"id": int(r.id)} for r in current.matching_events]
+        baseline_duplicates.require_review(rows, req.duplicate_review)
+        baseline_duplicates.record_review(c, scope, event_id, current.version, rows, req.duplicate_review)
+        append_audit(c, scope, "review_baseline_duplicates", payload={
+            "event_id": event_id, "matching_event_ids": req.duplicate_review.matching_event_ids})
+        return CashEventRepository.duplicate_candidates(c, scope, event_id)
 
     @staticmethod
     def void_event(c, scope, event_id: int, reason: RevisionReason) -> CashEventView:
@@ -1921,6 +1976,12 @@ class DealRepository:
             .all()
         )
         findings = []
+        for pair in baseline_duplicates.unresolved_pairs(c, business_id, excluding_deal_id=deal_id):
+            findings.append(Finding(
+                code="BASELINE_DUPLICATE_UNRESOLVED", field="baseline_events",
+                message=f"Baseline events {pair['event_id']} and {pair['matching_event_id']} may describe the same obligation. Void/correct the duplicate or record a distinct-obligation review.",
+                blocking=True, resolution="correct_input",
+                related_event_ids=[str(pair["event_id"]), str(pair["matching_event_id"])]))
         for f in flags:
             findings.append(
                 Finding(
