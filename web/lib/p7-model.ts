@@ -204,7 +204,7 @@ export function safeActionPath(actionUrl: string | null | undefined, businessId:
 }
 
 // ---------- audit ----------
-export type AuditEntry = { sequence: string; hash: string; previousHash: string | null; action: string; outcome: string; actor: string; tier: string; entity: string | null; dealId: string | null; at: string | null; payload: unknown; parsed: boolean; raw: string };
+export type AuditEntry = { sequence: string; hash: string; previousHash: string | null; action: string; outcome: string; actor: string; actorUser: string | null; tier: string; entity: string | null; dealId: string | null; at: string | null; payload: unknown; parsed: boolean; raw: string };
 /** The server's canonical text is a JSON array: seq, business, deal, actor, actor user, tier, action, entity, outcome, payload, time. */
 export function parseAuditRow(row: { sequence: string; canonical_text: string; row_hash: string; previous_hash: string | null }): AuditEntry {
   const base = { sequence: row.sequence, hash: row.row_hash, previousHash: row.previous_hash, raw: row.canonical_text };
@@ -212,11 +212,14 @@ export function parseAuditRow(row: { sequence: string; canonical_text: string; r
     const v = JSON.parse(row.canonical_text) as unknown;
     if (!Array.isArray(v) || v.length < 11) throw new Error("shape");
     const str = (x: unknown) => (typeof x === "string" ? x : null);
-    return { ...base, parsed: true, dealId: str(v[2]), actor: str(v[3]) ?? "unknown", tier: str(v[5]) ?? "unknown", action: str(v[6]) ?? "unknown", entity: str(v[7]), outcome: str(v[8]) ?? "unknown", payload: v[9], at: str(v[10]) };
+    return { ...base, parsed: true, dealId: str(v[2]), actor: str(v[3]) ?? "unknown", actorUser: str(v[4]), tier: str(v[5]) ?? "unknown", action: str(v[6]) ?? "unknown", entity: str(v[7]), outcome: str(v[8]) ?? "unknown", payload: v[9], at: str(v[10]) };
   } catch {
-    return { ...base, parsed: false, dealId: null, actor: "unknown", tier: "unknown", action: "unreadable entry", entity: null, outcome: "unknown", payload: null, at: null };
+    return { ...base, parsed: false, dealId: null, actor: "unknown", actorUser: null, tier: "unknown", action: "unreadable entry", entity: null, outcome: "unknown", payload: null, at: null };
   }
 }
+/** The write path labels every row "system" while storing the acting member; show the member when one is recorded. */
+export const memberLabel = (userId: string, me?: string | null) => (userId === me ? "you" : `member ${userId.slice(0, 8)}`);
+export const auditActorLabel = (e: Pick<AuditEntry, "actor" | "actorUser">, me?: string | null) => (e.actorUser ? memberLabel(e.actorUser, me) : e.actor);
 export const humanAction = (action: string) => action.replaceAll("_", " ");
 export const SEQUENCE = /^[1-9][0-9]{0,18}$/;
 /** Optional export range; both bounds must be positive whole numbers with from <= to. */
