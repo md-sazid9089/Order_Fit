@@ -111,6 +111,9 @@ All business operations are planned, not deployed. Test column is the required p
 | preparation_state | `GET /api/v1/businesses/{business_id}/deals/{deal_id}/preparation` | read | `preparation` | whatif_run,prepared_message,reply_candidate_set,party_acceptance | P5 | V09 |
 | preparation_review | `POST /api/v1/businesses/{business_id}/messages/{message_id}/review` | prepare | `preparation` | preparation_review | P5 | V09 |
 | reply_get | `GET /api/v1/businesses/{business_id}/replies/{reply_id}` | read | `preparation` | reply_candidate_set | P5 | V09 |
+| explanation_create | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/explanations` | prepare | `preparation` | operation,ai_advisory | P5 | V09 |
+| clause_assessment_create | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/clause-assessments` | prepare | `preparation` | operation,ai_advisory | P5 | V09 |
+| clause_assessment_get | `GET /api/v1/businesses/{business_id}/clause-assessments/{assessment_id}` | read | `preparation` | ai_advisory | P5 | V09 |
 | preparation_settings_reset | `POST /api/v1/businesses/{business_id}/deals/{deal_id}/preparation-settings/reset` | prepare | `preparation.reset_settings` | deal,operation_log | P5 | V09 |
 | passkey_enroll_options | `POST /api/v1/auth/passkeys/enroll/options` | self | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
 | passkey_enroll_verify | `POST /api/v1/auth/passkeys/enroll/verify` | self | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
