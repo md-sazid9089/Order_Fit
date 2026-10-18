@@ -2284,7 +2284,8 @@ class DealRepository:
             if not f.blocking and f.code not in req.acknowledged_warning_codes
         ]
         if unack:
-            raise ApplicationError(422, "UNACKNOWLEDGED_WARNINGS")
+            raise ApplicationError(422, "UNACKNOWLEDGED_WARNINGS",
+                                   "Acknowledge all review warnings before confirming.")
         if d["status"] == "ingesting":
             # The snapshot guard requires review state before immutable snapshot insert.
             c.execute(

@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from orderfit.api.errors import ApplicationError, install_errors
 from orderfit.api.routes.accounts import router as accounts_router
+from orderfit.api.routes.admin import router as admin_router
 from orderfit.api.routes.bundles import router as bundles_router
 from orderfit.api.routes.business import router as business_router
 from orderfit.api.routes.deals import router as deals_router
@@ -330,8 +331,7 @@ def create_app(config=None, database=None):
     app.include_router(members_router)
     app.include_router(accounts_router)
     app.include_router(notifications_router)
-    # Global admin query contracts are not enabled. Keep the runtime's no-global-
-    # tenant-enumeration boundary; the admin prototype is tested separately.
+    app.include_router(admin_router)
     app.include_router(passkeys_router)
 
     @app.get("/health", operation_id="health")

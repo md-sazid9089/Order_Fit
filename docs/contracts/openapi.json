@@ -597,6 +597,405 @@
         "title": "ActionView",
         "type": "object"
       },
+      "AdminCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "global_logs": {
+            "const": false,
+            "default": false,
+            "title": "Global Logs",
+            "type": "boolean"
+          },
+          "platform_mutations": {
+            "const": false,
+            "default": false,
+            "title": "Platform Mutations",
+            "type": "boolean"
+          },
+          "read_enabled": {
+            "title": "Read Enabled",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "schema_version": {
+            "const": "admin-capabilities.v1",
+            "default": "admin-capabilities.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "read_enabled",
+          "reason"
+        ],
+        "title": "AdminCapabilities",
+        "type": "object"
+      },
+      "AdminChecks": {
+        "additionalProperties": false,
+        "properties": {
+          "database": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Database"
+          },
+          "schema_current": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema Current"
+          },
+          "storage_writable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Writable"
+          },
+          "worker_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Active"
+          }
+        },
+        "required": [
+          "database",
+          "schema_current",
+          "storage_writable",
+          "worker_active"
+        ],
+        "title": "AdminChecks",
+        "type": "object"
+      },
+      "AdminCurrencyTotal": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maxLength": 40,
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "BDT",
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "orders_with_value": {
+            "minimum": 0,
+            "title": "Orders With Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "amount_minor",
+          "orders_with_value"
+        ],
+        "title": "AdminCurrencyTotal",
+        "type": "object"
+      },
+      "AdminOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "business_id": {
+            "format": "uuid",
+            "title": "Business Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "BDT",
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "order_value_minor": {
+            "anyOf": [
+              {
+                "maxLength": 17,
+                "pattern": "^(0|-?[1-9][0-9]*)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Value Minor"
+          },
+          "status": {
+            "enum": [
+              "ingesting",
+              "awaiting_confirm",
+              "computing",
+              "awaiting_approval",
+              "awaiting_reply",
+              "committed",
+              "closed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "business_id",
+          "status",
+          "currency",
+          "order_value_minor",
+          "created_at"
+        ],
+        "title": "AdminOrder",
+        "type": "object"
+      },
+      "AdminOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "active_tenants": {
+            "minimum": 0,
+            "title": "Active Tenants",
+            "type": "integer"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "order_value_by_currency": {
+            "items": {
+              "$ref": "#/components/schemas/AdminCurrencyTotal"
+            },
+            "title": "Order Value By Currency",
+            "type": "array"
+          },
+          "orders_without_value": {
+            "minimum": 0,
+            "title": "Orders Without Value",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "admin-overview.v1",
+            "default": "admin-overview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "total_orders": {
+            "minimum": 0,
+            "title": "Total Orders",
+            "type": "integer"
+          },
+          "total_tenants": {
+            "minimum": 0,
+            "title": "Total Tenants",
+            "type": "integer"
+          },
+          "total_users": {
+            "minimum": 0,
+            "title": "Total Users",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "as_of",
+          "total_users",
+          "total_tenants",
+          "active_tenants",
+          "total_orders",
+          "order_value_by_currency",
+          "orders_without_value"
+        ],
+        "title": "AdminOverview",
+        "type": "object"
+      },
+      "AdminSystem": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/AdminChecks"
+          },
+          "schema_version": {
+            "const": "admin-system.v1",
+            "default": "admin-system.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "degraded",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checked_at",
+          "status",
+          "checks"
+        ],
+        "title": "AdminSystem",
+        "type": "object"
+      },
+      "AdminTenant": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "BDT",
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "maintenance",
+              "suspended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "timezone",
+          "status",
+          "created_at"
+        ],
+        "title": "AdminTenant",
+        "type": "object"
+      },
+      "AdminUser": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Full Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_platform_admin": {
+            "title": "Is Platform Admin",
+            "type": "boolean"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "is_platform_admin",
+          "version"
+        ],
+        "title": "AdminUser",
+        "type": "object"
+      },
       "AdvisoryExplainRequest": {
         "additionalProperties": false,
         "description": "Ask for a model-worded explanation of one stored option (slots resolved by facts).",
@@ -8353,6 +8752,96 @@
         "title": "Page[ActionView]",
         "type": "object"
       },
+      "Page_AdminOrder_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminOrder"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[AdminOrder]",
+        "type": "object"
+      },
+      "Page_AdminTenant_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminTenant"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[AdminTenant]",
+        "type": "object"
+      },
+      "Page_AdminUser_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUser"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "Page[AdminUser]",
+        "type": "object"
+      },
       "Page_AuditRow_": {
         "additionalProperties": false,
         "properties": {
@@ -11998,6 +12487,1008 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/capabilities": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_capabilities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCapabilities"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.capabilities",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.capabilities",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
+    "/api/v1/admin/logs": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_logs",
+        "parameters": [],
+        "responses": {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.logs_unavailable",
+        "x-acceptance-test": "admin unavailable gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.logs_unavailable",
+        "x-storage-owner": [
+          "none"
+        ]
+      }
+    },
+    "/api/v1/admin/orders": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_orders",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminOrder_"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.orders",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.orders",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
+    "/api/v1/admin/overview": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOverview"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.overview",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.overview",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
+    "/api/v1/admin/system": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_system",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSystem"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.system",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.system",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
+    "/api/v1/admin/tenants": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_tenants",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminTenant_"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.tenants",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.tenants",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "description": "Mounted read-only admin contract. Requires current platform authority. Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. Global logs always return 503. No tenant mutation authority is granted.",
+        "operationId": "admin_users",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AdminUser_"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P8"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "admin.users",
+        "x-acceptance-test": "admin restricted-role gate",
+        "x-capability": "admin_reads_enabled",
+        "x-implementation-phase": "P8",
+        "x-permission": "platform_admin",
+        "x-service-owner": "admin.users",
+        "x-storage-owner": [
+          "app_user",
+          "auth_session",
+          "business",
+          "deal"
+        ]
+      }
+    },
     "/api/v1/auth/csrf": {
       "get": {
         "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",

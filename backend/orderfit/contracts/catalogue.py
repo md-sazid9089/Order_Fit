@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace
 
+from . import admin as ad
 from . import advisory as a
 from . import preparation as p
 from . import resources as r
@@ -1363,3 +1364,17 @@ for suffix, name, request, response, permission in [
 ]:
     add("POST", "/api/v1/auth/passkeys/" + suffix, name, request, response, permission,
         "identity.passkeys", "auth_passkey,auth_passkey_challenge,auth_session", "P1", "V04")
+
+for suffix, response, collection in [
+    ("capabilities", ad.AdminCapabilities, False),
+    ("overview", ad.AdminOverview, False),
+    ("users", Page[ad.AdminUser], True),
+    ("tenants", Page[ad.AdminTenant], True),
+    ("orders", Page[ad.AdminOrder], True),
+    ("system", ad.AdminSystem, False),
+]:
+    add("GET", "/api/v1/admin/" + suffix, "admin_" + suffix, None, response, "platform_admin",
+        "admin." + suffix, "app_user,auth_session,business,deal", "P8", "admin restricted-role gate",
+        collection=collection)
+add("GET", "/api/v1/admin/logs", "admin_logs", None, w.ErrorEnvelope, "platform_admin",
+    "admin.logs_unavailable", "none", "P8", "admin unavailable gate", status=503)
