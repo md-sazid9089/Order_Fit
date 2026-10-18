@@ -2102,3 +2102,103 @@ Final route-sweep closure: isolated production-image15-route desktop/mobile
 sweep passes, including held-read skeleton assertions at1280px/390px and all30
 route/width combinations. Runner identity orderfit-e2e-196d96e594;temporary
 browser results retained outside Git. Updated concise development context.
+
+## 18 October 2026 — local Docker configuration switched to existing Neon
+
+User selected the existing Neon database and its data, without copying local
+Postgres data. Ignored root `.env` now uses the pooled API/worker URLs and direct
+migrator URL from the existing backend environment, with
+`sslmode=verify-full&sslrootcert=system` for Linux containers. Session and account
+fingerprint settings also match the existing Neon backend configuration. The
+previous root environment is retained in an ignored local backup. No hosted SQL
+migration, provisioning, application write or local-volume removal was performed.
+
+Added `docker-compose.neon.yml`, selected by the ignored root `COMPOSE_FILE`,
+to keep local Postgres behind `local-db` and migration/provisioning behind
+`setup`. Default startup runs only API/worker/web; it does not automatically
+migrate an existing shared database. Document storage settings/volume remain
+as configured; availability of existing Neon's uploaded documents needs checking.
+Added `docs/deployment/neon-local.md` and a pointer in `.env.example`.
+
+Verification: live read-only API/worker probes passed the actual runtime role
+and schema checks; client TLS was verified with `verify-full` and the installed
+host CA bundle. `docker compose config --quiet` passes. Parsed Compose assertions
+verify only API/worker/web are active, pooled URLs and verified TLS are configured,
+owner credentials are excluded from runtime services, and private egress is
+enabled. These checks do not prove container connectivity or browser acceptance.
+`docker compose up --build -d` could not connect to the Docker engine named pipe;
+Docker also reports its user config file is unreadable in this session. Container
+startup, readiness, sign-in and persisted-data/document browser checks remain
+unverified. Start Docker and rerun the runbook's startup and health commands.
+
+Follow-up with Docker available: API and worker initially failed with
+`SSL error: certificate verify failed` using `sslrootcert=system`. A temporary
+container verified that the image's certifi CA bundle successfully connects to
+Neon and passes API role/schema validation. Updated the three ignored root URLs
+to explicitly use `/opt/venv/lib/python3.12/site-packages/certifi/cacert.pem`,
+retaining `sslmode=verify-full`; no TLS validation was disabled. Updated the
+local runbook accordingly. `docker compose up -d --wait --wait-timeout 90`
+then succeeded. API and web report healthy, worker is running, and the web's
+`/api/health` returned HTTP 200 with connected/ready/database all true, including
+live worker readiness. Browser sign-in and document availability remain untested.
+
+## 18 October 2026 — overview dashboard backend
+
+Implemented `GET /api/v1/businesses/{business_id}/overview`, operation
+`business_overview_get`, with timeframe/currency validation and existing verified
+session/read scope through `Database.tenant`. No frontend source was modified;
+pre-existing environment/Neon Compose/runbook changes were preserved.
+
+Added overview DTOs in `contracts/resources.py`, a single-statement tenant-scoped
+`store/overview_repository.py`, and `services/overview.py`. Aggregation uses stored
+snapshot amounts, unique evaluated deals per volume window, latest live verdicts,
+active review counts, five recent evaluations, default policy reserve and the
+recorded dated opening cash. The delay projection calls a small compute-boundary
+adapter around the canonical engine daily sweep. It includes baseline plus
+committed cash projections once, excludes voided/raw uncommitted supplier costs,
+preserves daily outflows before inflows, and rejects unsupported aggregate money
+or complete delayed horizons instead of clipping events. No migration, FX, new
+ledger, financial cache, provider call or shared Neon mutation was introduced.
+
+Reconciled prompt assumptions explicitly: the schema has one business currency,
+no historical balance/pending/headroom series, no actual payment settlement
+evidence and no enabled split strategies. Required `data_warnings` carries these
+limitations; unavailable comparison percentages remain neutral numeric placeholders
+and must render as unavailable in the frontend. Declined/unclassified evaluations
+are excluded from the four-strategy denominator rather than represented as an
+invented financing requirement. The recent-result status enum adds `review` for
+unsupported strategy buckets; supplier-extension results must not be mislabeled
+as financial declines. Missing baseline produces zero financial metrics and
+warning scenarios, retaining real operational counts. Negative opening cash
+remains signed in the KPI and is omitted from the nonnegative allocation DTO.
+
+Generated docs OpenAPI/types/inventory; added `contracts.export --backend-only`
+to honor the user's prohibition on frontend edits. Browser generated types are
+intentionally unchanged. Full export `--check` will therefore report browser drift
+until the frontend developer synchronizes them. The backend-only check passes.
+See [frontend handoff](contracts/overview-frontend-handoff.md) for exact files,
+fields, money/date meanings, errors, warning states and browser acceptance gates;
+an example payload is in `contracts/overview.example.json`.
+
+Verification:
+- Full default backend pytest completed: **634 passed**, three dependency
+  deprecation warnings, 594.57 seconds. The final `review` badge/schema refinement
+  was covered by a subsequent 99-test overview/architecture/contracts run; this
+  was not a second full-suite run. Final combined overview/architecture/contracts
+  and isolated PG17 recheck: **103 passed**, one dependency deprecation warning,
+  20.23 seconds, after all code/DTO refinements.
+- Four new integration tests passed on an isolated, labeled disposable PG17 using
+  actual runtime/worker logins. Verified empty business, query validation, anonymous
+  and foreign-tenant denial, direct repository RLS denial, financial values, live
+  evaluations, committed projections once, one aggregation statement and unchanged
+  business profile across repeated reads. Initial test-only assertion referenced
+  reserve under the wrong policy field; corrected to existing top-level contract.
+- Full backend Ruff and docs-only contract drift checks passed; Alembic sole head
+  remains `0019_merge_passkey_roles`; `git diff --check` passed; no `web/` diff.
+- Full contract export `--check` was executed and reports the expected
+  `generated-api.d.ts` drift. Browser type synchronization is an explicit pending
+  frontend integration gate, not a backend-only contract pass.
+
+No hosted latency/capacity claim, frontend/browser acceptance or deployment is
+established by these checks. Next integration gate belongs to the frontend owner
+following the handoff; historical/account capabilities require separate contracts.
