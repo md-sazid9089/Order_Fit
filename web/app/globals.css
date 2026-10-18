@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -18,9 +18,9 @@
   --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-radio-grotesk: 'IBM Plex Sans', system-ui, sans-serif;
   --font-neue-machina: 'IBM Plex Mono', monospace, sans-serif;
-  --font-beausite: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-serif: 'Playfair Display', 'Instrument Serif', Georgia, 'Times New Roman', serif;
 
   /* Settle Exact Brand Palette */
   --color-brand-pine-green: #004D3B;
@@ -179,6 +179,10 @@
 
 .font-sans, .font-beausite {
   font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.font-serif, .font-fancy, .font-editorial {
+  font-family: 'Playfair Display', 'Instrument Serif', Georgia, 'Times New Roman', serif !important;
 }
 
 @layer utilities {
