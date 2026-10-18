@@ -134,6 +134,14 @@ export default function SignInPage() {
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
+              <div className="flex justify-end pt-1.5">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs text-[#737373] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white transition-colors outline-none"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Buttons Row - Clean, simple, high-contrast in both modes */}
