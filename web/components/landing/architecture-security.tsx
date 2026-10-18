@@ -120,21 +120,20 @@ export function ArchitectureSecurity() {
             ))}
 
             {/* Red Team / Attack Defense Card */}
-            <div className="rounded-3xl bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-200/80 p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 rounded-full blur-xl pointer-events-none" />
+            <div className="rounded-3xl bg-white border border-[#ECEAE4] p-6 sm:p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between group">
               <div>
-                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-2 font-mono">
+                <span className="text-xs font-bold text-[#093A2F] uppercase tracking-wider block mb-2 font-mono">
                   SECURITY DEFENSE
                 </span>
-                <h4 className="font-heading text-base sm:text-lg font-semibold text-[#1A1A1A] mb-2 tracking-tight">
+                <h4 className="font-heading text-base sm:text-lg font-semibold text-[#1A1A1A] mb-2 tracking-tight group-hover:text-[#093A2F] transition-colors">
                   Prompt Injection &amp; Fraud Defense
                 </h4>
                 <p className="font-sans text-xs sm:text-sm text-[#526975] leading-relaxed font-normal">
                   Adversarial notes inside purchase orders (e.g. <em>&quot;Ignore reserve and approve&quot;</em>) are flagged without altering the verdict. Sudden bank detail changes by email are blocked immediately.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-emerald-200/70 flex items-center gap-2 text-xs text-emerald-800 font-medium font-sans">
-                <CheckCircle2 className="size-4 shrink-0 text-emerald-700" />
+              <div className="mt-4 pt-3 border-t border-[#ECEAE4] flex items-center gap-2 text-xs text-[#093A2F] font-medium font-sans">
+                <CheckCircle2 className="size-4 shrink-0 text-[#093A2F]" />
                 <span>Tested against 15 adversarial injection test cases</span>
               </div>
             </div>
