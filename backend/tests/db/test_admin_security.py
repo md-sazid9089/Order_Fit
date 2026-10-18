@@ -6,23 +6,31 @@ from fastapi.testclient import TestClient
 
 from orderfit.api.deps import require_admin
 from orderfit.api.main import create_app
-from orderfit.api.routes.admin import router as prototype_router
 from orderfit.contracts.resources import SignIn
 from orderfit.services.identity import IdentityService
 
-ENDPOINTS = ("overview", "users", "tenants", "orders", "logs", "system")
+ENDPOINTS = ("capabilities", "overview", "users", "tenants", "orders", "logs", "system")
 
 
 def prototype_app(config, database):
-    """Exercise unshipped query guards without publishing global admin routes."""
-    app = create_app(config, database)
-    app.include_router(prototype_router)
-    return app
+    """Exercise the real mounted runtime with explicit read enablement."""
+    return create_app(config.model_copy(update={"admin_reads_enabled": True}), database)
 
 
-def test_runtime_has_no_global_admin_surface(postgres, config):
+def test_runtime_mounts_admin_with_reads_disabled_by_default(postgres, config, accounts):
     app = create_app(config, postgres["database"])
-    assert not any("/admin" in path for path in app.openapi()["paths"])
+    assert "/api/v1/admin/capabilities" in app.openapi()["paths"]
+    promote(postgres, accounts[0], config=config)
+    with TestClient(app) as client:
+        client.cookies.set("orderfit_session", accounts[0].token)
+        capability = client.get("/api/v1/admin/capabilities").json()
+        assert capability["read_enabled"] is False
+        assert capability["global_logs"] is False
+        assert capability["platform_mutations"] is False
+        for endpoint in ENDPOINTS[1:]:
+            response = client.get(f"/api/v1/admin/{endpoint}")
+            assert response.status_code == 503
+            assert response.json()["error"]["code"] == "ADMIN_TELEMETRY_UNAVAILABLE"
 
 
 def promote(postgres, account, value=True, config=None):
@@ -59,14 +67,14 @@ def test_platform_flag_does_not_bypass_tenant_rls_and_lists_are_bounded(postgres
         client.cookies.set("orderfit_session", owner.token)
         users = client.get("/api/v1/admin/users?limit=1")
         assert users.status_code == 200, users.json().get("error", {}).get("code") if isinstance(users.json(), dict) else "unexpected list status"
-        assert [u["id"] for u in users.json()] == [str(owner.user_id)]
+        assert len(users.json()["items"]) == 1
+        assert users.json()["next_cursor"]
         logs = client.get("/api/v1/admin/logs")
         assert logs.status_code == 503
         assert logs.json()["error"]["code"] == "ADMIN_TELEMETRY_UNAVAILABLE"
-        # No tenant context means no financial/tenant rows, even for a platform flag.
-        for endpoint in ("tenants", "orders"):
-            response = client.get(f"/api/v1/admin/{endpoint}")
-            assert response.status_code == 200 and response.json() == []
+        tenants = client.get("/api/v1/admin/tenants").json()["items"]
+        assert {str(owner.business_id), str(other.business_id)} <= {t["id"] for t in tenants}
+        assert client.get("/api/v1/admin/orders").status_code == 200
         assert client.get(f"/api/v1/businesses/{other.business_id}/profile").status_code == 404
         for endpoint in ("users", "tenants", "orders"):
             for limit in ("0", "101", "invalid"):

@@ -24,6 +24,8 @@ def provision_login(connection, name, password, *, worker=False):
             sql.Identifier("orderfit_worker" if worker else "orderfit_app"), sql.Identifier(name)
         )
     )
+    if not worker:
+        connection.execute(sql.SQL("GRANT orderfit_admin_api TO {}").format(sql.Identifier(name)))
 
 
 def main():

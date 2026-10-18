@@ -54,6 +54,8 @@ class RuntimeConfiguration(BaseSettings):
     upload_idle_timeout_seconds: Annotated[int, Field(ge=1, le=120)] = 30
     # /docs, /redoc and /openapi.json. Off unless explicitly enabled (EXPOSE_API_DOCS=true).
     expose_api_docs: bool = False
+    # Read-only summaries also require the reviewed migration and API caller role.
+    admin_reads_enabled: bool = False
     session_absolute_seconds: Literal[28800] = 28800
     session_idle_seconds: Literal[1800] = 1800
     step_up_seconds: Literal[300] = 300

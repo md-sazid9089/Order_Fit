@@ -171,6 +171,13 @@ def build_openapi():
             "x-implementation-phase": endpoint.phase,
             "x-acceptance-test": endpoint.verification,
         }
+        if endpoint.operation_id.startswith("admin_"):
+            operation["description"] = (
+                "Mounted read-only admin contract. Requires current platform authority. "
+                "Read availability is reported by /api/v1/admin/capabilities; reads are disabled by default. "
+                "Global logs always return 503. No tenant mutation authority is granted."
+            )
+            operation["x-capability"] = "admin_reads_enabled"
         if endpoint.request:
             media = "application/json"
             shape = model_ref(endpoint.request)
@@ -270,8 +277,8 @@ def build_types(spec):
             request = ts_type(next(iter(req.values()))["schema"]) if req else "undefined"
             if req and not op["requestBody"]["required"]:
                 request += " | undefined"
-            success = next(v for k, v in op["responses"].items() if int(k) < 300)
-            response = ts_type(next(iter(success["content"].values()))["schema"])
+            success = next((v for k, v in op["responses"].items() if int(k) < 300), None)
+            response = ts_type(next(iter(success["content"].values()))["schema"]) if success else "never"
             params = op["parameters"]
             groups = {}
             for location in ("path", "query", "header"):

@@ -1,5 +1,77 @@
 # Backend implementation progress
 
+## 18 October 2026: read-only platform admin remediation
+
+Implemented atop `4578538` following
+[the backend fix plan](admin_backend_fix_plan_2026-10-18.md). The former
+membership-derived frontend remains for its owner to replace; no `web/` files,
+configured/shared database, running deployment or platform authority were changed.
+
+- New sole schema head `0021_admin_reads`; forward migration creates five
+  session-authorized functions and two private NOLOGIN/NOBYPASSRLS roles. The
+  function owner has column-limited reads on app_user/auth_session/business/deal,
+  private SELECT policies, locking-only UPDATE(id) grants with false write checks,
+  and no public-schema CREATE. The API caller role has function execution only.
+  Existing API logins need a reviewed caller-role grant; workers do not receive it.
+  Normal tenant RLS policies remain intact. Runtime validation rejects inheritance
+  of the private owner role. No owner/BYPASSRLS login was added to API or worker.
+- `contracts/admin.py`, `store/admin_repository.py`, `services/admin.py` and
+  `api/routes/admin.py` implement mounted capabilities, overview, paginated users/
+  tenants/orders and measured system status. `ADMIN_READS_ENABLED=false` by
+  default; catalog/schema/ACL/policy prerequisites are checked in one DB round
+  trip. Disabled/missing prerequisites return explicit unavailable; global logs
+  always remain unavailable and no platform mutation endpoints were introduced.
+- Functions validate the token digest/current session/current platform flag in
+  the same bounded transaction as the read. User-before-session locks serialize
+  platform revocation; NOWAIT handles contention with existing inverted passkey
+  flows as retryable failure. System probes release locks and revalidate afterward.
+  Signed keyset cursors bind endpoint, actor/session, order and 15-minute expiry.
+- Counts cover distinct persisted rows across all businesses, not memberships or
+  list pages. Recorded order values remain exact decimal strings grouped by
+  currency; missing values have explicit coverage. There is no FX or USD fallback.
+  Unsupported stored data returns `ADMIN_DATA_UNSUPPORTED`; SQL aggregate precision
+  is retained above individual-order and JavaScript safe-integer bounds.
+- Confirmation's existing warning rejection now has an actionable message;
+  remaining generic passkey challenge errors have curated retry guidance. Status
+  polling and evaluation DTOs retain their contracts. A regression proves retrying
+  a failed operation GET recovers the same operation without a second evaluation.
+- Published backend-only OpenAPI/TypeScript/ownership artifacts, response fixtures,
+  [frontend handoff](contracts/admin-frontend-handoff.md) and
+  [deployment runbook](deployment/admin-reads.md). Semantic comparison confirms
+  all pre-existing endpoint contracts and schemas remain unchanged. Browser types
+  intentionally remain for frontend ownership: full exporter `--check` currently
+  reports `generated-api.d.ts` drift; backend-only parity passes (123 operations).
+
+Verification in this implementation:
+
+- Locked `uv sync --frozen --extra dev` completed after finding the declared
+  FreeLLMPool dependency missing from the original virtual environment.
+- **131 final focused tests passed** using isolated labeled PG17 with separate
+  migrator/API/worker logins. Covers global reads without memberships, unchanged
+  ordinary tenant/direct-SQL denial, forged digest/context, worker/owner-role
+  denial, idle/absolute/revoked sessions, platform-revocation serialization,
+  session-lock contention/recovery, exact mixed-currency totals, >100-row keyset
+  paging, session/endpoint/expiry/tamper cursor rejection, missing API/private-column ACL/policy
+  fail-closed behavior, unknown/failed system checks and warning-before-write.
+- The original 0001 and forward-schema SQL suites remain **296/296** each;
+  concurrency scripts and historical-row preservation pass through the existing
+  disposable fixture. The exact SECURITY DEFINER inventory now includes only the
+  five named additions. Upgrade paths from both prior merge parents and from an
+  empty DB pass. Alembic reports sole head `0021_admin_reads`.
+- Full backend regression run: **757 passed, 1 live-provider test deselected,
+  3 deprecation warnings in 712.42 seconds**. The warnings concern the existing
+  Starlette HTTPX test client and SQLAlchemy DOMAIN operator-class deprecation.
+  Final focused rerun additionally covers private column-grant withdrawal added
+  during the full run; its **131 tests passed** on the final admin implementation.
+- Ruff passes. Backend-only contract parity, synthetic fixture validation, local
+  document links and diff whitespace checks pass (existing CRLF normalization
+  notice only). No browser or hosted acceptance was executed in this backend task.
+
+Release gates still open: deployed target/role review, approved shared deployment
+migration and API caller-role grant, explicit read enablement, browser declaration
+sync, frontend integration and joint browser acceptance. Local passing tests do
+not close these gates. Disable through configuration; do not downgrade history.
+
 > Current reconciliation, 17 October 2026: see the
 > [resumed audit matrix](orderfit_audit_2026-10-17.md). The old stress failures below
 > were subsequently repaired (reported final 507 backend passes); neither that
