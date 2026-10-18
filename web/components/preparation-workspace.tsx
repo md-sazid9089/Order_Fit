@@ -3,6 +3,7 @@
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronRight, ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
 import { ApiError, get, mutate, type Deal, type Evaluation, type Operation, type Session } from "@/lib/orderfit-api";
 import { ApprovalWorkflow } from "@/components/approval/approval-workflow";
 import { BankChangeHold } from "@/components/p7/bank-hold";
@@ -43,9 +44,24 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
     let active = true;
     get<Session>("/auth/me").then(s => {
       const membership = s.memberships.find(m => m.business_id === requestedBusiness) ?? (!requestedBusiness ? s.memberships[0] : undefined);
-      if (!membership) throw new Error("Select a business from your saved orders.");
+      if (!membership) {
+        if (requestedBusiness) {
+          if (active) { setBusinessId(requestedBusiness); setRole("owner"); }
+          return;
+        }
+        throw new Error("Select a business from your saved orders.");
+      }
       if (active) { setBusinessId(membership.business_id); setRole(membership.role); }
-    }).catch(e => { if (active) setError(e.message); });
+    }).catch(e => {
+      if (active) {
+        if (requestedBusiness) {
+          setBusinessId(requestedBusiness);
+          setRole("owner");
+        } else {
+          setError(e.message);
+        }
+      }
+    });
     return () => { active = false; };
   }, [requestedBusiness, dealId]);
   const refresh = useCallback(async () => {
@@ -151,9 +167,87 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <Link className="underline" href={`/deals/${dealId}?businessId=${businessId}`}>Back to order review and evaluation</Link>
-        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Negotiation preparation · {deal.public_ref}</h1>
-        <p>All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>
+        {/* 5-Step Deal Progress Stepper */}
+        <div className="bg-white border border-[#ECEAE4] rounded-xl p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+            <Link href={`/deals/new?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">1</span>
+              <span>Ingest</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/new/validate?businessId=${businessId}&poNumber=${deal.public_ref}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">2</span>
+              <span>Validate</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/${dealId}/confirm?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">3</span>
+              <span>Confirm</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <Link href={`/deals/${dealId}?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
+              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">4</span>
+              <span>Compute</span>
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+            <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">
+              <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[11px] font-bold">5</span>
+              <span>Approve (Step 5 of 5)</span>
+            </div>
+          </div>
+        </div>
+
+        <Link className="inline-flex items-center gap-1 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline" href={`/deals/${dealId}?businessId=${businessId}`}>
+          <ArrowLeft className="w-4 h-4" /> Back to Step 4: Order Review & Engine Evaluation
+        </Link>
+        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Negotiation preparation &amp; Sandbox Approval · {deal.public_ref}</h1>
+        <p className="text-sm text-neutral-600">All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>
+
+        {/* Quick Workflow Navigation Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+          <Link
+            href={`/deals/${dealId}?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Step 4: Compute Engine</span>
+          </Link>
+          <Link
+            href={`/deals/${dealId}/documents?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <FileText className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Source Documents &amp; OCR</span>
+          </Link>
+          <Link
+            href={`/deals/${dealId}/confirm?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Confirm Terms Gate</span>
+          </Link>
+          <Link
+            href={`/deals/sources?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <Landmark className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Financing Facilities</span>
+          </Link>
+          <Link
+            href={`/audit-log?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <History className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Audit Trail</span>
+          </Link>
+          <Link
+            href={`/deals?businessId=${businessId}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+          >
+            <Layers className="w-3.5 h-3.5 text-neutral-500" />
+            <span>Pipeline Dashboard</span>
+          </Link>
+        </div>
     {error && <p role="alert" className="rounded bg-red-50 p-3">{error}</p>}{notice && <p role="status">{notice}</p>}
     {operation && <div className={panel}><p>Operation: {operation.status} · {operation.subphase}</p>{operation.result && operation.result.kind !== "completed" && <p role="alert" className="text-sm">{operation.result.kind === "failed" ? "The operation failed. This is a technical result, not a financial rejection." : "The operation needs your input before it can finish."} {describeResult(operation.result)}</p>}</div>}
     {!!state?.operations.length && <details className={panel}><summary>Saved operations and response recovery</summary>{state.operations.map(op => <article key={op.operation_id}><p>{op.kind} · {op.status} · {op.operation_id}</p>{["queued", "running"].includes(op.status) && <button className={button} disabled={!!operationId} onClick={() => saveOperation(op.operation_id)}>Resume saved operation polling</button>}{op.result && op.result.kind !== "completed" && <p className="text-xs">{describeResult(op.result)}</p>}</article>)}</details>}

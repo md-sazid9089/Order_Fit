@@ -11,7 +11,7 @@ import { createDecisionExport, downloadExport } from "@/lib/p7-api";
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
 import { DecisionGuide } from "@/components/decision-guide";
 import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
-import { Download, Landmark, Edit3 } from "lucide-react";
+import { Download, Landmark, Edit3, ChevronRight, ArrowRight, FileText, CheckCircle2, MessageSquare, History } from "lucide-react";
 
 function DealDetailSkeleton() {
   return (
@@ -119,12 +119,67 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>
+        {/* Top Header & Stepper */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="flex items-center gap-3">
+            <Link href={`/deals?businessId=${businessId}`} className="text-xs text-[#737373] hover:text-[#1E2021] dark:text-neutral-400 dark:hover:text-white transition-colors">
+              ← Deals Pipeline
+            </Link>
+          </div>
+
+          {/* Stepper Indicator */}
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400">
+            <Link href={`/deals/new?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+              1. Ingest
+            </Link>
+            <ChevronRight className="size-3 text-[#A3A3A3]" />
+            <Link href={`/deals/new/validate?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+              2. Validate
+            </Link>
+            <ChevronRight className="size-3 text-[#A3A3A3]" />
+            <Link href={`/deals/${dealId}/confirm?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+              3. Confirm
+            </Link>
+            <ChevronRight className="size-3 text-[#A3A3A3]" />
+            <span className="font-bold text-[#1E2021] dark:text-white flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
+              4. Compute
+            </span>
+            <ChevronRight className="size-3 text-[#A3A3A3]" />
+            <Link href={`/deals/${dealId}/negotiate?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+              5. Approve
+            </Link>
+          </div>
+        </div>
+
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
         <button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>
         {!deal && !error && <DealDetailSkeleton />}
         {deal && (
           <>
+            {/* Next Step Action Banner linking to Step 5: Approve */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-[#FAF9F7] dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl shadow-xs">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                    Step 4 Feasibility Evaluation Complete
+                  </span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                    Counter-Offer Strategy Recommended
+                  </span>
+                </div>
+                <p className="text-xs text-[#737373] dark:text-neutral-400 mt-1">
+                  Explore what-if alternatives, review drafted messages, and execute the approval gate in Step 5.
+                </p>
+              </div>
+              <Link
+                href={`/deals/${dealId}/negotiate?businessId=${businessId}`}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
+              >
+                <span>Proceed to Step 5: What-If &amp; Approval</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
             <header className="rounded-2xl border bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -187,6 +242,34 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       >
         <Landmark className="h-4 w-4 text-neutral-600" />
         Business cash and financing sources
+      </Link>
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/deals/${dealId}/documents?businessId=${businessId}`}
+      >
+        <FileText className="h-4 w-4 text-neutral-600" />
+        Source documents &amp; OCR
+      </Link>
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/deals/${dealId}/confirm?businessId=${businessId}`}
+      >
+        <CheckCircle2 className="h-4 w-4 text-neutral-600" />
+        Confirm terms gate
+      </Link>
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/deals/${dealId}/reply?businessId=${businessId}`}
+      >
+        <MessageSquare className="h-4 w-4 text-neutral-600" />
+        Triage counterparty replies
+      </Link>
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/audit-log?businessId=${businessId}`}
+      >
+        <History className="h-4 w-4 text-neutral-600" />
+        Audit &amp; operation log
       </Link>
     </div>
     {editing && <form onSubmit={save} className="space-y-4 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Edit order inputs</h2><label className="block text-sm">Policy and financing configuration<select className={fieldClass} value={editing.constraints_id} onChange={e => { const p = policies.find(p => p.id === e.target.value); if (p) setEditing({ ...editing, constraints_id: p.id, reserve_minor: p.reserve_minor }); }}>{!policies.some(p => p.id === editing.constraints_id) && <option value={editing.constraints_id}>Current saved policy (load more to inspect)</option>}{policies.map(p => <option key={p.id} value={p.id}>{p.is_default ? "Default" : "Saved"} policy · {p.strategy_space.offer_ids.length} offers · {p.id.slice(0, 8)}</option>)}</select></label><CollectionPages query={policyPages} noun="policies" /><ManualOrderInputs value={editing} onChange={setEditing} /><button className="rounded-lg bg-neutral-900 px-4 py-2 text-white" disabled={busy}>Save revised inputs</button><button type="button" className="ml-3 underline" onClick={() => setEditing(null)}>Cancel edit</button></form>}
