@@ -190,8 +190,8 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
               <span>Compute</span>
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">
-              <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[11px] font-bold">5</span>
+            <div className="flex items-center gap-1.5 text-[#004D3B] dark:text-[#34D399] bg-[#F4F2ED] dark:bg-[#222425] px-2.5 py-1 rounded-full border border-[#E8E6E1] dark:border-[#2A2C2D]">
+              <span className="w-5 h-5 rounded-full bg-[#004D3B] text-white flex items-center justify-center text-[11px] font-bold">5</span>
               <span>Approve (Step 5 of 5)</span>
             </div>
           </div>

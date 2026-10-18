@@ -45,29 +45,29 @@ export function DealEvaluationInspector({
 
   const decisionStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
     accept_as_is: {
-      bg: "bg-emerald-50 dark:bg-emerald-950/40",
-      text: "text-emerald-700 dark:text-emerald-300",
-      border: "border-emerald-200 dark:border-emerald-800",
+      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
+      text: "text-[#004D3B] dark:text-[#34D399]",
+      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
       label: "Accept As-Is",
     },
     accept_with_changes: {
-      bg: "bg-amber-50 dark:bg-amber-950/40",
-      text: "text-amber-700 dark:text-amber-300",
-      border: "border-amber-200 dark:border-amber-800",
+      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
+      text: "text-[#8A5A00] dark:text-amber-400",
+      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
       label: "Accept with Changes (Negotiate)",
     },
     decline_or_renegotiate: {
-      bg: "bg-rose-50 dark:bg-rose-950/40",
-      text: "text-rose-700 dark:text-rose-300",
-      border: "border-rose-200 dark:border-rose-800",
+      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
+      text: "text-[#991B1B] dark:text-red-400",
+      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
       label: "Decline / Renegotiate",
     },
   };
 
   const currentDecision = decisionStyles[evaluation.decision] || {
-    bg: "bg-neutral-50 dark:bg-neutral-900",
-    text: "text-neutral-700 dark:text-neutral-300",
-    border: "border-neutral-200 dark:border-neutral-800",
+    bg: "bg-[#F4F2ED] dark:bg-[#222425]",
+    text: "text-[#525252] dark:text-neutral-300",
+    border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
     label: evaluation.decision.replaceAll("_", " "),
   };
 
@@ -90,7 +90,7 @@ export function DealEvaluationInspector({
                 {currentDecision.label}
               </span>
               {evaluation.is_stale && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#8A5A00] dark:text-amber-400 border border-[#E8E6E1] dark:border-[#2A2C2D]">
                   Stale
                 </span>
               )}
@@ -256,11 +256,11 @@ export function DealEvaluationInspector({
                     </span>
                     <span className="col-span-3 text-right">
                       {cand.hard_feasible ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-medium text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#004D3B] dark:text-[#34D399] border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
                           Feasible
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-medium text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#991B1B] dark:text-red-400 border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
                           Breach Floor
                         </span>
                       )}
@@ -305,11 +305,11 @@ export function DealEvaluationInspector({
                     {sc.scenario} Scenario
                   </span>
                   {sc.hard_feasible ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399]">
                       Feasible
                     </span>
                   ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400">
                       Floor Breach
                     </span>
                   )}
@@ -379,12 +379,12 @@ export function DealEvaluationInspector({
                   </span>
                   <span className="col-span-3 text-center">
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${
                         sens.decision === "accept_as_is"
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "text-[#004D3B] dark:text-[#34D399]"
                           : sens.decision === "accept_with_changes"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-rose-100 text-rose-800"
+                          ? "text-[#8A5A00] dark:text-amber-400"
+                          : "text-[#991B1B] dark:text-red-400"
                       }`}
                     >
                       {sens.decision.replaceAll("_", " ")}
@@ -666,11 +666,11 @@ export function DealCashSeriesViewer({
                     </span>
                     <span className="col-span-3 text-right">
                       {isBreach ? (
-                        <span className="inline-block px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-sans font-semibold text-[10px]">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400 font-sans font-semibold text-[10px]">
                           Breached ({formatMinor(headroom.toString(), currency)})
                         </span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-sans font-medium text-[10px]">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399] font-sans font-medium text-[10px]">
                           +{formatMinor(headroom.toString(), currency)}
                         </span>
                       )}
