@@ -1,0 +1,15 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "payment_days",
+    "value": "30",
+    "quote": "৩০ দিনের মধ্যে"
+   }
+  ],
+  "conditions": [],
+  "unsupported_clauses": [],
+  "stance": "partial"
+ }
+}

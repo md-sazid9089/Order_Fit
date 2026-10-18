@@ -1,0 +1,8 @@
+{
+ "model": "synthetic-weak-model",
+ "explanation": {
+  "sentences": [
+   "The fee is low, see {financing_cost}."
+  ]
+ }
+}

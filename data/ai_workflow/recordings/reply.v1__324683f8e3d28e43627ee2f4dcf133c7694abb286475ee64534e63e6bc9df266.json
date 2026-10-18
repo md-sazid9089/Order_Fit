@@ -1,0 +1,11 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [],
+  "conditions": [],
+  "unsupported_clauses": [
+   "हमारे नए बैंक खाते में करें"
+  ],
+  "stance": "unclear"
+ }
+}

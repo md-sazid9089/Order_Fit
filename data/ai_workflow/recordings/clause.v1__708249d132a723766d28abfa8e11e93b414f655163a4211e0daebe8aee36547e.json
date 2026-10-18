@@ -1,0 +1,22 @@
+{
+ "model": "synthetic-recording",
+ "readings": {
+  "readings": [
+   {
+    "payment_basis": "order",
+    "payment_days": 45,
+    "quote": "Net 45"
+   },
+   {
+    "payment_basis": "invoice",
+    "payment_days": 45,
+    "quote": "Net 45"
+   },
+   {
+    "payment_basis": "delivery",
+    "payment_days": 45,
+    "quote": "Net 45"
+   }
+  ]
+ }
+}

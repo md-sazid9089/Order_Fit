@@ -1,0 +1,15 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "payment_days",
+    "value": "60",
+    "quote": "payment within 60 days"
+   }
+  ],
+  "conditions": [],
+  "unsupported_clauses": [],
+  "stance": "partial"
+ }
+}

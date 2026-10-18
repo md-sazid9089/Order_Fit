@@ -1,0 +1,32 @@
+{
+ "model": "synthetic-weak-model",
+ "candidates": [
+  {
+   "document_id": "a0705b34-766d-5721-b2b1-3296bac62c85",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_value_minor",
+   "normalized_value": "100000",
+   "status": "extracted",
+   "exact_quote": "Total: BDT 1,000.00"
+  },
+  {
+   "document_id": "a0705b34-766d-5721-b2b1-3296bac62c85",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "30",
+   "status": "extracted",
+   "exact_quote": "Payment within 30 days after invoice."
+  },
+  {
+   "document_id": "a0705b34-766d-5721-b2b1-3296bac62c85",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "invoice",
+   "status": "extracted",
+   "exact_quote": "Payment within 30 days after invoice."
+  }
+ ]
+}

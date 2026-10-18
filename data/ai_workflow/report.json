@@ -1,0 +1,1887 @@
+{
+  "provider": "openai",
+  "mode": "recorded",
+  "repeat": 1,
+  "cases": [
+    {
+      "id": "extract-basic",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.003226500000891974,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "100000",
+              "order_date": "2026-11-02",
+              "invoice_date": "2026-12-14",
+              "delivery_date": "2026-12-14",
+              "payment_days": "30",
+              "payment_basis": "invoice"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "order_date": [
+                "extracted"
+              ],
+              "invoice_date": [
+                "extracted"
+              ],
+              "delivery_date": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-ambiguous-basis",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0007950999970489647,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "250000",
+              "payment_days": "30"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "ambiguous"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-conflict",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0006338999992294703,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "15",
+              "payment_basis": "delivery"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "conflicting"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-layout",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0008693000017956365,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "999999",
+              "delivery_date": "2026-12-01",
+              "invoice_date": "2026-12-03",
+              "payment_days": "30",
+              "payment_basis": "invoice"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "delivery_date": [
+                "extracted"
+              ],
+              "invoice_date": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-01",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0009544999993522651,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "deposit_pct",
+                "value": 25
+              }
+            ],
+            "baseline_changes": [
+              {
+                "kind": "deposit_pct",
+                "value": 25
+              }
+            ],
+            "baseline_pass": true,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-02",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0012197999967611395,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "customer_delay_days",
+                "value": 12
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-03",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00026199999774689786,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "customer_delay_days",
+                "value": 20
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-04",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00027439999757916667,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "cost_overrun_bps",
+                "value": 40
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-05",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0006554999999934807,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "deposit_pct",
+                "value": 30
+              }
+            ],
+            "baseline_changes": [
+              {
+                "kind": "deposit_pct",
+                "value": 30
+              }
+            ],
+            "baseline_pass": true,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-06",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00026339999749325216,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "ar_delay_days",
+                "value": 15
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-07",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00021430000197142363,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "customer_delay_days",
+                "value": 7
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-08",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0002029999996011611,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "cost_overrun_bps",
+                "value": 125
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-09",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00018569999883766286,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "deposit_pct",
+                "value": 10
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-10",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0001759999977366533,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "ar_delay_days",
+                "value": 21
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-11",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0002023999986704439,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "customer_delay_days",
+                "value": 30
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-12",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0001999000014620833,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [
+              {
+                "kind": "cost_overrun_bps",
+                "value": 75
+              }
+            ],
+            "baseline_changes": [],
+            "baseline_pass": false,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-unsupported",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00017220000154338777,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [],
+            "baseline_changes": [],
+            "baseline_pass": true,
+            "clarification": null
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-rewording",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0019171000021742657,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "30"
+            },
+            "conditions": [],
+            "unsupported": [],
+            "stance": "partial",
+            "baseline_stance": "partial",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-condition",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00034419999792589806,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {},
+            "conditions": [
+              "provided our board approves"
+            ],
+            "unsupported": [],
+            "stance": "partial",
+            "baseline_stance": "unclear",
+            "disagreement": true,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-negated",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.00017590000061318278,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "RECORDING_NOT_FOUND",
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "reject",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "reply-partial",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.00019279999833088368,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "RECORDING_NOT_FOUND",
+          "detail": {
+            "values": {
+              "deposit_pct": "20",
+              "payment_days": "45"
+            },
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "partial",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "reply-bank-change",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.00013699999908567406,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "RECORDING_NOT_FOUND",
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "unclear",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "reply-injection",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.00012959999730810523,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "RECORDING_NOT_FOUND",
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "unclear",
+            "disagreement": false,
+            "injection": true,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "extract-basis-suffix",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0008075999976426829,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "200000",
+              "payment_days": "30"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ]
+            },
+            "dropped": [
+              "payment_basis"
+            ],
+            "guard_findings": [
+              "AI-BASIS-UNRECOGNISED"
+            ],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-date-swap",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0006183000004966743,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "20",
+              "payment_basis": "delivery"
+            },
+            "statuses": {
+              "order_date": [
+                "ambiguous"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-computed-total",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0007138000000850298,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "10",
+              "payment_basis": "invoice"
+            },
+            "statuses": {
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [
+              "order_value_minor"
+            ],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-two-totals",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.000713100002030842,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "30",
+              "payment_basis": "invoice"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "ambiguous"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-conflict-both-extracted",
+      "task": "extract",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0009064000005309936,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "15",
+              "payment_basis": "delivery"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "conflicting",
+                "conflicting"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [
+              "AI-VALUE-CONFLICT"
+            ],
+            "language": "en"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-unsupported-clause",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00040049999734037556,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "45"
+            },
+            "conditions": [],
+            "unsupported": [
+              "a 2% handling fee applies"
+            ],
+            "stance": "partial",
+            "baseline_stance": "partial",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-fabricated-quote",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.0002886000002035871,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "values": {
+              "payment_days": "30"
+            },
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "partial",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "reply-model-claims-acceptance",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.00029580000045825727,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "unclear",
+            "disagreement": false,
+            "injection": false,
+            "language": "en",
+            "language_hold": false
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "reply-bn-days",
+      "task": "reply",
+      "language": "bn",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00039000000106170774,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "30"
+            },
+            "conditions": [],
+            "unsupported": [],
+            "stance": "partial",
+            "baseline_stance": "unclear",
+            "disagreement": true,
+            "injection": false,
+            "language": "bn",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-hi-bank-change",
+      "task": "reply",
+      "language": "hi",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0003299999989394564,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [
+              "हमारे नए बैंक खाते में करें"
+            ],
+            "stance": "unclear",
+            "baseline_stance": "unclear",
+            "disagreement": false,
+            "injection": false,
+            "language": "hi",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-zh-condition",
+      "task": "reply",
+      "language": "zh-Hans",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00033289999919361435,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "values": {
+              "payment_days": "30"
+            },
+            "conditions": [
+              "但需要董事会批准"
+            ],
+            "unsupported": [],
+            "stance": "partial",
+            "baseline_stance": "unclear",
+            "disagreement": true,
+            "injection": false,
+            "language": "zh-Hans",
+            "language_hold": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "reply-unsupported-language",
+      "task": "reply",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.0001838000025600195,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "RECORDING_NOT_FOUND",
+          "detail": {
+            "values": {},
+            "conditions": [],
+            "unsupported": [],
+            "stance": null,
+            "baseline_stance": "unclear",
+            "disagreement": false,
+            "injection": false,
+            "language": "other",
+            "language_hold": true
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "extract-bn",
+      "task": "extract",
+      "language": "bn",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.001153699999122182,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "100000",
+              "order_date": "2026-11-02",
+              "payment_days": "30",
+              "payment_basis": "invoice"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "order_date": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "bn"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-hi",
+      "task": "extract",
+      "language": "hi",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0009353000023111235,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "100000",
+              "order_date": "2026-11-02",
+              "payment_days": "30",
+              "payment_basis": "delivery"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "order_date": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "hi"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-zh",
+      "task": "extract",
+      "language": "zh-Hans",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0007485999994969461,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "100000",
+              "order_date": "2026-11-02",
+              "payment_days": "30",
+              "payment_basis": "delivery"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "order_date": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "extracted"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "zh-Hans"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "extract-bn-unreviewed-basis",
+      "task": "extract",
+      "language": "bn",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0007334000001719687,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "parsed",
+          "code": null,
+          "detail": {
+            "values": {
+              "order_value_minor": "200000",
+              "payment_days": "30"
+            },
+            "statuses": {
+              "order_value_minor": [
+                "extracted"
+              ],
+              "payment_days": [
+                "extracted"
+              ],
+              "payment_basis": [
+                "ambiguous"
+              ]
+            },
+            "dropped": [],
+            "guard_findings": [],
+            "language": "bn"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-clarify-vague",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.00026840000282390974,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [],
+            "baseline_changes": [],
+            "baseline_pass": true,
+            "clarification": "Which risk should be tested: customer delay, receivables delay or cost overrun?"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-clarify-mixed",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.0002549999990151264,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "changes": [],
+            "baseline_changes": [],
+            "baseline_pass": true,
+            "clarification": "A new lender cannot be modelled. Should only the deposit change be tested?"
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "whatif-clarify-with-digits",
+      "task": "whatif",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.0002578000021458138,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "changes": [],
+            "baseline_changes": [],
+            "baseline_pass": true,
+            "clarification": null
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "clause-net45",
+      "task": "clause",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 2.9510055999999167,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "readings": [
+              [
+                "order",
+                45
+              ],
+              [
+                "invoice",
+                45
+              ],
+              [
+                "delivery",
+                45
+              ]
+            ],
+            "decision_changes": true
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "clause-net90",
+      "task": "clause",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 3.4506648000024143,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "readings": [
+              [
+                "order",
+                90
+              ],
+              [
+                "invoice",
+                90
+              ],
+              [
+                "delivery",
+                90
+              ]
+            ],
+            "decision_changes": false
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "clause-fabricated-quote",
+      "task": "clause",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 3.5236082000010356,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "readings": [
+              [
+                "order",
+                45
+              ],
+              [
+                "invoice",
+                45
+              ],
+              [
+                "delivery",
+                45
+              ]
+            ],
+            "decision_changes": true
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "clause-bn-ambiguous",
+      "task": "clause",
+      "language": "bn",
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 3.442066200001136,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "readings": [
+              [
+                "order",
+                45
+              ],
+              [
+                "invoice",
+                45
+              ],
+              [
+                "delivery",
+                45
+              ]
+            ],
+            "decision_changes": true
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "explain-slot-only",
+      "task": "explain",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 1,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 0.0,
+      "latency_seconds": 0.8055827999996836,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "recorded",
+          "code": null,
+          "detail": {
+            "sentences": [
+              "Your priorities are profit, independence any, simplicity, and cash is tightest in the severe scenario.",
+              "This option has incremental profit of 134600000 minor units and headroom of -83600000 minor units in the severe case."
+            ]
+          },
+          "model_pass": true
+        }
+      ]
+    },
+    {
+      "id": "explain-number-leak",
+      "task": "explain",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.8974503000026743,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "sentences": []
+          },
+          "model_pass": false
+        }
+      ]
+    },
+    {
+      "id": "explain-fee-claim",
+      "task": "explain",
+      "language": null,
+      "pass_k": true,
+      "model_passes": 0,
+      "repeat": 1,
+      "unsafe_changes": 0,
+      "fallback_rate": 1.0,
+      "latency_seconds": 0.8177702000029967,
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "trials": [
+        {
+          "kind": "template",
+          "code": "INVALID_OUTPUT",
+          "detail": {
+            "sentences": []
+          },
+          "model_pass": false
+        }
+      ]
+    }
+  ],
+  "tasks": {
+    "clause": {
+      "cases": 4,
+      "passed": 4,
+      "model_passed": 3,
+      "unsafe_changes": 0,
+      "model_path_retained": true,
+      "evidence": "recorded"
+    },
+    "explain": {
+      "cases": 3,
+      "passed": 3,
+      "model_passed": 1,
+      "unsafe_changes": 0,
+      "model_path_retained": true,
+      "evidence": "recorded"
+    },
+    "extract": {
+      "cases": 13,
+      "passed": 13,
+      "model_passed": 13,
+      "unsafe_changes": 0,
+      "model_path_retained": true,
+      "evidence": "recorded"
+    },
+    "reply": {
+      "cases": 13,
+      "passed": 13,
+      "model_passed": 6,
+      "unsafe_changes": 0,
+      "model_path_retained": true,
+      "evidence": "recorded"
+    },
+    "whatif": {
+      "cases": 16,
+      "passed": 16,
+      "model_passed": 15,
+      "unsafe_changes": 0,
+      "model_path_retained": true,
+      "evidence": "recorded",
+      "baseline_passed": 6,
+      "model_improves_on_baseline": 10
+    }
+  },
+  "languages": {
+    "en": {
+      "cases": 41,
+      "passed": 41,
+      "tasks": [
+        "clause",
+        "explain",
+        "extract",
+        "reply",
+        "whatif"
+      ],
+      "qualified": true,
+      "evidence": "recorded"
+    },
+    "bn": {
+      "cases": 4,
+      "passed": 4,
+      "tasks": [
+        "clause",
+        "extract",
+        "reply"
+      ],
+      "qualified": true,
+      "evidence": "recorded"
+    },
+    "hi": {
+      "cases": 2,
+      "passed": 2,
+      "tasks": [
+        "extract",
+        "reply"
+      ],
+      "qualified": true,
+      "evidence": "recorded"
+    },
+    "zh-Hans": {
+      "cases": 2,
+      "passed": 2,
+      "tasks": [
+        "extract",
+        "reply"
+      ],
+      "qualified": true,
+      "evidence": "recorded"
+    }
+  },
+  "passed": true,
+  "baseline": "regex/template deterministic paths"
+}

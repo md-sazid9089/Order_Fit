@@ -1,0 +1,15 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "acceptance",
+    "value": "accepted",
+    "quote": "accept the exact proposed terms"
+   }
+  ],
+  "conditions": [],
+  "unsupported_clauses": [],
+  "stance": "accept"
+ }
+}

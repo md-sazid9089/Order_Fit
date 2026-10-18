@@ -1,0 +1,32 @@
+{
+ "model": "synthetic-weak-model",
+ "candidates": [
+  {
+   "document_id": "ad1397c7-d667-5958-b2aa-7a2a836d3412",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_value_minor",
+   "normalized_value": "110000",
+   "status": "extracted",
+   "exact_quote": "Item B BDT 600.00\nFreight BDT 100.00"
+  },
+  {
+   "document_id": "ad1397c7-d667-5958-b2aa-7a2a836d3412",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "10",
+   "status": "extracted",
+   "exact_quote": "Payment within 10 days after invoice."
+  },
+  {
+   "document_id": "ad1397c7-d667-5958-b2aa-7a2a836d3412",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "invoice",
+   "status": "extracted",
+   "exact_quote": "Payment within 10 days after invoice."
+  }
+ ]
+}

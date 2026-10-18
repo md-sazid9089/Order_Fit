@@ -1,0 +1,15 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "payment_days",
+    "value": "30",
+    "quote": "payment within 30 calendar days"
+   }
+  ],
+  "conditions": [],
+  "unsupported_clauses": [],
+  "stance": "partial"
+ }
+}

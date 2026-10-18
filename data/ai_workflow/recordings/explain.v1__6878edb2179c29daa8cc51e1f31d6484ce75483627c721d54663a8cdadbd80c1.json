@@ -1,0 +1,8 @@
+{
+ "model": "synthetic-weak-model",
+ "explanation": {
+  "sentences": [
+   "Profit is about 1000 {base_profit} so this is fine."
+  ]
+ }
+}

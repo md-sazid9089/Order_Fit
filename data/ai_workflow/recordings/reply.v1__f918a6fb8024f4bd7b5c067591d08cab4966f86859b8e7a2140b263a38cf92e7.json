@@ -1,0 +1,17 @@
+{
+ "model": "synthetic-recording",
+ "reading": {
+  "terms": [
+   {
+    "field": "payment_days",
+    "value": "30",
+    "quote": "30天内付款"
+   }
+  ],
+  "conditions": [
+   "但需要董事会批准"
+  ],
+  "unsupported_clauses": [],
+  "stance": "partial"
+ }
+}

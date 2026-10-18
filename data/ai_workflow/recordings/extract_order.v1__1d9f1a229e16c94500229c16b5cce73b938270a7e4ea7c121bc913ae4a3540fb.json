@@ -1,0 +1,41 @@
+{
+ "model": "synthetic-recording",
+ "candidates": [
+  {
+   "document_id": "11a28d07-9104-554d-a361-cc8ae34017e6",
+   "page": 1,
+   "gloss_en": "Total amount: 1,000.00 rupees",
+   "field": "order_value_minor",
+   "normalized_value": "100000",
+   "status": "extracted",
+   "exact_quote": "कुल राशि: १,०००.०० रुपये"
+  },
+  {
+   "document_id": "11a28d07-9104-554d-a361-cc8ae34017e6",
+   "page": 1,
+   "gloss_en": null,
+   "field": "order_date",
+   "normalized_value": "2026-11-02",
+   "status": "extracted",
+   "exact_quote": "ऑर्डर की तारीख: २ नवंबर २०२६"
+  },
+  {
+   "document_id": "11a28d07-9104-554d-a361-cc8ae34017e6",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_days",
+   "normalized_value": "30",
+   "status": "extracted",
+   "exact_quote": "डिलीवरी के ३० दिन बाद भुगतान।"
+  },
+  {
+   "document_id": "11a28d07-9104-554d-a361-cc8ae34017e6",
+   "page": 1,
+   "gloss_en": null,
+   "field": "payment_basis",
+   "normalized_value": "delivery",
+   "status": "extracted",
+   "exact_quote": "डिलीवरी के ३० दिन बाद भुगतान।"
+  }
+ ]
+}
