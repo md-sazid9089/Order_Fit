@@ -106,43 +106,6 @@ export default function NewDealPage() {
     financingText ||
     constraintsText;
 
-  const handleLoadDemo = () => {
-    setPoFile({
-      name: "PO-8841_CustomerContract.pdf",
-      size: "248 KB",
-      type: "application/pdf",
-    });
-    setQuoteFile({
-      name: "SQ-4029_SupplierQuote.pdf",
-      size: "185 KB",
-      type: "application/pdf",
-    });
-    setCashFile({
-      name: "Apex_DatedCashBalance.csv",
-      size: "34 KB",
-      type: "text/csv",
-    });
-    setBillsFile({
-      name: "Payroll_AP_AR_Ledger.csv",
-      size: "56 KB",
-      type: "text/csv",
-    });
-    setFinancingFile({
-      name: "WorkingCapital_TermSheet.json",
-      size: "18 KB",
-      type: "application/json",
-    });
-    setConstraintsFile({
-      name: "Owner_Risk_Policy_Limits.pdf",
-      size: "32 KB",
-      type: "application/pdf",
-    });
-    setReserveFloor("100,000");
-    setMaxCost("3.5%");
-    setTargetResilience("Downside Scenario (Recommended)");
-    setValidationAttempted(false);
-  };
-
   const handleClearAll = () => {
     setPoFile(null);
     setQuoteFile(null);
@@ -434,14 +397,6 @@ export default function NewDealPage() {
 
         {intakeMode === "auto" && (
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleLoadDemo}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#1E2021] dark:text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-            >
-              <Sparkles className="size-3.5 text-[#525252] dark:text-neutral-300" />
-              <span>Load Sample Files</span>
-            </button>
             {hasAnyInput && (
               <button
                 type="button"

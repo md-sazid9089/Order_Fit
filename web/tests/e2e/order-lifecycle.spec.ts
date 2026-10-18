@@ -41,6 +41,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
 
   await page.getByRole("link", { name: "New order" }).first().click();
+  await page.getByRole("button", { name: "Manual Order Form" }).click();
   await expect(page.getByRole("heading", { name: "Set the business cash baseline first" })).toBeVisible();
   await page.getByLabel("Opening date").fill(today);
   await page.getByLabel("Opening cash (integer minor units)").fill("10000000");

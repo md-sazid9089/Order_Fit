@@ -11,6 +11,7 @@ test("older saved customer is selectable after a recoverable continuation failur
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await page.getByRole("link", { name: "New order" }).first().click();
+  await page.getByRole("button", { name: "Manual Order Form" }).click();
   await page.getByLabel("Opening date").fill("2026-10-16");
   await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
   await page.getByLabel("Coverage through").fill("2027-10-16");

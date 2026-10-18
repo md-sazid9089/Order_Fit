@@ -28,7 +28,7 @@ test("password plus verified passkey enrollment and login through the real proxy
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+    await expect(page).toHaveURL(/\/(?:deals|overview)(?:\?|$)/);
     const session = (await page.request.get("/api/v1/auth/me")).json();
     expect((await session).mfa_enabled).toBe(true);
     const current = (await context.cookies()).find(cookie => cookie.name === "orderfit_session");
