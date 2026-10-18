@@ -667,7 +667,10 @@ SELECT of_test.eq('H1 public functions without a pinned search_path', '0',
   (SELECT count(*)::text FROM pg_proc WHERE pronamespace = 'public'::regnamespace
      AND NOT coalesce(array_to_string(proconfig, ',') LIKE '%search_path=%', false)));
 -- Exact inventories for both supported revisions; behavior checks above are unchanged.
-SELECT of_test.eq('H2 SECURITY DEFINER functions', CASE WHEN to_regclass('public.operation') IS NULL
+SELECT of_test.eq('H2 SECURITY DEFINER functions',
+  CASE WHEN to_regprocedure('public.admin_read_identity(bytea)') IS NOT NULL
+   THEN 'admin_read_identity,admin_read_orders,admin_read_overview,admin_read_tenants,admin_read_users,' ELSE '' END
+  || CASE WHEN to_regclass('public.operation') IS NULL
   THEN 'auth_lookup,user_businesses'
   WHEN to_regclass('public.commitment_settlement') IS NULL
   THEN 'auth_lookup,auth_rate_consume,auth_request_complete,auth_request_reserve,operation_claim,operation_context,operation_finish,operation_heartbeat,owner_provision,security_record,session_csrf,session_issue,session_password,session_resolve,session_revoke,user_businesses'

@@ -94,6 +94,7 @@ services:
       WEBAUTHN_ORIGIN: http://localhost:${WEB_PORT:-3000}
       # Explicit proxy trust; [] ignores X-Forwarded-* (the browser reaches the API directly).
       TRUSTED_PROXY_IPS: '${TRUSTED_PROXY_IPS:-[]}'
+      ADMIN_READS_ENABLED: ${ADMIN_READS_ENABLED:-false}
     volumes:
       - documents:/app/var      # uploaded documents survive restarts
       - ./data:/app/data:ro     # demo business, catalogue, test cases

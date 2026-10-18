@@ -5,6 +5,23 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+18 October admin-read remediation atop `4578538`: sole schema head is now
+`0021_admin_reads`. Typed `/api/v1/admin/capabilities` plus overview/users/tenants/
+orders/system reads are mounted, but `ADMIN_READS_ENABLED` defaults false. Global
+logs and platform mutations remain unavailable. Two private NOLOGIN/NOBYPASSRLS
+roles isolate fixed session-authorized read functions from runtime tenant access;
+existing API logins require an explicit `orderfit_admin_api` grant, workers do not.
+Totals are exact minor-unit strings grouped by currency; lists use signed session-
+bound 15-minute cursors. Confirmation still rejects unacknowledged warnings with
+a clearer message. Final focused restricted-role/contract suite: 131 passed on
+disposable PG17; full regression 757 passed / 1 live deselected, with 3 deprecation warnings.
+The focused rerun covers the final private-column grant gate. No shared
+DB migration, frontend changes or hosted/browser acceptance. Backend-only contract
+exports are current; browser declaration sync remains with the frontend owner.
+See [frontend handoff](../../../docs/contracts/admin-frontend-handoff.md) and
+[deployment runbook](../../../docs/deployment/admin-reads.md). Earlier schema-head
+and disabled-router statements below are historical snapshots.
+
 18 October AI workflow C1-C6/F5 (atop `8b7c00a`): sole schema head is now
 `0020_ai_workflow` (candidate language/gloss columns, immutable `ai_advisory`, `advisory`
 operation kind). Clause hypotheses (forks via `agent/nodes/compute.py`), slot-only
@@ -182,7 +199,7 @@ remain partial; engineering completion is not submission evidence.
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0020_ai_workflow` (sole head, after `0019_merge_passkey_roles`, which joined the passkey/platform
+- Code requires `0021_admin_reads` (sole head after `0020_ai_workflow` and `0019_merge_passkey_roles`, which joined the passkey/platform
   authority line with the recovered Neon role branch). The hosted DB needs this migration before the new API runs.
   Platform flag changes revoke all existing sessions and record an atomic audit event.
   Revision 0015

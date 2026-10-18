@@ -108,7 +108,7 @@ class Passkeys:
                     "count": verified.sign_count,
                 }).scalar_one()
                 if not accepted:
-                    raise ApplicationError(403, "MFA_CHALLENGE_INVALID")
+                    raise ApplicationError(403, "MFA_CHALLENGE_INVALID", "Start a new passkey verification.")
                 result = None
             else:
                 new_token = secrets.token_urlsafe(32)
@@ -120,7 +120,7 @@ class Passkeys:
                     "previous": digest_token(token),
                 }).scalar_one()
                 if not sid:
-                    raise ApplicationError(403, "MFA_CHALLENGE_INVALID")
+                    raise ApplicationError(403, "MFA_CHALLENGE_INVALID", "Start a new passkey verification.")
                 row = c.execute(text("SELECT * FROM session_resolve(:digest)"), {
                     "digest": digest_token(new_token)}).mappings().one()
                 scope = Scope(row["user_id"], row["session_id"])

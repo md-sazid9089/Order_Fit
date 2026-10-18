@@ -1,0 +1,29 @@
+{
+  "capabilities_disabled": {
+    "schema_version": "admin-capabilities.v1",
+    "read_enabled": false,
+    "global_logs": false,
+    "platform_mutations": false,
+    "reason": "Platform administrative reads are not enabled or their database prerequisites are unavailable."
+  },
+  "overview": {
+    "schema_version": "admin-overview.v1",
+    "as_of": "2026-10-18T10:00:00Z",
+    "total_users": 3,
+    "total_tenants": 2,
+    "active_tenants": 2,
+    "total_orders": 4,
+    "order_value_by_currency": [
+      {"currency": "BDT", "amount_minor": "18000000000000000", "orders_with_value": 2},
+      {"currency": "USD", "amount_minor": "250000", "orders_with_value": 1}
+    ],
+    "orders_without_value": 1
+  },
+  "empty_users": {"items": [], "next_cursor": null},
+  "system_unknown": {
+    "schema_version": "admin-system.v1",
+    "checked_at": "2026-10-18T10:00:00Z",
+    "status": "unavailable",
+    "checks": {"database": true, "schema_current": true, "storage_writable": null, "worker_active": true}
+  }
+}

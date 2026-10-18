@@ -11,7 +11,7 @@ from sqlalchemy.exc import TimeoutError as PoolTimeout
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0020_ai_workflow"
+SCHEMA_REVISION = "0021_admin_reads"
 
 
 def digest_token(token: str | None) -> bytes:
@@ -80,7 +80,8 @@ class Database:
             c.execute(
                 text(
                     "SELECT r.rolsuper,r.rolbypassrls,r.rolcreaterole,r.rolcreatedb,r.rolreplication,r.rolcanlogin,"
-                    "pg_has_role(current_user,'orderfit_admin','MEMBER') AS admin,"
+                    "(pg_has_role(current_user,'orderfit_admin','MEMBER') OR "
+                    "coalesce(pg_has_role(current_user,to_regrole('orderfit_admin_reader'),'MEMBER'),false)) AS admin,"
                     "pg_has_role(current_user,'orderfit_app','USAGE') AS app,"
                     "pg_has_role(current_user,'orderfit_worker','USAGE') AS worker,"
                     "(EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p') AND pg_has_role(current_user,c.relowner,'MEMBER')) "

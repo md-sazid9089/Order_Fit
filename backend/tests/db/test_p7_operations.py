@@ -603,8 +603,10 @@ def test_no_global_tenant_list_in_runtime_paths(world):
     view = owner.me()
     assert [m["business_id"] for m in view["memberships"]] == [str(owner.business_id)]
     paths = set(owner.client.app.openapi()["paths"])
-    assert not any(p.rstrip("/") in {"/api/v1/businesses", "/api/v1/admin/tenants"} for p in paths)
-    assert not any("/admin" in p for p in paths)
+    assert "/api/v1/businesses" not in paths
+    assert "/api/v1/admin/capabilities" in paths
+    # Discovery is protected and reads still default to unavailable, never tenant enumeration.
+    assert owner.client.get("/api/v1/admin/tenants").status_code in (401, 403)
     with world["postgres"]["database"].tenant(owner.token, owner.business_id) as (c, _):
         assert c.execute(text("SELECT count(*) FROM business")).scalar_one() == 1
         assert c.execute(text("SELECT count(*) FROM membership_invitation WHERE business_id<>:b"),
