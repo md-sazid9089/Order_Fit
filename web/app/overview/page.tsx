@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   Clock,
   Filter,
-  ChevronRight,
   Info,
   DollarSign,
   Activity,
@@ -96,11 +95,7 @@ export default function OverviewPage() {
   // Growth / Comparison indicators respecting handoff warning rules
   const renderBalanceChange = () => {
     if (warnings.has("BALANCE_HISTORY_UNAVAILABLE")) {
-      return (
-        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-          History unavailable
-        </span>
-      );
+      return null;
     }
     const val = data?.kpis.total_balance_change_pct ?? 0;
     const isUp = val >= 0;
@@ -114,11 +109,7 @@ export default function OverviewPage() {
 
   const renderVolumeChange = () => {
     if (warnings.has("VOLUME_CHANGE_UNDEFINED_FROM_ZERO")) {
-      return (
-        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-          History unavailable
-        </span>
-      );
+      return null;
     }
     const val = data?.kpis.volume_30d_change_pct ?? 0;
     const isUp = val >= 0;
@@ -132,11 +123,7 @@ export default function OverviewPage() {
 
   const renderPendingReviewsChange = () => {
     if (warnings.has("PENDING_HISTORY_UNAVAILABLE")) {
-      return (
-        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-          History unavailable
-        </span>
-      );
+      return null;
     }
     const val = data?.kpis.pending_reviews_change_pct ?? 0;
     const isUp = val >= 0;
@@ -150,11 +137,7 @@ export default function OverviewPage() {
 
   const renderHeadroomChange = () => {
     if (warnings.has("HEADROOM_HISTORY_UNAVAILABLE")) {
-      return (
-        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-          History unavailable
-        </span>
-      );
+      return null;
     }
     const val = data?.kpis.protected_headroom_change_pct ?? 0;
     const isUp = val >= 0;
@@ -301,30 +284,16 @@ export default function OverviewPage() {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        {/* Top Breadcrumb & Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-1">
-              <span className="font-medium text-[#1E2021] dark:text-white">Dashboard</span>
-              <ChevronRight className="size-3.5 text-[#A3A3A3]" />
-              <span className="font-semibold text-[#004D3B] dark:text-[#B5F2C6]">Overview</span>
-            </div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
               Overview
             </h1>
-            <p className="text-xs sm:text-sm text-[#737373] dark:text-neutral-400 mt-0.5">
-              Financial posture, liquidity stress tests, and order evaluations as of {data.as_of}
-            </p>
           </div>
 
           {/* Quick Actions */}
           <div className="flex items-center flex-wrap gap-2.5">
-            <Link
-              href={`/deals/new${query}`}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#004D3B] hover:bg-[#00382B] text-white text-xs font-semibold shadow-xs transition-colors"
-            >
-              <span>+ New Order</span>
-            </Link>
             <Link
               href={`/deals${query}`}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
@@ -652,26 +621,6 @@ export default function OverviewPage() {
                   })}
                 </div>
 
-                {/* Active Window Snapshot Callout */}
-                {selectedPoint && (
-                  <div className="mt-4 p-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#1E2021] dark:text-white font-display">
-                        {selectedPoint.date_range}:
-                      </span>
-                      <span className="text-[#525252] dark:text-neutral-300">
-                        {selectedPoint.highlight_note ?? "Scheduled baseline & commitment balance window"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 font-mono font-medium text-[#1E2021] dark:text-neutral-200">
-                      <span>In: +{formatMoney(selectedPoint.inflow_minor)}</span>
-                      <span className="text-[#737373]">Out: -{formatMoney(selectedPoint.outflow_minor)}</span>
-                      <span className="font-bold text-[#004D3B] dark:text-[#B5F2C6]">
-                        Net: {formatMoney(selectedPoint.net_minor)}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -768,41 +717,35 @@ export default function OverviewPage() {
               {activeDelayScenario && (
                 <div className="p-4 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div className="font-semibold text-[#1E2021] dark:text-white flex items-center gap-1.5">
-                      <span>Scenario: {activeDelayScenario.label}</span>
+                    <div className="text-[#1E2021] dark:text-white">
+                      <span className="text-[#737373] dark:text-neutral-400">Scenario: </span>
+                      <span className="font-semibold">{activeDelayScenario.label}</span>
                     </div>
-                    <span className="text-[#737373] dark:text-neutral-400 font-mono">
-                      Policy Reserve Floor: {formatMoney(reserveFloorMinor)}
+                    <span className="text-xs text-[#737373] dark:text-neutral-400">
+                      Policy Reserve Floor: <span className="font-mono font-medium text-[#1E2021] dark:text-white">{formatMoney(reserveFloorMinor)}</span>
                     </span>
                   </div>
 
-                  {/* Progress bar showing projected trough relative to reserve */}
-                  <div className="space-y-1.5">
-                    <div className="h-2 w-full bg-[#E8E6E1] dark:bg-[#2A2C2D] rounded-full overflow-hidden flex">
-                      <div
-                        className="h-full bg-[#1E2021] dark:bg-white rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.max(
-                              5,
-                              reserveFloorMinor > BigInt(0)
-                                ? (Number(BigInt(activeDelayScenario.projected_trough_minor)) / Number(reserveFloorMinor * BigInt(2))) * 100
-                                : 50
-                            )
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-[#737373] dark:text-neutral-400 font-mono">
-                      <span>{currency} 0 Floor</span>
-                      <span>Reserve Baseline</span>
-                      <span>200% Target Safety</span>
-                    </div>
+                  {/* Minimal progress bar */}
+                  <div className="h-1.5 w-full bg-[#E8E6E1] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#1E2021] dark:bg-white rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            5,
+                            reserveFloorMinor > BigInt(0)
+                              ? (Number(BigInt(activeDelayScenario.projected_trough_minor)) / Number(reserveFloorMinor * BigInt(2))) * 100
+                              : 50
+                          )
+                        )}%`,
+                      }}
+                    />
                   </div>
 
-                  <p className="text-xs text-[#525252] dark:text-neutral-300 bg-white dark:bg-[#181A1B] p-3 rounded-lg border border-[#E8E6E1] dark:border-[#2A2C2D]">
-                    <strong className="text-[#1E2021] dark:text-white">Recommendation: </strong>
+                  <p className="text-xs text-[#525252] dark:text-neutral-300 pt-1">
+                    <strong className="text-[#1E2021] dark:text-white font-medium">Recommendation: </strong>
                     {activeDelayScenario.recommendation}
                   </p>
                 </div>
@@ -886,17 +829,12 @@ export default function OverviewPage() {
         {/* Bottom Section: 2 Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Recent Evaluations */}
-          <div className="lg:col-span-7 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-white dark:bg-[#181A1B] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
-                <div>
-                  <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
-                    Recent evaluations
-                  </h2>
-                  <p className="text-xs text-[#737373] dark:text-neutral-400">
-                    Latest evaluated purchase orders and recommended strategy options (not proof of funds received)
-                  </p>
-                </div>
+              <div className="flex items-center justify-between pb-3">
+                <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                  Recent evaluations
+                </h2>
                 <Link
                   href={`/deals${query}`}
                   className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
@@ -906,7 +844,7 @@ export default function OverviewPage() {
               </div>
 
               {/* List of recent settlements */}
-              <div className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
+              <div className="space-y-1 pt-1">
                 {data.recent_settlements.length === 0 ? (
                   <div className="py-8 text-center text-xs text-[#737373] dark:text-neutral-400">
                     No order evaluations recorded yet.
@@ -916,10 +854,10 @@ export default function OverviewPage() {
                     <Link
                       key={item.id}
                       href={`/deals/${item.deal_id}${query}`}
-                      className="py-3.5 flex items-center justify-between gap-3 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] -mx-2 px-2 rounded-xl transition-colors block"
+                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] rounded-xl transition-colors block"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-9 rounded-full bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center font-bold text-xs shrink-0 font-display">
+                        <div className="size-9 rounded-full bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center font-bold text-xs shrink-0 font-display">
                           {item.customer_name ? item.customer_name.charAt(0) : "D"}
                         </div>
                         <div className="min-w-0">
@@ -938,9 +876,6 @@ export default function OverviewPage() {
                         </div>
                         <div className="flex items-center gap-1.5">
                           {recentStatusBadge(item.status, item.status_label)}
-                          <span className="text-[10px] text-[#737373] dark:text-neutral-400">
-                            {item.terms}
-                          </span>
                         </div>
                       </div>
                     </Link>
@@ -949,7 +884,7 @@ export default function OverviewPage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between text-xs text-[#737373] dark:text-neutral-400">
+            <div className="mt-4 pt-3 flex items-center justify-between text-xs text-[#737373] dark:text-neutral-400">
               <span>{data.recent_settlements.length} recent evaluations shown</span>
               <Link href={`/deals/new${query}`} className="font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline flex items-center gap-1">
                 Evaluate next order <ArrowRight className="size-3" />
@@ -958,17 +893,12 @@ export default function OverviewPage() {
           </div>
 
           {/* Right Column: Balance by currency / Reserve Status */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-white dark:bg-[#181A1B] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
-                <div>
-                  <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
-                    Balance by currency
-                  </h2>
-                  <p className="text-xs text-[#737373] dark:text-neutral-400">
-                    Recorded primary opening balance (single operating baseline)
-                  </p>
-                </div>
+              <div className="flex items-center justify-between pb-3">
+                <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                  Balance by currency
+                </h2>
                 <Link
                   href={`/deals/sources${query}`}
                   className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
@@ -978,7 +908,7 @@ export default function OverviewPage() {
               </div>
 
               {/* Currency Account Cards */}
-              <div className="space-y-4 pt-3">
+              <div className="space-y-4 pt-2">
                 {data.currency_balances.length === 0 ? (
                   <div className="py-6 text-center text-xs text-[#737373] dark:text-neutral-400">
                     {warnings.has("NEGATIVE_BALANCE_NOT_REPRESENTABLE_IN_CURRENCY_ALLOCATION")
@@ -990,7 +920,7 @@ export default function OverviewPage() {
                     <div key={c.code} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <div className="size-6 rounded-md bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 font-bold flex items-center justify-center text-[11px] font-mono">
+                          <div className="size-6 rounded-md bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-neutral-200 font-bold flex items-center justify-center text-[11px] font-mono">
                             {c.symbol}
                           </div>
                           <span className="font-semibold text-[#1E2021] dark:text-white">{c.name}</span>
@@ -1000,7 +930,7 @@ export default function OverviewPage() {
                         </span>
                       </div>
 
-                      <div className="h-2 w-full bg-[#F4F2ED] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-[#F4F2ED] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-[#1E2021] dark:bg-neutral-300"
                           style={{ width: `${c.pct_allocation}%` }}
@@ -1013,7 +943,7 @@ export default function OverviewPage() {
             </div>
 
             {/* Cash Floor Policy Indicator */}
-            <div className="mt-5 p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs space-y-1.5">
+            <div className="mt-5 p-3.5 bg-[#FAF9F7] dark:bg-[#222425] rounded-xl text-xs space-y-1">
               <div className="flex items-center justify-between font-semibold">
                 <span className="text-[#1E2021] dark:text-white flex items-center gap-1.5">
                   <ShieldCheck className="size-4 text-[#004D3B] dark:text-[#B5F2C6]" />
@@ -1023,9 +953,6 @@ export default function OverviewPage() {
                   {formatMoney(reserveFloorMinor)}
                 </span>
               </div>
-              <p className="text-[11px] text-[#737373] dark:text-neutral-400 leading-normal">
-                OrderFit checks every prospective order against this daily floor to prevent unfunded payroll or supplier defaults.
-              </p>
             </div>
           </div>
         </div>

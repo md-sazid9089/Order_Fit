@@ -25,8 +25,8 @@ export function PageFrame({ title, intro: _intro, children }: { title: string; i
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold font-display text-[#1E2021]">{title}</h1>
+        <header className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
         </header>
         {children}
       </div>

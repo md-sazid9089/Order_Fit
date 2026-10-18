@@ -211,15 +211,9 @@ export default function AdminOverviewPage() {
                 <Server className="size-4" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight flex items-center gap-2">
-                  <span>OrderFit Control Console</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#1E2021] text-white font-bold">
-                    ADMIN
-                  </span>
+                <h1 className="text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight flex items-center gap-2">
+                  <span>Admin Panel</span>
                 </h1>
-                <p className="text-[11px] text-[#737373] leading-tight hidden sm:block">
-                  Deterministic engine controls, multi-tenant database isolation & verifiable audit trail
-                </p>
               </div>
             </div>
 
@@ -249,6 +243,12 @@ export default function AdminOverviewPage() {
 
         {/* Main Content Workspace */}
         <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
+          {/* Top Header Bar */}
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              Admin Panel
+            </h1>
+          </div>
           {toastMessage && (
             <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
