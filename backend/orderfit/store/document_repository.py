@@ -17,12 +17,14 @@ from orderfit.contracts.resources import (
     CSVConfirm,
     CSVPreview,
     DocumentView,
+    DuplicateReview,
     ExtractedFieldView,
     ExtractionCandidateView,
     FieldResolution,
 )
 from orderfit.contracts.workflow import Finding
 from orderfit.services.documents import PARSER_VERSION, ParseResult
+from orderfit.store import baseline_duplicates
 from orderfit.store.repositories import CashEventRepository, append_audit
 
 ROLE_DEFAULT = "other"
@@ -303,6 +305,9 @@ class DocumentRepository:
             raise ApplicationError(409, "STALE_FINANCIAL_REVISION")
         if any(e for e in row["errors"]):
             raise ApplicationError(422, "PREVIEW_HAS_ERRORS")
+        if row["duplicate_keys"]:
+            raise ApplicationError(422, "PREVIEW_HAS_DUPLICATES",
+                                   "Correct repeated rows before confirming this CSV.")
         inserted = c.execute(
             text(
                 "INSERT INTO csv_confirmation(preview_id,business_id,confirmed_by) VALUES(:p,:b,:u) ON CONFLICT DO NOTHING RETURNING 1"
@@ -316,7 +321,16 @@ class DocumentRepository:
             {"b": scope.business_id, "id": row["document_id"]},
         ).mappings().one()
         digest = bytes(doc["content_hash"]).hex()
-        created = []
+        reviews = {r.row_number: r for r in req.duplicate_reviews}
+        source_rows = {ev["row"] for ev in row["events"]}
+        if set(reviews) - source_rows:
+            raise ApplicationError(422, "UNKNOWN_CSV_REVIEW_ROW")
+        # Check every claim before writing any event. A reviewed financial match
+        # cannot override immutable source identity, even after the event is voided.
+        for ev in row["events"]:
+            baseline_duplicates.check_source(c, scope.business_id, digest, ev["row"], preview_id=req.preview_id)
+        staged_matches = baseline_duplicates.csv_matches(c, row["events"])
+        prepared = []
         for ev in row["events"]:
             quote = f"row {ev['row']}"
             event = CashEventInput(
@@ -331,14 +345,34 @@ class DocumentRepository:
                     "page": 1, "quote": quote, "manual_attestation": None, "override_reason": None,
                 },
             )
+            matching = baseline_duplicates.matches(c, scope.business_id, event)
+            baseline_duplicates.require_csv_review(matching, staged_matches[ev["row"]],
+                                                   reviews.get(ev["row"]), ev["row"])
+            prepared.append((ev["row"], event))
+        # All reviews are validated before inserts; conflict IDs always refer to
+        # persisted rows, and intra-file conflicts use stable source row numbers.
+        created, created_ids = [], {}
+        for source_row, event in prepared:
+            row_review = reviews.get(source_row)
+            resolution = None
+            if row_review is not None:
+                resolution = DuplicateReview(
+                    matching_event_ids=[*row_review.duplicate_review.matching_event_ids,
+                                        *[created_ids[r] for r in row_review.matching_source_rows]],
+                    reason=row_review.duplicate_review.reason)
             current = c.execute(
                 text("SELECT financial_revision FROM business WHERE id=:b"), {"b": scope.business_id}
             ).scalar_one()
-            created.append(
-                CashEventRepository.create_event(
-                    c, scope, CashEventCreate(expected_financial_revision=current, event=event)
-                )
-            )
+            try:
+                result = CashEventRepository.create_event(c, scope, CashEventCreate(
+                    expected_financial_revision=current, event=event,
+                    duplicate_review=resolution))
+            except ApplicationError as exc:
+                exc.details = exc.details.model_copy(update={"source_row": source_row})
+                raise
+            baseline_duplicates.claim_source(c, scope.business_id, digest, source_row, int(result.id))
+            created.append(result)
+            created_ids[source_row] = result.id
         append_audit(c, scope, "csv_confirm", deal_id=row["deal_id"],
                      payload={"preview_id": str(req.preview_id), "events": len(created)})
         return created

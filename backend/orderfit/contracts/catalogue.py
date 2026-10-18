@@ -342,7 +342,7 @@ add(
     "cash_event,business,operation_log",
     "P3",
     "V09",
-    status=201,
+    status=200,
 )
 add(
     "PATCH",
@@ -380,6 +380,12 @@ add(
     "P3",
     "V06",
 )
+add("GET", "cash-events/{event_id}/duplicates", "cash_event_duplicates", None,
+    r.CashEventDuplicates, "read", "baseline.duplicates", "cash_event,cash_event_duplicate_review",
+    "P3", "V09")
+add("POST", "cash-events/{event_id}/duplicate-review", "cash_event_duplicate_review",
+    r.CashEventDuplicateReview, r.CashEventDuplicates, "manage_finance", "baseline.review_duplicates",
+    "cash_event_duplicate_review,business,operation_log", "P3", "V09")
 add(
     "POST",
     "cash-events/csv-preview",

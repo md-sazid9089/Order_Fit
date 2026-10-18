@@ -396,13 +396,32 @@ class BaselineView(DTO):
     balance: BaselineBalance
 
 
+class DuplicateReview(DTO):
+    matching_event_ids: list[BigId] = Field(default_factory=list, max_length=200)
+    reason: str = Field(min_length=12, max_length=2000, pattern=r"\S")
+
+    @model_validator(mode="after")
+    def unique_matches(self):
+        if len(self.reason.strip()) < 12:
+            raise ValueError("review reason needs at least 12 non-padding characters")
+        if len(set(self.matching_event_ids)) != len(self.matching_event_ids):
+            raise ValueError("duplicate matching event IDs")
+        return self
+
+
 class CashEventCreate(DTO):
     expected_financial_revision: Version
     event: CashEventInput
+    duplicate_review: DuplicateReview | None = None
 
 
 class CashEventWrite(RevisionWrite):
     event: CashEventInput
+    duplicate_review: DuplicateReview | None = None
+
+
+class CashEventDuplicateReview(RevisionWrite):
+    duplicate_review: DuplicateReview
 
 
 class CashEventView(DTO):
@@ -411,6 +430,28 @@ class CashEventView(DTO):
     financial_revision: Version
     event: CashEventInput
     voided_at: UTCInstant | None
+
+
+class CashEventDuplicateMatch(DTO):
+    id: BigId
+    version: Version
+    event_date: BizDate
+    amount_minor: PositiveMoney
+    direction: Literal["in", "out"]
+    kind: CashKind
+    description: str | None
+    invoice_ref: str | None
+    customer_id: UUID | None
+    payee_id: UUID | None
+    deal_id: UUID | None
+
+
+class CashEventDuplicates(DTO):
+    event_id: BigId
+    version: Version
+    financial_revision: Version
+    event: CashEventDuplicateMatch
+    matching_events: list[CashEventDuplicateMatch] = Field(max_length=200)
 
 
 class CustomerInput(DTO):
@@ -679,10 +720,31 @@ class CSVPreview(DTO):
     canonical_changed: Literal[False]
 
 
+class CSVRowDuplicateReview(DTO):
+    row_number: Annotated[int, Field(strict=True, ge=2, le=2001)]
+    duplicate_review: DuplicateReview
+    matching_source_rows: list[Annotated[int, Field(strict=True, ge=2, le=2001)]] = Field(default_factory=list, max_length=200)
+
+    @model_validator(mode="after")
+    def earlier_unique_rows(self):
+        if (len(set(self.matching_source_rows)) != len(self.matching_source_rows)
+                or any(r >= self.row_number for r in self.matching_source_rows)):
+            raise ValueError("matching source rows must be unique earlier rows")
+        return self
+
+
 class CSVConfirm(DTO):
     preview_id: UUID
     preview_hash: HashHex
     expected_financial_revision: Version
+    duplicate_reviews: list[CSVRowDuplicateReview] = Field(default_factory=list, max_length=2000)
+
+    @model_validator(mode="after")
+    def unique_rows(self):
+        rows = [r.row_number for r in self.duplicate_reviews]
+        if len(set(rows)) != len(rows):
+            raise ValueError("duplicate row review")
+        return self
 
 
 class DraftRequest(ExpectedVersions):
