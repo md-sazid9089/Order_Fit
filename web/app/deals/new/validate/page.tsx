@@ -83,25 +83,45 @@ export default function ValidatePage() {
   const [cashReserveFloor, setCashReserveFloor] = useState("$100,000.00");
 
   // Production Obligations & Cost Schedule
+  const [dealId, setDealId] = useState("");
   const [costItems, setCostItems] = useState<CostLineItem[]>(INITIAL_COST_ITEMS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // Read draft from localStorage if present
+  // Read draft from localStorage or query params if present (works identically for auto and manual intake)
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("orderfit_deal_draft");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.poText && parsed.poText.length > 5) {
-          const matchPo = parsed.poText.match(/PO-?\d+/i);
-          if (matchPo) setPoNumber(matchPo[0].toUpperCase());
-        } else if (parsed.poFileName) {
-          const matchPo = parsed.poFileName.match(/PO-?\d+/i);
-          if (matchPo) setPoNumber(matchPo[0].toUpperCase());
-        }
-        if (parsed.reserveFloor) {
-          setCashReserveFloor(`$${parsed.reserveFloor}`);
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlDealId = searchParams.get("dealId");
+        const urlPo = searchParams.get("poNumber");
+        if (urlDealId) setDealId(urlDealId);
+        if (urlPo) setPoNumber(urlPo);
+
+        const stored = localStorage.getItem("orderfit_deal_draft");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.dealId) setDealId(parsed.dealId);
+          if (parsed.poNumber) {
+            setPoNumber(parsed.poNumber);
+          } else if (parsed.poText && parsed.poText.length > 5) {
+            const matchPo = parsed.poText.match(/PO-?\d+/i);
+            if (matchPo) setPoNumber(matchPo[0].toUpperCase());
+          } else if (parsed.poFileName) {
+            const matchPo = parsed.poFileName.match(/PO-?\d+/i);
+            if (matchPo) setPoNumber(matchPo[0].toUpperCase());
+          }
+          if (parsed.customerName) setCustomerName(parsed.customerName);
+          if (parsed.orderValue && Number(parsed.orderValue) > 0) setOrderValue(Number(parsed.orderValue));
+          if (parsed.deliveryDate) setDeliveryDate(parsed.deliveryDate);
+          if (parsed.paymentTermsDays && Number(parsed.paymentTermsDays) > 0) setPaymentTermsDays(Number(parsed.paymentTermsDays));
+          if (parsed.paymentTermsAnchor) setPaymentTermsAnchor(parsed.paymentTermsAnchor);
+          if (parsed.reserveFloor) {
+            setCashReserveFloor(parsed.reserveFloor.startsWith("$") ? parsed.reserveFloor : `$${parsed.reserveFloor}`);
+          }
+          if (parsed.costItems && Array.isArray(parsed.costItems) && parsed.costItems.length > 0) {
+            setCostItems(parsed.costItems);
+          }
         }
       }
     } catch {
@@ -172,31 +192,38 @@ export default function ValidatePage() {
     setSubmitError("");
 
     try {
-      // If connected to a real business with backend, we can persist the validated order
-      if (businessId) {
-        try {
-          // Attempt deal creation or redirect to existing deal
-          const query = `?businessId=${encodeURIComponent(businessId)}`;
-          router.push(`/deals${query}`);
-          return;
-        } catch (e) {
-          console.error("Backend persistence note:", e);
-        }
+      if (typeof window !== "undefined") {
+        const validatedData = {
+          poNumber: poNumber.trim() || "PO-8841",
+          customerName,
+          orderValue,
+          deliveryDate,
+          paymentTermsDays,
+          paymentTermsAnchor,
+          targetScenario,
+          cashReserveFloor,
+          costItems,
+          totalIncrementalCosts,
+          projectedProfit,
+        };
+        localStorage.setItem("orderfit_deal_validated", JSON.stringify(validatedData));
       }
 
-      // Default smooth workflow routing
+      const targetId = dealId ? encodeURIComponent(dealId) : encodeURIComponent(poNumber.trim() || "PO-8841");
+      const targetUrl = `/deals/${targetId}/confirm${query}`;
+
       setTimeout(() => {
         setIsSubmitting(false);
-        const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
-        router.push(`/deals${query}`);
-      }, 600);
+        router.push(targetUrl);
+      }, 500);
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Failed to evaluate order.");
+      setSubmitError(e instanceof Error ? e.message : "Failed to confirm parameters.");
       setIsSubmitting(false);
     }
   };
 
   const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+  const currentPo = dealId ? encodeURIComponent(dealId) : encodeURIComponent(poNumber.trim() || "PO-8841");
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
@@ -239,11 +266,17 @@ export default function ValidatePage() {
             2. Validate
           </span>
           <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">3. Confirm</span>
+          <Link href={`/deals/${currentPo}/confirm${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+            3. Confirm
+          </Link>
           <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">4. Compute</span>
+          <Link href={`/deals/${currentPo}${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+            4. Compute
+          </Link>
           <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">5. Approve</span>
+          <Link href={`/deals/${currentPo}/negotiate${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
+            5. Approve
+          </Link>
         </div>
       </div>
 

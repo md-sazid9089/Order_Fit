@@ -317,13 +317,14 @@ export default function NewDealPage() {
     setBusy(true);
     setError("");
     try {
+      let resolvedCustomerName = customerName.trim();
       let customerId = inputs.customer_id;
       if (!customerId) {
-        if (!customerName.trim()) throw new Error("Select or enter a customer.");
+        if (!resolvedCustomerName) throw new Error("Select or enter a customer.");
         const customer = await mutate<Customer>(`/businesses/${businessId}/customers`, "POST", {
           expected_financial_revision: business.financial_revision,
           customer: {
-            name: customerName.trim(),
+            name: resolvedCustomerName,
             known_domains: customerDomains
               .split(",")
               .map((d) => d.trim().toLowerCase())
@@ -333,11 +334,15 @@ export default function NewDealPage() {
         });
         customerId = customer.id;
         setInputs((value) => ({ ...value, customer_id: customerId }));
+      } else {
+        const found = customers.find((c) => c.id === customerId);
+        if (found) resolvedCustomerName = found.customer.name;
       }
+      const ref = reference.trim() || "PO-8841";
       const created =
         createdDraft ??
         (await mutate<Deal>(`/businesses/${businessId}/deals`, "POST", {
-          public_ref: reference.trim(),
+          public_ref: ref,
           start_date: startDate,
           constraints_id: inputs.constraints_id,
           customer_id: customerId,
@@ -349,7 +354,41 @@ export default function NewDealPage() {
         expected_financial_revision: created.financial_revision,
         inputs: { ...inputs, customer_id: customerId },
       });
-      router.push(`/deals/${created.id}?businessId=${businessId}`);
+
+      // Save draft into localStorage so Step 2: Validate receives all parameters
+      if (typeof window !== "undefined") {
+        const orderVal = inputs.order_value_minor ? Number(inputs.order_value_minor) / 100 : 360000;
+        const mappedCosts = inputs.costs && inputs.costs.length > 0
+          ? inputs.costs.map((c, idx) => ({
+              id: `cost-${idx}-${Date.now()}`,
+              name: c.original_obligation_id || `Cost Item ${idx + 1}`,
+              amount: Number(c.amount_minor || 0) / 100,
+              date: c.event_date || inputs.delivery_date || "2026-12-14",
+              deferrable: c.is_deferrable ?? false,
+              incremental: c.incremental ?? true,
+              kind: ((c.kind === "existing_inventory" ? "supplier_payment" : c.kind) as "supplier_payment" | "labour" | "freight" | "subcontract") || "supplier_payment",
+            }))
+          : undefined;
+
+        const manualDraft = {
+          dealId: created.id,
+          poNumber: ref,
+          customerName: resolvedCustomerName || "Apex Retailers Inc",
+          orderValue: orderVal,
+          deliveryDate: inputs.delivery_date || "2026-12-14",
+          paymentTermsDays: inputs.payment_days ? Number(inputs.payment_days) : 45,
+          paymentTermsAnchor: inputs.payment_basis || "delivery",
+          reserveFloor: inputs.reserve_minor ? (Number(inputs.reserve_minor) / 100).toLocaleString() : "100,000",
+          costItems: mappedCosts,
+        };
+        localStorage.setItem("orderfit_deal_draft", JSON.stringify(manualDraft));
+      }
+
+      // Route to Step 2: Validate (Identical workflow for manual and auto intake!)
+      const query = businessId
+        ? `?businessId=${encodeURIComponent(businessId)}&dealId=${encodeURIComponent(created.id)}&poNumber=${encodeURIComponent(ref)}`
+        : `?dealId=${encodeURIComponent(created.id)}&poNumber=${encodeURIComponent(ref)}`;
+      router.push(`/deals/new/validate${query}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save the order.");
     } finally {
@@ -1577,9 +1616,10 @@ export default function NewDealPage() {
 
               <button
                 disabled={busy || !inputs.constraints_id}
-                className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-5 py-2.5 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-5 py-2.5 text-xs font-semibold cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
-                {busy ? "Saving…" : "Save and review"}
+                <span>{busy ? "Saving Order…" : "Save & Continue to Step 2: Validate"}</span>
+                <ArrowRight className="size-3.5" />
               </button>
             </form>
           )}
