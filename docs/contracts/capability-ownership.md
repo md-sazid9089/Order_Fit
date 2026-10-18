@@ -120,3 +120,10 @@ All business operations are planned, not deployed. Test column is the required p
 | passkey_enroll_verify | `POST /api/v1/auth/passkeys/enroll/verify` | self | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
 | passkey_login_options | `POST /api/v1/auth/passkeys/login/options` | public | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
 | passkey_login_verify | `POST /api/v1/auth/passkeys/login/verify` | public | `identity.passkeys` | auth_passkey,auth_passkey_challenge,auth_session | P1 | V04 |
+| admin_capabilities | `GET /api/v1/admin/capabilities` | platform_admin | `admin.capabilities` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_overview | `GET /api/v1/admin/overview` | platform_admin | `admin.overview` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_users | `GET /api/v1/admin/users` | platform_admin | `admin.users` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_tenants | `GET /api/v1/admin/tenants` | platform_admin | `admin.tenants` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_orders | `GET /api/v1/admin/orders` | platform_admin | `admin.orders` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_system | `GET /api/v1/admin/system` | platform_admin | `admin.system` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
+| admin_logs | `GET /api/v1/admin/logs` | platform_admin | `admin.logs_unavailable` | none | P8 | admin unavailable gate |
