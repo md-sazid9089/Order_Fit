@@ -3,7 +3,7 @@ import { documentDownloadPath, safeDownloadName } from "./p7-model";
 import { saveBlob } from "./p7-api";
 
 export type DocumentView = { id: string; deal_id: string; kind: string; source_role: string; content_hash: string; original_filename: string; mime_type: string; size_bytes: number; uploaded_at: string; parse_status: "pending" | "parsed" | "failed" | "ocr_required"; untrusted: true; download_url: string };
-export type CandidateView = { id: string; field: string; value: string | null; status: string; source_page: number | null; source_quote: string | null; confidence: number; source_role: string | null; flags: string[] };
+export type CandidateView = { id: string; field: string; value: string | null; status: string; source_page: number | null; source_quote: string | null; confidence: number; source_role: string | null; flags: string[]; provenance?: "recorded" | "live" | null; model?: string | null; page_language?: string | null; page_script?: string | null; gloss_en?: string | null };
 export type ExtractedField = { field_id: string; document_id: string; field: string; value: string | null; status: "extracted" | "ambiguous" | "missing" | "conflicting" | "confirmed" | "overridden" | "rejected"; candidate_id: string | null; candidates: CandidateView[]; version: number };
 export type Accepted = { operation_id: string; status: string; poll_url: string };
 export type CsvPreview = { id: string; preview_hash: string; financial_revision: number; events: { event_date: string; amount_minor: string; direction: string; kind: string }[]; errors: { code: string; message: string }[]; duplicate_keys: string[] };
