@@ -77,7 +77,7 @@ export function ArchitectureSecurity() {
   return (
     <section id="architecture" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A] relative overflow-hidden border-t border-[#ECEAE4]">
       <div id="security-adr" className="sr-only" />
-      <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
