@@ -20,8 +20,13 @@ export function HeroSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Main Hero Header */}
         <div className="text-center max-w-5xl mx-auto mb-10">
-          <h1 className="font-heading font-medium text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-tight leading-[1.05] text-[#1A1A1A] mb-6">
-            Stress-test orders, protect cash flow, negotiate safe terms.
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-tight leading-[1.12] mb-6">
+            <span className="block font-sans font-medium text-[#1A1A1A] dark:text-[#F3F4F6]">
+              Stress-test orders, protect cash flow,
+            </span>
+            <span className="block font-serif italic font-normal text-[#1A1A1A] dark:text-[#F3F4F6] tracking-tight sm:tracking-normal mt-1 sm:mt-2">
+              negotiate safe terms.
+            </span>
           </h1>
           <p className="font-sans text-lg sm:text-xl text-[#526975] leading-relaxed max-w-3xl mx-auto font-normal">
             From customer purchase order to supplier payment, with deterministic cash runway calculations, linear late-payment stress testing, and mandatory human approvals.

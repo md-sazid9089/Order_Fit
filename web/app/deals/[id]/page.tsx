@@ -10,6 +10,7 @@ import { createDecisionExport, downloadExport } from "@/lib/p7-api";
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
 import { DecisionGuide } from "@/components/decision-guide";
 import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
+import { Download, Landmark, Edit3 } from "lucide-react";
 
 function DealDetailSkeleton() {
   return (
@@ -108,11 +109,106 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     );
   }
   if (!businessId) return <main className="p-8">This order link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</main>;
-  return <main className="min-h-screen bg-[#f7f6f5] p-6"><div className="mx-auto max-w-4xl space-y-5"><Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}<button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>{!deal && !error && <DealDetailSkeleton />}{deal && <><header className="rounded-2xl border bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">{deal.public_ref}</h1><p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>{deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}</div><button disabled={!canPrepare || !(deal.allowed_actions.includes("confirm") || deal.status === "ingesting") || deal.status === "computing" || busy || !review?.snapshot_hash || review.findings.some(f => f.blocking)} onClick={evaluate} className="rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40">{busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}</button></div></header>
-    {operation && <p role="status">Saved evaluation operation: {operation.status}. Reloading this link recovers the operation from the server.</p>}
-    <div className="flex flex-wrap gap-3">{canPrepare && deal.allowed_actions.includes("edit") && <button className="rounded-lg border px-3 py-2" disabled={busy} onClick={() => setEditing(deal.inputs)}>Edit saved inputs</button>}{["owner", "risk_officer", "auditor"].includes(role) && <button className="underline" disabled={busy || !evaluation} onClick={exportDecision}>Download decision and audit evidence</button>}<Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Business cash and financing sources</Link></div>
+  return (
+    <main className="min-h-screen bg-[#f7f6f5] p-6">
+      <div className="mx-auto max-w-4xl space-y-5">
+        <Link href={`/deals?businessId=${businessId}`} className="text-sm underline">← Saved orders</Link>
+        {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
+        <button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>
+        {!deal && !error && <DealDetailSkeleton />}
+        {deal && (
+          <>
+            <header className="rounded-2xl border bg-white p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">{deal.public_ref}</h1>
+            <p className="mt-1 text-sm text-neutral-600">Saved state · {deal.status.replaceAll("_", " ")} · revision {deal.input_version}</p>
+            {deal.is_stale && <p className="mt-2 text-sm font-medium text-amber-800">Inputs changed; the previous result is stale.</p>}
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            <button
+              disabled={!canPrepare || !(deal.allowed_actions.includes("confirm") || deal.status === "ingesting") || deal.status === "computing" || busy || !review?.snapshot_hash || review.findings.some(f => f.blocking)}
+              onClick={evaluate}
+              className="rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40"
+            >
+              {busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}
+            </button>
+            {!deal.allowed_actions.includes("confirm") && deal.allowed_actions.includes("reopen_for_review") && (
+              <p className="text-xs text-amber-700 max-w-xs text-right">
+                Locked ({deal.status.replaceAll("_", " ")}). Provide a reason below and click <strong>reopen for review</strong> to enable re-evaluation.
+              </p>
+            )}
+          </div>
+        </div>
+      </header>
+    <div className="flex flex-wrap items-center gap-3">
+      {canPrepare && deal.allowed_actions.includes("edit") && (
+        <button
+          className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:opacity-40 transition-colors"
+          disabled={busy}
+          onClick={() => setEditing(deal.inputs)}
+        >
+          <Edit3 className="h-4 w-4 text-neutral-500" />
+          Edit saved inputs
+        </button>
+      )}
+      {["owner", "risk_officer", "auditor"].includes(role) && (
+        <button
+          className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:opacity-40 transition-colors"
+          disabled={busy || !evaluation}
+          onClick={exportDecision}
+        >
+          <Download className="h-4 w-4 text-neutral-600" />
+          Download decision and audit evidence
+        </button>
+      )}
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/deals/sources?businessId=${businessId}`}
+      >
+        <Landmark className="h-4 w-4 text-neutral-600" />
+        Business cash and financing sources
+      </Link>
+    </div>
     {editing && <form onSubmit={save} className="space-y-4 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Edit order inputs</h2><label className="block text-sm">Policy and financing configuration<select className={fieldClass} value={editing.constraints_id} onChange={e => { const p = policies.find(p => p.id === e.target.value); if (p) setEditing({ ...editing, constraints_id: p.id, reserve_minor: p.reserve_minor }); }}>{!policies.some(p => p.id === editing.constraints_id) && <option value={editing.constraints_id}>Current saved policy (load more to inspect)</option>}{policies.map(p => <option key={p.id} value={p.id}>{p.is_default ? "Default" : "Saved"} policy · {p.strategy_space.offer_ids.length} offers · {p.id.slice(0, 8)}</option>)}</select></label><CollectionPages query={policyPages} noun="policies" /><ManualOrderInputs value={editing} onChange={setEditing} /><button className="rounded-lg bg-neutral-900 px-4 py-2 text-white" disabled={busy}>Save revised inputs</button><button type="button" className="ml-3 underline" onClick={() => setEditing(null)}>Cancel edit</button></form>}
-    {canPrepare && ["close", "hold", "reopen_for_review"].some(action => deal.allowed_actions.includes(action)) && <section className="space-y-3 rounded-2xl border bg-white p-5"><label className="block text-sm">Reason for workflow change<input className={fieldClass} value={reason} onChange={e => setReason(e.target.value)} /></label><div className="flex flex-wrap gap-2">{["reopen_for_review", "hold", "close"].filter(action => deal.allowed_actions.includes(action)).map(action => <button key={action} className="rounded-lg border px-3 py-2 disabled:opacity-40" disabled={busy || !reason.trim()} onClick={() => { void command(action.replaceAll("_", "-")); }}>{action.replaceAll("_", " ")}</button>)}</div></section>}
+    {canPrepare && ["close", "hold", "reopen_for_review"].some(action => deal.allowed_actions.includes(action)) && (
+      <section className="space-y-3 rounded-2xl border bg-white p-5">
+        <div>
+          <label htmlFor="workflow-reason-input" className="block text-sm font-medium text-neutral-800">
+            Reason for workflow change
+          </label>
+          <p className="mt-0.5 text-xs text-neutral-500">
+            {!deal.allowed_actions.includes("confirm") && deal.allowed_actions.includes("reopen_for_review")
+              ? "A reason is required to change workflow status or reopen this order for review before re-evaluating."
+              : "Enter a reason before initiating a workflow transition for this order."}
+          </p>
+        </div>
+        <input
+          id="workflow-reason-input"
+          placeholder="e.g. Updating buyer terms and recalculating cash flow feasibility"
+          className={fieldClass}
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          {["reopen_for_review", "hold", "close"].filter(action => deal.allowed_actions.includes(action)).map(action => (
+            <button
+              key={action}
+              className="rounded-lg border px-3 py-2 disabled:opacity-40 transition-colors hover:bg-neutral-50"
+              disabled={busy || !reason.trim()}
+              onClick={() => { void command(action.replaceAll("_", "-")); }}
+            >
+              {action.replaceAll("_", " ")}
+            </button>
+          ))}
+          {!reason.trim() && (
+            <span className="text-xs text-amber-700 italic ml-1">
+              * Provide a reason above to enable these actions
+            </span>
+          )}
+        </div>
+      </section>
+    )}
     <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : review?.snapshot_hash ? <p className="mt-2 text-sm text-neutral-600">Inputs and source versions are ready for confirmation.</p> : <div role="status" aria-busy="true" className="mt-3 space-y-2"><span className="sr-only">Loading review…</span><Skeleton className="h-4 w-64" /><Skeleton className="h-4 w-48" /></div>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
     <Link className="inline-block rounded-lg border bg-white px-4 py-2 underline" href={`/deals/${dealId}/negotiate?businessId=${businessId}`}>What-if and negotiation preparation</Link>
     {evaluation && (
@@ -145,5 +241,9 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         />
       </section>
     )}
-    </>}</div></main>;
+    </>
+  )}
+      </div>
+    </main>
+  );
 }
