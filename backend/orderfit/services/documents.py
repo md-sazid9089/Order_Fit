@@ -14,9 +14,11 @@ import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from threading import BoundedSemaphore
 
 from orderfit.agent.guards.injection import scan
+from orderfit.services.language import detect
 
 PARSER_VERSION = "p4.2"
 MAX_PAGES = 50
@@ -169,6 +171,8 @@ def _norm(value: str) -> str:
 NUMERIC_FIELDS = {"order_value_minor", "opening_cash_minor", "payment_days"}
 DATE_FIELDS = {"order_date", "invoice_date", "delivery_date"}
 BASIS_FIELDS = {"payment_basis"}
+_LEXICON_PATH = Path(__file__).parents[3] / "data" / "ai_workflow" / "lexicon" / "payment_basis.json"
+PAYMENT_BASIS_LEXICON = json.loads(_LEXICON_PATH.read_text(encoding="utf-8"))
 # Group-separated (1,234 / 1,00,000) or plain numbers, never a fragment of a longer number.
 _NUMBER = re.compile(r"(?<![\d.,])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?![\d])")
 
@@ -182,6 +186,15 @@ def _ascii_numerals(value: str) -> str:
         except ValueError:
             output.append({"٫": ".", "٬": ","}.get(char, char))
     return "".join(output)
+_EUROPEAN = re.compile(r"(?<![\d.,])\d{1,3}(?:\.\d{3})+,\d{1,2}(?!\d)")
+
+
+def _european_grouping(value: str) -> str:
+    """Rewrite 1.234,56 as 1,234.56 (same length). Only a token with both separators in
+    that order is converted; a lone 1.234 stays as written and is never guessed."""
+    return _EUROPEAN.sub(lambda m: m.group().translate({46: 44, 44: 46}), value)
+
+
 _MINUS = r"\-\u2212\u2012\u2013\u2014\ufe63\uff0d"
 _CURRENCY_MARKER = r"(?:\b(?:bdt|usd|eur|gbp)\b|[$€£৳])"
 _NEGATIVE_PREFIX = re.compile(
@@ -200,7 +213,8 @@ def _numbers_in(quote: str, page_text: str) -> set[Decimal]:
     source sign or select only a numeric substring (100 from 1000, for example).
     Whitespace/case normalization matches the existing quote-presence contract.
     """
-    source, quoted = _ascii_numerals(_norm(page_text)), _ascii_numerals(_norm(quote))
+    source = _european_grouping(_ascii_numerals(_norm(page_text)))
+    quoted = _european_grouping(_ascii_numerals(_norm(quote)))
     values: set[Decimal] = set()
     tokens = iter(_NUMBER.finditer(source))
     token = next(tokens, None)
@@ -241,11 +255,24 @@ def quote_supports(field_name: str, value: str | None, quote: str, page_text: st
         if field_name == "payment_days":
             return "ok" if Decimal(value) in _numbers_in(quote, page_text) else "quote_mismatch"
         # minor units: a quoted token must equal the major amount (value / 100) exactly
-        return "ok" if Decimal(value) / 100 in _numbers_in(quote, page_text) else "quote_mismatch"
+        if Decimal(value) / 100 not in _numbers_in(quote, page_text):
+            return "quote_mismatch"
+        # Two different stated totals (for example quoted vs revised) need a person.
+        return "ambiguous" if field_name == "order_value_minor" and len(_stated_totals(page_text)) > 1 else "ok"
     if field_name in BASIS_FIELDS:
-        words = re.sub(r"[\W_]+", " ", value.lower()).strip()
-        found = re.search(rf"(?<!\w){re.escape(words)}(?!\w)", re.sub(r"[\W_]+", " ", quote.lower()))
-        return "ok" if words and found else "quote_mismatch"
+        language, _script, supported = detect(quote)
+        # The source is authoritative.  A model's English enum is accepted only
+        # when a reviewed source-language term establishes that enum.
+        words = PAYMENT_BASIS_LEXICON.get(language, {}).get(value, []) if supported else []
+        normalized_quote = _norm(quote)
+        if any(_norm(word) in normalized_quote for word in words):
+            return "ok"
+        # A reviewed term for a different trigger contradicts the claimed one.
+        others = (
+            word for basis, group in PAYMENT_BASIS_LEXICON.get(language, {}).items()
+            if basis != value for word in group
+        ) if supported else ()
+        return "quote_mismatch" if any(_norm(word) in normalized_quote for word in others) else "ambiguous"
     if field_name in DATE_FIELDS:
         try:
             wanted = date.fromisoformat(value)
@@ -254,39 +281,98 @@ def quote_supports(field_name: str, value: str | None, quote: str, page_text: st
         found, ambiguous = _dates_in(quote)
         if wanted not in found:
             return "quote_mismatch"
-        return "ambiguous" if ambiguous else "ok"
+        # A quote carrying several dates cannot say which one the field means.
+        return "ambiguous" if ambiguous or _date_token_count(quote) > 1 else "ok"
     return "ambiguous"
 
 
 MONTHS = {m: i for i, m in enumerate(
     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
+# Reviewed month names for the supported scripts (NFKC-normalised, matched after the
+# same normalisation).  Month order stays explicit; numeric day/month order never is.
+_LOCAL_MONTH_NAMES = {
+    1: ["জানুয়ারি", "জানুয়ারী", "जनवरी"],
+    2: ["ফেব্রুয়ারি", "ফেব্রুয়ারী", "फरवरी", "फ़रवरी"],
+    3: ["মার্চ", "मार्च"],
+    4: ["এপ্রিল", "अप्रैल", "अप्रेल"],
+    5: ["মে", "मई"],
+    6: ["জুন", "जून"],
+    7: ["জুলাই", "जुलाई"],
+    8: ["আগস্ট", "अगस्त"],
+    9: ["সেপ্টেম্বর", "सितंबर", "सितम्बर"],
+    10: ["অক্টোবর", "अक्टूबर", "अक्तूबर"],
+    11: ["নভেম্বর", "नवंबर", "नवम्बर"],
+    12: ["ডিসেম্বর", "दिसंबर", "दिसम्बर"],
+}
+_LOCAL_MONTHS = {
+    unicodedata.normalize("NFKC", name).casefold(): month
+    for month, names in _LOCAL_MONTH_NAMES.items() for name in names
+}
+_LOCAL_ALT = "|".join(sorted(map(re.escape, _LOCAL_MONTHS), key=len, reverse=True))
+_ENGLISH_ALT = "|".join(MONTHS)
+
+
+def _date_matches(quote: str):
+    """Yield (span, (y, m, d), numeric_order_unclear) for each date token in the quote."""
+    quote = unicodedata.normalize("NFKC", _ascii_numerals(quote)).casefold()
+    for m in re.finditer(r"(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)", quote):
+        yield m.span(), [(int(m[1]), int(m[2]), int(m[3]))], False
+    for m in re.finditer(r"(?<![\d./-])(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})(?![\d./-])", quote):
+        a, b, y = int(m[1]), int(m[2]), int(m[3])
+        yield m.span(), [(y, b, a), (y, a, b)], a <= 12 and b <= 12 and a != b
+    for m in re.finditer(rf"(?<!\d)(\d{{1,2}})(?:st|nd|rd|th)?\s+({_ENGLISH_ALT})[a-z]*\.?,?\s+(\d{{4}})(?!\d)", quote):
+        yield m.span(), [(int(m[3]), MONTHS[m[2]], int(m[1]))], False
+    for m in re.finditer(rf"(?<![a-z])({_ENGLISH_ALT})[a-z]*\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})(?!\d)", quote):
+        yield m.span(), [(int(m[3]), MONTHS[m[1]], int(m[2]))], False
+    for m in re.finditer(rf"(?<!\d)(\d{{1,2}})\s*({_LOCAL_ALT})\s*,?\s*(\d{{4}})(?!\d)", quote):
+        yield m.span(), [(int(m[3]), _LOCAL_MONTHS[m[2]], int(m[1]))], False
+    for m in re.finditer(rf"({_LOCAL_ALT})\s*(\d{{1,2}})\s*,?\s*(\d{{4}})(?!\d)", quote):
+        yield m.span(), [(int(m[3]), _LOCAL_MONTHS[m[1]], int(m[2]))], False
+    for m in re.finditer(r"(?<!\d)(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?", quote):
+        yield m.span(), [(int(m[1]), int(m[2]), int(m[3]))], False
 
 
 def _dates_in(quote: str) -> tuple[set[date], bool]:
     """Every calendar date the quote could mean, and whether numeric day/month order is unclear."""
     found: set[date] = set()
     ambiguous = False
-
-    def add(y, m, d):
-        try:
-            found.add(date(y if y > 99 else 2000 + y, m, d))
-        except ValueError:
-            pass
-
-    for m in re.finditer(r"\b(\d{4})-(\d{2})-(\d{2})\b", quote):
-        add(int(m[1]), int(m[2]), int(m[3]))
-    for m in re.finditer(r"\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b", quote):
-        a, b, y = int(m[1]), int(m[2]), int(m[3])
-        add(y, b, a)  # day-first
-        add(y, a, b)  # month-first
-        if a <= 12 and b <= 12 and a != b:
-            ambiguous = True
-    names = "|".join(MONTHS)
-    for m in re.finditer(rf"(\d{{1,2}})(?:st|nd|rd|th)?\s+({names})[a-z]*\.?,?\s+(\d{{4}})", quote, re.I):
-        add(int(m[3]), MONTHS[m[2].lower()], int(m[1]))
-    for m in re.finditer(rf"({names})[a-z]*\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})", quote, re.I):
-        add(int(m[3]), MONTHS[m[1].lower()], int(m[2]))
+    for _span, options, unclear in _date_matches(quote):
+        ambiguous |= unclear
+        for y, m, d in options:
+            try:
+                found.add(date(y if y > 99 else 2000 + y, m, d))
+            except ValueError:
+                pass
     return found, ambiguous
+
+
+def _date_token_count(quote: str) -> int:
+    """Distinct (non-overlapping) date expressions in the quote."""
+    spans = sorted(span for span, _options, _unclear in _date_matches(quote))
+    count, end = 0, -1
+    for start, stop in spans:
+        if start >= end:
+            count += 1
+            end = stop
+    return count
+
+
+_TOTAL = re.compile(
+    r"(?<![a-z])total(?:\s+(?:amount|due|value|price))?\s*[:=\-]?\s*"
+    r"(?:bdt|usd|eur|gbp|[$€£৳₹¥])?\s*(\d[\d.,]*\d|\d)"
+)
+
+
+def _stated_totals(page_text: str) -> set[Decimal]:
+    """Distinct figures labelled 'total' in the page; only used to force human review."""
+    text = _european_grouping(_ascii_numerals(_norm(page_text)))
+    values: set[Decimal] = set()
+    for match in _TOTAL.finditer(text):
+        try:
+            values.add(Decimal(match[1].replace(",", "")))
+        except InvalidOperation:
+            continue
+    return values
 
 
 def injection_flags(texts: list[str]) -> list[str]:

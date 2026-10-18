@@ -159,7 +159,11 @@ class DocumentRepository:
             {"b": business_id, "d": deal_id},
         ).mappings().all()
         candidates = c.execute(
-            text("SELECT * FROM extraction_candidate WHERE business_id=:b AND deal_id=:d ORDER BY created_at, id"),
+            text(
+                "SELECT c.*, r.llm_mode AS run_mode, r.model AS run_model FROM extraction_candidate c"
+                " JOIN extraction_run r ON r.business_id=c.business_id AND r.id=c.run_id"
+                " WHERE c.business_id=:b AND c.deal_id=:d ORDER BY c.created_at, c.id"
+            ),
             {"b": business_id, "d": deal_id},
         ).mappings().all()
         out = []
@@ -175,6 +179,11 @@ class DocumentRepository:
                     confidence=float(cand["confidence"]),
                     source_role=cand["source_role"],
                     flags=[],
+                    provenance=cand["run_mode"] if cand["run_mode"] in {"recorded", "live"} else None,
+                    model=cand["run_model"],
+                    page_language=cand["page_language"],
+                    page_script=cand["page_script"],
+                    gloss_en=cand["gloss_en"],
                 )
                 for cand in candidates
                 if cand["document_id"] == f["document_id"] and cand["field"] == f["field"]
