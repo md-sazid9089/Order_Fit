@@ -384,12 +384,22 @@ function SkeletonChart({
 }
 
 /**
- * Complete Dashboard / Deals Pipeline skeleton (cards + status banner + table).
+ * Complete Deals Pipeline skeleton matching the exact page layout:
+ * Header + 4 Metric KPI Cards + Critical Status Banner + Tabs & Search + 10-Row Order Table + Pagination Bar.
  */
 function SkeletonDashboard({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const tableHeaders = [
+    "Order Reference",
+    "Financials",
+    "Timeline & Terms",
+    "Engine Verdict",
+    "Decision Status",
+    "Action",
+  ];
+
   return (
     <div
       data-slot="skeleton-dashboard"
@@ -402,8 +412,12 @@ function SkeletonDashboard({
 
       {/* Top Header Controls Bar */}
       <div className="flex items-center justify-between gap-4">
-        <Skeleton className="h-8 w-44 rounded-xl" />
-        <Skeleton className="h-8 w-24 rounded-xl" />
+        <div>
+          <Skeleton className="h-8 w-44 rounded-xl" />
+        </div>
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-8 w-20 rounded-xl" />
+        </div>
       </div>
 
       {/* 4 Summary Metric Cards */}
@@ -417,25 +431,86 @@ function SkeletonDashboard({
       {/* Status Alert Banner */}
       <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div className="space-y-1.5 flex-1 min-w-0 max-w-full">
-          <Skeleton className="h-4 w-48" />
-          <Skeleton className="h-3 w-80 max-w-full" />
+          <Skeleton className="h-4 w-52" />
+          <Skeleton className="h-3.5 w-96 max-w-full" />
         </div>
-        <Skeleton className="h-8 w-28 rounded-xl shrink-0" />
+        <Skeleton className="h-9 w-36 rounded-xl shrink-0" />
       </div>
 
       {/* Tabs and Search Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-8 w-20 rounded-xl" />
-          <Skeleton className="h-8 w-28 rounded-xl" />
-          <Skeleton className="h-8 w-32 rounded-xl" />
-          <Skeleton className="h-8 w-24 rounded-xl" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5 p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl">
+          <Skeleton className="h-7 w-20 rounded-lg" />
+          <Skeleton className="h-7 w-28 rounded-lg" />
+          <Skeleton className="h-7 w-32 rounded-lg" />
+          <Skeleton className="h-7 w-24 rounded-lg" />
         </div>
-        <Skeleton className="h-9 w-64 rounded-xl" />
+        <Skeleton className="h-9 w-full md:w-80 rounded-xl" />
       </div>
 
-      {/* Data Table */}
-      <SkeletonTable rows={6} columns={6} />
+      {/* Actual 10-Row Deals Data Table */}
+      <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-xs">
+          <thead>
+            <tr className="border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
+              {tableHeaders.map((h, i) => (
+                <th key={i} className="px-4 py-3 font-semibold">
+                  <Skeleton className="h-3 w-20" />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
+            {Array.from({ length: 10 }).map((_, r) => (
+              <tr key={r} className="align-top">
+                {/* Col 1: Order Reference + Customer */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-36" />
+                </td>
+
+                {/* Col 2: Order Value + Profit */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </td>
+
+                {/* Col 3: Delivery + Terms */}
+                <td className="px-4 py-4 space-y-1.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-3 w-20" />
+                </td>
+
+                {/* Col 4: Engine Verdict */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-3.5 w-48" />
+                </td>
+
+                {/* Col 5: Decision Status Pill */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </td>
+
+                {/* Col 6: Action Button */}
+                <td className="px-4 py-4">
+                  <Skeleton className="h-8 w-28 rounded-xl" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Actual Pagination Bar Skeleton */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <Skeleton className="h-4 w-44" />
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-8 w-20 rounded-xl" />
+          <Skeleton className="size-8 rounded-xl" />
+          <Skeleton className="size-8 rounded-xl" />
+          <Skeleton className="h-8 w-16 rounded-xl" />
+        </div>
+      </div>
     </div>
   );
 }
