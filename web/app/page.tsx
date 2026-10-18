@@ -9,7 +9,6 @@ import { OldVsNewWay } from "@/components/landing/old-vs-new-way";
 import { CompetitiveMatrix } from "@/components/landing/competitive-matrix";
 import { OrderSimulator } from "@/components/landing/order-simulator";
 import { FaqSection } from "@/components/landing/faq-section";
-import { CustomerStories } from "@/components/landing/customer-stories";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -66,11 +65,6 @@ export default function Home() {
         {/* Section 9: Frequently Asked Questions */}
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <FaqSection />
-        </ScrollReveal>
-
-        {/* Section 10: Customer Stories */}
-        <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
-          <CustomerStories />
         </ScrollReveal>
 
         {/* Section 11: Insights Newsletter CTA */}

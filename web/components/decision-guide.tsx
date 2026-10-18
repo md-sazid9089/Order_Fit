@@ -43,7 +43,7 @@ function GuideFindingList({ title, findings }: { title: string; findings: Return
   return <div>
     <h3 className="font-medium">{title}</h3>
     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-700">
-      {findings.map(finding => <li key={`${finding.code}:${finding.message}`}>{finding.code ? `${finding.code}: ` : ""}{finding.message}</li>)}
+      {findings.map(finding => <li key={`${finding.code}:${finding.message}`}>{finding.message}</li>)}
     </ul>
   </div>;
 }

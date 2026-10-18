@@ -15,5 +15,5 @@ interface AdminSidebarProps {
 export function AdminSidebar({
   clusterStatus = "Operational",
 }: AdminSidebarProps) {
-  return <AppSidebar variant="admin" companyName="OrderFit Control" currency="USD ($)" />;
+  return <AppSidebar variant="admin" companyName="OrderFit Control" />;
 }

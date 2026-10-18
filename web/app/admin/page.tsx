@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatMinor } from "@/lib/approval-model";
 import { getSession, getBusiness, listMembers } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -35,7 +36,7 @@ interface DatabaseTelemetry {
   workerActive: boolean;
   totalUsers: number;
   totalOrders: number;
-  totalPipelineMinor: number;
+  pipelineLabel: string;
   activeTenants: number;
   currency: string;
 }
@@ -82,8 +83,8 @@ export default function AdminOverviewPage() {
       const memberships = sess.memberships ?? [];
       let userCount = 0;
       let orderCount = 0;
-      let pipelineSum = 0;
-      let defaultCurrency = "USD";
+      const pipelineByCurrency = new Map<string, bigint>();
+      let unreadTenants = 0;
 
       await Promise.all(
         memberships.map(async (m) => {
@@ -94,18 +95,16 @@ export default function AdminOverviewPage() {
               getBusiness(m.business_id).catch(() => null),
             ]);
 
+            if (!membersRes || !dealsRes) unreadTenants += 1;
             if (membersRes?.items) {
               userCount += membersRes.items.length;
             }
             if (dealsRes?.items) {
               orderCount += dealsRes.items.length;
               for (const deal of dealsRes.items) {
-                const amount = Number(deal.order_value_minor) || 0;
-                pipelineSum += amount;
+                const cur = deal.currency || bizProfile?.currency || "";
+                if (deal.order_value_minor && /^\d+$/.test(deal.order_value_minor)) pipelineByCurrency.set(cur, (pipelineByCurrency.get(cur) ?? BigInt(0)) + BigInt(deal.order_value_minor));
               }
-            }
-            if (bizProfile?.currency) {
-              defaultCurrency = bizProfile.currency;
             }
           } catch {
             // Ignore individual business read failures
@@ -118,11 +117,11 @@ export default function AdminOverviewPage() {
         schemaCurrent: schemaOk,
         storageWritable: storageOk,
         workerActive: workerOk,
-        totalUsers: userCount > 0 ? userCount : memberships.length,
+        totalUsers: userCount,
         totalOrders: orderCount,
-        totalPipelineMinor: pipelineSum,
+        pipelineLabel: pipelineByCurrency.size ? [...pipelineByCurrency].map(([c, v]) => formatMinor(v.toString(), c)).join(" · ") : "none recorded",
         activeTenants: memberships.length,
-        currency: defaultCurrency,
+        currency: [...pipelineByCurrency.keys()].join("/"),
       });
     } catch {
       router.replace("/auth/signin");
@@ -138,7 +137,7 @@ export default function AdminOverviewPage() {
     setIsVerifying(true);
     await loadData();
     setIsVerifying(false);
-    setToastMessage("Database and cluster readiness probe verified live from PostgreSQL.");
+    setToastMessage("Readiness probe re-run. Results are shown above.");
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -307,12 +306,10 @@ export default function AdminOverviewPage() {
               <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-1.5">
                 <DollarSign className="size-4.5 text-[#1E2021]" />
                 <span>
-                  {telemetry.totalPipelineMinor > 0
-                    ? `$${(telemetry.totalPipelineMinor / 100).toLocaleString()}`
-                    : "$0.00"}
+                  {telemetry.pipelineLabel}
                 </span>
               </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">Integer precision minor units</div>
+              <div className="text-[11px] text-[#525252] mt-0.5">Per tenant currency; first 100 orders per tenant</div>
             </div>
           </div>
 

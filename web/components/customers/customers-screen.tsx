@@ -78,7 +78,7 @@ function Invoices({ customer }: { customer: CustomerView }) {
     e.preventDefault();
     if (!parsed || parsed.errors.length || !parsed.invoices.length || revision === undefined) return;
     const result = await run(async () => importInvoices(businessId, customer.id, { expected_financial_revision: revision, invoices: parsed.invoices }), `Imported ${parsed.invoices.length} invoices.`);
-    if (result.ok) { setCsv(""); void queryClient.invalidateQueries({ queryKey: invoicesKey }); void queryClient.invalidateQueries({ queryKey: key("business-profile") }); } // the import bumped the revision; reload it so a repeat attempt is judged on its content, not reported as a stale revision
+    if (result.ok) { setCsv(""); void queryClient.invalidateQueries({ queryKey: invoicesKey }); void queryClient.invalidateQueries({ queryKey: key("business-profile") }); void queryClient.invalidateQueries({ queryKey: key("history", customer.id) }); } // the import bumped the revision; reload it so a repeat attempt is judged on its content, not reported as a stale revision
   }
   return <section className={panel} aria-labelledby="invoices-heading">
     <h2 id="invoices-heading" className="text-lg font-semibold">Invoices</h2>

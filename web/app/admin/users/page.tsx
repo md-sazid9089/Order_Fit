@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, listMembers, changeRole, createInvitation, revokeMember, getBusiness } from "@/lib/p7-api";
-import { ROLES, buildInvitation, buildRevocation, buildRoleChange, roleLabel, type Role } from "@/lib/p7-model";
+import { ROLES, buildInvitation, buildRevocation, buildRoleChange, describeP7Error, invitationLink, roleLabel, type Role } from "@/lib/p7-model";
 import type { Member, SessionView } from "@/lib/generated-api";
 import {
   Users,
@@ -175,14 +175,13 @@ export default function AdminUsersPage() {
       await changeRole(
         editingUser.businessId,
         editingUser.userId,
-        buildRoleChange({ version: editingUser.version }, editRole, 0)
+        buildRoleChange({ version: editingUser.version }, editRole, (await getBusiness(editingUser.businessId)).financial_revision)
       );
       showToast(`Database role updated to ${roleLabel(editRole)} for ${editingUser.fullName}`);
       setEditingUser(null);
       await loadDatabaseUsers();
-    } catch {
-      showToast("Role update committed to database.");
-      setEditingUser(null);
+    } catch (e) {
+      showToast(`Role was not changed. ${describeP7Error(e).message}`);
       await loadDatabaseUsers();
     } finally {
       setEditBusy(false);
@@ -197,16 +196,14 @@ export default function AdminUsersPage() {
       await revokeMember(
         revokingUser.businessId,
         revokingUser.userId,
-        buildRevocation({ version: revokingUser.version }, revokeReason, 0)
+        buildRevocation({ version: revokingUser.version }, revokeReason, (await getBusiness(revokingUser.businessId)).financial_revision)
       );
       showToast(`Access revoked in database for ${revokingUser.fullName}`);
       setRevokingUser(null);
       setRevokeReason("");
       await loadDatabaseUsers();
-    } catch {
-      showToast("Revocation request submitted to database.");
-      setRevokingUser(null);
-      setRevokeReason("");
+    } catch (e) {
+      showToast(`Access was not revoked. ${describeP7Error(e).message}`);
       await loadDatabaseUsers();
     } finally {
       setRevokeBusy(false);
@@ -218,16 +215,14 @@ export default function AdminUsersPage() {
     if (!newEmail.trim() || !newTenantId) return;
     setProvisionBusy(true);
     try {
-      await createInvitation(newTenantId, buildInvitation(newEmail, newRole, 0));
-      showToast(`Invitation sent and recorded in database for ${newEmail}`);
+      const created = await createInvitation(newTenantId, buildInvitation(newEmail, newRole, (await getBusiness(newTenantId)).financial_revision));
+      const link = invitationLink(window.location.origin, created.invitation_url);
+      showToast(link ? `Invitation created for ${newEmail}. Nothing was emailed; share this one-time link yourself: ${link}` : `Invitation created for ${newEmail}. Nothing was emailed.`);
       setIsProvisionOpen(false);
       setNewEmail("");
       await loadDatabaseUsers();
-    } catch {
-      showToast(`Invitation generated for ${newEmail}`);
-      setIsProvisionOpen(false);
-      setNewEmail("");
-      await loadDatabaseUsers();
+    } catch (e) {
+      showToast(`No invitation was created. ${describeP7Error(e).message}`);
     } finally {
       setProvisionBusy(false);
     }
@@ -570,7 +565,7 @@ export default function AdminUsersPage() {
             <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-[#1E2021] font-display">Invite User to Organization</h3>
-                <p className="text-xs text-[#737373] mt-0.5">Creates a confirmed invitation record in the database.</p>
+                <p className="text-xs text-[#737373] mt-0.5">Creates an invitation record. Nothing is emailed; you share the one-time link.</p>
               </div>
               <button
                 type="button"
