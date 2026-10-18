@@ -51,6 +51,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 const LABELS: Record<string, string> = {
   "/overview": "Overview",
   "/deals": "Deals Pipeline",
+  "/deals/new": "New order",
+  "/deals/customers": "Customers",
   "/cash-flow": "Cash Flow Baseline",
   "/deals/sources": "Cash & Financing",
   "/payees": "Payees & Suppliers",
@@ -58,7 +60,8 @@ const LABELS: Record<string, string> = {
   "/useraccess": "User Management",
   "/users": "User Management",
   "/orders": "Orders Management",
-  "/admin": "Platform Overview",
+  "/settings": "Settings",
+  "/admin": "Admin Panel",
   "/admin/users": "User Management",
   "/admin/orders": "Orders Management",
   "/admin/tenants": "Tenant Namespaces",

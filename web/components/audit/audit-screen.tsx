@@ -10,7 +10,7 @@ import { Alert, Loading, NotPermitted, PageFrame, QueryError, button, field, pan
 /** The business's tamper-evident operation log (newest first) and its canonical export. Auditors, risk officers and owners only. */
 export function AuditScreen() {
   const { role } = useScoped();
-  return <PageFrame title="Audit log" intro="Every recorded action in this business, newest first, with the server's hash chain. Entries are append-only.">
+  return <PageFrame title="Operation Audit Log" intro="Every recorded action in this business, newest first, with the server's hash chain. Entries are append-only.">
     {can(role, "audit") ? <><Log /><Export /></> : <NotPermitted what="read the audit log" needs="Auditors, risk officers and owners can." />}
   </PageFrame>;
 }

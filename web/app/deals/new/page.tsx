@@ -197,7 +197,9 @@ export default function NewDealPage() {
               <span className="text-[#A3A3A3]">/</span>
               <span className="font-semibold text-[#1E2021] dark:text-white">Evaluate New Order</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">Evaluate New Order</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
+              Evaluate New Order
+            </h1>
           </div>
         </div>
 
