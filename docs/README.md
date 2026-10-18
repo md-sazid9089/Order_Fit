@@ -8,6 +8,7 @@ then follow its pointers to scoped instructions, the phase plan and current evid
 
 | Document | Contents |
 |---|---|
+| [manual_stress_testing_guide.md](manual_stress_testing_guide.md) | Exact UI steps, synthetic fixtures, manual concurrency/recovery checks and result template |
 | [engine.md](engine.md) | Algorithms, money rules, ranking, adding test cases |
 | [agent.md](agent.md) | Workflow, pause points, guards |
 | [initial_backend_implementation_plan.md](initial_backend_implementation_plan.md) | Backend contracts, implementation phases and acceptance gates |
