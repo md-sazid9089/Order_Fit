@@ -313,3 +313,20 @@ test("only verified accounts of the reply's own party are offered for clearing t
   assert.equal(m.eligibleBankAccounts(accounts, null).length, 0);
   assert.match(m.describeP7Error(apiError("NOT_A_BANK_CHANGE_REPLY", 409)).message, /bank change/);
 });
+
+test("audit and verification attribution shows the recorded member, not 'system'", () => {
+  const canonical = JSON.stringify([9, "b", null, "system", "11111111-2222-3333-4444-555555555555", "T3", "account_verified", "account", "completed", {}, "2030-01-01T00:00:00.000000Z"]);
+  const entry = m.parseAuditRow({ sequence: "9", canonical_text: canonical, row_hash: "aa", previous_hash: null });
+  assert.equal(entry.actorUser, "11111111-2222-3333-4444-555555555555");
+  assert.equal(m.auditActorLabel(entry, "someone-else"), "member 11111111");
+  assert.equal(m.auditActorLabel(entry, "11111111-2222-3333-4444-555555555555"), "you");
+  assert.equal(m.auditActorLabel({ actor: "system", actorUser: null }, "x"), "system");
+});
+
+test("document upload rejections have plain-language messages, not raw codes", () => {
+  for (const code of ["EMPTY_DOCUMENT", "UNSUPPORTED_MEDIA_TYPE", "MIME_MISMATCH", "KIND_MIME_MISMATCH", "REQUEST_TOO_LARGE"]) {
+    const { message } = m.describeP7Error({ name: "ApiError", code, status: 422 });
+    assert.ok(!message.includes(code), code);
+    assert.ok(message.length > 20, code);
+  }
+});
