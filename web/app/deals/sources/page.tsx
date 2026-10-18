@@ -54,8 +54,23 @@ export default function SourcesPage() {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <Link className="underline" href={`/deals?businessId=${businessId}`}>Saved orders</Link>
-        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Business cash and financing</h1>
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              Cash & Financing
+            </h1>
+          </div>
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              type="button"
+              onClick={() => reload()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}{error.startsWith("Saved, but") && <> <button type="button" className="underline" onClick={() => { setError(""); reload(); }}>Reload</button></>}</p>}
         {message && <p role="status" className="rounded-lg bg-green-50 p-3">{message}</p>}
     {!business && !error && (

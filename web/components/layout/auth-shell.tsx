@@ -135,7 +135,21 @@ export function AuthShell({ children }: { children: ReactNode }) {
   const links = navFor(scope.membership?.role);
   const current = activeHref(pathname, links);
   const canPrepare = can(scope.membership?.role, "prepare");
-  const title = links.find(l => l.href === current)?.label ?? "OrderFit";
+  const SIDEBAR_ROUTE_NAMES: Record<string, string> = {
+    "/overview": "Overview",
+    "/deals": "Deals Pipeline",
+    "/deals/new": "New order",
+    "/deals/customers": "Customers",
+    "/cash-flow": "Cash Flow Baseline",
+    "/deals/sources": "Cash & Financing",
+    "/payees": "Payees & Suppliers",
+    "/audit-log": "Operation Audit Log",
+    "/useraccess": "User Management",
+    "/users": "User Management",
+    "/settings": "Settings",
+    "/admin": "Admin Panel",
+  };
+  const title = (current && SIDEBAR_ROUTE_NAMES[current]) || SIDEBAR_ROUTE_NAMES[pathname] || links.find(l => l.href === current)?.label || "OrderFit";
   const isAdmin = Boolean(scope.session.is_platform_admin === true);
   return <ScopeContext.Provider value={scope}>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
@@ -143,7 +157,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
-            <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] font-display leading-tight">{title === "Orders" ? "Deals & Orders Pipeline" : title}</h1>
+            <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">{title}</h1>
             <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
               <ThemeToggle variant="icon" />
               {businessId && <NotificationBell />}

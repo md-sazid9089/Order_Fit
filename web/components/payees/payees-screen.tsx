@@ -18,7 +18,7 @@ export function PayeesScreen() {
   const { businessId, key, businessName } = useScoped();
   const payees = useCollection<PayeeView>(`/businesses/${businessId}/payees`);
   const business = useQuery({ queryKey: key("business-profile"), queryFn: () => getBusiness(businessId), retry: false });
-  return <PageFrame title="Payees and bank accounts" intro={<>{businessName}. Account numbers are never shown in full: only the last four characters are kept for display. A verified account means a person recorded evidence, not that a bank confirmed it. Nothing here moves money. Lenders are added under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
+  return <PageFrame title="Payees & Suppliers" intro={<>{businessName}. Account numbers are never shown in full: only the last four characters are kept for display. A verified account means a person recorded evidence, not that a bank confirmed it. Nothing here moves money. Lenders are added under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
     {payees.isPending && <Loading what="payees" />}
     {payees.isError && <QueryError error={payees.error} retry={() => void payees.refetch()} retrying={payees.isFetching} />}
     {payees.isSuccess && !payees.data.items.length && <p className={panel}>No payees are recorded for this business yet.</p>}

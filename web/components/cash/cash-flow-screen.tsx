@@ -26,7 +26,7 @@ export function CashFlowScreen() {
   const low = lowestBalance(rows);
   const currency = flow.data?.currency ?? "";
   const live = (events.data?.items ?? []).filter(e => !e.voided_at);
-  return <PageFrame title="Cash flow baseline" intro={<>Opening cash and dated baseline events saved for this business. Set opening cash and add events under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>. Correct or void an event below if your role allows. Amounts are decimal strings of minor units.</>}>
+  return <PageFrame title="Cash Flow Baseline" intro={<>Opening cash and dated baseline events saved for this business. Set opening cash and add events under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>. Correct or void an event below if your role allows. Amounts are decimal strings of minor units.</>}>
     <section className={panel} aria-labelledby="running-heading">
       <h2 id="running-heading" className="text-lg font-semibold">Running balance after each dated event</h2>
       <p className="text-sm text-neutral-700">This is the saved opening balance plus each baseline event in date order, with your cash reserve for comparison. It is a ledger view, not a forecast: it applies no customer delays or stress scenarios. Per-order stress analysis is on each order&apos;s result.</p>
