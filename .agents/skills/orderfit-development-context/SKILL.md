@@ -5,6 +5,16 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+18 October overview backend adds authenticated `GET /businesses/{business_id}/overview`
+under `/api/v1`, with one tenant-scoped aggregation query, integer money and the
+canonical daily sweep for posted portfolio delay projections. No frontend changes.
+Contract/data limitations and frontend integration work are documented in
+`docs/contracts/overview-frontend-handoff.md`; no multi-currency ledger, FX,
+historical balance comparisons or actual settlement evidence is invented. Use
+`contracts.export --backend-only` until the frontend owner updates browser types.
+Verification:634full backend tests pass;103final focused tests pass after DTO
+refinement. Browser contract sync remains pending. Details are in the overview
+entry in the backend progress file.
 18 October native FreeLLMPool integration atop `abf2c5f`:207 focused tests pass
 after reconciling concurrent Tier0/multilingual work. Four synthetic live smoke
 tasks and repeated persisted same-order extraction/review/confirm/evaluate/what-if

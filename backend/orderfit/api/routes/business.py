@@ -5,11 +5,12 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request
 
 from orderfit.api.deps import identity_service, mutation, session_token
-from orderfit.contracts.primitives import Page, RevisionReason
+from orderfit.contracts.primitives import Currency, Page, RevisionReason
 from orderfit.contracts.protocol import IdempotencyMaterial, canonical_hash
 from orderfit.contracts.resources import (
     BaselineView,
     BaselineWrite,
+    BusinessOverviewView,
     BusinessView,
     CashEventCreate,
     CashEventView,
@@ -22,11 +23,13 @@ from orderfit.contracts.resources import (
     OfferCreate,
     OfferView,
     OfferWrite,
+    OverviewTimeframe,
     PayeeCreate,
     PayeeView,
     PayeeWrite,
 )
 from orderfit.contracts.workflow import Series
+from orderfit.store.overview_repository import OverviewRepository
 from orderfit.store.repositories import (
     BusinessRepository,
     CashEventRepository,
@@ -38,6 +41,18 @@ from orderfit.store.repositories import (
 )
 
 router = APIRouter(prefix="/api/v1/businesses/{business_id}")
+
+
+@router.get("/overview", response_model=BusinessOverviewView, operation_id="business_overview_get")
+def get_overview(
+    business_id: UUID,
+    request: Request,
+    timeframe: OverviewTimeframe = "30d",
+    currency: Currency | None = None,
+):
+    service = identity_service(request)
+    with service.database.tenant(session_token(request), business_id, "read") as (c, _):
+        return OverviewRepository.get_overview(c, business_id, timeframe, currency)
 
 
 # --- Profile & Baseline ---
