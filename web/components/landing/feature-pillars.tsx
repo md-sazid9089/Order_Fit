@@ -44,32 +44,6 @@ export function FeaturePillars() {
               </p>
             </div>
 
-            {/* In-Card Visual Demonstration */}
-            <div className="rounded-2xl bg-[#F7F6F5] dark:bg-[#151718] p-4 border border-[#ECEAE4] dark:border-[#2E3235] my-2">
-              <div className="flex items-center justify-between text-xs font-semibold mb-2 font-sans">
-                <span className="text-[#1A1A1A] dark:text-[#F3F4F6]">Baseline Cash Trajectory</span>
-                <span className="text-rose-600 dark:text-rose-400 font-bold">Deficit: -$30,000</span>
-              </div>
-              <div className="space-y-1.5 text-xs text-[#526975] dark:text-[#9CA3AF] font-mono">
-                <div className="flex justify-between py-1 border-b border-[#ECEAE4] dark:border-[#2E3235]">
-                  <span>Opening Cash (Day 0):</span>
-                  <span className="font-semibold text-[#1A1A1A] dark:text-[#F3F4F6]">$45,000</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-[#ECEAE4] dark:border-[#2E3235] text-rose-600 dark:text-rose-400">
-                  <span>Materials Due (Day 15):</span>
-                  <span className="font-semibold">-$75,000</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-[#ECEAE4] dark:border-[#2E3235] text-rose-600 dark:text-rose-400">
-                  <span>Payroll Run (Day 30):</span>
-                  <span className="font-semibold">-$18,000</span>
-                </div>
-                <div className="flex justify-between py-1 text-emerald-700 dark:text-emerald-400">
-                  <span>Customer Pays (Day 45):</span>
-                  <span className="font-semibold">+$120,000</span>
-                </div>
-              </div>
-            </div>
-
             <div className="pt-4">
               <a
                 href="#simulator"
@@ -101,28 +75,6 @@ export function FeaturePillars() {
               </p>
             </div>
 
-            {/* In-Card Visual Demonstration */}
-            <div className="rounded-2xl bg-[#F7F6F5] dark:bg-[#151718] p-4 border border-[#ECEAE4] dark:border-[#2E3235] my-2">
-              <div className="flex items-center justify-between text-xs font-semibold mb-2 font-sans">
-                <span className="text-[#1A1A1A] dark:text-[#F3F4F6]">Document Matching</span>
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">2-Way Verified</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235]">
-                  <span className="text-[#526975] dark:text-[#9CA3AF] font-sans">Customer PO #4892:</span>
-                  <span className="font-semibold text-[#1A1A1A] dark:text-[#F3F4F6] font-sans">$120,000 · Net 45</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235]">
-                  <span className="text-[#526975] dark:text-[#9CA3AF] font-sans">Supplier Quote SQ-102:</span>
-                  <span className="font-semibold text-[#1A1A1A] dark:text-[#F3F4F6] font-sans">$75,000 · Net 15</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-[#EAF7EE] dark:bg-[#06241C] border border-[#B5F2C6]/60 dark:border-[#34D399]/30">
-                  <span className="text-[#004D3B] dark:text-[#34D399] font-semibold font-sans">True Landed Margin:</span>
-                  <span className="font-bold text-[#004D3B] dark:text-[#34D399] font-sans">37.5% ($45,000)</span>
-                </div>
-              </div>
-            </div>
-
             <div className="pt-4">
               <a
                 href="#simulator"
@@ -152,28 +104,6 @@ export function FeaturePillars() {
               <p className="font-sans text-[#526975] dark:text-[#9CA3AF] text-base leading-relaxed mb-6 font-normal">
                 When an order is profitable but strains cash reserves, compare customer deposits, supplier term extensions, and owner financing to find the best feasible path.
               </p>
-            </div>
-
-            {/* In-Card Visual Demonstration */}
-            <div className="rounded-2xl bg-[#F7F6F5] dark:bg-[#151718] p-4 border border-[#ECEAE4] dark:border-[#2E3235] my-2">
-              <div className="flex items-center justify-between text-xs font-semibold mb-2 font-sans">
-                <span className="text-[#1A1A1A] dark:text-[#F3F4F6]">Ranked Mitigation Options</span>
-                <span className="text-[#004D3B] dark:text-[#34D399] font-bold">Target: $20K Floor</span>
-              </div>
-              <div className="space-y-1.5 text-xs">
-                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-[#06241C] border border-emerald-200 dark:border-[#34D399]/40 flex justify-between items-center">
-                  <span className="font-medium text-emerald-900 dark:text-emerald-300 font-sans">1. 35% Customer Deposit ($42K)</span>
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 font-sans">Cost: $0</span>
-                </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] flex justify-between items-center">
-                  <span className="font-medium text-[#1A1A1A] dark:text-[#F3F4F6] font-sans">2. Shift Supplier to Net 30</span>
-                  <span className="font-semibold text-[#526975] dark:text-[#9CA3AF] font-sans">Cost: $0</span>
-                </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] flex justify-between items-center">
-                  <span className="font-medium text-[#1A1A1A] dark:text-[#F3F4F6] font-sans">3. $40K Working Capital Line</span>
-                  <span className="font-semibold text-[#526975] dark:text-[#9CA3AF] font-sans">Fee: $980</span>
-                </div>
-              </div>
             </div>
 
             <div className="pt-4">

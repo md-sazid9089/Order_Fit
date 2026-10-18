@@ -9,6 +9,7 @@ import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs"
 import { createDecisionExport, downloadExport } from "@/lib/p7-api";
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
 import { DecisionGuide } from "@/components/decision-guide";
+import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
 
 function DealDetailSkeleton() {
   return (
@@ -113,11 +114,36 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     {editing && <form onSubmit={save} className="space-y-4 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Edit order inputs</h2><label className="block text-sm">Policy and financing configuration<select className={fieldClass} value={editing.constraints_id} onChange={e => { const p = policies.find(p => p.id === e.target.value); if (p) setEditing({ ...editing, constraints_id: p.id, reserve_minor: p.reserve_minor }); }}>{!policies.some(p => p.id === editing.constraints_id) && <option value={editing.constraints_id}>Current saved policy (load more to inspect)</option>}{policies.map(p => <option key={p.id} value={p.id}>{p.is_default ? "Default" : "Saved"} policy · {p.strategy_space.offer_ids.length} offers · {p.id.slice(0, 8)}</option>)}</select></label><CollectionPages query={policyPages} noun="policies" /><ManualOrderInputs value={editing} onChange={setEditing} /><button className="rounded-lg bg-neutral-900 px-4 py-2 text-white" disabled={busy}>Save revised inputs</button><button type="button" className="ml-3 underline" onClick={() => setEditing(null)}>Cancel edit</button></form>}
     {canPrepare && ["close", "hold", "reopen_for_review"].some(action => deal.allowed_actions.includes(action)) && <section className="space-y-3 rounded-2xl border bg-white p-5"><label className="block text-sm">Reason for workflow change<input className={fieldClass} value={reason} onChange={e => setReason(e.target.value)} /></label><div className="flex flex-wrap gap-2">{["reopen_for_review", "hold", "close"].filter(action => deal.allowed_actions.includes(action)).map(action => <button key={action} className="rounded-lg border px-3 py-2 disabled:opacity-40" disabled={busy || !reason.trim()} onClick={() => { void command(action.replaceAll("_", "-")); }}>{action.replaceAll("_", " ")}</button>)}</div></section>}
     <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : review?.snapshot_hash ? <p className="mt-2 text-sm text-neutral-600">Inputs and source versions are ready for confirmation.</p> : <div role="status" aria-busy="true" className="mt-3 space-y-2"><span className="sr-only">Loading review…</span><Skeleton className="h-4 w-64" /><Skeleton className="h-4 w-48" /></div>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
-    <Link className="inline-block rounded-lg border bg-white px-4 py-2 underline" href={`/deals/${dealId}/negotiate?businessId=${businessId}`}>What-if and negotiation preparation</Link>{evaluation && <section className="space-y-4 rounded-2xl border bg-white p-5"><div><h2 className="text-xl font-semibold">Persisted evaluation</h2><p className="text-sm text-neutral-600">{evaluation.decision.replaceAll("_", " ")} · calculator {evaluation.calculator_version}{evaluation.is_stale ? " · stale" : ""}</p></div><DecisionGuide evaluation={evaluation} businessId={businessId} dealId={dealId} /><div className="grid gap-3 sm:grid-cols-2"><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">As offered · base lowest balance</p><strong>{evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_balance_minor ?? "Unavailable"} minor units</strong><p className="text-sm">Headroom: {evaluation.as_is.scenarios.find(x => x.scenario === "base")?.lowest_headroom_minor ?? "Unavailable"}</p></article><article className="rounded-xl bg-neutral-50 p-4"><p className="text-xs uppercase text-neutral-500">Recommended option</p><strong>{evaluation.recommended_option_key ?? "No recommendation"}</strong><p className="text-sm">{evaluation.ranked_candidates.length} ranked candidates</p></article></div><details><summary className="cursor-pointer text-sm underline">Inspect all exact financial results and warnings</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(evaluation, null, 2)}</pre></details><details><summary className="cursor-pointer text-sm underline">View saved cash series</summary><CashSeries key={evaluation.id} businessId={businessId} evaluationId={evaluation.id} options={[evaluation.as_is.option_key, ...evaluation.ranked_candidates.map(x => x.option_key)].filter((x, i, all) => all.indexOf(x) === i)} initialOption={evaluation.recommended_option_key ?? evaluation.as_is.option_key} /></details></section>}
+    <Link className="inline-block rounded-lg border bg-white px-4 py-2 underline" href={`/deals/${dealId}/negotiate?businessId=${businessId}`}>What-if and negotiation preparation</Link>
+    {evaluation && (
+      <section className="space-y-6">
+        <div className="rounded-2xl border bg-white p-5 space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">Persisted evaluation</h2>
+            <p className="text-sm text-neutral-600">
+              {evaluation.decision.replaceAll("_", " ")} · calculator {evaluation.calculator_version}{evaluation.is_stale ? " · stale" : ""}
+            </p>
+          </div>
+          <DecisionGuide evaluation={evaluation} businessId={businessId} dealId={dealId} />
+        </div>
+
+        {/* Beautiful Interactive Evaluation Inspector replacing raw JSON block */}
+        <DealEvaluationInspector
+          evaluation={evaluation}
+          businessId={businessId}
+          currency="USD"
+        />
+
+        {/* Beautiful Interactive Cash Series Ledger replacing plain textarea */}
+        <DealCashSeriesViewer
+          key={evaluation.id}
+          businessId={businessId}
+          evaluationId={evaluation.id}
+          options={[evaluation.as_is.option_key, ...evaluation.ranked_candidates.map(x => x.option_key)].filter((x, i, all) => all.indexOf(x) === i)}
+          initialOption={evaluation.recommended_option_key ?? evaluation.as_is.option_key}
+          currency="USD"
+        />
+      </section>
+    )}
     </>}</div></main>;
-}
-function CashSeries({ businessId, evaluationId, options, initialOption }: { businessId: string; evaluationId: string; options: string[]; initialOption: string }) {
-  const [option, setOption] = useState(initialOption); const [scenario, setScenario] = useState("base"); const [message, setMessage] = useState("Loading stored series...");
-  useEffect(() => { let active = true; const query = new URLSearchParams({ scenario, option_key: option }); get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(`/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`).then(series => { if (active) setMessage(series.points.map(p => `${p.date}: trough ${p.candidate_trough_minor}, reserve ${p.reserve_minor} (minor units)`).join("\n") || "No points saved."); }).catch(e => { if (active) setMessage(e.message); }); return () => { active = false; }; }, [businessId, evaluationId, option, scenario]);
-  return <div className="mt-3 space-y-2"><label className="block text-sm">Option<select className={fieldClass} value={option} onChange={e => { setMessage("Loading stored series..."); setOption(e.target.value); }}>{options.map(key => <option key={key}>{key}</option>)}</select></label><label className="block text-sm">Scenario<select className={fieldClass} value={scenario} onChange={e => { setMessage("Loading stored series..."); setScenario(e.target.value); }}>{["base", "downside", "severe"].map(item => <option key={item}>{item}</option>)}</select></label><pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-3 text-xs">{message}</pre></div>;
 }
