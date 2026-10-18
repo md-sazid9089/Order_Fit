@@ -4,6 +4,67 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { RotateCcw, AlertTriangle, CheckCircle2, ExternalLink, Factory } from "lucide-react";
 
+interface CustomRangeSliderProps {
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (val: number) => void;
+  color?: "emerald" | "amber";
+  ariaLabel: string;
+}
+
+function CustomRangeSlider({
+  min,
+  max,
+  step,
+  value,
+  onChange,
+  color = "emerald",
+  ariaLabel,
+}: CustomRangeSliderProps) {
+  const percentage = Math.round(((value - min) / (max - min)) * 100);
+  const fillColor = color === "amber" ? "#D97706" : "#004D3B";
+
+  return (
+    <div className="relative flex items-center w-full py-1">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={ariaLabel}
+        style={{
+          background: `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percentage}%, var(--border, #E5EBEA) ${percentage}%, var(--border, #E5EBEA) 100%)`,
+        }}
+        className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none transition-all
+          [&::-webkit-slider-thumb]:appearance-none
+          [&::-webkit-slider-thumb]:w-4.5
+          [&::-webkit-slider-thumb]:h-4.5
+          [&::-webkit-slider-thumb]:rounded-full
+          [&::-webkit-slider-thumb]:bg-white
+          [&::-webkit-slider-thumb]:border-2
+          [&::-webkit-slider-thumb]:border-[#1E2021]
+          [&::-webkit-slider-thumb]:shadow-xs
+          [&::-webkit-slider-thumb]:transition-transform
+          [&::-webkit-slider-thumb]:hover:scale-115
+          [&::-webkit-slider-thumb]:active:scale-95
+          [&::-moz-range-thumb]:w-4.5
+          [&::-moz-range-thumb]:h-4.5
+          [&::-moz-range-thumb]:rounded-full
+          [&::-moz-range-thumb]:bg-white
+          [&::-moz-range-thumb]:border-2
+          [&::-moz-range-thumb]:border-[#1E2021]
+          [&::-moz-range-thumb]:shadow-xs
+          [&::-moz-range-thumb]:transition-transform
+          [&::-moz-range-thumb]:hover:scale-115"
+      />
+    </div>
+  );
+}
+
 export function OrderSimulator() {
   // Slider states
   const [advancePercent, setAdvancePercent] = useState<number>(0);
@@ -13,7 +74,6 @@ export function OrderSimulator() {
 
   // ILLUSTRATION ONLY: made-up example numbers and simplified arithmetic. This is not the OrderFit engine; real results come
   // only from the backend's deterministic evaluation of saved, confirmed inputs. Do not extend this into a calculator.
-  // Example constants
   const STARTING_CASH = 45000;
   const RESERVE = 20000;
   const ORDER_REVENUE = 120000;
@@ -118,42 +178,42 @@ export function OrderSimulator() {
   };
 
   return (
-    <section id="simulator" className="py-20 md:py-28 bg-[#F7F6F5] text-[#1A1A1A]">
+    <section id="simulator" className="py-20 md:py-28 bg-[#F7F6F5] dark:bg-[#121314] text-[#1A1A1A] dark:text-[#F3F4F6] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Settle Section 9 Header */}
+        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-3">
+          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] mb-3">
             Illustration: how terms can move cash.
           </h2>
-          <p className="font-sans text-base sm:text-lg text-[#526975]">
+          <p className="font-sans text-base sm:text-lg text-[#526975] dark:text-[#9CA3AF]">
             Illustration only. Not an assessment: real results come from the saved, confirmed-input evaluation. Every number here is made up.{" "}
             <Link
               href="/auth/signup"
-              className="font-medium text-[#004D3B] underline underline-offset-4 hover:text-[#00382B]"
+              className="font-medium text-[#004D3B] dark:text-[#34D399] underline underline-offset-4 hover:text-[#00382B] dark:hover:text-[#6EE7B7]"
             >
               Request a live demo
             </Link>
           </p>
         </div>
 
-        {/* Settle Browser Window Container */}
-        <div className="rounded-3xl sm:rounded-4xl bg-white border border-[#ECEAE4] shadow-xl overflow-hidden w-full mx-auto">
+        {/* Clean, Human-Crafted Container without harsh box outlines */}
+        <div className="rounded-3xl sm:rounded-4xl bg-white dark:bg-[#181A1B] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.35)] overflow-hidden w-full mx-auto">
           
-          {/* Browser Window Header Chrome */}
-          <div className="bg-[#ECEAE4]/60 px-4 py-3 border-b border-[#ECEAE4] flex items-center justify-between">
+          {/* Top Window Bar - Soft, seamless, no harsh line */}
+          <div className="bg-[#FAF9F7] dark:bg-[#202223] px-5 py-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="size-3 rounded-full bg-[#E5EBEA] border border-[#DDD9D0]" />
-              <span className="size-3 rounded-full bg-[#E5EBEA] border border-[#DDD9D0]" />
-              <span className="size-3 rounded-full bg-[#E5EBEA] border border-[#DDD9D0]" />
+              <span className="size-2.5 rounded-full bg-[#E8E6E1] dark:bg-[#2E3235]" />
+              <span className="size-2.5 rounded-full bg-[#E8E6E1] dark:bg-[#2E3235]" />
+              <span className="size-2.5 rounded-full bg-[#E8E6E1] dark:bg-[#2E3235]" />
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-white border border-[#ECEAE4] text-xs text-[#526975] font-mono">
+            <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white dark:bg-[#181A1B] text-xs text-[#526975] dark:text-neutral-400 font-mono shadow-xs">
               <span className="size-1.5 rounded-full bg-emerald-500" />
               <span>Illustration (made-up numbers)</span>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-[#526975]">
+            <div className="flex items-center gap-1.5 text-xs text-[#526975] dark:text-neutral-400">
               <span className="hidden sm:inline font-sans">Open tour in new tab</span>
               <ExternalLink className="size-3.5" />
             </div>
@@ -162,62 +222,66 @@ export function OrderSimulator() {
           {/* Simulator Content Area */}
           <div className="p-6 sm:p-10">
             
-            {/* Presets Header with Real Product Image */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#ECEAE4] gap-4 mb-8">
+            {/* Header with Title and Presets */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 mb-8">
               <div className="flex items-center gap-3">
-                <div className="relative size-12 rounded-xl bg-gradient-to-br from-[#004D3B] via-[#023327] to-[#011C15] dark:from-[#005A45] dark:to-[#01261D] border border-[#004D3B]/30 dark:border-[#34D399]/20 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
+                <div className="relative size-12 rounded-2xl bg-gradient-to-br from-[#004D3B] via-[#023327] to-[#011C15] dark:from-[#005A45] dark:to-[#01261D] shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(52,211,153,0.25),transparent_70%)]" />
                   <Factory className="size-6 text-[#FFFAEC] relative z-10" />
                   <span className="absolute bottom-1 right-1 size-2 rounded-full bg-[#34D399] ring-2 ring-white dark:ring-[#1E2021] z-20" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#004D3B] uppercase tracking-wider font-sans block mb-0.5">
+                  <span className="text-xs font-bold text-[#004D3B] dark:text-[#34D399] uppercase tracking-wider font-sans block mb-0.5">
                     Illustration only
                   </span>
-                  <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight font-heading">
+                  <h3 className="text-lg font-bold text-[#1A1A1A] dark:text-white tracking-tight font-heading">
                     Example order: $120,000 (made-up)
                   </h3>
                 </div>
               </div>
 
-              {/* Strategy Preset Buttons */}
+              {/* Strategy Preset Buttons - Tactile, borderless pills */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => handlePreset("breach")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                     advancePercent === 0 && supplierExtensionDays === 0 && loanAmount === 0
-                      ? "bg-rose-100 text-rose-800 border border-rose-200"
-                      : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
+                      ? "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 shadow-xs"
+                      : "bg-[#FAF9F7] dark:bg-[#202223] text-[#526975] dark:text-neutral-400 hover:text-[#1A1A1A] dark:hover:text-white hover:bg-[#F2F0EB] dark:hover:bg-[#282A2C]"
                   }`}
                 >
                   Baseline Breach
                 </button>
                 <button
+                  type="button"
                   onClick={() => handlePreset("deposit")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                     advancePercent === 35
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
-                      : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
+                      ? "bg-[#004D3B] dark:bg-[#B5F2C6] text-[#FFFAEC] dark:text-[#00382B] shadow-xs"
+                      : "bg-[#FAF9F7] dark:bg-[#202223] text-[#526975] dark:text-neutral-400 hover:text-[#1A1A1A] dark:hover:text-white hover:bg-[#F2F0EB] dark:hover:bg-[#282A2C]"
                   }`}
                 >
                   35% Deposit Plan
                 </button>
                 <button
+                  type="button"
                   onClick={() => handlePreset("supplier")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                     supplierExtensionDays === 30
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
-                      : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
+                      ? "bg-[#004D3B] dark:bg-[#B5F2C6] text-[#FFFAEC] dark:text-[#00382B] shadow-xs"
+                      : "bg-[#FAF9F7] dark:bg-[#202223] text-[#526975] dark:text-neutral-400 hover:text-[#1A1A1A] dark:hover:text-white hover:bg-[#F2F0EB] dark:hover:bg-[#282A2C]"
                   }`}
                 >
                   Net 30 Supplier Shift
                 </button>
                 <button
+                  type="button"
                   onClick={() => handlePreset("loan")}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                     loanAmount === 40000
-                      ? "bg-[#004D3B] text-[#FFFAEC]"
-                      : "bg-[#F7F6F5] text-[#526975] hover:bg-[#ECEAE4]"
+                      ? "bg-[#004D3B] dark:bg-[#B5F2C6] text-[#FFFAEC] dark:text-[#00382B] shadow-xs"
+                      : "bg-[#FAF9F7] dark:bg-[#202223] text-[#526975] dark:text-neutral-400 hover:text-[#1A1A1A] dark:hover:text-white hover:bg-[#F2F0EB] dark:hover:bg-[#282A2C]"
                   }`}
                 >
                   $40K Working Capital
@@ -228,25 +292,24 @@ export function OrderSimulator() {
             {/* Main Interactive Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Sliders Control Column (5 Cols) */}
-              <div className="lg:col-span-5 space-y-6 bg-[#F7F6F5] p-6 rounded-3xl border border-[#ECEAE4]">
+              {/* Sliders Control Column (5 Cols) - Smooth soft background, no harsh wireframe border */}
+              <div className="lg:col-span-5 space-y-6 bg-[#FAF9F7] dark:bg-[#202223] p-6 sm:p-7 rounded-3xl">
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                    <span className="text-[#1A1A1A]">Customer Advance Deposit</span>
-                    <span className="font-mono text-[#004D3B] font-bold">
+                    <span className="text-[#1A1A1A] dark:text-white font-sans">Customer Advance Deposit</span>
+                    <span className="font-mono text-[#004D3B] dark:text-[#34D399] font-bold">
                       {advancePercent}% ({formatUSD((ORDER_REVENUE * advancePercent) / 100)})
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="50"
-                    step="5"
+                  <CustomRangeSlider
+                    min={0}
+                    max={50}
+                    step={5}
                     value={advancePercent}
-                    onChange={(e) => setAdvancePercent(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    onChange={setAdvancePercent}
+                    ariaLabel="Customer Advance Deposit"
                   />
-                  <div className="flex justify-between text-[10px] text-[#526975] mt-1">
+                  <div className="flex justify-between text-[11px] text-[#526975] dark:text-neutral-400 mt-1 font-sans">
                     <span>0% (Net 45)</span>
                     <span>25%</span>
                     <span>50%</span>
@@ -255,19 +318,18 @@ export function OrderSimulator() {
 
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                    <span className="text-[#1A1A1A]">Supplier Term Extension</span>
-                    <span className="font-mono text-[#004D3B] font-bold">+{supplierExtensionDays} Days</span>
+                    <span className="text-[#1A1A1A] dark:text-white font-sans">Supplier Term Extension</span>
+                    <span className="font-mono text-[#004D3B] dark:text-[#34D399] font-bold">+{supplierExtensionDays} Days</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="45"
-                    step="15"
+                  <CustomRangeSlider
+                    min={0}
+                    max={45}
+                    step={15}
                     value={supplierExtensionDays}
-                    onChange={(e) => setSupplierExtensionDays(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    onChange={setSupplierExtensionDays}
+                    ariaLabel="Supplier Term Extension"
                   />
-                  <div className="flex justify-between text-[10px] text-[#526975] mt-1">
+                  <div className="flex justify-between text-[11px] text-[#526975] dark:text-neutral-400 mt-1 font-sans">
                     <span>0 Days (Due Day 15)</span>
                     <span>+15 Days</span>
                     <span>+45 Days</span>
@@ -276,19 +338,19 @@ export function OrderSimulator() {
 
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                    <span className="text-[#1A1A1A]">Customer Late Payment Delay</span>
-                    <span className="font-mono text-amber-700 font-bold">+{customerDelayDays} Days Late</span>
+                    <span className="text-[#1A1A1A] dark:text-white font-sans">Customer Late Payment Delay</span>
+                    <span className="font-mono text-amber-700 dark:text-amber-400 font-bold">+{customerDelayDays} Days Late</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="45"
-                    step="5"
+                  <CustomRangeSlider
+                    min={0}
+                    max={45}
+                    step={5}
                     value={customerDelayDays}
-                    onChange={(e) => setCustomerDelayDays(Number(e.target.value))}
-                    className="w-full accent-amber-600 cursor-pointer"
+                    onChange={setCustomerDelayDays}
+                    color="amber"
+                    ariaLabel="Customer Late Payment Delay"
                   />
-                  <div className="flex justify-between text-[10px] text-[#526975] mt-1">
+                  <div className="flex justify-between text-[11px] text-[#526975] dark:text-neutral-400 mt-1 font-sans">
                     <span>0 Days (On-time)</span>
                     <span>+15 Days</span>
                     <span>+45 Days</span>
@@ -297,19 +359,18 @@ export function OrderSimulator() {
 
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
-                    <span className="text-[#1A1A1A]">Working Capital Line</span>
-                    <span className="font-mono text-[#004D3B] font-bold">{formatUSD(loanAmount)}</span>
+                    <span className="text-[#1A1A1A] dark:text-white font-sans">Working Capital Line</span>
+                    <span className="font-mono text-[#004D3B] dark:text-[#34D399] font-bold">{formatUSD(loanAmount)}</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="60000"
-                    step="10000"
+                  <CustomRangeSlider
+                    min={0}
+                    max={60000}
+                    step={10000}
                     value={loanAmount}
-                    onChange={(e) => setLoanAmount(Number(e.target.value))}
-                    className="w-full accent-[#004D3B] cursor-pointer"
+                    onChange={setLoanAmount}
+                    ariaLabel="Working Capital Line"
                   />
-                  <div className="flex justify-between text-[10px] text-[#526975] mt-1">
+                  <div className="flex justify-between text-[11px] text-[#526975] dark:text-neutral-400 mt-1 font-sans">
                     <span>$0</span>
                     <span>$30,000</span>
                     <span>$60,000</span>
@@ -318,8 +379,9 @@ export function OrderSimulator() {
 
                 <div className="pt-2">
                   <button
+                    type="button"
                     onClick={() => handlePreset("breach")}
-                    className="inline-flex items-center gap-1.5 text-xs text-[#526975] hover:text-[#1A1A1A] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#526975] dark:text-neutral-400 hover:text-[#1A1A1A] dark:hover:text-white transition-colors cursor-pointer border-0 bg-transparent p-0 font-sans"
                   >
                     <RotateCcw className="size-3" />
                     <span>Reset to baseline order conditions</span>
@@ -330,27 +392,27 @@ export function OrderSimulator() {
               {/* Dynamic Results & Visual Timeline (7 Cols) */}
               <div className="lg:col-span-7 space-y-6">
                 
-                {/* Status Callout Card */}
+                {/* Status Callout - Soft tonal tint, zero harsh borders */}
                 <div
-                  className={`p-5 rounded-3xl border transition-all ${
+                  className={`p-5 sm:p-6 rounded-3xl transition-all ${
                     simulation.isSafe
-                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
-                      : "bg-rose-50/80 border-rose-200 text-rose-900"
+                      ? "bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100"
+                      : "bg-rose-50/90 dark:bg-rose-950/40 text-rose-950 dark:text-rose-100"
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
                     {simulation.isSafe ? (
-                      <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     ) : (
-                      <AlertTriangle className="size-5 text-rose-600 shrink-0" />
+                      <AlertTriangle className="size-5 text-rose-600 dark:text-rose-400 shrink-0" />
                     )}
-                    <span className="font-bold text-sm sm:text-base">
+                    <span className="font-bold text-sm sm:text-base font-heading tracking-tight">
                       {simulation.isSafe
                         ? "Example: stays above the example reserve"
                         : "Example: falls below the example reserve"}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm leading-relaxed text-[#526975]">
+                  <p className="text-xs sm:text-sm leading-relaxed text-[#526975] dark:text-neutral-300 font-sans">
                     {simulation.isSafe
                       ? `Lowest cash point is ${formatUSD(simulation.lowestBalance)} on Day ${
                           simulation.lowestDay
@@ -361,74 +423,76 @@ export function OrderSimulator() {
                   </p>
                 </div>
 
-                {/* Live Key Numbers Banner */}
+                {/* Live Key Numbers Banner - Borderless clean metric cards */}
                 <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2 sm:gap-3">
-                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] dark:bg-[#202223] text-center min-w-0">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#526975] dark:text-neutral-400 block mb-1 font-sans">
                       Lowest Cash
                     </span>
                     <span
                       className={`text-base sm:text-lg md:text-xl font-bold font-neue-machina truncate block ${
                         simulation.lowestBalance < 0
-                          ? "text-rose-600"
+                          ? "text-rose-600 dark:text-rose-400"
                           : simulation.isSafe
-                          ? "text-emerald-700"
-                          : "text-amber-600"
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-amber-600 dark:text-amber-400"
                       }`}
                     >
                       {formatUSD(simulation.lowestBalance)}
                     </span>
                   </div>
 
-                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] dark:bg-[#202223] text-center min-w-0">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#526975] dark:text-neutral-400 block mb-1 font-sans">
                       Example Headroom
                     </span>
                     <span
                       className={`text-base sm:text-lg md:text-xl font-bold font-neue-machina truncate block ${
-                        simulation.headroom >= 0 ? "text-emerald-700" : "text-rose-600"
+                        simulation.headroom >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                       }`}
                     >
                       {formatUSD(simulation.headroom)}
                     </span>
                   </div>
 
-                  <div className="p-3 sm:p-4 rounded-2xl bg-[#F7F6F5] border border-[#ECEAE4] text-center min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-[#526975] block mb-1">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9F7] dark:bg-[#202223] text-center min-w-0">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#526975] dark:text-neutral-400 block mb-1 font-sans">
                       Example Profit
                     </span>
-                    <span className="text-base sm:text-lg md:text-xl font-bold font-neue-machina text-[#004D3B] truncate block">
+                    <span className="text-base sm:text-lg md:text-xl font-bold font-neue-machina text-[#004D3B] dark:text-[#34D399] truncate block">
                       {formatUSD(simulation.netProfit)}
                     </span>
                   </div>
                 </div>
 
-                {/* Day-by-day Event Timeline Table */}
-                <div className="rounded-2xl border border-[#ECEAE4] overflow-hidden">
-                  <div className="bg-[#F7F6F5] px-4 py-2.5 text-xs font-bold text-[#526975] uppercase tracking-wider flex justify-between items-center">
+                {/* Day-by-day Event Timeline Table - Borderless ledger with soft row highlights */}
+                <div className="rounded-2xl bg-[#FAF9F7] dark:bg-[#202223] p-3 sm:p-4 overflow-hidden">
+                  <div className="px-3 py-2 text-[11px] font-bold text-[#526975] dark:text-neutral-400 uppercase tracking-wider flex justify-between items-center mb-1 font-sans">
                     <span>Day &amp; Financial Event</span>
                     <span className="shrink-0 pl-2">Ending Balance</span>
                   </div>
-                  <div className="divide-y divide-[#ECEAE4] max-h-56 overflow-y-auto text-xs font-mono">
+                  <div className="space-y-1 max-h-56 overflow-y-auto text-xs font-mono">
                     {simulation.timelineData.map((ev, i) => (
                       <div
                         key={i}
-                        className={`px-4 py-2 flex justify-between items-center gap-2 ${
-                          ev.balance < 0 ? "bg-rose-50/50" : ""
+                        className={`px-3 py-2.5 rounded-xl flex justify-between items-center gap-2 transition-colors ${
+                          ev.balance < 0
+                            ? "bg-rose-100/70 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200"
+                            : "hover:bg-black/5 dark:hover:bg-white/5"
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0 pr-2">
-                          <span className="text-[#526975] w-12 shrink-0">Day {ev.day}:</span>
-                          <span className="text-[#1A1A1A] font-sans font-medium truncate">{ev.name}</span>
+                          <span className="text-[#526975] dark:text-neutral-400 w-12 shrink-0 text-[11px]">Day {ev.day}:</span>
+                          <span className="text-[#1A1A1A] dark:text-neutral-200 font-sans font-medium truncate">{ev.name}</span>
                         </div>
                         <div className="text-right shrink-0">
                           <span
                             className={`font-bold ${
                               ev.balance < 0
-                                ? "text-rose-600"
+                                ? "text-rose-600 dark:text-rose-400"
                                 : ev.balance < RESERVE
-                                ? "text-amber-600"
-                                : "text-[#1A1A1A]"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-[#1A1A1A] dark:text-white"
                             }`}
                           >
                             {formatUSD(ev.balance)}
