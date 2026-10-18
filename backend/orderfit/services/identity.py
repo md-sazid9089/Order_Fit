@@ -25,7 +25,7 @@ from orderfit.contracts.resources import (
     StepUpView,
 )
 from orderfit.services.pagination import CursorCodec, cursor_key
-from orderfit.store.db import Scope, digest_token, set_context
+from orderfit.store.db import Scope, apply_timeouts, digest_token, set_context
 from orderfit.store.repositories import IdentityRepository
 
 PASSWORDS = PasswordHasher(type=Type.ID, **PASSWORD_HASH_PARAMETERS)
@@ -215,6 +215,9 @@ class IdentityService:
         if not key or not key.strip() or len(key) > 200:
             raise ApplicationError(422, "INVALID_IDEMPOTENCY_KEY")
         with self.database.engine.begin() as c:
+            # session_issue holds a per-user row lock for the rest of this transaction. Bound the wait like every
+            # other authenticated path so contention fails as a retryable 503 instead of hanging the sign-in.
+            apply_timeouts(c)
             cached = c.execute(
                 text("SELECT auth_request_reserve(:scope,:key,:hash)"),
                 {"scope": scope_hash, "key": key, "hash": fingerprint},

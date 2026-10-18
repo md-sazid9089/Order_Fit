@@ -78,7 +78,7 @@ function Invoices({ customer }: { customer: CustomerView }) {
     e.preventDefault();
     if (!parsed || parsed.errors.length || !parsed.invoices.length || revision === undefined) return;
     const result = await run(async () => importInvoices(businessId, customer.id, { expected_financial_revision: revision, invoices: parsed.invoices }), `Imported ${parsed.invoices.length} invoices.`);
-    if (result.ok) { setCsv(""); void queryClient.invalidateQueries({ queryKey: invoicesKey }); }
+    if (result.ok) { setCsv(""); void queryClient.invalidateQueries({ queryKey: invoicesKey }); void queryClient.invalidateQueries({ queryKey: key("business-profile") }); } // the import bumped the revision; reload it so a repeat attempt is judged on its content, not reported as a stale revision
   }
   return <section className={panel} aria-labelledby="invoices-heading">
     <h2 id="invoices-heading" className="text-lg font-semibold">Invoices</h2>
@@ -96,7 +96,9 @@ function Invoices({ customer }: { customer: CustomerView }) {
       {parsed && parsed.errors.length > 0 && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800"><p className="font-semibold">Fix these before importing:</p><ul className="list-disc pl-5">{parsed.errors.slice(0, 20).map(m => <li key={m}>{m}</li>)}</ul>{parsed.errors.length > 20 && <p>and {parsed.errors.length - 20} more.</p>}</div>}
       {parsed && !parsed.errors.length && <Alert tone="info">{parsed.invoices.length} invoices ready to import.</Alert>}
       {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-      <button className={primary} disabled={busy || revision === undefined || !parsed || !!parsed.errors.length || !parsed.invoices.length}>{busy ? "Importing…" : "Import invoices"}</button>
+      {(() => { const why = busy ? "" : revision === undefined ? "Waiting for the current business revision to load." : !parsed ? "Paste invoice CSV above to continue." : parsed.errors.length ? "Fix the errors listed above to continue." : !parsed.invoices.length ? "The CSV has a header but no invoice rows." : ""; return <>
+        <button className={primary} disabled={busy || !!why} aria-describedby={why ? "import-invoices-why" : undefined}>{busy ? "Importing…" : "Import invoices"}</button>
+        {why && <p id="import-invoices-why" className="text-xs text-neutral-600">{why}</p>}</>; })()}
     </form> : <p className="text-xs text-neutral-600">{customer.archived_at ? "This customer is archived, so invoices cannot be imported." : "Only a commercial lead, risk officer or owner can import invoices."}</p>}
   </section>;
 }
