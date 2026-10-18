@@ -50,5 +50,22 @@ Retain the existing document volume; database URLs alone do not move uploaded
 document files. For this database-only switch, existing
 storage configuration is retained and document availability needs verification.
 
+## API/worker restart with “Database schema is not current”
+
+The Neon overlay intentionally does not run migrations during ordinary startup.
+The runtime must match its declared Alembic revision; rebuilding the image cannot
+update the database. The startup error names the required and deployed revisions.
+Keep the compatibility guard enabled and have the database owner apply the
+pending forward migrations through the authorized deployment process before
+recreating API/worker/web. Do not stamp a revision or put owner credentials in the
+runtime containers.
+
+On 19 October, read-only verification found deployed `0020_ai_workflow` versus
+required `0022_baseline_duplicates`. Both `0021_admin_reads` and
+`0022_baseline_duplicates` are pending. See the current
+[backend/database handoff](../baseline_duplicates_backend_database_handoff.md)
+for the verified blocker and recovery steps. No Neon migration was performed by
+that diagnosis.
+
 To return to local Postgres, restore the previous local URLs and remove the two
 `COMPOSE_*` values from the root `.env`. Do not delete the local database volume.
