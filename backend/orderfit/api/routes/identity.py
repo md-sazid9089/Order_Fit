@@ -57,6 +57,8 @@ IMPLEMENTED = {
     "cash_event_create",
     "cash_event_update",
     "cash_event_void",
+    "cash_event_duplicates",
+    "cash_event_duplicate_review",
     "cash_flow",
     "customers",
     "customer_create",

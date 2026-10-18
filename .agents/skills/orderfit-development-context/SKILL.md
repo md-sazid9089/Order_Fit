@@ -5,6 +5,20 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+18 October baseline-duplicate repair atop `9ed213e`: sole required schema head
+is now `0022_baseline_duplicates` after `0021_admin_reads`. Backend manual create/
+edit and CSV confirmation require explicit version-bound reviews of matching
+obligations; immutable file-hash/row claims prevent reimport, including legacy
+confirmed-preview history with lost cash-row attribution. Existing unresolved
+baseline pairs block canonical confirmation. Migration preserves financial rows,
+backfills source claims and invalidates existing snapshots once per affected
+business. **No Neon migration, shared-data audit or deployment ran.** Final focused
+disposable-PG17/contracts/architecture acceptance:118passed; broader regression
+766passed/1live deselected (final delta evidence detailed in the handoff); frontend remains
+with its owner. See [backend/database handoff](../../../docs/baseline_duplicates_backend_database_handoff.md)
+and [frontend handoff](../../../docs/baseline_duplicates_frontend_handoff.md).
+Earlier schema-head statements below are historical snapshots.
+
 18 October admin-read remediation atop `4578538`: sole schema head is now
 `0021_admin_reads`. Typed `/api/v1/admin/capabilities` plus overview/users/tenants/
 orders/system reads are mounted, but `ADMIN_READS_ENABLED` defaults false. Global

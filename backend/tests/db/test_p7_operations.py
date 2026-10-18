@@ -428,9 +428,9 @@ def test_cash_export_audit_list_and_downloads_are_authorized(world):
     owner = world["signup"]()
     viewer = join(world, owner, "viewer")
     auditor = join(world, owner, "auditor")
-    for description in ("=cmd|' /C calc'!A0", "Payroll, October"):
+    for index, description in enumerate(("=cmd|' /C calc'!A0", "Payroll, October")):
         owner.ok("POST", "/cash-events", dict(expected_financial_revision=owner.revision(), event=dict(
-            deal_id=None, event_date="2026-11-01", amount_minor="1234567", direction="out", kind="payroll",
+            deal_id=None, event_date="2026-11-01", amount_minor=str(1234567 + index), direction="out", kind="payroll",
             certainty="confirmed", description=description, invoice_ref=None, is_deferrable=False,
             incremental=False, customer_id=None, payee_id=None, evidence=EVIDENCE)))
     export = viewer.ok("POST", "/cash-events/export", None, 201)

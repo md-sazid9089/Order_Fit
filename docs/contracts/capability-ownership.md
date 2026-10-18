@@ -29,6 +29,8 @@ All business operations are planned, not deployed. Test column is the required p
 | cash_event_update | `PATCH /api/v1/businesses/{business_id}/cash-events/{event_id}` | manage_finance | `baseline.revise` | cash_event,business,operation_log | P3 | V09 |
 | cash_event_void | `POST /api/v1/businesses/{business_id}/cash-events/{event_id}/void` | manage_finance | `baseline.void` | cash_event,business,operation_log | P3 | V09 |
 | cash_flow | `GET /api/v1/businesses/{business_id}/cash-flow` | read | `baseline.series` | cash_event,business | P3 | V06 |
+| cash_event_duplicates | `GET /api/v1/businesses/{business_id}/cash-events/{event_id}/duplicates` | read | `baseline.duplicates` | cash_event,cash_event_duplicate_review | P3 | V09 |
+| cash_event_duplicate_review | `POST /api/v1/businesses/{business_id}/cash-events/{event_id}/duplicate-review` | manage_finance | `baseline.review_duplicates` | cash_event_duplicate_review,business,operation_log | P3 | V09 |
 | csv_preview_create | `POST /api/v1/businesses/{business_id}/cash-events/csv-preview` | manage_finance | `imports.preview` | document,operation | P4 | V07 |
 | csv_preview_get | `GET /api/v1/businesses/{business_id}/cash-events/csv-previews/{preview_id}` | manage_finance | `imports.get_preview` | operation | P4 | V07 |
 | csv_confirm | `POST /api/v1/businesses/{business_id}/cash-events/csv-confirm` | manage_finance | `imports.confirm` | cash_event,business,idempotency_key | P4 | V12 |
