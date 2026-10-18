@@ -30,7 +30,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
   const documentPages = useCollection<DocumentView>(`/businesses/${scope?.businessId}/deals/${scope?.dealId}/documents`, !!scope);
   const docs = documentPages.items;
   const [kind, setKind] = useState("po"); const [role, setRole] = useState("customer_order"); const [file, setFile] = useState<File | null>(null);
-  const [asOf, setAsOf] = useState(""); const [preview, setPreview] = useState<CsvPreview | null>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const [asOf, setAsOf] = useState(""); const [preview, setPreview] = useState<CsvPreview | null>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [fileKey, setFileKey] = useState(0);
   useEffect(() => { void params.then(p => setScope({ dealId: p.id, businessId: selectedBusiness })); }, [params, selectedBusiness]);
   const refresh = useCallback(async () => {
     if (!scope?.businessId) return;
@@ -54,7 +54,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
       setError(e instanceof ApiError && e.status === 409 ? `${described.message} The order and extracted values were reloaded from the saved state. Review the current values before confirming again.` : e instanceof ApiError ? described.message : e instanceof Error && !(e.name === "NetworkError") && e.message ? e.message : described.message);
     } finally { await Promise.all([refresh(), documentPages.refetch()]); setBusy(false); }
   }
-  const upload = (e: FormEvent) => { e.preventDefault(); if (!file || !scope) return; void run(async () => { await uploadDocument(scope.businessId, scope.dealId, { ...versions(), kind, source_role: role }, file); setFile(null); setMessage("Document stored privately."); }); };
+  const upload = (e: FormEvent) => { e.preventDefault(); if (!file || !scope) return; void run(async () => { await uploadDocument(scope.businessId, scope.dealId, { ...versions(), kind, source_role: role }, file); setFile(null); setFileKey(k => k + 1); setMessage("Document stored privately."); }); };
   const extract = (doc: DocumentView) => scope && void run(async () => {
     const accepted = await extractDocument(scope.businessId, scope.dealId, doc.id, versions());
     const op = await settle(scope.businessId, accepted.operation_id);
@@ -106,7 +106,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
     <form onSubmit={upload} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Upload</h2>
       <div className="flex flex-wrap gap-3 text-sm"><label>Type<select className="ml-2 rounded border p-1" value={kind} onChange={e => { setKind(e.target.value); setRole(ROLES[e.target.value][0]); }}>{Object.keys(ROLES).map(k => <option key={k}>{k}</option>)}</select></label>
         <label>Meaning<select className="ml-2 rounded border p-1" value={role} onChange={e => setRole(e.target.value)}>{ROLES[kind].map(r => <option key={r}>{r}</option>)}</select></label>
-        <input type="file" accept=".pdf,.txt,.csv,.json" onChange={e => setFile(e.target.files?.[0] ?? null)} aria-label="Document file" /></div>
+        <input key={fileKey} type="file" accept=".pdf,.txt,.csv,.json" onChange={e => setFile(e.target.files?.[0] ?? null)} aria-label="Document file" /></div>
       <p className="text-xs text-neutral-600">PDF with a text layer, text, CSV or JSON, up to 25 MiB. Document text is treated as data, never instructions.</p>
       <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || !file}>Upload</button></form>
     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Documents</h2><CollectionPages query={documentPages} noun="documents" />{docs.length === 0 && !documentPages.isPending && !documentPages.isError ? <p className="text-sm">No documents yet. You can still enter values manually.</p> : <ul className="space-y-2 text-sm">{docs.map(d => <li key={d.id} className="flex flex-wrap items-center gap-3"><span className="font-medium">{d.original_filename}</span><span>{d.source_role} · {d.parse_status === "ocr_required" ? "scanned, no text layer" : d.parse_status}</span>

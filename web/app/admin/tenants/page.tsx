@@ -28,8 +28,8 @@ interface DatabaseTenant {
   name: string;
   currency: string;
   timezone: string;
-  dealCount: number;
-  userCount: number;
+  dealCount: number | null;
+  userCount: number | null;
 }
 
 export default function AdminTenantsPage() {
@@ -68,20 +68,20 @@ export default function AdminTenantsPage() {
 
             collected.push({
               id: m.business_id,
-              name: profile?.profile?.name || m.business_name || "Enterprise Tenant",
-              currency: profile?.currency || "USD",
-              timezone: profile?.profile?.timezone || "UTC",
-              dealCount: deals?.items?.length ?? 0,
-              userCount: members?.items?.length ?? 1,
+              name: profile?.profile?.name || m.business_name,
+              currency: profile?.currency || "unavailable",
+              timezone: profile?.profile?.timezone || "unavailable",
+              dealCount: deals?.items?.length ?? null,
+              userCount: members?.items?.length ?? null,
             });
           } catch {
             collected.push({
               id: m.business_id,
               name: m.business_name,
-              currency: "USD",
-              timezone: "UTC",
-              dealCount: 0,
-              userCount: 1,
+              currency: "unavailable",
+              timezone: "unavailable",
+              dealCount: null,
+              userCount: null,
             });
           }
         })
@@ -185,7 +185,7 @@ export default function AdminTenantsPage() {
               </div>
               <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
                 <Package className="size-4 text-[#2563EB]" />
-                <span>{tenants.reduce((sum, t) => sum + t.dealCount, 0)} Orders</span>
+                <span>{tenants.reduce((sum, t) => sum + (t.dealCount ?? 0), 0)} Orders</span>
               </div>
               <div className="text-[11px] text-[#525252] mt-0.5">Saved in database</div>
             </div>
@@ -196,7 +196,7 @@ export default function AdminTenantsPage() {
               </div>
               <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
                 <Users className="size-4 text-[#059669]" />
-                <span>{tenants.reduce((sum, t) => sum + t.userCount, 0)} Users</span>
+                <span>{tenants.reduce((sum, t) => sum + (t.userCount ?? 0), 0)} Users</span>
               </div>
               <div className="text-[11px] text-[#525252] mt-0.5">Membership records</div>
             </div>
@@ -279,11 +279,11 @@ export default function AdminTenantsPage() {
                         </td>
 
                         <td className="py-3.5 px-4 font-semibold text-[#1E2021]">
-                          {tenant.dealCount}
+                          {tenant.dealCount ?? "unavailable"}
                         </td>
 
                         <td className="py-3.5 px-4 text-[#525252]">
-                          {tenant.userCount} users
+                          {tenant.userCount === null ? "users unavailable" : `${tenant.userCount} users`}
                         </td>
 
                         <td className="py-3.5 px-4 text-right">

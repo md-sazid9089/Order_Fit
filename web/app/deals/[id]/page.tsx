@@ -4,6 +4,7 @@ import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ApiError, get, mutate, type DraftInputs, type Session, type ConstraintsView, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
+import { describeP7Error } from "@/lib/p7-model";
 import { useScope } from "@/components/layout/auth-shell";
 import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs";
 import { createDecisionExport, downloadExport } from "@/lib/p7-api";
@@ -46,6 +47,12 @@ function DealDetailSkeleton() {
 }
 
 type Snapshot = { snapshot_id: string; snapshot_hash: string; version: number; input_version: number; financial_revision: number };
+/** User-facing text for a failed command: mapped API codes get plain wording; anything else keeps its own message. */
+function explain(e: unknown, fallback: string): string {
+  if (e instanceof ApiError) return describeP7Error(e).message;
+  return e instanceof Error && e.message ? e.message : fallback;
+}
+
 export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> }) {
   const { businessId: selectedBusiness } = useScope();
   const [route, setRoute] = useState<{ dealId: string; businessId: string; operationId?: string } | null>(null);
@@ -78,26 +85,26 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       const [result, checks] = await Promise.all([d.live_evaluation_id ? get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`) : Promise.resolve(null), get<Review>(`/businesses/${businessId}/deals/${dealId}/review`)]);
       if (generation !== loadGeneration.current) return;
       setDeal(d); setRole(session.memberships.find(m => m.business_id === businessId)?.role ?? ""); setEvaluation(result); setReview(checks); setAcknowledgements([]);
-    } catch (e) { if (generation === loadGeneration.current) setError(e instanceof Error ? e.message : "Could not load this order."); }
+    } catch (e) { if (generation === loadGeneration.current) setError(explain(e, "Could not load this order.")); }
   }, [businessId, dealId]);
   useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh, route?.operationId]);
   useEffect(() => {
     if (!route?.operationId || !businessId) return;
     let active = true; let timer: ReturnType<typeof setTimeout>;
-    async function poll() { try { const current = await get<Operation>(`/businesses/${businessId}/operations/${route!.operationId}`); if (!active) return; setOperation(current); if (["queued", "running"].includes(current.status)) timer = setTimeout(() => { void poll(); }, 1500); else { await refresh(); if (current.result?.kind === "blocked") setError(`Evaluation produced no financial result: ${current.result.outcome}. ${current.result.findings.map(f => f.message).join(" ")}`); else if (current.result?.kind === "failed") setError(current.result.error.message); else if (current.status !== "succeeded") setError(`Evaluation ${current.status}.`); } } catch (e) { if (active) setError(e instanceof Error ? e.message : "Could not recover evaluation status."); } }
+    async function poll() { try { const current = await get<Operation>(`/businesses/${businessId}/operations/${route!.operationId}`); if (!active) return; setOperation(current); if (["queued", "running"].includes(current.status)) timer = setTimeout(() => { void poll(); }, 1500); else { await refresh(); if (current.result?.kind === "blocked") setError(`Evaluation produced no financial result: ${current.result.outcome}. ${current.result.findings.map(f => f.message).join(" ")}`); else if (current.result?.kind === "failed") setError(current.result.error.message); else if (current.status !== "succeeded") setError(`Evaluation ${current.status}.`); } } catch (e) { if (active) setError(explain(e, "Could not recover evaluation status.")); } }
     void poll(); return () => { active = false; clearTimeout(timer); };
   }, [businessId, route, refresh]);
   async function save(e: FormEvent) { e.preventDefault(); if (!deal || !editing) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/deals/${dealId}`, "PATCH", { expected_version: deal.version, expected_input_version: deal.input_version, expected_financial_revision: deal.financial_revision, inputs: { ...editing, opening_cash_minor: null } }); setEditing(null); await refresh(); } catch (e) { setError(e instanceof ApiError && e.status === 409 ? `${e.message} Another edit was saved. Reload before editing again.` : e instanceof Error ? e.message : "Could not save inputs."); } finally { setBusy(false); } }
-  async function command(name: string) { if (!deal) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/deals/${dealId}/${name}`, "POST", { expected_version: deal.version, expected_input_version: deal.input_version, expected_financial_revision: deal.financial_revision, reason }); setReason(""); await refresh(); } catch (e) { setError(e instanceof Error ? e.message : "Could not update workflow."); } finally { setBusy(false); } }
+  async function command(name: string) { if (!deal) return; setBusy(true); setError(""); try { await mutate(`/businesses/${businessId}/deals/${dealId}/${name}`, "POST", { expected_version: deal.version, expected_input_version: deal.input_version, expected_financial_revision: deal.financial_revision, reason }); setReason(""); await refresh(); } catch (e) { setError(explain(e, "Could not update workflow.")); } finally { setBusy(false); } }
   // The export endpoints take no request body: a literal JSON null is the contract (an empty object is rejected with 422).
-  async function exportDecision() { setBusy(true); setError(""); try { const exported = await createDecisionExport(businessId, dealId); await downloadExport(businessId, exported, `orderfit-decision-${dealId}.json`); } catch (e) { setError(e instanceof Error ? e.message : "Export failed."); } finally { setBusy(false); } }
+  async function exportDecision() { setBusy(true); setError(""); try { const exported = await createDecisionExport(businessId, dealId); await downloadExport(businessId, exported, `orderfit-decision-${dealId}.json`); } catch (e) { setError(explain(e, "Export failed.")); } finally { setBusy(false); } }
   async function evaluate() { if (!deal || !review?.snapshot_hash || !review.candidate_snapshot) return; setBusy(true); setError(""); try {
     const confirmed = await mutate<Snapshot>(`/businesses/${businessId}/deals/${dealId}/confirm`, "POST", { expected_version: review.version, expected_input_version: review.input_version, expected_financial_revision: review.financial_revision, snapshot_hash: review.snapshot_hash, confirmed_field_ids: review.required_field_ids, acknowledged_warning_codes: acknowledgements });
     const afterConfirm = await get<Deal>(`/businesses/${businessId}/deals/${dealId}`);
     const op = await mutate<Operation>(`/businesses/${businessId}/deals/${dealId}/evaluations`, "POST", { expected_version: afterConfirm.version, expected_input_version: confirmed.input_version, expected_financial_revision: confirmed.financial_revision, snapshot_id: confirmed.snapshot_id });
     window.history.replaceState(null, "", `/deals/${dealId}?businessId=${businessId}&operationId=${op.operation_id}`); setRoute({ dealId, businessId, operationId: op.operation_id });
     await refresh();
-  } catch (e) { setError(e instanceof Error ? e.message : "Could not evaluate this order."); await refresh(); } finally { setBusy(false); } }
+  } catch (e) { setError(explain(e, "Could not evaluate this order.")); await refresh(); } finally { setBusy(false); } }
   if (!route) {
     return (
       <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
@@ -134,6 +141,10 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
             >
               {busy ? "Evaluating…" : deal.live_evaluation_id && !deal.is_stale ? "Re-evaluate" : "Confirm and evaluate"}
             </button>
+            {(() => {
+              const why = !canPrepare ? "Your role cannot prepare orders." : deal.status === "computing" ? "The engine is already running on this order." : !review?.snapshot_hash ? "The saved inputs are not ready to review yet." : review.findings.some(f => f.blocking) ? "Resolve the blocking checks below first." : "";
+              return why ? <p className="text-xs text-neutral-600 max-w-xs text-right">{why}</p> : null;
+            })()}
             {!deal.allowed_actions.includes("confirm") && deal.allowed_actions.includes("reopen_for_review") && (
               <p className="text-xs text-amber-700 max-w-xs text-right">
                 Locked ({deal.status.replaceAll("_", " ")}). Provide a reason below and click <strong>reopen for review</strong> to enable re-evaluation.
@@ -163,6 +174,13 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
           Download decision and audit evidence
         </button>
       )}
+      <Link
+        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
+        href={`/deals/${dealId}/documents?businessId=${businessId}`}
+      >
+        <Landmark className="h-4 w-4 text-neutral-600" />
+        Source documents
+      </Link>
       <Link
         className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
         href={`/deals/sources?businessId=${businessId}`}
@@ -228,7 +246,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         <DealEvaluationInspector
           evaluation={evaluation}
           businessId={businessId}
-          currency="USD"
+          currency={deal.currency}
         />
 
         {/* Beautiful Interactive Cash Series Ledger replacing plain textarea */}
@@ -238,7 +256,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
           evaluationId={evaluation.id}
           options={[evaluation.as_is.option_key, ...evaluation.ranked_candidates.map(x => x.option_key)].filter((x, i, all) => all.indexOf(x) === i)}
           initialOption={evaluation.recommended_option_key ?? evaluation.as_is.option_key}
-          currency="USD"
+          currency={deal.currency}
         />
       </section>
     )}

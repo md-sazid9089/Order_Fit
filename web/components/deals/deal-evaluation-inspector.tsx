@@ -26,13 +26,13 @@ import { get } from "@/lib/orderfit-api";
 interface DealEvaluationInspectorProps {
   evaluation: Evaluation;
   businessId: string;
-  currency?: string;
+  currency: string;
 }
 
 export function DealEvaluationInspector({
   evaluation,
   businessId,
-  currency = "USD",
+  currency,
 }: DealEvaluationInspectorProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"summary" | "scenarios" | "sensitivity" | "gaps" | "raw">("summary");
@@ -488,17 +488,19 @@ export function DealCashSeriesViewer({
   evaluationId,
   options,
   initialOption,
-  currency = "USD",
+  currency,
 }: {
   businessId: string;
   evaluationId: string;
   options: string[];
   initialOption: string;
-  currency?: string;
+  currency: string;
 }) {
   const [option, setOption] = useState(initialOption);
   const [scenario, setScenario] = useState<"base" | "downside" | "severe">("base");
   const [loading, setLoading] = useState(false);
+  const [seriesError, setSeriesError] = useState("");
+  const [reloadSeries, setReloadSeries] = useState(0);
   const [seriesPoints, setSeriesPoints] = useState<
     { date: string; candidate_trough_minor: string; reserve_minor: string }[]
   >([]);
@@ -507,6 +509,8 @@ export function DealCashSeriesViewer({
   React.useEffect(() => {
     let active = true;
     setLoading(true);
+    setSeriesError("");
+    setSeriesPoints([]);
     const query = new URLSearchParams({ scenario, option_key: option });
     get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(
       `/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`
@@ -517,14 +521,17 @@ export function DealCashSeriesViewer({
           setLoading(false);
         }
       })
-      .catch(() => {
-        if (active) setLoading(false);
+      .catch((e) => {
+        if (active) {
+          setSeriesError(e instanceof Error ? e.message : "The daily series could not be loaded.");
+          setLoading(false);
+        }
       });
 
     return () => {
       active = false;
     };
-  }, [businessId, evaluationId, option, scenario]);
+  }, [businessId, evaluationId, option, scenario, reloadSeries]);
 
   return (
     <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] overflow-hidden shadow-xs">
@@ -612,6 +619,13 @@ export function DealCashSeriesViewer({
         {loading ? (
           <div className="py-12 text-center text-xs text-[#737373] dark:text-neutral-400 font-mono">
             Loading daily series ledger...
+          </div>
+        ) : seriesError ? (
+          <div role="alert" className="py-12 text-center text-xs text-red-700 dark:text-red-300">
+            {seriesError}{" "}
+            <button type="button" className="underline font-semibold cursor-pointer" onClick={() => setReloadSeries((n) => n + 1)}>
+              Retry
+            </button>
           </div>
         ) : seriesPoints.length === 0 ? (
           <div className="py-12 text-center text-xs text-[#737373] dark:text-neutral-400">

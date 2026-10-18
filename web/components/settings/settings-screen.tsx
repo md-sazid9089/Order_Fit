@@ -38,8 +38,8 @@ function UserProfile() {
 }
 
 function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (session: SessionView) => void }) {
-  const { session } = useScope();
-  const { busy, error, notice, run } = useCommand();
+  const { session, replaceSession } = useScope();
+  const { busy, error, notice, run } = useCommand({ onConflict: () => void getSession().then(replaceSession).catch(() => undefined) });
   const [draft, setDraft] = useState<ProfileDraft>(initial);
   const changed = JSON.stringify(draft) !== JSON.stringify(initial);
   const valid = draft.full_name.trim().length > 0 && timezoneValid(draft.timezone);

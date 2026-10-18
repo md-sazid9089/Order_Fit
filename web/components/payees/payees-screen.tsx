@@ -45,7 +45,7 @@ function Accounts({ payee }: { payee: PayeeView }) {
   const queryClient = useQueryClient();
   const accountsKey = key("accounts", payee.id);
   const accounts = useInfiniteQuery({ queryKey: accountsKey, queryFn: ({ pageParam }) => listAccounts(businessId, payee.id, pageParam), initialPageParam: null as string | null, getNextPageParam: last => last.next_cursor, retry: false });
-  const reload = () => void queryClient.invalidateQueries({ queryKey: accountsKey });
+  const reload = () => { void queryClient.invalidateQueries({ queryKey: accountsKey }); void queryClient.invalidateQueries({ queryKey: key("business-profile") }); }; // account changes bump the business revision
   const items = accounts.data?.pages.flatMap(p => p.items) ?? [];
   const manage = can(role, "manage_finance");
   return <div className="space-y-3">

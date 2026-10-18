@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { formatMinor } from "@/lib/approval-model";
 import { getSession, getBusiness } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
 import type { SessionView, BusinessView } from "@/lib/generated-api";
@@ -80,13 +81,13 @@ export default function AdminOrdersPage() {
                 collectedOrders.push({
                   id: deal.id,
                   poNumber: deal.public_ref || `PO-${deal.id.slice(0, 6).toUpperCase()}`,
-                  customerName: deal.inputs?.customer_id ? `Customer (${deal.inputs.customer_id.slice(0, 8)})` : "Enterprise Counterparty",
+                  customerName: deal.inputs?.customer_id ? `Customer (${deal.inputs.customer_id.slice(0, 8)})` : "Customer not recorded",
                   tenantName: m.business_name,
                   businessId: m.business_id,
                   orderAmountMinor: Number(deal.order_value_minor) || 0,
                   currency: deal.currency || currency,
                   hasEvaluation: Boolean(deal.live_evaluation_id),
-                  createdAt: deal.start_date ? new Date(deal.start_date).toLocaleDateString() : "-",
+                  createdAt: deal.start_date ? `starts ${new Date(deal.start_date).toLocaleDateString()}` : "-",
                 });
               }
             }
@@ -114,8 +115,10 @@ export default function AdminOrdersPage() {
     return ["All Tenants", ...Array.from(list)];
   }, [orders]);
 
-  const totalPipelineMinor = useMemo(() => {
-    return orders.reduce((sum, o) => sum + o.orderAmountMinor, 0);
+  const pipelineLabel = useMemo(() => {
+    const by = new Map<string, bigint>();
+    for (const o of orders) by.set(o.currency, (by.get(o.currency) ?? BigInt(0)) + BigInt(Math.trunc(o.orderAmountMinor)));
+    return by.size ? [...by].map(([c, v]) => formatMinor(v.toString(), c)).join(" · ") : "none recorded";
   }, [orders]);
 
   const filteredOrders = useMemo(() => {
@@ -239,9 +242,7 @@ export default function AdminOrdersPage() {
               <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-1.5">
                 <DollarSign className="size-4.5 text-[#1E2021]" />
                 <span>
-                  {totalPipelineMinor > 0
-                    ? `$${(totalPipelineMinor / 100).toLocaleString()}`
-                    : "$0.00"}
+                  {pipelineLabel}
                 </span>
               </div>
               <div className="text-[11px] text-[#525252] mt-0.5">Integer minor units stored</div>
@@ -346,8 +347,7 @@ export default function AdminOrdersPage() {
 
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-[#1E2021] text-xs">
-                            ${(order.orderAmountMinor / 100).toLocaleString()}{" "}
-                            <span className="text-[10px] font-normal text-[#737373]">{order.currency}</span>
+                            {formatMinor(String(order.orderAmountMinor), order.currency)}
                           </div>
                         </td>
 

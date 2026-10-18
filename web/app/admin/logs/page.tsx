@@ -94,8 +94,8 @@ export default function AdminLogsPage() {
       a.click();
       document.body.removeChild(a);
       showToast("Exported verifiable cryptographic audit proof from database.");
-    } catch {
-      showToast("Audit export generated.");
+    } catch (e) {
+      showToast(`Audit export failed. ${e instanceof Error ? e.message : ""}`.trim());
     }
   };
 
