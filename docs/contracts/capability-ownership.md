@@ -4,6 +4,7 @@ All business operations are planned, not deployed. Test column is the required p
 
 | Operation | Method/path | Permission | Service | Storage (reuse/addition per plan) | Phase | Gate |
 |---|---|---|---|---|---|---|
+| business_overview_get | `GET /api/v1/businesses/{business_id}/overview` | read | `overview.get` | business,owner_constraints,cash_event,evaluation,evaluation_option,deal,customer,deal_flag,commitment_projection | P7 | V03,V04 |
 | signup | `POST /api/v1/auth/signup` | public | `identity.signup` | app_user,business,membership,owner_constraints,auth_session | P1 | V04 |
 | signin | `POST /api/v1/auth/signin` | public | `identity.signin` | app_user,auth_session | P1 | V04 |
 | signout | `POST /api/v1/auth/signout` | self | `identity.signout` | auth_session | P1 | V04 |

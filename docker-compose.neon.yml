@@ -1,0 +1,15 @@
+# Overlay for an existing, migrated Neon database. Selected through COMPOSE_FILE
+# in the ignored root .env; see docs/deployment/neon-local.md.
+services:
+  db:
+    profiles: ["local-db"]
+
+  migrate:
+    profiles: ["setup"]
+    depends_on: !reset {}
+
+  api:
+    depends_on: !reset {}
+
+  worker:
+    depends_on: !reset {}

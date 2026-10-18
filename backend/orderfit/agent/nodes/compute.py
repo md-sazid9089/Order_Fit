@@ -19,6 +19,23 @@ SENSITIVITY_PATHS = {
 }
 
 
+def portfolio_trough(opening, events, start, end, delay_days):
+    """Reuse the canonical daily outflows-before-inflows sweep for posted cash events.
+
+    This is an absolute liquidity projection, not a new order feasibility verdict.
+    The caller supplies bounded, validated dates/amounts and the complete horizon.
+    """
+    from orderfit.engine.models import CashEvent
+    from orderfit.engine.timeline import sweep
+
+    shifted = [
+        CashEvent(str(index), event["date"], event["amount"], event["direction"], "other")
+        .moved(delay_days if event["delayed"] else 0)
+        for index, event in enumerate(events)
+    ]
+    return min(trough for trough, _ in sweep(opening, shifted, start, end).values())
+
+
 @dataclass(frozen=True)
 class Computation:
     snapshot_hash: str

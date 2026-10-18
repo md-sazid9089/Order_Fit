@@ -1392,6 +1392,95 @@
         "title": "BundleView",
         "type": "object"
       },
+      "BusinessOverviewView": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "business_id": {
+            "format": "uuid",
+            "title": "Business Id",
+            "type": "string"
+          },
+          "cashflow": {
+            "$ref": "#/components/schemas/OverviewCashflowSummary"
+          },
+          "currency_balances": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewCurrencyBalance"
+            },
+            "title": "Currency Balances",
+            "type": "array"
+          },
+          "data_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Warnings",
+            "type": "array"
+          },
+          "delay_sensitivity": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewDelayScenario"
+            },
+            "title": "Delay Sensitivity",
+            "type": "array"
+          },
+          "kpis": {
+            "$ref": "#/components/schemas/OverviewKPISummary"
+          },
+          "primary_currency": {
+            "enum": [
+              "BDT",
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Primary Currency",
+            "type": "string"
+          },
+          "recent_settlements": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewRecentSettlement"
+            },
+            "title": "Recent Settlements",
+            "type": "array"
+          },
+          "reserve_floor_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Reserve Floor Minor",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "overview.v1",
+            "default": "overview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "verdict_distribution": {
+            "$ref": "#/components/schemas/OverviewVerdictDistribution"
+          }
+        },
+        "required": [
+          "business_id",
+          "primary_currency",
+          "as_of",
+          "reserve_floor_minor",
+          "kpis",
+          "cashflow",
+          "delay_sensitivity",
+          "verdict_distribution",
+          "recent_settlements",
+          "currency_balances",
+          "data_warnings"
+        ],
+        "title": "BusinessOverviewView",
+        "type": "object"
+      },
       "BusinessProfile": {
         "additionalProperties": false,
         "properties": {
@@ -7532,6 +7621,403 @@
           "value"
         ],
         "title": "OverrunChange",
+        "type": "object"
+      },
+      "OverviewCashflowPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "date_range": {
+            "title": "Date Range",
+            "type": "string"
+          },
+          "highlight_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight Note"
+          },
+          "inflow_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Inflow Minor",
+            "type": "string"
+          },
+          "net_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Net Minor",
+            "type": "string"
+          },
+          "outflow_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Outflow Minor",
+            "type": "string"
+          },
+          "period_key": {
+            "title": "Period Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_key",
+          "date_range",
+          "inflow_minor",
+          "outflow_minor",
+          "net_minor",
+          "highlight_note"
+        ],
+        "title": "OverviewCashflowPoint",
+        "type": "object"
+      },
+      "OverviewCashflowSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewCashflowPoint"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "total_inflow_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Total Inflow Minor",
+            "type": "string"
+          },
+          "total_net_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Total Net Minor",
+            "type": "string"
+          },
+          "total_outflow_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Total Outflow Minor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total_inflow_minor",
+          "total_outflow_minor",
+          "total_net_minor",
+          "timeline"
+        ],
+        "title": "OverviewCashflowSummary",
+        "type": "object"
+      },
+      "OverviewCurrencyBalance": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "code": {
+            "enum": [
+              "BDT",
+              "USD",
+              "EUR",
+              "GBP"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pct_allocation": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Pct Allocation",
+            "type": "number"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "tag": {
+            "title": "Tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "symbol",
+          "amount_minor",
+          "pct_allocation",
+          "tag"
+        ],
+        "title": "OverviewCurrencyBalance",
+        "type": "object"
+      },
+      "OverviewDelayScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "delay_days": {
+            "enum": [
+              0,
+              15,
+              30,
+              45,
+              60
+            ],
+            "title": "Delay Days",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "projected_trough_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Projected Trough Minor",
+            "type": "string"
+          },
+          "recommendation": {
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "reserve_floor_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Reserve Floor Minor",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "safe",
+              "warning",
+              "breach"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delay_days",
+          "label",
+          "projected_trough_minor",
+          "reserve_floor_minor",
+          "status",
+          "recommendation"
+        ],
+        "title": "OverviewDelayScenario",
+        "type": "object"
+      },
+      "OverviewKPISummary": {
+        "additionalProperties": false,
+        "properties": {
+          "pending_reviews_change_pct": {
+            "title": "Pending Reviews Change Pct",
+            "type": "number"
+          },
+          "pending_reviews_count": {
+            "minimum": 0,
+            "title": "Pending Reviews Count",
+            "type": "integer"
+          },
+          "protected_headroom_change_pct": {
+            "title": "Protected Headroom Change Pct",
+            "type": "number"
+          },
+          "protected_headroom_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Protected Headroom Minor",
+            "type": "string"
+          },
+          "protected_headroom_status": {
+            "enum": [
+              "safe",
+              "warning",
+              "breach"
+            ],
+            "title": "Protected Headroom Status",
+            "type": "string"
+          },
+          "total_balance_change_pct": {
+            "title": "Total Balance Change Pct",
+            "type": "number"
+          },
+          "total_balance_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Total Balance Minor",
+            "type": "string"
+          },
+          "total_orders_tested": {
+            "minimum": 0,
+            "title": "Total Orders Tested",
+            "type": "integer"
+          },
+          "volume_30d_change_pct": {
+            "title": "Volume 30D Change Pct",
+            "type": "number"
+          },
+          "volume_30d_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Volume 30D Minor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total_balance_minor",
+          "total_balance_change_pct",
+          "volume_30d_minor",
+          "volume_30d_change_pct",
+          "total_orders_tested",
+          "pending_reviews_count",
+          "pending_reviews_change_pct",
+          "protected_headroom_minor",
+          "protected_headroom_status",
+          "protected_headroom_change_pct"
+        ],
+        "title": "OverviewKPISummary",
+        "type": "object"
+      },
+      "OverviewRecentSettlement": {
+        "additionalProperties": false,
+        "properties": {
+          "amount_minor": {
+            "maxLength": 17,
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "title": "Amount Minor",
+            "type": "string"
+          },
+          "customer_name": {
+            "title": "Customer Name",
+            "type": "string"
+          },
+          "deal_id": {
+            "format": "uuid",
+            "title": "Deal Id",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "order_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order No"
+          },
+          "public_ref": {
+            "title": "Public Ref",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "safe",
+              "deposit",
+              "split",
+              "financing",
+              "declined",
+              "review"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "terms": {
+            "title": "Terms",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "customer_name",
+          "public_ref",
+          "order_no",
+          "amount_minor",
+          "terms",
+          "status",
+          "status_label",
+          "evaluated_at"
+        ],
+        "title": "OverviewRecentSettlement",
+        "type": "object"
+      },
+      "OverviewVerdictDistribution": {
+        "additionalProperties": false,
+        "properties": {
+          "deposit_required_count": {
+            "minimum": 0,
+            "title": "Deposit Required Count",
+            "type": "integer"
+          },
+          "deposit_required_pct": {
+            "title": "Deposit Required Pct",
+            "type": "number"
+          },
+          "feasible_as_is_count": {
+            "minimum": 0,
+            "title": "Feasible As Is Count",
+            "type": "integer"
+          },
+          "feasible_as_is_pct": {
+            "title": "Feasible As Is Pct",
+            "type": "number"
+          },
+          "financing_needed_count": {
+            "minimum": 0,
+            "title": "Financing Needed Count",
+            "type": "integer"
+          },
+          "financing_needed_pct": {
+            "title": "Financing Needed Pct",
+            "type": "number"
+          },
+          "split_milestones_count": {
+            "minimum": 0,
+            "title": "Split Milestones Count",
+            "type": "integer"
+          },
+          "split_milestones_pct": {
+            "title": "Split Milestones Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feasible_as_is_pct",
+          "deposit_required_pct",
+          "split_milestones_pct",
+          "financing_needed_pct",
+          "feasible_as_is_count",
+          "deposit_required_count",
+          "split_milestones_count",
+          "financing_needed_count"
+        ],
+        "title": "OverviewVerdictDistribution",
         "type": "object"
       },
       "OwnerPolicy": {
@@ -28610,6 +29096,185 @@
         "x-service-owner": "operations.request_cancel",
         "x-storage-owner": [
           "operation"
+        ]
+      }
+    },
+    "/api/v1/businesses/{business_id}/overview": {
+      "get": {
+        "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
+        "operationId": "business_overview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeframe",
+            "required": false,
+            "schema": {
+              "default": "30d",
+              "enum": [
+                "30d",
+                "90d",
+                "6m",
+                "1y"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "enum": [
+                "BDT",
+                "USD",
+                "EUR",
+                "GBP"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessOverviewView"
+                }
+              }
+            },
+            "description": "Target contract; implementation phase P7"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Curated safe error; never SQL/provider text"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "overview.get",
+        "x-acceptance-test": "V03,V04",
+        "x-implementation-phase": "P7",
+        "x-permission": "read",
+        "x-service-owner": "overview.get",
+        "x-storage-owner": [
+          "business",
+          "owner_constraints",
+          "cash_event",
+          "evaluation",
+          "evaluation_option",
+          "deal",
+          "customer",
+          "deal_flag",
+          "commitment_projection"
         ]
       }
     },
