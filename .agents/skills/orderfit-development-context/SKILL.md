@@ -5,6 +5,14 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+18 October AI workflow C1-C6/F5 (uncommitted atop `8b7c00a`): sole schema head is now
+`0020_ai_workflow` (candidate language/gloss columns, immutable `ai_advisory`, `advisory`
+operation kind). Clause hypotheses (forks via `agent/nodes/compute.py`), slot-only
+explanations, typed reply conditions/stance, what-if clarification, per-script language
+provenance and provenance badges are implemented; verified only on recorded synthetic cases
+(`scripts/ai_eval.py`, 49 cases) and disposable PG17. No live-model quality or browser E2E
+run. See [plan](../../../docs/AI_WORKFLOW_PLAN.md) and the latest progress entry.
+
 18 October native FreeLLMPool integration atop `abf2c5f`:207 focused tests pass
 after reconciling concurrent Tier0/multilingual work. Four synthetic live smoke
 tasks and repeated persisted same-order extraction/review/confirm/evaluate/what-if
@@ -164,8 +172,8 @@ remain partial; engineering completion is not submission evidence.
 - Neon is the intended existing core database. API uses restricted `DATABASE_URL`;
   worker uses `WORKER_DATABASE_URL`; `DATABASE_URL_DIRECT` is migrator-only.
   Use `orderfit.runtime api|worker --env-file .env` from `backend/` to select settings.
-- Code requires `0019_merge_passkey_roles` (sole head), joining the passkey/platform
-  authority line with the recovered Neon role branch.
+- Code requires `0020_ai_workflow` (sole head, after `0019_merge_passkey_roles`, which joined the passkey/platform
+  authority line with the recovered Neon role branch). The hosted DB needs this migration before the new API runs.
   Platform flag changes revoke all existing sessions and record an atomic audit event.
   Revision 0015
   requires new authentication after membership role changes and fences old

@@ -2203,3 +2203,64 @@ not rerun. General model-quality and remaining release gates stay open.
 This is not full C6: contracts/persistence/API provenance, language-specific payment
 basis/date lexicons, reply holds, prompt revisions, evaluation cases/PDF tests, web
 badges/fonts, and live/recorded multilingual qualification remain unimplemented.
+
+### 18 October 2026 — F4 offline AI evaluation harness
+
+- Added `data/ai_workflow/cases/cases.json`: four synthetic extraction layout/
+  ambiguity/conflict cases, thirteen what-if paraphrase/unsupported cases, and six
+  reply safety/baseline cases. Added committed synthetic recorded outputs keyed to
+  the existing `llm.py` filename contracts under `data/ai_workflow/recordings/`.
+- Added `scripts/ai_eval.py` and `docs/evaluation.md`. The harness never loads
+  `.env`, invokes public extraction/what-if functions, evaluates quote grounding,
+  expected fields/changes and safe unsupported changes, and reports per-case
+  `pass_k`, model-pass count, fallback rate, latency and tokens. Template fallbacks
+  can be a safe case outcome but never count as model passes. Reply remains an
+  explicitly labelled deterministic baseline until C2 is wired.
+- Added provider-free regression tests in `backend/tests/test_ai_eval.py`.
+  Executed: `uv run --frozen python ../scripts/ai_eval.py --mode recorded` (**23
+  cases, passed**), and `uv run --frozen pytest tests/test_ai_eval.py -q` (**2
+  passed**). The OpenAI live evaluation was not run; C1–C6 integration and the
+  multilingual/PDF corpus remain open.
+
+### 18 October 2026 — C2 typed reply-reader integration (partial)
+
+- Added `read_reply` at the sole provider boundary in `agent/llm.py`. It accepts
+  only existing `ReplyTerm` fields, requires a normalized verbatim quote from the
+  reply, bounds numeric terms, and refuses a model acceptance unless the existing
+  deterministic exact-acceptance check also passes.
+- `workflow/preparation.py` now invokes that reader before the publication
+  transaction and merges unique valid proposals with the regex baseline. Bank-change
+  and injection signals remain deterministic and cannot be cleared by model output.
+  Reply provenance/model/input hash are persisted in the existing JSON payload;
+  no schema migration is required.
+- Updated generated API types and the preparation UI to show reply provenance,
+  model and language where present, and render reply/quotes with `dir="auto"`.
+  Focused reader test passed (**1 passed, 29 deselected**). Ruff and contract export
+  checks passed. The complete P5 file exceeded the observation window, so its total
+  result is not claimed. C3/C4/C5/full C6 and their acceptance gates remain open.
+
+### 18 October 2026 — C4 deterministic combined-change fallback
+
+- Extended `services/preparation.py` so an instruction containing multiple clear,
+  supported changes joined by ordinary prose can produce a combined typed proposal.
+  The parser consumes every non-scaffolding word; unknown wording, duplicate change
+  kinds, out-of-range values and financing/recipient invention return no proposal.
+- Focused provider-free check: two tests passed (`combined_whatif` and typed reply
+  reader); Ruff passed after importing the validation type. Live/recorded quality
+  comparison has not been run, so this is a safer fallback improvement rather than
+  evidence that the model path beats it.
+
+### 18 October 2026 — C6 reviewed payment-basis lexicon and reply hold (partial)
+
+- Added reviewed English, Bengali, Hindi and Simplified-Chinese payment-basis
+  lexicons under `data/ai_workflow/lexicon/`. `quote_supports` now requires a
+  reviewed source-language term to ground the canonical basis enum; otherwise it
+  returns `ambiguous`, never `ok`. Native decimal digits are normalized before
+  date matching as well.
+- Reply publication records detected language/support state and holds unknown,
+  mixed or unsupported-language replies before candidate application. This hold is
+  surfaced in the preparation UI and model output cannot remove it.
+- Fresh focused checks: multilingual pure tests (**4 passed**), Ruff and API
+  contract generation passed; frontend typecheck passed. PDFs, page provenance,
+  glosses, per-language model recordings/evaluation and language qualification
+  remain open, so no non-English language is marked fully supported.

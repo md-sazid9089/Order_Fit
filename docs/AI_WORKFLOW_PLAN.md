@@ -1,6 +1,6 @@
 # OrderFit AI workflow plan
 
-Status: plan only. Nothing in this document is implemented unless the code says so. It consolidates the earlier AI strategy and AI role assessments into one list of additions that make the AI more meaningful without breaking the product's invariants: the engine owns every figure, the owner confirms facts and approves actions, and model output is a proposal.
+Status: C1-C6 and F1-F5 are implemented in code (18 October 2026) and verified offline against recorded synthetic cases and a disposable PostgreSQL 17; no live OpenAI or FreeLLMPool quality run has been made for them (see "Implementation status"). C7-C10 remain proposals. It consolidates the earlier AI strategy and AI role assessments into one list of additions that make the AI more meaningful without breaking the product's invariants: the engine owns every figure, the owner confirms facts and approves actions, and model output is a proposal.
 
 Provider policy: FreeLLMPool is for testing only. The hosted website uses the OpenAI API (`LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL`; the configuration validator already requires all three for live OpenAI mode).
 
@@ -9,14 +9,31 @@ Provider policy: FreeLLMPool is for testing only. The hosted website uses the Op
 | Capability | Where | State |
 |---|---|---|
 | Document field extraction | `agent/llm.py` `extract`, `workflow/extraction.py` | Live/recorded/off; shared provider boundary and shared system prompt; candidates with quotes and statuses; human review |
-| What-if intent parsing | `agent/llm.py` `propose_intent` | Live/recorded with deterministic fallback and the shared provider boundary/system prompt |
-| Reply reading | `services/preparation.py` `reply_candidates` | Regex only; `prompts/read_reply.md` exists but is not wired |
-| Explanations and drafts | `services/preparation.py` | Deterministic templates; `prompts/explain.md` and `draft_message.md` are not wired |
+| What-if intent parsing | `agent/llm.py` `propose_intent` | Live/recorded with shared boundary/system prompt; deterministic fallback supports clear combined changes and rejects residual unsupported terms |
+| Reply reading | `agent/llm.py` `read_reply`, `workflow/preparation.py` | Live/recorded/off typed proposals merge with the regex baseline; deterministic acceptance, bank-change and injection controls remain authoritative |
+| Explanations | `services/explanations.py`, `workflow/advisory.py`, `agent/llm.py` `explain_slots` | Deterministic template by default; an optional durable job stores a slot-only model wording (number/terms guards, fixed caveats, template fallback) |
+| Clause interpreter | `services/clauses.py`, `workflow/advisory.py`, `agent/llm.py` `read_clause`, `agent/nodes/compute.py` `evaluate_forks` | Typed hypotheses on isolated engine forks; a question only when the decision changes; deterministic template readings when the model is off or invalid |
+| Drafts | `services/preparation.py` | Deterministic templates; `prompts/draft_message.md` is not wired (C7) |
 | Ranking, money, approvals | engine, workflow | Deterministic; no model authority |
 
 FreeLLMPool live mode is configuration-restricted to loopback origins and filesystem
-document storage. The remaining Tier 0 evaluation/UI work and all Tier 1 capabilities
-are not implemented by this update.
+document storage.
+
+## Implementation status (18 October 2026)
+
+| Item | State | Evidence and limits |
+|---|---|---|
+| F1-F3 | Implemented | Shared structured call, `*.system.md` prompts, FreeLLMPool production guard |
+| F4 | Implemented | `scripts/ai_eval.py`, 49 synthetic cases, 5 task types, committed recordings, `data/ai_workflow/report.json`; recorded results prove the replay path and guards, not live-model quality |
+| F5 | Implemented | `ProvenanceBadge` on extraction candidates, forks, clause readings, replies, explanations and messages; AI kinds are `live`/`recorded`, everything else is labelled template/typed/manual |
+| C1 | Implemented | Prompt rules plus deterministic guards: unrecognised basis, conflicting values, two stated totals, multi-date quotes, computed sums; guards only lower a status |
+| C2 | Implemented | Typed terms, conditions, unsupported clauses and stance, each verbatim-quoted; one fabricated quote invalidates the reading; stance never sets acceptance; reviewer disagreement shown; persisted in the reply payload |
+| C3 | Implemented | Durable `advisory` job; isolated forks through `agent/nodes/compute.py`; stored in `ai_advisory`; a question only when the decision changes |
+| C4 | Implemented | `clarification` replaces changes (never both), no figures allowed; the recorded corpus shows zero unsafe model changes, so the model path is retained. The model path beat the deterministic grammar only on recorded synthetic labels (10 of 16 what-if cases) |
+| C5 | Implemented | Slot-only text, number/terms guards before resolution, engine-fact resolution, fixed caveats, template fallback; stored in `ai_advisory` and served by the existing explanation endpoint |
+| C6 | Implemented, English/Bengali/Hindi/Simplified Chinese qualified on recorded synthetic cases only | Page language/script and optional reviewer-only gloss persisted per candidate; per-language dates, numbers, lexicons, bank vocabulary; synthetic text-layer PDFs per script; font stack and original/gloss UI. Real producer shaping and live-model quality are untested |
+
+A language counts as supported only while `scripts/ai_eval.py` shows passing extract and reply cases for it (`tests/test_ai_eval.py` enforces this). Arabic and every other language remain unsupported and fail closed to manual review.
 
 ## Tier 0: foundation
 
@@ -27,7 +44,7 @@ These make every later AI addition work identically on FreeLLMPool and OpenAI.
 | F1 | One shared structured-call helper for both providers | Provider dispatch, error mapping and provenance are duplicated in `extract` and `propose_intent`; every new task would copy it again | `agent/llm.py` |
 | F2 | Shared system prompts in prompt files, included in `prompt_hash` | FreeLLMPool gets payment-basis instructions that OpenAI does not (`llm.py` system messages differ), so test results do not transfer; `prompt_hash` covers only `extract_order.md` (`workflow/extraction.py`) | `agent/prompts/*.system.md`, `workflow/extraction.py` |
 | F3 | Production guard: reject `LLM_PROVIDER=freellmpool` when any allowed origin is not loopback or storage is S3 | No production flag exists; hosted deployments always use non-loopback origins | `contracts/configuration.py` |
-| F4 | Provider-agnostic evaluation harness | Same synthetic cases on FreeLLMPool now and OpenAI later; code graders, k repeated trials (all must pass), comparison with the regex/template baseline, JSON report. Generalises `scripts/test_freellmpool.py` | `scripts/ai_eval.py`, `data/ai_workflow/`, `docs/evaluation.md` |
+| F4 | Provider-agnostic evaluation harness | Implemented for recorded extraction/what-if and deterministic reply baselines. Synthetic cases, committed recordings, code grounding/safety grader and JSON reports live in `scripts/ai_eval.py`, `data/ai_workflow/` and `docs/evaluation.md`. Recorded results prove replay-path correctness, not live-model quality. |
 | F5 | Provenance badge on every AI output (live / recorded / template, model) | Makes AI use and fallback visible to the owner and reviewers; check current UI coverage first | web review screens |
 
 ## Tier 1: core AI capabilities, in priority order
