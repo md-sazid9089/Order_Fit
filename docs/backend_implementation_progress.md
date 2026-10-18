@@ -2539,3 +2539,25 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   reconcile legacy candidates. Frontend owner must implement the review flow.
   Matching is a deterministic candidate policy, not universal semantic identity;
   synchronous row-iterative CSV validation bounds are not a capacity guarantee.
+
+
+### 19 October 2026 — Docker startup schema mismatch (Neon migration deferred)
+
+- Fresh Docker status/logs: API and worker repeatedly exited at
+  `Database.validate_runtime` with `Database schema is not current`; web never
+  started because the API health dependency could not pass.
+- Read-only one-off API container verified Neon revision `0020_ai_workflow` versus
+  image requirement `0022_baseline_duplicates`. Sanitized Compose inspection
+  verified API/worker/direct migration URL target the same endpoint/database.
+  The Neon overlay intentionally keeps migration behind the setup profile.
+- Kept schema/role guards intact. Added a failure-only, secret-safe diagnostic
+  naming required/deployed revisions and the database owner's migration action;
+  healthy checks still use the existing single catalog round trip.
+- Eight focused runtime/entrypoint/diagnostic tests and Ruff pass. Rebuilt the
+  Docker API image and verified the clearer rejection against Neon using SELECTs
+  only. Stopped the already-failing API/worker restart loops. No migration,
+  provisioning, data cleanup or credential/configuration change was performed.
+- Updated both duplicate handoffs and the local Neon deployment runbook.
+  Deployment remains BLOCKED: database owner must review/apply `0021_admin_reads`
+  and `0022_baseline_duplicates`, verify runtime grants, then recreate API,
+  worker and web. No healthy hosted startup or full-suite rerun is claimed here.

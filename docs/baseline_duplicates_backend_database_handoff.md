@@ -4,7 +4,39 @@ Prepared 18 October 2026. Share this report with the backend owner **and the dat
 
 ## Deployment status and ownership
 
-Backend implementation and a forward migration are supplied in the checkout. **No Neon connection, migration, data cleanup or deployment was performed.** All database verification for this task uses labeled disposable PostgreSQL containers. The database owner must inspect the actual Neon revision, backup/restore readiness, existing financial data and active execution runs before applying anything.
+### 19 October Docker startup diagnosis (live read-only verification)
+
+The configured Docker API and worker point to the same Neon endpoint/database;
+the configured direct migration URL also targets that database. A read-only
+container check found deployed revision **`0020_ai_workflow`**, while the rebuilt
+image requires **`0022_baseline_duplicates`**. Both API and worker were restarting
+with `Database schema is not current`; web remained unstarted because API health
+never became ready. This is a migration/deployment mismatch, not a build failure.
+
+The database owner must therefore review/apply **both** `0021_admin_reads` and
+`0022_baseline_duplicates`, in graph order. In addition to the baseline migration
+steps below, follow `docs/deployment/admin-reads.md` for the administrative-read
+role/grant migration. Leave `ADMIN_READS_ENABLED=false` unless separately enabled
+by the authorized operator. Do not stamp the database to the new revision.
+
+The Neon overlay correctly keeps migrations behind the explicit `setup` profile;
+ordinary `docker compose up --build` does not migrate this database. No Neon
+migration or data change was performed during diagnosis. Failing API/worker
+containers were stopped to end their restart loops, and `orderfit-api:local` was
+rebuilt. The failure-only startup diagnostic now reports required and deployed
+revisions without connection secrets; its eight focused tests and actual
+container-to-Neon read-only mismatch check pass. Startup remains **BLOCKED** until
+the database owner applies the pending revisions.
+
+After the authorized migration and runtime-role checks, recreate the services:
+
+```powershell
+docker compose up -d api worker web
+docker compose ps
+curl.exe --fail http://localhost:3000/api/health
+```
+
+Backend implementation and a forward migration are supplied in the checkout. During the original implementation, **no Neon connection, migration, data cleanup or deployment was performed**; all migration/write verification used labeled disposable PostgreSQL containers. The subsequent 19 October diagnosis above connected to Neon for read-only schema verification only. The database owner must inspect the actual Neon revision, backup/restore readiness, existing financial data and active execution runs before applying anything.
 
 Required runtime schema: `0022_baseline_duplicates`, directly after `0021_admin_reads`. Both API and worker use `store/db.py:SCHEMA_REVISION`; restarting this backend against an older schema fails the existing schema-current guard. Coordinate database, API, worker and frontend releases. Do not point local test fixtures at Neon.
 

@@ -1,6 +1,7 @@
 """Short synchronous SQLAlchemy transactions on psycopg 3. SQL owns DDL."""
 
 import hashlib
+import re
 from contextlib import contextmanager
 from dataclasses import dataclass
 from uuid import UUID
@@ -117,7 +118,20 @@ class Database:
             if not restricted:
                 raise RuntimeError("A restricted non-owner runtime login is required")
             if not current:
-                raise RuntimeError("Database schema is not current")
+                # Failure-only diagnostic: keep the healthy startup/readiness path
+                # at one round trip and never log a connection URL or role secret.
+                revisions = c.execute(text(
+                    "SELECT version_num FROM alembic_version ORDER BY version_num LIMIT 5"
+                )).scalars().all()
+                deployed = ", ".join(
+                    revision if re.fullmatch(r"[A-Za-z0-9_]{1,64}", revision or "")
+                    else "<unrecognized>" for revision in revisions
+                ) or "<none>"
+                raise RuntimeError(
+                    f"Database schema is not current: required {SCHEMA_REVISION}; "
+                    f"deployed {deployed}. Have the database owner apply the pending "
+                    "Alembic migrations before starting the API and worker."
+                )
 
     def readiness(self) -> dict:
         """Safe booleans only; never raises and never returns driver or URL text."""

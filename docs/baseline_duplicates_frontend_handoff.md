@@ -2,6 +2,15 @@
 
 Prepared 18 October 2026. Backend changes are in the checkout; **frontend implementation and browser acceptance are still required**. The database owner must apply the forward migration before this backend is deployed. **No Neon migration was initiated.** See the [backend/database handoff](baseline_duplicates_backend_database_handoff.md) for schema and release ownership.
 
+## Current Docker deployment blocker
+
+19 October read-only verification found Docker's Neon database at
+`0020_ai_workflow`, while the backend requires `0022_baseline_duplicates`.
+The database owner must apply `0021_admin_reads` and `0022_baseline_duplicates`
+before the new API/worker can start. API and worker crash loops were stopped;
+web remains unavailable pending that migration. No Neon migration was executed.
+See the backend/database handoff before frontend runtime testing.
+
 ## User-visible contract
 
 Saving a matching baseline event now stops for review. Show the matching saved entries and let an authorized user either correct/cancel the proposed entry, void/correct an actual duplicate through the existing audited controls, or explain that both entries are genuine distinct obligations. Do not automatically acknowledge matches, hide duplicate rows in the list, or discard an event from cash calculations.

@@ -5,6 +5,14 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+19 October Docker startup follow-up: read-only container checks found the active
+Neon DB at `0020_ai_workflow`, but the image requires `0022_baseline_duplicates`.
+API/worker crash loops were stopped; database owner must apply BOTH `0021_admin_reads`
+and `0022_baseline_duplicates` before recreating services. No Neon migration ran.
+Failure-only startup diagnostics now name required/deployed revisions (8 focused
+tests and rebuilt-image read-only verification pass). See the backend/database
+handoff for the current BLOCKED deployment status.
+
 18 October baseline-duplicate repair atop `9ed213e`: sole required schema head
 is now `0022_baseline_duplicates` after `0021_admin_reads`. Backend manual create/
 edit and CSV confirmation require explicit version-bound reviews of matching
