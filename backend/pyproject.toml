@@ -19,6 +19,7 @@ dependencies = [
   "sqlalchemy>=2.0.36",
   "alembic>=1.14",
   "openai>=2,<3",
+  "freellmpool==0.13.0",
   "argon2-cffi>=25,<26",
   "tzdata>=2025",
   "pypdf>=6.20.1",
@@ -52,7 +53,7 @@ build-constraint-dependencies = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["live: opt-in OpenAI calls requiring explicit credentials and budget"]
+markers = ["live: opt-in external model calls; paid providers require explicit credentials and budget"]
 addopts = "-m 'not live'"
 
 [tool.ruff]
