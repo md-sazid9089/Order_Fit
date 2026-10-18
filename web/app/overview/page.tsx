@@ -22,7 +22,7 @@ import {
   type OverviewTimeframe,
 } from "@/lib/orderfit-api";
 import { formatMinor } from "@/lib/approval-model";
-import { SkeletonDashboard } from "@/components/ui/skeleton";
+import { SkeletonOverview } from "@/components/ui/skeleton";
 
 export default function OverviewPage() {
   const { businessId } = useScope();
@@ -161,29 +161,17 @@ export default function OverviewPage() {
   };
 
   const recentStatusBadge = (status: "safe" | "deposit" | "split" | "financing" | "declined" | "review", label: string) => {
-    if (status === "review") {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF7E6] dark:bg-amber-950/60 text-[#8A5A00] dark:text-amber-300 border border-[#F2DDA6] dark:border-amber-800">
-          {label}
-        </span>
-      );
-    }
-    if (status === "safe") {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#EAF7EE] dark:bg-emerald-950/60 text-[#004D3B] dark:text-emerald-300 border border-[#B5F2C6] dark:border-emerald-800">
-          {label}
-        </span>
-      );
-    }
-    if (status === "declined") {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEF2F2] dark:bg-red-950/60 text-[#991B1B] dark:text-red-300 border border-[#F6CACA] dark:border-red-800">
-          {label}
-        </span>
-      );
-    }
+    const textColors: Record<string, string> = {
+      safe: "text-[#004D3B] dark:text-[#34D399]",
+      review: "text-[#8A5A00] dark:text-amber-400",
+      deposit: "text-[#8A5A00] dark:text-amber-400",
+      split: "text-[#8A5A00] dark:text-amber-400",
+      declined: "text-[#991B1B] dark:text-red-400",
+      financing: "text-[#525252] dark:text-neutral-400",
+    };
+    const color = textColors[status] ?? "text-[#525252] dark:text-neutral-400";
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] text-[#525252] dark:text-neutral-300 border border-[#E8E6E1] dark:border-[#2A2C2D]">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${color}`}>
         {label}
       </span>
     );
@@ -211,7 +199,7 @@ export default function OverviewPage() {
     return (
       <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
         <div className="max-w-[1560px] mx-auto w-full">
-          <SkeletonDashboard />
+          <SkeletonOverview />
         </div>
       </main>
     );

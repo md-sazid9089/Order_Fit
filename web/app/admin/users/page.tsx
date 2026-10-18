@@ -36,6 +36,7 @@ interface DatabaseUser {
   tenantName: string;
   businessId: string;
   role: string;
+  isPlatformAdmin?: boolean;
   revokedAt: string | null;
   version: number;
 }
@@ -99,13 +100,19 @@ export default function AdminUsersPage() {
           try {
             const page = await listMembers(m.business_id);
             for (const item of page.items) {
+              const isUserAdmin = Boolean(
+                (sess && item.email.toLowerCase() === sess.email.toLowerCase() && sess.is_platform_admin) ||
+                item.email.toLowerCase() === "saidulislamshehab@gmail.com" ||
+                (item.role as string) === "admin"
+              );
               collectedUsers.push({
                 userId: item.user_id,
                 fullName: item.full_name,
                 email: item.email,
                 tenantName: m.business_name,
                 businessId: m.business_id,
-                role: item.role,
+                role: isUserAdmin ? "admin" : item.role,
+                isPlatformAdmin: isUserAdmin,
                 revokedAt: item.revoked_at,
                 version: item.version,
               });
@@ -247,10 +254,11 @@ export default function AdminUsersPage() {
     showToast(`Exported ${users.length} database user records.`);
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role: string, isPlatformAdmin?: boolean) => {
+    if (isPlatformAdmin || role === "admin") {
+      return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Admin</span>;
+    }
     switch (role) {
-      case "admin":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Admin</span>;
       case "owner":
         return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Owner</span>;
       case "risk_officer":
@@ -498,7 +506,7 @@ export default function AdminUsersPage() {
                         </td>
 
                         <td className="py-3.5 px-4">
-                          {getRoleBadge(user.role)}
+                          {getRoleBadge(user.role, user.isPlatformAdmin)}
                         </td>
 
                         <td className="py-3.5 px-4">

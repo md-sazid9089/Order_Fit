@@ -12,13 +12,13 @@ async function optional<T>(request: Promise<T>): Promise<T | null> {
 }
 
 /** Fresh, business-scoped reads for one bounded page. Never caches financial results. */
-export async function loadPipeline(businessId: string, offset: number, signal?: AbortSignal): Promise<PipelineData> {
+export async function loadPipeline(businessId: string, offset: number, signal?: AbortSignal, limit: number = PIPELINE_PAGE_SIZE): Promise<PipelineData> {
   signal?.throwIfAborted();
   const base = `/businesses/${businessId}`;
   const read = <T>(path: string) => get<T>(`${base}/${path}`, { signal });
   const [profile, deals, baseline] = await Promise.all([
     read<BusinessView>("profile"),
-    read<Page<Deal>>(`deals?limit=${PIPELINE_PAGE_SIZE}&offset=${offset}`),
+    read<Page<Deal>>(`deals?limit=${limit}&offset=${offset}`),
     optional(read<BaselineView>("baseline")),
   ]);
   const [customerPage, constraints] = await Promise.all([
