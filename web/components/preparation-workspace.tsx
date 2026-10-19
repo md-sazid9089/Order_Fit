@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
 import { ApiError, get, mutate, type Deal, type Evaluation, type Operation } from "@/lib/orderfit-api";
 import { useScope } from "@/components/layout/auth-shell";
+import { InlineAlert } from "@/components/system/inline-alert";
 import { ApprovalWorkflow } from "@/components/approval/approval-workflow";
 import { BankChangeHold } from "@/components/p7/bank-hold";
 import { messageForCode } from "@/lib/approval-model";
@@ -79,18 +80,26 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
     if (id) url.searchParams.set("operationId", id); else url.searchParams.delete("operationId");
     window.history.replaceState(null, "", url);
   }
+  // Polling backs off and stops after about two minutes. The task keeps running on the server; the user is told so and
+  // can check again, instead of watching a spinner that never ends.
+  const [pollStalled, setPollStalled] = useState(false); const [pollNonce, setPollNonce] = useState(0);
   useEffect(() => {
     if (!operationId || !businessId) return;
-    let active = true; let timer: ReturnType<typeof setTimeout>;
+    let active = true; let timer: ReturnType<typeof setTimeout>; let attempts = 0; const started = Date.now();
     const poll = async () => {
       try {
         const op = await get<Operation>(`${prefix}/operations/${operationId}`); if (!active) return; setOperation(op);
-        if (["queued", "running"].includes(op.status)) timer = setTimeout(poll, 800);
+        if (["queued", "running"].includes(op.status)) {
+          attempts += 1;
+          if (Date.now() - started > 120_000) { setPollStalled(true); return; }
+          timer = setTimeout(poll, Math.min(5000, 800 * 2 ** Math.floor(attempts / 5)));
+        }
         else { await refresh(); saveOperation(""); setNotice(op.status === "failed" ? `Saved operation failed. ${op.result && op.result.kind !== "completed" ? describeResult(op.result) : ""}`.trim() : `Saved operation ${op.status}.`); }
-      } catch (e) { if (active) setError(e instanceof Error ? e.message : "Polling failed. Reload to recover the same operation."); }
+      } catch (e) { if (active) { setError(e instanceof Error ? e.message : "Checking the task failed. Check again to recover the same task."); setPollStalled(true); } }
     };
+    queueMicrotask(() => { if (active) setPollStalled(false); });
     void poll(); return () => { active = false; clearTimeout(timer); };
-  }, [businessId, operationId, prefix, refresh]);
+  }, [businessId, operationId, prefix, refresh, pollNonce]);
   /** Resolves true only when the request was accepted, so a form clears its fields only after a confirmed save. */
   async function command(work: () => Promise<unknown>): Promise<boolean> {
     setBusy(true); setError(""); setNotice("");
@@ -227,7 +236,7 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
             <span>Pipeline Dashboard</span>
           </Link>
         </div>
-    {error && <p role="alert" className="rounded bg-red-50 p-3">{error}</p>}{notice && <p role="status">{notice}</p>}
+    {error && <InlineAlert tone="danger">{error}</InlineAlert>}{notice && <InlineAlert tone="info">{notice}</InlineAlert>}{pollStalled && operationId && <InlineAlert tone="warning" title="This is taking longer than usual" action={<button type="button" className="text-sm font-semibold text-primary underline" onClick={() => { setError(""); setPollNonce(n => n + 1); }}>Check again</button>}>The task is saved and keeps running on the server. Check again in a moment; nothing will run twice.</InlineAlert>}
     {operation && <div className={panel}><p>Operation: {operation.status} · {operation.subphase}</p>{operation.result && operation.result.kind !== "completed" && <p role="alert" className="text-sm">{operation.result.kind === "failed" ? "The operation failed. This is a technical result, not a financial rejection." : "The operation needs your input before it can finish."} {describeResult(operation.result)}</p>}</div>}
     {!!state?.operations.length && <details className={panel}><summary>Saved operations and response recovery</summary>{state.operations.map(op => <article key={op.operation_id}><p>{op.kind} · {op.status} · {op.operation_id}</p>{["queued", "running"].includes(op.status) && <button className={button} disabled={!!operationId} onClick={() => saveOperation(op.operation_id)}>Resume saved operation polling</button>}{op.result && op.result.kind !== "completed" && <p className="text-xs">{describeResult(op.result)}</p>}</article>)}</details>}
     {deal.findings.filter(f => f.blocking).map(f => <p role="alert" key={f.code} className="rounded bg-red-50 p-3">{f.message}</p>)}
