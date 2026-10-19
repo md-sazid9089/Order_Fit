@@ -5,8 +5,28 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getSession, listMembers, changeRole, createInvitation, revokeMember, getBusiness } from "@/lib/p7-api";
-import { ROLES, buildInvitation, buildRevocation, buildRoleChange, describeP7Error, invitationLink, roleLabel, type Role } from "@/lib/p7-model";
+import {
+  getSession,
+  listMembers,
+  changeRole,
+  createInvitation,
+  revokeMember,
+  getBusiness,
+} from "@/lib/p7-api";
+import {
+  buildInvitation,
+  buildRevocation,
+  buildRoleChange,
+  describeP7Error,
+  invitationLink,
+  roleLabel,
+  type Role,
+} from "@/lib/p7-model";
+import {
+  exportToCsv,
+  loadAggregatedUsers,
+  type AdminDatabaseUser,
+} from "@/lib/admin-api";
 import type { SessionView } from "@/lib/generated-api";
 import {
   Users,
@@ -21,44 +41,50 @@ import {
   Mail,
   Building2,
   X,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Copy,
+  Check,
+  AlertTriangle,
+  Info,
+  Shield,
 } from "lucide-react";
-
-interface DatabaseUser {
-  userId: string;
-  fullName: string;
-  email: string;
-  tenantName: string;
-  businessId: string;
-  role: string;
-  isPlatformAdmin?: boolean;
-  revokedAt: string | null;
-  version: number;
-}
 
 export default function AdminUsersPage() {
   const router = useRouter();
   const [session, setSession] = useState<SessionView | null>(null);
-  const [users, setUsers] = useState<DatabaseUser[]>([]);
+  const [users, setUsers] = useState<AdminDatabaseUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTenant, setSelectedTenant] = useState("All Tenants");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Detail Modal State
+  const [detailUser, setDetailUser] = useState<AdminDatabaseUser | null>(null);
+
   // Provision Modal State
   const [isProvisionOpen, setIsProvisionOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
   const [newTenantId, setNewTenantId] = useState<string>("");
   const [newRole, setNewRole] = useState<Role>("commercial_lead");
   const [provisionBusy, setProvisionBusy] = useState(false);
+  const [invitationResultLink, setInvitationResultLink] = useState<string | null>(null);
+  const [hasCopiedLink, setHasCopiedLink] = useState(false);
 
   // Edit Role Modal State
-  const [editingUser, setEditingUser] = useState<DatabaseUser | null>(null);
+  const [editingUser, setEditingUser] = useState<AdminDatabaseUser | null>(null);
   const [editRole, setEditRole] = useState<Role>("commercial_lead");
   const [editBusy, setEditBusy] = useState(false);
 
   // Revoke Modal State
-  const [revokingUser, setRevokingUser] = useState<DatabaseUser | null>(null);
+  const [revokingUser, setRevokingUser] = useState<AdminDatabaseUser | null>(null);
   const [revokeReason, setRevokeReason] = useState("");
   const [revokeBusy, setRevokeBusy] = useState(false);
 
@@ -67,7 +93,7 @@ export default function AdminUsersPage() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const loadDatabaseUsers = useCallback(async () => {
@@ -87,51 +113,8 @@ export default function AdminUsersPage() {
         setNewTenantId(memberships[0].business_id);
       }
 
-      const collectedUsers: DatabaseUser[] = [];
-
-      await Promise.all(
-        memberships.map(async (m) => {
-          try {
-            const page = await listMembers(m.business_id);
-            for (const item of page.items) {
-              const isUserAdmin = Boolean(
-                (sess && item.email.toLowerCase() === sess.email.toLowerCase() && sess.is_platform_admin) ||
-                item.email.toLowerCase() === "saidulislamshehab@gmail.com" ||
-                (item.role as string) === "admin"
-              );
-              collectedUsers.push({
-                userId: item.user_id,
-                fullName: item.full_name,
-                email: item.email,
-                tenantName: m.business_name,
-                businessId: m.business_id,
-                role: isUserAdmin ? "admin" : item.role,
-                isPlatformAdmin: isUserAdmin,
-                revokedAt: item.revoked_at,
-                version: item.version,
-              });
-            }
-          } catch {
-            // If tenant has no members yet or lacks permission, skip
-          }
-        })
-      );
-
-      // If no members in businesses yet, ensure the admin themselves is shown from session
-      if (collectedUsers.length === 0 && sess) {
-        collectedUsers.push({
-          userId: sess.user_id,
-          fullName: sess.profile.full_name || "Platform Admin",
-          email: sess.email,
-          tenantName: sess.memberships?.[0]?.business_name || "Platform Administration",
-          businessId: sess.memberships?.[0]?.business_id || "",
-          role: "admin",
-          revokedAt: null,
-          version: sess.profile_version,
-        });
-      }
-
-      setUsers(collectedUsers);
+      const aggregation = await loadAggregatedUsers(sess);
+      setUsers(aggregation.users);
     } catch {
       router.replace("/auth/signin");
     } finally {
@@ -140,7 +123,9 @@ export default function AdminUsersPage() {
   }, [router, newTenantId]);
 
   useEffect(() => {
-    const initial = setTimeout(() => { void loadDatabaseUsers(); }, 0);
+    const initial = setTimeout(() => {
+      void loadDatabaseUsers();
+    }, 0);
     return () => clearTimeout(initial);
   }, [loadDatabaseUsers]);
 
@@ -149,121 +134,253 @@ export default function AdminUsersPage() {
     return ["All Tenants", ...Array.from(list)];
   }, [users]);
 
-  // Platform administrative and business roles
-  const availableRoles = ["All Roles", "admin", "owner", "risk_officer", "commercial_lead", "auditor", "viewer"];
+  const availableRoles = [
+    "All Roles",
+    "admin",
+    "owner",
+    "risk_officer",
+    "commercial_lead",
+    "auditor",
+    "viewer",
+  ];
 
+  // Search & Filter combined
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.userId.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        u.fullName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.userId.toLowerCase().includes(q) ||
+        u.tenantName.toLowerCase().includes(q);
+
       const matchesTenant = selectedTenant === "All Tenants" || u.tenantName === selectedTenant;
-      const matchesRole = selectedRole === "All Roles" || u.role === selectedRole;
+      const matchesRole =
+        selectedRole === "All Roles" ||
+        (selectedRole === "admin" && (u.isPlatformAdmin || u.role === "admin")) ||
+        u.role === selectedRole;
+
       const matchesStatus =
         selectedStatus === "All Statuses" ||
         (selectedStatus === "ACTIVE" && !u.revokedAt) ||
+        (selectedStatus === "REVOKED" && Boolean(u.revokedAt)) ||
         (selectedStatus === "SUSPENDED" && Boolean(u.revokedAt));
+
       return matchesSearch && matchesTenant && matchesRole && matchesStatus;
     });
   }, [users, searchQuery, selectedTenant, selectedRole, selectedStatus]);
 
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTenant, selectedRole, selectedStatus, pageSize]);
+
+  // Paginated slice
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(start, start + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
+
+  // Edit Role Handler
   const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+
+    // Guard: Prevent an admin from removing their own last admin privilege
+    if (
+      session &&
+      editingUser.userId === session.user_id &&
+      editRole !== "owner" &&
+      (editRole as string) !== "admin"
+    ) {
+      const otherAdmins = users.filter(
+        (u) => u.userId !== session.user_id && (u.role === "owner" || u.isPlatformAdmin)
+      );
+      if (otherAdmins.length === 0) {
+        showToast("Cannot demote the last remaining platform administrator or owner.");
+        return;
+      }
+    }
+
     setEditBusy(true);
     try {
+      const biz = await getBusiness(editingUser.businessId);
       await changeRole(
         editingUser.businessId,
         editingUser.userId,
-        buildRoleChange({ version: editingUser.version }, editRole, (await getBusiness(editingUser.businessId)).financial_revision)
+        buildRoleChange({ version: editingUser.version }, editRole, biz.financial_revision)
       );
       showToast(`Database role updated to ${roleLabel(editRole)} for ${editingUser.fullName}`);
       setEditingUser(null);
       await loadDatabaseUsers();
-    } catch (e) {
-      showToast(`Role was not changed. ${describeP7Error(e).message}`);
-      await loadDatabaseUsers();
+    } catch (err) {
+      showToast(`Role was not changed. ${describeP7Error(err).message}`);
     } finally {
       setEditBusy(false);
     }
   };
 
+  // Revoke Access Handler
   const handleRevoke = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!revokingUser || revokeReason.trim().length < 10) return;
+
+    // Guard: Prevent self-revocation if the administrator would lock themselves out
+    if (session && revokingUser.userId === session.user_id) {
+      showToast("Administrators cannot revoke their own active administrative access.");
+      return;
+    }
+
+    // Guard: Prevent removal of the last Owner in a tenant
+    if (revokingUser.role === "owner") {
+      const otherOwners = users.filter(
+        (u) =>
+          u.businessId === revokingUser.businessId &&
+          u.userId !== revokingUser.userId &&
+          u.role === "owner" &&
+          !u.revokedAt
+      );
+      if (otherOwners.length === 0) {
+        showToast("Cannot revoke access for the last remaining Owner of this organization.");
+        return;
+      }
+    }
+
     setRevokeBusy(true);
     try {
+      const biz = await getBusiness(revokingUser.businessId);
       await revokeMember(
         revokingUser.businessId,
         revokingUser.userId,
-        buildRevocation({ version: revokingUser.version }, revokeReason, (await getBusiness(revokingUser.businessId)).financial_revision)
+        buildRevocation({ version: revokingUser.version }, revokeReason, biz.financial_revision)
       );
-      showToast(`Access revoked in database for ${revokingUser.fullName}`);
+      showToast(`Membership revoked in database for ${revokingUser.fullName}`);
       setRevokingUser(null);
       setRevokeReason("");
       await loadDatabaseUsers();
-    } catch (e) {
-      showToast(`Access was not revoked. ${describeP7Error(e).message}`);
-      await loadDatabaseUsers();
+    } catch (err) {
+      showToast(`Access was not revoked. ${describeP7Error(err).message}`);
     } finally {
       setRevokeBusy(false);
     }
   };
 
+  // Provision Invitation Handler
   const handleProvisionInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail.trim() || !newTenantId) return;
+
+    // Check for existing active membership
+    const existing = users.find(
+      (u) =>
+        u.businessId === newTenantId &&
+        u.email.toLowerCase() === newEmail.trim().toLowerCase() &&
+        !u.revokedAt
+    );
+    if (existing) {
+      showToast(`User ${newEmail} is already an active member of this organization.`);
+      return;
+    }
+
     setProvisionBusy(true);
+    setInvitationResultLink(null);
     try {
-      const created = await createInvitation(newTenantId, buildInvitation(newEmail, newRole, (await getBusiness(newTenantId)).financial_revision));
+      const biz = await getBusiness(newTenantId);
+      const created = await createInvitation(
+        newTenantId,
+        buildInvitation(newEmail.trim(), newRole, biz.financial_revision)
+      );
       const link = invitationLink(window.location.origin, created.invitation_url);
-      showToast(link ? `Invitation created for ${newEmail}. Nothing was emailed; share this one-time link yourself: ${link}` : `Invitation created for ${newEmail}. Nothing was emailed.`);
-      setIsProvisionOpen(false);
-      setNewEmail("");
+      setInvitationResultLink(link);
+      showToast(`Invitation created in database for ${newEmail}. Copy the secure token link below.`);
       await loadDatabaseUsers();
-    } catch (e) {
-      showToast(`No invitation was created. ${describeP7Error(e).message}`);
+    } catch (err) {
+      showToast(`No invitation was created. ${describeP7Error(err).message}`);
     } finally {
       setProvisionBusy(false);
     }
   };
 
+  const copyToClipboard = (text: string) => {
+    void navigator.clipboard.writeText(text);
+    setHasCopiedLink(true);
+    setTimeout(() => setHasCopiedLink(false), 2500);
+  };
+
+  // Export CSV Handler with Formula Injection Sanitization
   const handleExportCsv = () => {
-    const headers = "User_ID,Name,Email,Tenant,Role,Status,Version\n";
-    const rows = users
-      .map(
-        (u) =>
-          `"${u.userId}","${u.fullName}","${u.email}","${u.tenantName}","${u.role}","${u.revokedAt ? "REVOKED" : "ACTIVE"}",${u.version}`
-      )
-      .join("\n");
-    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `orderfit-database-users-${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast(`Exported ${users.length} database user records.`);
+    const today = new Date().toISOString().split("T")[0];
+    const fileName = `orderfit-users-${today}.csv`;
+    const headers = [
+      "User ID",
+      "Full Name",
+      "Email Address",
+      "Tenant Organization",
+      "Tenant ID",
+      "Role",
+      "Platform Admin",
+      "Membership Status",
+      "Record Version",
+    ];
+
+    const rows = filteredUsers.map((u) => [
+      u.userId,
+      u.fullName,
+      u.email,
+      u.tenantName,
+      u.businessId,
+      u.role,
+      u.isPlatformAdmin ? "YES" : "NO",
+      u.revokedAt ? "REVOKED" : "ACTIVE",
+      u.version,
+    ]);
+
+    exportToCsv(fileName, headers, rows);
+    showToast(`Exported ${filteredUsers.length} matching user records to CSV.`);
   };
 
   const getRoleBadge = (role: string, isPlatformAdmin?: boolean) => {
     if (isPlatformAdmin || role === "admin") {
-      return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Admin</span>;
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">
+          Admin
+        </span>
+      );
     }
     switch (role) {
       case "owner":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">Owner</span>;
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B]">
+            Owner
+          </span>
+        );
       case "risk_officer":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE] dark:bg-[#8B5CF6]/20 dark:text-[#C4B5FD] dark:border-[#8B5CF6]/30">Risk Officer</span>;
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE] dark:bg-[#8B5CF6]/20 dark:text-[#C4B5FD] dark:border-[#8B5CF6]/30">
+            Risk Officer
+          </span>
+        );
       case "commercial_lead":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0] dark:bg-[#059669]/20 dark:text-[#6EE7B7] dark:border-[#059669]/30">Commercial Lead</span>;
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0] dark:bg-[#059669]/20 dark:text-[#6EE7B7] dark:border-[#059669]/30">
+            Commercial Lead
+          </span>
+        );
       case "auditor":
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] dark:bg-[#D97706]/20 dark:text-[#FCD34D] dark:border-[#D97706]/30">Auditor</span>;
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] dark:bg-[#D97706]/20 dark:text-[#FCD34D] dark:border-[#D97706]/30">
+            Auditor
+          </span>
+        );
       case "viewer":
       default:
-        return <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3F4F6] text-[#374151] border border-[#E5E7EB] dark:bg-[#26282A] dark:text-[#D1D5DB] dark:border-[#373A3C]">{roleLabel(role)}</span>;
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F3F4F6] text-[#374151] border border-[#E5E7EB] dark:bg-[#26282A] dark:text-[#D1D5DB] dark:border-[#373A3C]">
+            {roleLabel(role)}
+          </span>
+        );
     }
   };
 
@@ -285,11 +402,16 @@ export default function AdminUsersPage() {
               </Link>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                  <Link href="/admin" className="text-xs text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white transition-colors">
+                  <Link
+                    href="/admin"
+                    className="text-xs text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white transition-colors"
+                  >
                     Admin Console
                   </Link>
                   <span className="text-[#A3A3A3] dark:text-[#737373] text-xs">/</span>
-                  <span className="text-xs font-semibold text-[#1E2021] dark:text-[#F3F4F6]">User Management</span>
+                  <span className="text-xs font-semibold text-[#1E2021] dark:text-[#F3F4F6]">
+                    User Management
+                  </span>
                 </div>
                 <h1 className="text-sm sm:text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">
                   Database User Credentials & Membership Roles
@@ -302,22 +424,35 @@ export default function AdminUsersPage() {
 
               <button
                 type="button"
-                onClick={handleExportCsv}
-                disabled={users.length === 0}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
+                onClick={() => void loadDatabaseUsers()}
+                disabled={loading}
+                aria-label="Refresh user list"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#D1D5DB] hover:text-[#1E2021] dark:hover:text-white border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
               >
-                <Download className="size-3.5 text-[#525252] dark:text-[#A3A3A3]" />
+                <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={filteredUsers.length === 0}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Download className="size-3.5" />
                 <span className="hidden sm:inline">Export CSV</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setIsProvisionOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-[#181A1B] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                onClick={() => {
+                  setInvitationResultLink(null);
+                  setIsProvisionOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black dark:bg-white dark:hover:bg-[#E5E7EB] text-white dark:text-[#181A1B] text-xs font-semibold transition-all shadow-xs"
               >
                 <Plus className="size-3.5" />
-                <span className="hidden sm:inline">Invite User</span>
-                <span className="sm:hidden">Invite</span>
+                <span>Invite User</span>
               </button>
             </div>
           </div>
@@ -325,280 +460,523 @@ export default function AdminUsersPage() {
 
         {/* Main Content Workspace */}
         <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
+          {/* Toast Notification */}
           {toastMessage && (
-            <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
+            <div className="p-4 rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#181A1B] text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-white shrink-0" />
+                <CheckCircle2 className="size-4 text-[#059669] shrink-0" />
                 <span className="break-words">{toastMessage}</span>
               </div>
-              <button onClick={() => setToastMessage(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/70">
+              <button
+                onClick={() => setToastMessage(null)}
+                aria-label="Dismiss message"
+                className="p-1 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 text-white/70 dark:text-black/70"
+              >
                 <X className="size-3.5" />
               </button>
             </div>
           )}
 
-          {/* Database Metric Telemetry Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Total Database Users
+          {/* Search & Filters Card */}
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Search Field */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A3A3A3] dark:text-[#737373]" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or user UUID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs text-[#1E2021] dark:text-white placeholder-[#A3A3A3] focus:outline-none focus:ring-1 focus:ring-[#1E2021] dark:focus:ring-white transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#1E2021] dark:hover:text-white text-xs"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
-                <Users className="size-4 text-[#1E2021]" />
-                <span>{users.length} Users</span>
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">Across {tenantsList.length - 1 || 1} organizations</div>
-            </div>
 
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Admin & Privileged Accounts
-              </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
-                <ShieldCheck className="size-4 text-[#1E2021]" />
-                <span>
-                  {users.filter((u) => u.role === "admin" || u.role === "owner" || u.role === "risk_officer").length} Privileged
-                </span>
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">Admin, Owner & Risk roles</div>
-            </div>
-
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                Active Memberships
-              </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#059669]" />
-                <span>{users.filter((u) => !u.revokedAt).length} Active</span>
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">
-                {users.filter((u) => Boolean(u.revokedAt)).length} revoked
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
-              <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
-                PostgreSQL Isolation
-              </div>
-              <div className="text-xl font-bold font-display text-[#1E2021] mt-1 flex items-center gap-2">
-                <Building2 className="size-4 text-[#059669]" />
-                <span>RLS Active</span>
-              </div>
-              <div className="text-[11px] text-[#525252] mt-0.5">Row-level security enforced</div>
-            </div>
-          </div>
-
-          {/* Search & Filter Controls */}
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#737373]" />
-              <input
-                type="text"
-                placeholder="Search database user by name, email, or user ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] placeholder-[#A3A3A3] focus:outline-none focus:border-[#1E2021] focus:bg-white transition-all"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={selectedTenant}
-                onChange={(e) => setSelectedTenant(e.target.value)}
-                className="px-3 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021] cursor-pointer"
-              >
-                {tenantsList.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021] cursor-pointer"
-              >
-                {availableRoles.map((r) => (
-                  <option key={r} value={r}>
-                    {r === "All Roles" ? r : roleLabel(r)}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021] cursor-pointer"
-              >
-                <option value="All Statuses">All Statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="SUSPENDED">Revoked / Suspended</option>
-              </select>
-
-              {(searchQuery || selectedTenant !== "All Tenants" || selectedRole !== "All Roles" || selectedStatus !== "All Statuses") && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedTenant("All Tenants");
-                    setSelectedRole("All Roles");
-                    setSelectedStatus("All Statuses");
-                  }}
-                  className="px-2.5 py-2 text-xs font-semibold text-[#991B1B] hover:bg-[#FEF2F2] rounded-xl transition-colors cursor-pointer"
+              {/* Filter Dropdowns */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Tenant Filter */}
+                <select
+                  value={selectedTenant}
+                  onChange={(e) => setSelectedTenant(e.target.value)}
+                  aria-label="Filter by Tenant Organization"
+                  className="px-3 py-2 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
                 >
-                  Clear Filters
-                </button>
-              )}
+                  {tenantsList.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Role Filter */}
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  aria-label="Filter by Role"
+                  className="px-3 py-2 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
+                >
+                  {availableRoles.map((r) => (
+                    <option key={r} value={r}>
+                      {r === "All Roles" ? "All Roles" : roleLabel(r)}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Status Filter */}
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  aria-label="Filter by Status"
+                  className="px-3 py-2 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
+                >
+                  <option value="All Statuses">All Statuses</option>
+                  <option value="ACTIVE">Active Only</option>
+                  <option value="REVOKED">Revoked / Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Filter Summary & Record Counts */}
+            <div className="flex items-center justify-between text-xs text-[#737373] dark:text-[#A3A3A3] pt-2 border-t border-[#F0EEEA] dark:border-[#2A2C2D]">
+              <div>
+                Showing <span className="font-bold text-[#1E2021] dark:text-white">{filteredUsers.length}</span> of{" "}
+                <span className="font-bold text-[#1E2021] dark:text-white">{users.length}</span> database memberships
+                {searchQuery || selectedTenant !== "All Tenants" || selectedRole !== "All Roles" || selectedStatus !== "All Statuses" ? (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedTenant("All Tenants");
+                      setSelectedRole("All Roles");
+                      setSelectedStatus("All Statuses");
+                    }}
+                    className="ml-2.5 text-[#DC2626] dark:text-[#F87171] hover:underline font-semibold"
+                  >
+                    Reset all filters
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-1.5">
+                <span>Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  aria-label="Records per page"
+                  className="bg-transparent font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Database Users Table */}
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl shadow-xs overflow-hidden">
+          {/* User Table Card */}
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#FAF9F7] border-b border-[#E8E6E1] text-[#737373] font-semibold">
-                    <th className="py-3 px-4">User Details</th>
-                    <th className="py-3 px-4">Tenant Organization</th>
+                  <tr className="border-b border-[#E8E6E1] dark:border-[#2A2C2D] bg-[#FAF9F7] dark:bg-[#222425] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-[#A3A3A3]">
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Organization</th>
                     <th className="py-3 px-4">Role</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Version</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F0EEEA]">
+                <tbody className="divide-y divide-[#F0EEEA] dark:divide-[#2A2C2D]">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-xs text-[#737373]">
-                        <RefreshCw className="size-4 animate-spin inline-block mr-2" />
-                        Loading database user credentials...
+                      <td colSpan={6} className="py-12 text-center text-[#737373] dark:text-[#A3A3A3]">
+                        <RefreshCw className="size-5 animate-spin mx-auto mb-2 text-[#1E2021] dark:text-white" />
+                        <span>Querying PostgreSQL database user records...</span>
                       </td>
                     </tr>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : paginatedUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-xs text-[#737373]">
-                        No user accounts found matching the criteria.
+                      <td colSpan={6} className="py-12 text-center text-[#737373] dark:text-[#A3A3A3]">
+                        <div className="size-12 rounded-2xl bg-[#FAF9F7] dark:bg-[#222425] flex items-center justify-center mx-auto mb-3">
+                          <Users className="size-6 text-[#A3A3A3]" />
+                        </div>
+                        <p className="font-semibold text-sm text-[#1E2021] dark:text-white">
+                          No database records matched your criteria
+                        </p>
+                        <p className="text-xs text-[#737373] dark:text-[#A3A3A3] mt-1">
+                          Try adjusting your search query, tenant organization, or role filter.
+                        </p>
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((user) => (
-                      <tr key={`${user.businessId}-${user.userId}`} className="hover:bg-[#FAF9F7] transition-colors group">
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-xs text-[#1E2021]">{user.fullName}</div>
-                          <div className="text-[11px] text-[#737373] flex items-center gap-1 mt-0.5 font-mono">
-                            <Mail className="size-3 text-[#A3A3A3]" />
-                            <span>{user.email}</span>
-                          </div>
-                          <div className="text-[10px] text-[#A3A3A3] font-mono mt-0.5">{user.userId}</div>
-                        </td>
+                    paginatedUsers.map((u) => {
+                      const isRevoked = Boolean(u.revokedAt);
+                      return (
+                        <tr
+                          key={`${u.businessId}-${u.userId}`}
+                          className="hover:bg-[#FAF9F7] dark:hover:bg-[#222425] transition-colors group"
+                        >
+                          {/* User info */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="size-8 rounded-full bg-[#FAF9F7] dark:bg-[#26282A] border border-[#E8E6E1] dark:border-[#373A3C] flex items-center justify-center text-xs font-bold text-[#1E2021] dark:text-white shrink-0">
+                                {u.fullName ? u.fullName.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-[#1E2021] dark:text-white truncate">
+                                  {u.fullName}
+                                </div>
+                                <div className="text-[11px] text-[#737373] dark:text-[#A3A3A3] font-mono truncate">
+                                  {u.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                        <td className="py-3.5 px-4 font-medium text-[#1E2021]">
-                          <div className="flex items-center gap-1.5">
-                            <Building2 className="size-3.5 text-[#737373] shrink-0" />
-                            <span className="truncate max-w-[190px]">{user.tenantName}</span>
-                          </div>
-                        </td>
+                          {/* Organization */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5 font-medium text-[#1E2021] dark:text-white">
+                              <Building2 className="size-3.5 text-[#737373] dark:text-[#A3A3A3] shrink-0" />
+                              <span className="truncate">{u.tenantName}</span>
+                            </div>
+                            <div className="text-[10px] text-[#737373] dark:text-[#A3A3A3] font-mono truncate">
+                              ID: {u.businessId ? u.businessId.slice(0, 8) : "Platform"}
+                            </div>
+                          </td>
 
-                        <td className="py-3.5 px-4">
-                          {getRoleBadge(user.role, user.isPlatformAdmin)}
-                        </td>
+                          {/* Role Badge */}
+                          <td className="py-3.5 px-4">{getRoleBadge(u.role, u.isPlatformAdmin)}</td>
 
-                        <td className="py-3.5 px-4">
-                          {user.revokedAt ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF2F2] text-[#991B1B] border border-[#FECACA]">
-                              <span className="size-1.5 rounded-full bg-[#DC2626]" />
-                              Revoked
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
-                              <span className="size-1.5 rounded-full bg-[#059669]" />
-                              Active
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4 font-mono text-[#737373]">
-                          v{user.version}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {!user.revokedAt && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingUser(user);
-                                    setEditRole(
-                                      ROLES.includes(user.role as Role) ? (user.role as Role) : "commercial_lead"
-                                    );
-                                  }}
-                                  className="px-2.5 py-1 rounded-lg border border-[#E8E6E1] hover:border-[#1E2021] bg-white text-[#1E2021] font-semibold text-[11px] transition-colors cursor-pointer"
-                                >
-                                  Edit Role
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setRevokingUser(user)}
-                                  className="p-1 rounded-lg border border-[#FECACA] bg-[#FEF2F2] text-[#991B1B] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
-                                  title="Revoke member access"
-                                >
-                                  <UserX className="size-3.5" />
-                                </button>
-                              </>
+                          {/* Status */}
+                          <td className="py-3.5 px-4">
+                            {isRevoked ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF2F2] text-[#991B1B] dark:bg-[#DC2626]/20 dark:text-[#FCA5A5] border border-[#FCA5A5] dark:border-[#DC2626]/30">
+                                <span className="size-1.5 rounded-full bg-[#DC2626]" />
+                                Revoked
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] text-[#065F46] dark:bg-[#059669]/20 dark:text-[#6EE7B7] border border-[#A7F3D0] dark:border-[#059669]/30">
+                                <span className="size-1.5 rounded-full bg-[#059669]" />
+                                Active
+                              </span>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+
+                          {/* Version */}
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                            v{u.version}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* View Details */}
+                              <button
+                                type="button"
+                                onClick={() => setDetailUser(u)}
+                                title="View User Details"
+                                className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#EFECE6] dark:hover:bg-[#2A2C2D] transition-colors"
+                              >
+                                <Eye className="size-4" />
+                              </button>
+
+                              {/* Edit Role */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingUser(u);
+                                  setEditRole(u.role as Role);
+                                }}
+                                disabled={isRevoked}
+                                title="Edit Role"
+                                className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#EFECE6] dark:hover:bg-[#2A2C2D] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <ShieldCheck className="size-4" />
+                              </button>
+
+                              {/* Revoke Access */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRevokingUser(u);
+                                  setRevokeReason("");
+                                }}
+                                disabled={isRevoked}
+                                title="Revoke Membership"
+                                className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#DC2626] dark:hover:text-[#F87171] hover:bg-[#FEF2F2] dark:hover:bg-[#DC2626]/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <UserX className="size-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {filteredUsers.length > 0 && (
+              <div className="p-4 border-t border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="text-[#737373] dark:text-[#A3A3A3]">
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} records
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-lg border border-[#E8E6E1] dark:border-[#2A2C2D] bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#EFECE6] dark:hover:bg-[#2A2C2D] transition-colors"
+                    aria-label="Previous Page"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const pageNum = i + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`size-8 rounded-lg text-xs font-semibold transition-colors ${
+                            currentPage === pageNum
+                              ? "bg-[#1E2021] dark:bg-white text-white dark:text-[#181A1B]"
+                              : "border border-[#E8E6E1] dark:border-[#2A2C2D] bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#D1D5DB] hover:bg-[#EFECE6] dark:hover:bg-[#2A2C2D]"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    }
+                    if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                      return (
+                        <span key={pageNum} className="text-[#737373] px-1">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-lg border border-[#E8E6E1] dark:border-[#2A2C2D] bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#EFECE6] dark:hover:bg-[#2A2C2D] transition-colors"
+                    aria-label="Next Page"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
 
-      {/* Invite User Modal */}
-      {isProvisionOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm text-[#1E2021] font-display">Invite User to Organization</h3>
-                <p className="text-xs text-[#737373] mt-0.5">Creates an invitation record. Nothing is emailed; you share the one-time link.</p>
+      {/* ======================================================== */}
+      {/* 1. User Details Modal                                    */}
+      {/* ======================================================== */}
+      {detailUser && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-[#FAF9F7] dark:bg-[#26282A] border border-[#E8E6E1] dark:border-[#373A3C] flex items-center justify-center text-sm font-bold text-[#1E2021] dark:text-white">
+                  {detailUser.fullName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#1E2021] dark:text-white">
+                    {detailUser.fullName}
+                  </h3>
+                  <p className="text-xs text-[#737373] dark:text-[#A3A3A3] font-mono">
+                    {detailUser.email}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsProvisionOpen(false)}
-                className="p-1 rounded-lg text-[#737373] hover:text-[#1E2021] hover:bg-[#FAF9F7]"
+                onClick={() => setDetailUser(null)}
+                aria-label="Close user details"
+                className="p-1.5 rounded-lg text-[#737373] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleProvisionInvitation} className="p-6 space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-[#FAF9F7] dark:bg-[#222425] p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D]">
               <div>
-                <label className="block font-semibold text-[#1E2021] mb-1">Business Email Address</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. member@company.com"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] focus:outline-none focus:border-[#1E2021] focus:bg-white"
-                />
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  User ID
+                </span>
+                <span className="font-mono font-medium text-[#1E2021] dark:text-white break-all">
+                  {detailUser.userId}
+                </span>
               </div>
+              <div>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  Tenant Organization
+                </span>
+                <span className="font-semibold text-[#1E2021] dark:text-white">
+                  {detailUser.tenantName}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  Assigned Role
+                </span>
+                <span className="mt-1 inline-block">
+                  {getRoleBadge(detailUser.role, detailUser.isPlatformAdmin)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  Membership Status
+                </span>
+                <span className="font-semibold text-[#1E2021] dark:text-white">
+                  {detailUser.revokedAt ? "Revoked" : "Active"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  Record Version
+                </span>
+                <span className="font-mono text-[#1E2021] dark:text-white">
+                  v{detailUser.version}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#737373] dark:text-[#A3A3A3] block text-[10px] uppercase font-semibold">
+                  Platform Admin
+                </span>
+                <span className="font-semibold text-[#1E2021] dark:text-white">
+                  {detailUser.isPlatformAdmin ? "Yes" : "No"}
+                </span>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-[#1E2021] mb-1">Target Organization</label>
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailUser(null)}
+                className="px-4 py-2 rounded-xl bg-[#1E2021] text-white dark:bg-white dark:text-[#181A1B] text-xs font-semibold hover:opacity-90 transition-opacity"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 2. Invite User Modal                                     */}
+      {/* ======================================================== */}
+      {isProvisionOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white">
+                  <Mail className="size-4" />
+                </div>
+                <h3 className="text-base font-bold text-[#1E2021] dark:text-white">
+                  Invite User to Organization
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProvisionOpen(false)}
+                aria-label="Close invite modal"
+                className="p-1.5 rounded-lg text-[#737373] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {invitationResultLink ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-[#ECFDF5] dark:bg-[#059669]/20 border border-[#A7F3D0] dark:border-[#059669]/30 text-xs space-y-2">
+                  <div className="font-bold text-[#065F46] dark:text-[#6EE7B7] flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4" />
+                    <span>Invitation Successfully Persisted</span>
+                  </div>
+                  <p className="text-[#047857] dark:text-[#A7F3D0]">
+                    Email delivery is running in link-based sandbox mode. Share this one-time secure link with the invitee:
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={invitationResultLink}
+                      className="w-full p-2 bg-white dark:bg-[#181A1B] border border-[#A7F3D0] dark:border-[#059669]/40 rounded-lg text-[11px] font-mono text-[#1E2021] dark:text-white select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(invitationResultLink)}
+                      className="px-3 py-2 rounded-lg bg-[#059669] text-white font-semibold flex items-center gap-1 shrink-0 hover:bg-[#047857] transition-colors"
+                    >
+                      {hasCopiedLink ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      <span>{hasCopiedLink ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProvisionOpen(false);
+                    setInvitationResultLink(null);
+                    setNewEmail("");
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#181A1B] text-xs font-semibold"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleProvisionInvitation} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="teammate@company.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs text-[#1E2021] dark:text-white placeholder-[#A3A3A3] focus:outline-none focus:ring-1 focus:ring-[#1E2021] dark:focus:ring-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                    Target Organization
+                  </label>
                   <select
                     value={newTenantId}
                     onChange={(e) => setNewTenantId(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021]"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
                   >
                     {session?.memberships?.map((m) => (
                       <option key={m.business_id} value={m.business_id}>
@@ -608,95 +986,114 @@ export default function AdminUsersPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-semibold text-[#1E2021] mb-1">Assigned Role</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                    Membership Role
+                  </label>
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as Role)}
-                    className="w-full px-3 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021]"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
                   >
-                    {ROLES.map((r) => (
-                      <option key={r} value={r}>
-                        {roleLabel(r)}
-                      </option>
-                    ))}
+                    <option value="commercial_lead">Commercial Lead (Intake, review & what-if plans)</option>
+                    <option value="risk_officer">Risk Officer (Holds & reserve calibration)</option>
+                    <option value="auditor">Auditor (Tamper-evident logs & read-only history)</option>
+                    <option value="viewer">Viewer (Read-only pipeline access)</option>
+                    <option value="owner">Owner (Full business administration)</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="pt-4 border-t border-[#E8E6E1] flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsProvisionOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] hover:bg-[#FAF9F7] font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={provisionBusy}
-                  className="px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white font-semibold shadow-xs disabled:opacity-50"
-                >
-                  {provisionBusy ? "Inviting..." : "Send Invitation"}
-                </button>
-              </div>
-            </form>
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsProvisionOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] text-xs font-semibold text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={provisionBusy || !newEmail.trim() || !newTenantId}
+                    className="px-4 py-2 rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#181A1B] text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  >
+                    {provisionBusy ? "Persisting..." : "Create Invitation"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
 
-      {/* Edit Role Modal */}
+      {/* ======================================================== */}
+      {/* 3. Edit Role Modal                                       */}
+      {/* ======================================================== */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm text-[#1E2021] font-display">Update Security Role</h3>
-                <p className="text-xs text-[#737373] mt-0.5">{editingUser.fullName} ({editingUser.email})</p>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white">
+                  <ShieldCheck className="size-4" />
+                </div>
+                <h3 className="text-base font-bold text-[#1E2021] dark:text-white">
+                  Update Membership Role
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingUser(null)}
-                className="p-1 rounded-lg text-[#737373] hover:text-[#1E2021] hover:bg-[#FAF9F7]"
+                aria-label="Close edit role modal"
+                className="p-1.5 rounded-lg text-[#737373] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveRole} className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-[#1E2021] mb-1">Select Role</label>
+            <form onSubmit={handleSaveRole} className="space-y-4">
+              <div className="p-3 bg-[#FAF9F7] dark:bg-[#222425] rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] text-xs space-y-1">
+                <div className="font-semibold text-[#1E2021] dark:text-white">
+                  {editingUser.fullName}
+                </div>
+                <div className="text-[#737373] dark:text-[#A3A3A3] font-mono">
+                  {editingUser.email}
+                </div>
+                <div className="text-[11px] text-[#525252] dark:text-[#A3A3A3]">
+                  Organization: <span className="font-semibold">{editingUser.tenantName}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                  Select New Role
+                </label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value as Role)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] font-medium focus:outline-none focus:border-[#1E2021]"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
                 >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {roleLabel(r)}
-                    </option>
-                  ))}
+                  <option value="commercial_lead">Commercial Lead (Intake, review & plans)</option>
+                  <option value="risk_officer">Risk Officer (Holds & reserve calibration)</option>
+                  <option value="auditor">Auditor (Tamper-evident logs & read-only history)</option>
+                  <option value="viewer">Viewer (Read-only pipeline access)</option>
+                  <option value="owner">Owner (Full business administration)</option>
                 </select>
               </div>
 
-              <div className="p-3 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-[11px] text-[#737373] leading-relaxed">
-                Role change is recorded immutably in the PostgreSQL audit log and updates tenant privilege boundaries immediately.
-              </div>
-
-              <div className="pt-4 border-t border-[#E8E6E1] flex items-center justify-end gap-2.5">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2 rounded-xl border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] hover:bg-[#FAF9F7] font-semibold"
+                  className="px-4 py-2 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] text-xs font-semibold text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editBusy}
-                  className="px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white font-semibold shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#181A1B] text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
                 >
-                  {editBusy ? "Saving..." : "Apply Role"}
+                  {editBusy ? "Saving..." : "Save Role"}
                 </button>
               </div>
             </form>
@@ -704,54 +1101,68 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Revoke Access Modal */}
+      {/* ======================================================== */}
+      {/* 4. Revoke Access Confirmation Modal                      */}
+      {/* ======================================================== */}
       {revokingUser && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm text-[#991B1B] font-display">Revoke Access</h3>
-                <p className="text-xs text-[#737373] mt-0.5">{revokingUser.fullName}</p>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[#FEF2F2] dark:bg-[#DC2626]/20 text-[#DC2626]">
+                  <AlertTriangle className="size-4" />
+                </div>
+                <h3 className="text-base font-bold text-[#1E2021] dark:text-white">
+                  Revoke Organization Access
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setRevokingUser(null)}
-                className="p-1 rounded-lg text-[#737373] hover:text-[#1E2021] hover:bg-[#FAF9F7]"
+                aria-label="Close revoke modal"
+                className="p-1.5 rounded-lg text-[#737373] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleRevoke} className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-[#1E2021] mb-1">
-                  Revocation Reason (at least 10 characters)
+            <p className="text-xs text-[#525252] dark:text-[#A3A3A3] leading-relaxed">
+              This will revoke the tenant membership for{" "}
+              <strong className="text-[#1E2021] dark:text-white">{revokingUser.fullName}</strong> in{" "}
+              <strong className="text-[#1E2021] dark:text-white">{revokingUser.tenantName}</strong>. The user
+              account is preserved, but all active access to this organization will be severed immediately.
+            </p>
+
+            <form onSubmit={handleRevoke} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                  Reason for Revocation (min 10 characters)
                 </label>
                 <textarea
                   required
                   minLength={10}
-                  rows={3}
-                  placeholder="Explain reason for access revocation (recorded in audit log)..."
+                  placeholder="e.g. Employee offboarding or team restructuring"
                   value={revokeReason}
                   onChange={(e) => setRevokeReason(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-[#FAF9F7] border border-[#E8E6E1] rounded-xl text-xs text-[#1E2021] focus:outline-none focus:border-[#991B1B]"
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs text-[#1E2021] dark:text-white placeholder-[#A3A3A3] focus:outline-none focus:ring-1 focus:ring-[#DC2626]"
                 />
               </div>
 
-              <div className="pt-4 border-t border-[#E8E6E1] flex items-center justify-end gap-2.5">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setRevokingUser(null)}
-                  className="px-4 py-2 rounded-xl border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] hover:bg-[#FAF9F7] font-semibold"
+                  className="px-4 py-2 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] text-xs font-semibold text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={revokeBusy || revokeReason.trim().length < 10}
-                  className="px-4 py-2 rounded-xl bg-[#991B1B] hover:bg-[#7F1D1D] text-white font-semibold shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold disabled:opacity-50 transition-colors"
                 >
-                  {revokeBusy ? "Revoking..." : "Revoke Access"}
+                  {revokeBusy ? "Revoking..." : "Confirm Revocation"}
                 </button>
               </div>
             </form>
