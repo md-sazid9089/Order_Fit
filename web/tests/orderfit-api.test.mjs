@@ -169,3 +169,8 @@ test("bodyless exports and notification reads send a JSON null body the API acce
   assert.deepEqual(writes.map(c => [c.url.replace("http://orderfit.invalid/api/v1", ""), c.options.body]), [
     ["/businesses/biz/cash-events/export", "null"], ["/businesses/biz/deals/deal/decision-export", "null"], ["/businesses/biz/notifications/7/read", "null"]]);
 });
+
+test("download conflicts preserve integrity errors and request references instead of claiming expiry", async () => {
+  const { client } = transport([]);
+  await assert.rejects(client.downloadFailure({ status: 409, headers: new Headers(), json: async () => ({ error: { code: "EXPORT_INTEGRITY_FAILURE", message: "Integrity verification failed.", request_id: "synthetic-integrity-reference", retryable: false } }) }), error => error.code === "EXPORT_INTEGRITY_FAILURE" && error.requestId === "synthetic-integrity-reference" && error.retryable === false);
+});

@@ -1,5 +1,6 @@
-import { ApiError, NetworkError, SESSION_EXPIRED_EVENT, apiPath, get, mutate, mutateUpload } from "./orderfit-api";
+import { ApiError, NetworkError, downloadFailure, apiPath, get, mutate, mutateUpload } from "./orderfit-api";
 import { documentDownloadPath, safeDownloadName } from "./p7-model";
+import type { CSVConfirm } from "./generated-api";
 import { saveBlob } from "./p7-api";
 
 export type DocumentView = { id: string; deal_id: string; kind: string; source_role: string; content_hash: string; original_filename: string; mime_type: string; size_bytes: number; uploaded_at: string; parse_status: "pending" | "parsed" | "failed" | "ocr_required"; untrusted: true; download_url: string };
@@ -15,7 +16,7 @@ export const extractDocument = (businessId: string, dealId: string, documentId: 
 export const resolveField = (businessId: string, dealId: string, body: unknown) => mutate(`/businesses/${businessId}/deals/${dealId}/fields/resolve`, "POST", body);
 export const previewCsv = (businessId: string, body: { document_id: string; currency: string; as_of: string; expected_financial_revision: number }) => mutate<Accepted>(`/businesses/${businessId}/cash-events/csv-preview`, "POST", body);
 export const getCsvPreview = (businessId: string, id: string) => get<CsvPreview>(`/businesses/${businessId}/cash-events/csv-previews/${id}`);
-export const confirmCsv = (businessId: string, body: { preview_id: string; preview_hash: string; expected_financial_revision: number }) => mutate(`/businesses/${businessId}/cash-events/csv-confirm`, "POST", body);
+export const confirmCsv = (businessId: string, body: CSVConfirm) => mutate(`/businesses/${businessId}/cash-events/csv-confirm`, "POST", body);
 
 /** Multipart upload; routed through the shared serialized, idempotent write path. */
 export const uploadDocument = (businessId: string, dealId: string, meta: Versions & { kind: string; source_role: string }, file: File) =>
@@ -29,8 +30,7 @@ export async function downloadDocument(businessId: string, doc: Pick<DocumentVie
   const path = documentDownloadPath(businessId, doc.deal_id, doc.id);
   if (!path) throw new ApiError("The document identifiers were not in the expected form, so nothing was downloaded.", "INVALID_DOCUMENT_LINK", 0);
   let response: Response;
-  try { response = await fetch(apiPath(path), { credentials: "include", cache: "no-store" }); } catch { throw new NetworkError(); }
-  if (response.status === 401 && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-  if (!response.ok) throw new ApiError(response.status === 404 ? "The stored file was not found." : "Could not download the document.", response.status === 401 ? "UNAUTHENTICATED" : response.status === 404 ? "NOT_FOUND" : "DOWNLOAD_FAILED", response.status);
+  try { response = await fetch(apiPath(path), { credentials: "include", cache: "no-store", signal: AbortSignal.timeout(30_000) }); } catch { throw new NetworkError(); }
+  if (!response.ok) return downloadFailure(response);
   saveBlob(new Blob([await response.blob()], { type: "application/octet-stream" }), safeDownloadName(doc.original_filename));
 }
