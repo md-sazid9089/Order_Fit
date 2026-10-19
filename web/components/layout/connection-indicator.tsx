@@ -6,24 +6,27 @@ import { HEALTH_TEXT, healthState, parseProbe, type Probe } from "@/lib/health-m
 
 type Corner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
 
-function savedCorner(): Corner {
-  try {
-    const saved = localStorage.getItem("orderfit_status_corner");
-    if (saved === "bottom-right" || saved === "bottom-left" || saved === "top-right" || saved === "top-left") return saved;
-  } catch {
-    // Ignore localStorage access issues.
-  }
-  return "bottom-right";
-}
-
 export function ConnectionIndicator() {
   const [probe, setProbe] = useState<Probe | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [lastChecked, setLastChecked] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
-  const [corner, setCorner] = useState<Corner>(savedCorner);
+  const [corner, setCorner] = useState<Corner>("bottom-right");
   const [isDragging, setIsDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+    try {
+      const saved = localStorage.getItem("orderfit_status_corner");
+      if (saved === "bottom-right" || saved === "bottom-left" || saved === "top-right" || saved === "top-left") {
+        setCorner(saved);
+      }
+    } catch {
+      // Ignore localStorage access issues.
+    }
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerStartRef = useRef<{ startX: number; startY: number; moved: boolean } | null>(null);
@@ -141,6 +144,10 @@ export function ConnectionIndicator() {
     "top-right": "top-0 right-0 origin-top-right",
     "top-left": "top-0 left-0 origin-top-left",
   };
+
+  if (!hasMounted) {
+    return null;
+  }
 
   return (
     <>

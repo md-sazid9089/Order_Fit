@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { LiquidSculpture } from "@/components/ui/liquid-sculpture-hero";
 
 export function CtaSection() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ export function CtaSection() {
     <section className="py-16 md:py-24 bg-[#F7F6F5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Newsletter CTA Light Card */}
-        <div className="rounded-4xl bg-white border border-[#ECEAE4] text-[#1A1A1A] px-6 py-16 sm:px-12 sm:py-20 text-center shadow-sm">
+        <div className="rounded-4xl bg-white border border-[#ECEAE4] text-[#1A1A1A] px-6 pt-16 pb-8 sm:px-12 sm:pt-20 sm:pb-10 text-center shadow-sm overflow-hidden">
           <div className="max-w-3xl mx-auto flex flex-col items-center">
             
             <h2 className="font-heading font-medium text-[2rem] sm:text-[2.5rem] md:text-[3rem] leading-[110%] tracking-tight text-[#1A1A1A] mb-4">
@@ -56,10 +57,22 @@ export function CtaSection() {
               </form>
             )}
 
-            <span className="text-xs text-[#737373] mt-4">
+            <span className="text-xs text-[#737373] mt-4 mb-2">
               No spam. Unsubscribe at any time.
             </span>
 
+          </div>
+
+          {/* Liquid Sculpture inside card under the form with transparent background */}
+          <div className="w-full mt-4 sm:mt-6 flex justify-center items-center bg-transparent">
+            <LiquidSculpture
+              background="transparent"
+              imageBackground="#EAE9E7"
+              className="h-64 sm:h-80 md:h-96 lg:h-[420px] w-full max-w-5xl mx-auto bg-transparent"
+              sculptureScale={1.05}
+              interactive={true}
+              ambient={true}
+            />
           </div>
         </div>
       </div>
