@@ -80,9 +80,6 @@ export function CustomersScreen() {
                 <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-[#1E2021] dark:text-white">
                   Customers & Ledger
                 </h1>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Verified counterparty directory, historic invoice logs, and as-of payment tracking.
-                </p>
               </div>
             </div>
           </div>
