@@ -1,17 +1,12 @@
-import { Suspense } from "react";
-import { DealConfirmClient } from "@/components/deals/deal-confirm-client";
+import { redirect } from "next/navigation";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string }> };
 
-async function ConfirmContent({ params }: Props) {
+// Confirmation happens on the saved order itself (review inputs, then "Confirm and evaluate").
+// The former standalone confirm screen rendered invented terms and has been removed.
+export default async function DealConfirmPage({ params, searchParams }: Props) {
   const { id } = await params;
-  return <DealConfirmClient id={id} />;
-}
-
-export default function DealConfirmPage(props: Props) {
-  return (
-    <Suspense fallback={<main className="p-8 text-xs text-[#737373]">Loading confirmation gate...</main>}>
-      <ConfirmContent {...props} />
-    </Suspense>
-  );
+  const { businessId } = await searchParams;
+  const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+  redirect(`/deals/${encodeURIComponent(id)}${query}`);
 }
