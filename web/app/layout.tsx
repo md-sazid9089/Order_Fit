@@ -46,7 +46,7 @@ export default async function RootLayout({
   await connection();
   return (
     <html lang="en" className="min-h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] font-sans antialiased">
+      <body className="min-h-full flex flex-col bg-background  text-foreground  font-sans antialiased">
         <Providers>
           {children}
           <ConnectionIndicator />

@@ -1,3 +1,4 @@
+import { verifyWorkflowViews } from "./release-visual";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
@@ -77,7 +78,8 @@ test("an owner uploads a text-layer PDF and safely falls back to manual review w
   await page.getByRole("button", { name: "Upload", exact: true }).click();
   await expect(page.getByText("Document stored privately.")).toBeVisible();
   await expect(page.getByText("synthetic-order.pdf", { exact: true })).toBeVisible();
-  await expect(page.getByText(/customer_order · parsed/)).toBeVisible();
+  await expect(page.getByText(/customer order · parsed/)).toBeVisible();
+  await verifyWorkflowViews(page, "source-documents");
   await page.getByRole("button", { name: "Extract values", exact: true }).click();
   await expect(page.getByText("Automatic extraction is unavailable. Enter the values manually.")).toBeVisible();
 });

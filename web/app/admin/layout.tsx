@@ -44,16 +44,9 @@ export default async function AdminLayout({
     redirect("/auth/signin?return=%2Fadmin");
   }
 
-  // 3. Authenticated non-admin users are denied with an explanation (not a silent bounce).
+  // 3. Keep the verified session and return non-admins to their authorized workspace.
   if (!auth.isAdmin) {
-    return (
-      <UnavailableNotice
-        title="You don't have platform administrator access"
-        reason="This area is for operators of the OrderFit service. Your account can still use every business you belong to."
-        href="/deals"
-        linkLabel="Go to your orders"
-      />
-    );
+    redirect("/deals?notice=platform-access-required");
   }
 
   // 4. Verified platform administrator: one shared admin shell for every page.

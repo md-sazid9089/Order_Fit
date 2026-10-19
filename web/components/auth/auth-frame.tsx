@@ -30,7 +30,7 @@ export function AuthFrame({ title, description, children, links = "both" }: { ti
 }
 
 export const authControl =
-  "mt-1.5 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/70 transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
+  "mt-1.5 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
 
 /** A labelled auth input. The label is always visible; placeholders are examples, never the label. */
 export function AuthField({ label, hint, ...input }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {

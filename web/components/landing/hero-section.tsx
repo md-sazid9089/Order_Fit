@@ -252,7 +252,7 @@ export function HeroSection() {
                     <span className="w-3 h-0.5 bg-[#C97D18] inline-block" />
                     <span>$20K Min Reserve</span>
                   </span>
-                  <span className="flex items-center gap-1.5 text-neutral-400">
+                  <span className="flex items-center gap-1.5 text-[#526975]">
                     <span className="w-3 h-0.5 border-t border-dashed border-neutral-400 inline-block" />
                     <span>Without Plan (Deficit)</span>
                   </span>

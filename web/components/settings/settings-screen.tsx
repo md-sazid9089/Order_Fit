@@ -27,7 +27,7 @@ export function SettingsScreen() {
   const [tab, setTab] = useState<Tab>("user");
   const tabs: { id: Tab; label: string }[] = [{ id: "user", label: "Your profile" }, { id: "company", label: "Company profile" }];
   return <PageFrame title="Settings" intro="Your profile and your company's profile. Security controls such as audit, tenant isolation and approvals cannot be switched off from here.">
-    <div role="tablist" aria-label="Settings sections" className="flex gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-neutral-900 text-white" : "bg-white"}`}>{t.label}</button>)}</div>
+    <div role="tablist" aria-label="Settings sections" className="flex gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-primary text-primary-foreground" : "bg-card"}`}>{t.label}</button>)}</div>
     <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>{tab === "user" ? <UserProfile /> : <CompanyProfile />}</div>
   </PageFrame>;
 }
@@ -52,7 +52,7 @@ function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (se
   }
   return <form onSubmit={save} className={panel}>
     <h2 className="text-lg font-semibold">Your profile</h2>
-    <p className="text-sm text-neutral-700">Signed in as {session.email}. Your profile and preferences apply across every business you belong to.</p>
+    <p className="text-sm text-muted-foreground">Signed in as {session.email}. Your profile and preferences apply across every business you belong to.</p>
     <label className="block text-sm">Full name<input required className={field} value={draft.full_name} maxLength={2000} onChange={e => setDraft({ ...draft, full_name: e.target.value })} /></label>
     <label className="block text-sm">Time zone<select className={field} value={draft.timezone} onChange={e => setDraft({ ...draft, timezone: e.target.value })}>{zones(draft.timezone).map(z => <option key={z} value={z}>{z}</option>)}</select></label>
     <label className="block text-sm">Language<select className={field} value={draft.language} onChange={e => setDraft({ ...draft, language: e.target.value as ProfileDraft["language"] })}><option value="en">English</option><option value="bn">Bangla</option></select></label>
@@ -92,10 +92,10 @@ function PasswordPanel() {
       }
     } finally { setCurrent(""); setNext(""); setConfirm(""); setBusy(false); }
   }
-  const shown = (name: "current" | "next" | "confirm") => touched && errors[name] ? <span role="alert" className="block text-xs text-red-700">{errors[name]}</span> : null;
+  const shown = (name: "current" | "next" | "confirm") => touched && errors[name] ? <span role="alert" className="block text-xs text-danger">{errors[name]}</span> : null;
   return <form onSubmit={submit} className={panel} noValidate>
     <h2 className="text-lg font-semibold">Change password</h2>
-    <p className="text-sm text-neutral-700">Use at least {PASSWORD_MIN} characters. When it succeeds, every session of this account ends, including this one, and you sign in again with the new password. The passwords are never stored in this browser.</p>
+    <p className="text-sm text-muted-foreground">Use at least {PASSWORD_MIN} characters. When it succeeds, every session of this account ends, including this one, and you sign in again with the new password. The passwords are never stored in this browser.</p>
     <label className="block text-sm">Current password<input type="password" autoComplete="current-password" className={field} value={current} onChange={e => setCurrent(e.target.value)} />{shown("current")}</label>
     <label className="block text-sm">New password<input type="password" autoComplete="new-password" className={field} value={next} onChange={e => setNext(e.target.value)} />{shown("next")}</label>
     <label className="block text-sm">Repeat new password<input type="password" autoComplete="new-password" className={field} value={confirm} onChange={e => setConfirm(e.target.value)} />{shown("confirm")}</label>
@@ -133,7 +133,7 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
   }
   return <form onSubmit={save} className={panel}>
     <h2 className="text-lg font-semibold">{businessName || "Company profile"}</h2>
-    <p className="text-sm text-neutral-700">Currency {business.currency} (fixed, amounts use minor units with {business.exponent} decimal places). {editable ? "As an owner you can edit these details." : `Your role (${roleText}) can read but not edit them; only an owner can.`}</p>
+    <p className="text-sm text-muted-foreground">Currency {business.currency} (fixed, amounts use minor units with {business.exponent} decimal places). {editable ? "As an owner you can edit these details." : `Your role (${roleText}) can read but not edit them; only an owner can.`}</p>
     <fieldset disabled={!editable || busy} className="space-y-3">
       <label className="block text-sm">Company name<input required className={field} value={draft.name} maxLength={2000} onChange={e => set({ name: e.target.value })} /></label>
       <label className="block text-sm">Time zone<select className={field} value={draft.timezone} onChange={e => set({ timezone: e.target.value })}>{zones(draft.timezone).map(z => <option key={z} value={z}>{z}</option>)}</select></label>
@@ -144,7 +144,7 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
     </fieldset>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
     {editable && <button className={primary} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
-    <p className="text-xs text-neutral-600">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
+    <p className="text-xs text-muted-foreground">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
   </form>;
 }
 
@@ -174,7 +174,7 @@ function EmailVerificationPanel() {
     <p className="text-sm text-muted-foreground">
       {session.email_verified
         ? recovery === "available" && session.password_recovery_eligible ? `If you forget your password, a reset link can be sent to ${session.email}.` : "Your email is verified. Password reset by email is not offered in this workspace."
-        : `Verify ${session.email} so a forgotten password can be reset by email. Until then, a forgotten password cannot be recovered.`}
+        : verification === "available" && recovery === "available" ? `Verify ${session.email} to enable password recovery by email.` : "Email verification and password recovery are not enabled here. Keep access to your password and any configured passkeys."}
     </p>
     {!session.email_verified && verification === "available" && (requested
       ? <Alert tone="ok">Verification email requested. Open the link and confirm while signed in to this account.</Alert>

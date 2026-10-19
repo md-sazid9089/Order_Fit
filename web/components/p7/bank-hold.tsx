@@ -6,8 +6,8 @@ import { listAccounts, resolveFlag } from "@/lib/p7-api";
 import { bankHold, BANK_EVIDENCE_MIN, bankEvidenceValid, buildBankResolution, describeP7Error, eligibleBankAccounts, maskedAccount } from "@/lib/p7-model";
 import type { AccountView, DealView, ReplyView } from "@/lib/generated-api";
 
-const input = "block w-full rounded border border-red-300 bg-white p-2 text-sm text-neutral-900";
-const button = "rounded border border-red-500 bg-white px-3 py-2 text-sm font-medium disabled:opacity-40";
+const input = "block w-full rounded border border-red-300 bg-card p-2 text-sm text-foreground";
+const button = "rounded border border-red-500 bg-card px-3 py-2 text-sm font-medium disabled:opacity-40";
 
 /**
  * Explains an unresolved bank-change hold. A hold is a blocking flag: it stops every outgoing action for the order and
@@ -45,7 +45,7 @@ export function BankChangeHold({ businessId, deal, replies, role, disabled = fal
     finally { setBusy(false); }
   }
 
-  return <section role="alert" className="space-y-2 rounded-xl border-2 border-red-300 bg-red-50 p-5 text-sm text-red-900">
+  return <section role="alert" className="space-y-2 rounded-xl border-2 border-red-300 bg-danger-soft p-5 text-sm text-danger">
     <h2 className="text-lg font-semibold">Bank-change hold</h2>
     <p>A reply asked to change bank or beneficiary details. Nothing can be sent or committed for this order until the change is verified separately. The hold cannot be overridden.</p>
     {hold.replyIds.length > 0 && <p>{hold.replyIds.length > 1 ? "Replies" : "Reply"} that raised it: <span className="font-mono text-xs">{hold.replyIds.join(", ")}</span></p>}
@@ -56,7 +56,7 @@ export function BankChangeHold({ businessId, deal, replies, role, disabled = fal
       <li>Written evidence of at least {BANK_EVIDENCE_MIN} characters describing how you confirmed the change independently of the reply.</li>
     </ol>
     {!hold.flagId && <p>This hold has no identifier in the order response, so it cannot be cleared from this screen. Reload the order; the hold stays in force.</p>}
-    {hold.canResolve && <form className="space-y-2 rounded border border-red-200 bg-white/60 p-3" onSubmit={e => { e.preventDefault(); void submit(); }}>
+    {hold.canResolve && <form className="space-y-2 rounded border border-red-200 bg-card/60 p-3" onSubmit={e => { e.preventDefault(); void submit(); }}>
       <label className="block">Bank-change reply
         <select className={input} value={replyId} onChange={e => { setReplyId(e.target.value); setAccountId(""); setAccounts([]); setError(""); setLoading(!!e.target.value); }}>
           <option value="">Choose the reply that raised the hold</option>

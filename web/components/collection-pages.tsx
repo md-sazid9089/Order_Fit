@@ -1,7 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { get } from "@/lib/orderfit-api";
+import { ApiError, get } from "@/lib/orderfit-api";
 
 type Page<T> = { items: T[]; next_cursor: string | null };
 
@@ -10,12 +10,16 @@ export function useCollection<T extends { id: string }>(path: string, enabled = 
   const query = useInfiniteQuery({
     queryKey: ["collection", path], enabled,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => get<Page<T>>(`${path}${path.includes("?") ? "&" : "?"}limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`),
+    queryFn: async ({ pageParam }) => {
+      const page = await get<Page<T>>(`${path}${path.includes("?") ? "&" : "?"}limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`);
+      if (!page || !Array.isArray(page.items) || page.items.some(item => !item || typeof item.id !== "string")) throw new ApiError("The service returned incomplete list data. Try loading it again.", "MALFORMED_RESPONSE", 200, { retryable: true });
+      return page;
+    },
     getNextPageParam: page => page.next_cursor,
     retry: false,
   });
   const items = [...new Map((query.data?.pages.flatMap(page => page.items) ?? []).map(item => [item.id, item])).values()];
-  return { ...query, isSuccess: !!query.data, data: { items }, items };
+  return { ...query, isSuccess: query.isSuccess, data: { items }, items };
 }
 
 type Controls = {

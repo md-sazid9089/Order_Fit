@@ -106,9 +106,9 @@ export default function OverviewPage() {
     const val = data?.kpis.total_balance_change_pct ?? 0;
     const isUp = val >= 0;
     return (
-      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
-        {Math.abs(val).toFixed(1)}%
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-foreground  bg-background  border border-border ">
+        {isUp ? <TrendingUp className="size-3 text-muted-foreground" /> : <TrendingDown className="size-3 text-muted-foreground" />}
+        {Math.abs(val).toFixed(1)}% {isUp ? "increase" : "decrease"}
       </span>
     );
   };
@@ -120,9 +120,9 @@ export default function OverviewPage() {
     const val = data?.kpis.volume_30d_change_pct ?? 0;
     const isUp = val >= 0;
     return (
-      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
-        {Math.abs(val).toFixed(1)}%
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-foreground  bg-background  border border-border ">
+        {isUp ? <TrendingUp className="size-3 text-muted-foreground" /> : <TrendingDown className="size-3 text-muted-foreground" />}
+        {Math.abs(val).toFixed(1)}% {isUp ? "increase" : "decrease"}
       </span>
     );
   };
@@ -134,9 +134,9 @@ export default function OverviewPage() {
     const val = data?.kpis.pending_reviews_change_pct ?? 0;
     const isUp = val >= 0;
     return (
-      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
-        {Math.abs(val).toFixed(1)}%
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-foreground  bg-background  border border-border ">
+        {isUp ? <TrendingUp className="size-3 text-muted-foreground" /> : <TrendingDown className="size-3 text-muted-foreground" />}
+        {Math.abs(val).toFixed(1)}% {isUp ? "increase" : "decrease"}
       </span>
     );
   };
@@ -148,9 +148,9 @@ export default function OverviewPage() {
     const val = data?.kpis.protected_headroom_change_pct ?? 0;
     const isUp = val >= 0;
     return (
-      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#1E2021] dark:text-neutral-200 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
-        {isUp ? <TrendingUp className="size-3 text-[#737373]" /> : <TrendingDown className="size-3 text-[#737373]" />}
-        {Math.abs(val).toFixed(1)}%
+      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-foreground  bg-background  border border-border ">
+        {isUp ? <TrendingUp className="size-3 text-muted-foreground" /> : <TrendingDown className="size-3 text-muted-foreground" />}
+        {Math.abs(val).toFixed(1)}% {isUp ? "increase" : "decrease"}
       </span>
     );
   };
@@ -158,26 +158,26 @@ export default function OverviewPage() {
   const statusBadge = (status: "safe" | "warning" | "breach") => {
     switch (status) {
       case "safe":
-        return <span className="font-medium text-[#004D3B] dark:text-[#B5F2C6]">Safe</span>;
+        return <span className="font-medium text-primary ">Safe</span>;
       case "warning":
-        return <span className="font-medium text-[#8A5A00] dark:text-amber-300">Warning</span>;
+        return <span className="font-medium text-warning ">Warning</span>;
       case "breach":
-        return <span className="font-medium text-[#991B1B] dark:text-red-300">Breach</span>;
+        return <span className="font-medium text-danger ">Breach</span>;
     }
   };
 
   const recentStatusBadge = (status: "safe" | "deposit" | "split" | "financing" | "declined" | "review", label: string) => {
     const textColors: Record<string, string> = {
-      safe: "text-[#004D3B] dark:text-[#34D399]",
-      review: "text-[#8A5A00] dark:text-amber-400",
-      deposit: "text-[#8A5A00] dark:text-amber-400",
-      split: "text-[#8A5A00] dark:text-amber-400",
-      declined: "text-[#991B1B] dark:text-red-400",
-      financing: "text-[#525252] dark:text-neutral-400",
+      safe: "text-primary ",
+      review: "text-warning ",
+      deposit: "text-warning ",
+      split: "text-warning ",
+      declined: "text-danger ",
+      financing: "text-muted-foreground ",
     };
-    const color = textColors[status] ?? "text-[#525252] dark:text-neutral-400";
+    const color = textColors[status] ?? "text-muted-foreground ";
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${color}`}>
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted  border border-border  ${color}`}>
         {label}
       </span>
     );
@@ -194,7 +194,7 @@ export default function OverviewPage() {
   if (!data) {
     return (
       <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-        <div className="max-w-[1560px] mx-auto w-full">
+        <div className="max-w-[1440px] mx-auto w-full">
           <SkeletonOverview />
         </div>
       </main>
@@ -215,18 +215,20 @@ export default function OverviewPage() {
   }));
 
   let maxValMinor = BigInt(1);
+  let minValMinor = BigInt(0);
   for (const b of timelineBigInts) {
     if (b.inflow > maxValMinor) maxValMinor = b.inflow;
     if (b.outflow > maxValMinor) maxValMinor = b.outflow;
     if (b.net > maxValMinor) maxValMinor = b.net;
+    if (b.net < minValMinor) minValMinor = b.net;
   }
   const maxValNum = Math.max(100, Number(maxValMinor) / 100);
+  const minValNum = Number(minValMinor) / 100;
 
   const getCoordinates = (amountMinor: bigint, index: number, total: number) => {
     const x = total > 1 ? ((index + 0.5) / total) * svgW : svgW / 2;
     const val = Number(amountMinor) / 100;
-    const clamped = Math.max(0, Math.min(val, maxValNum));
-    const y = padY + chartH - (clamped / maxValNum) * chartH;
+    const y = padY + chartH - ((val - minValNum) / (maxValNum - minValNum)) * chartH;
     return { x, y };
   };
 
@@ -267,11 +269,11 @@ export default function OverviewPage() {
 
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+      <div className="max-w-[1440px] mx-auto space-y-6 w-full">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground  tracking-tight">
               Overview
             </h1>
           </div>
@@ -280,9 +282,9 @@ export default function OverviewPage() {
           <div className="flex items-center flex-wrap gap-2.5">
             <Link
               href={`/deals${query}`}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card  border border-border  text-foreground  hover:bg-background  text-xs font-semibold shadow-xs transition-colors"
             >
-              <Layers className="size-3.5 text-[#004D3B] dark:text-[#B5F2C6]" />
+              <Layers className="size-3.5 text-primary " />
               <span>Explore Deals</span>
             </Link>
           </div>
@@ -290,8 +292,8 @@ export default function OverviewPage() {
 
         {/* Data warnings banner when warnings exist */}
         {warnings.has("BASELINE_NOT_CONFIGURED") && (
-          <div role="status" className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
-            <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div role="status" className="p-4 bg-warning-soft  border border-amber-200  rounded-2xl flex items-start gap-3 text-xs text-warning ">
+            <AlertTriangle className="size-5 text-warning  shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold text-sm">Opening cash baseline not configured</p>
               <p>
@@ -299,7 +301,7 @@ export default function OverviewPage() {
               </p>
               <Link
                 href={`/deals/sources${query}`}
-                className="inline-block mt-1 font-semibold text-[#004D3B] dark:text-[#B5F2C6] underline"
+                className="inline-block mt-1 font-semibold text-primary  underline"
               >
                 Configure baseline balance &rarr;
               </Link>
@@ -308,8 +310,8 @@ export default function OverviewPage() {
         )}
 
         {(warnings.has("BASELINE_COVERAGE_INCOMPLETE") || warnings.has("PAST_EVENTS_REQUIRE_RECONCILIATION")) && (
-          <div role="status" className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
-            <Info className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div role="status" className="p-4 bg-warning-soft  border border-amber-200  rounded-2xl flex items-start gap-3 text-xs text-warning ">
+            <Info className="size-5 text-warning  shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               <p className="font-bold text-sm">Data quality notice</p>
               <p>
@@ -323,108 +325,108 @@ export default function OverviewPage() {
         {/* 4 Top Metric KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Opening cash balance */}
-          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <div className="p-5 bg-card  border border-border  rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                  <div className="size-7 rounded-lg bg-background  border border-border  text-foreground  flex items-center justify-center">
                     <DollarSign className="size-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground  uppercase tracking-wider">
                     Opening cash balance
                   </span>
                 </div>
                 {renderBalanceChange()}
               </div>
 
-              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-foreground  tracking-tight">
                 {formatMoney(data.kpis.total_balance_minor)}
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+            <div className="mt-3 pt-2.5 border-t border-border  text-[11px] text-muted-foreground  flex items-center justify-between">
               <span>As of {data.as_of}</span>
-              <span className="font-medium text-[#1E2021] dark:text-neutral-200">
+              <span className="font-medium text-foreground ">
                 {warnings.has("BASELINE_NOT_CONFIGURED") ? "Not configured" : "Recorded"}
               </span>
             </div>
           </div>
 
           {/* Card 2: Evaluated Volume (30d) */}
-          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <div className="p-5 bg-card  border border-border  rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                  <div className="size-7 rounded-lg bg-background  border border-border  text-foreground  flex items-center justify-center">
                     <Activity className="size-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground  uppercase tracking-wider">
                     Volume (30d)
                   </span>
                 </div>
                 {renderVolumeChange()}
               </div>
 
-              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-foreground  tracking-tight">
                 {formatMoney(data.kpis.volume_30d_minor)}
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+            <div className="mt-3 pt-2.5 border-t border-border  text-[11px] text-muted-foreground  flex items-center justify-between">
               <span>Orders stress-tested</span>
-              <span className="font-medium text-[#1E2021] dark:text-neutral-200">{data.kpis.total_orders_tested} Total</span>
+              <span className="font-medium text-foreground ">{data.kpis.total_orders_tested} Total</span>
             </div>
           </div>
 
           {/* Card 3: Pending Order Reviews */}
-          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <div className="p-5 bg-card  border border-border  rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                  <div className="size-7 rounded-lg bg-background  border border-border  text-foreground  flex items-center justify-center">
                     <Clock className="size-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground  uppercase tracking-wider">
                     Pending reviews
                   </span>
                 </div>
                 {renderPendingReviewsChange()}
               </div>
 
-              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-foreground  tracking-tight">
                 {data.kpis.pending_reviews_count}
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+            <div className="mt-3 pt-2.5 border-t border-border  text-[11px] text-muted-foreground  flex items-center justify-between">
               <span>Awaiting owner confirmation</span>
-              <span className="font-medium text-[#1E2021] dark:text-neutral-200">
+              <span className="font-medium text-foreground ">
                 {data.kpis.pending_reviews_count > 0 ? "Action required" : "Up to date"}
               </span>
             </div>
           </div>
 
           {/* Card 4: Protected Headroom */}
-          <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+          <div className="p-5 bg-card  border border-border  rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
+                  <div className="size-7 rounded-lg bg-background  border border-border  text-foreground  flex items-center justify-center">
                     <ShieldCheck className="size-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground  uppercase tracking-wider">
                     Protected Headroom
                   </span>
                 </div>
                 {renderHeadroomChange()}
               </div>
 
-              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold font-display text-foreground  tracking-tight">
                 {formatMoney(data.kpis.protected_headroom_minor)}
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-[11px] text-[#737373] dark:text-neutral-400 flex items-center justify-between">
+            <div className="mt-3 pt-2.5 border-t border-border  text-[11px] text-muted-foreground  flex items-center justify-between">
               <span>Buffer above cash reserve</span>
               {statusBadge(data.kpis.protected_headroom_status)}
             </div>
@@ -432,37 +434,37 @@ export default function OverviewPage() {
         </div>
 
         {/* Main Graph: Cash Flow */}
-        <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs">
+        <div className="bg-card  border border-border  rounded-2xl p-5 sm:p-6 shadow-xs">
           {/* Header & Legend */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border ">
             <div className="space-y-1">
               <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-lg font-bold text-[#1E2021] dark:text-white font-display">
+                <h2 className="text-lg font-bold text-foreground  font-display">
                   Cash Flow
                 </h2>
                 <div className="flex items-center gap-3 text-xs flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 text-[#1E2021] dark:text-white font-semibold">
-                    <span className="size-2 rounded-full bg-[#1E2021] dark:bg-white" />
+                  <span className="inline-flex items-center gap-1.5 text-foreground  font-semibold">
+                    <span className="size-2 rounded-full bg-info " />
                     Inflow {formatMoney(data.cashflow.total_inflow_minor)}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-[#737373] dark:text-neutral-400 font-semibold">
-                    <span className="size-2 rounded-full bg-[#737373]" />
+                  <span className="inline-flex items-center gap-1.5 text-muted-foreground  font-semibold">
+                    <span className="size-2 rounded-full bg-warning" />
                     Outflow {formatMoney(data.cashflow.total_outflow_minor)}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-[#004D3B] dark:text-[#B5F2C6] font-semibold">
-                    <span className="size-2 rounded-full bg-[#004D3B] dark:bg-[#B5F2C6]" />
+                  <span className="inline-flex items-center gap-1.5 text-primary  font-semibold">
+                    <span className="size-2 rounded-full bg-primary " />
                     Net {formatMoney(data.cashflow.total_net_minor)}
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-[#737373] dark:text-neutral-400">
+              <p className="text-xs text-muted-foreground ">
                 Forward scheduled baseline events and committed order projections from {data.as_of}. Uncommitted hypothetical orders are excluded.
               </p>
             </div>
 
             {/* Timeframe Scrubber Pills */}
             <div className="flex items-center gap-2">
-              <div className="inline-flex p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl text-xs font-semibold">
+              <div className="inline-flex p-1 bg-muted  rounded-xl text-xs font-semibold">
                 {(["30d", "90d", "6m", "1y"] as const).map(tf => (
                   <button
                     key={tf}
@@ -470,8 +472,8 @@ export default function OverviewPage() {
                     onClick={() => setActiveTimeframe(tf)}
                     className={`px-3 py-1 rounded-lg uppercase transition-all ${
                       activeTimeframe === tf
-                        ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
-                        : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                        ? "bg-card  text-foreground  shadow-xs"
+                        : "text-muted-foreground  hover:text-foreground"
                     }`}
                   >
                     {tf}
@@ -484,7 +486,7 @@ export default function OverviewPage() {
           {/* Interactive Chart Canvas */}
           <div className="relative pt-6 pb-2">
             {timeline.length === 0 ? (
-              <div className="py-16 text-center text-xs text-[#737373] dark:text-neutral-400">
+              <div className="py-16 text-center text-xs text-muted-foreground ">
                 No scheduled cash events recorded in this timeframe window.
               </div>
             ) : (
@@ -495,20 +497,21 @@ export default function OverviewPage() {
                     className="absolute z-10 -translate-x-1/2 -top-1 pointer-events-none transition-all duration-200"
                     style={{ left: `${(selectedPt.x / svgW) * 100}%` }}
                   >
-                    <div className="bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] px-3 py-1.5 rounded-xl shadow-lg text-center whitespace-nowrap">
-                      <div className="text-xs font-bold font-display tracking-tight text-white dark:text-[#1E2021]">
+                    <div className="bg-primary  text-primary-foreground  px-3 py-1.5 rounded-xl shadow-lg text-center whitespace-nowrap">
+                      <div className="text-xs font-bold font-display tracking-tight text-primary-foreground ">
                         Net: {formatMoney(selectedPoint.net_minor)}
                       </div>
-                      <div className="text-[10px] text-neutral-300 dark:text-neutral-600 font-mono">
+                      <div className="text-xs text-primary-foreground font-mono">
                         {selectedPoint.date_range}
                       </div>
                     </div>
                   </div>
                 )}
 
+                <details className="mb-3 text-sm"><summary className="cursor-pointer">View exact scheduled cash amounts</summary><div className="overflow-x-auto"><table className="w-full text-left"><caption className="sr-only">Engine-provided scheduled cash amounts</caption><thead><tr><th>Period</th><th>Inflow</th><th>Outflow</th><th>Net</th></tr></thead><tbody>{timeline.map(point => <tr key={point.period_key}><td>{point.period_key}</td><td>{formatMoney(point.inflow_minor)}</td><td>{formatMoney(point.outflow_minor)}</td><td>{formatMoney(point.net_minor)}</td></tr>)}</tbody></table></div></details>
                 {/* SVG Chart with Splines */}
                 <div className="w-full overflow-hidden">
-                  <svg
+                  <svg role="img" aria-label="Scheduled cash inflow, outflow and net amounts; exact amounts are available in the table below"
                     viewBox={`0 0 ${svgW} ${svgH}`}
                     preserveAspectRatio="none"
                     className="w-full h-48 sm:h-64 lg:h-72 select-none"
@@ -524,7 +527,7 @@ export default function OverviewPage() {
                           x2={svgW}
                           y2={y}
                           stroke="currentColor"
-                          className="text-[#F0EFEA] dark:text-[#2A2C2D]"
+                          className="text-muted-foreground "
                           strokeWidth="1"
                           strokeDasharray="4 4"
                         />
@@ -538,16 +541,16 @@ export default function OverviewPage() {
                         y1={padY}
                         x2={selectedPt.x}
                         y2={svgH - padY}
-                        stroke="#3B82F6"
+                        stroke="var(--warning)"
                         strokeWidth="1.5"
                         strokeDasharray="3 3"
                       />
                     )}
 
                     {/* Spline Lines */}
-                    <path d={inflowPath} fill="none" stroke="#E05D52" strokeWidth="2.8" strokeLinecap="round" />
-                    <path d={outflowPath} fill="none" stroke="#3B82F6" strokeWidth="2.8" strokeLinecap="round" />
-                    <path d={netPath} fill="none" stroke="#004D3B" strokeWidth="3" strokeLinecap="round" className="dark:stroke-[#B5F2C6]" />
+                    <path strokeDasharray="8 4" d={inflowPath} fill="none" stroke="var(--info)" strokeWidth="2.8" strokeLinecap="round" />
+                    <path strokeDasharray="2 4" d={outflowPath} fill="none" stroke="var(--warning)" strokeWidth="2.8" strokeLinecap="round" />
+                    <path d={netPath} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round"  />
 
                     {/* Interactive Points */}
                     {timeline.map((d, i) => {
@@ -561,7 +564,7 @@ export default function OverviewPage() {
                               cx={pt.x}
                               cy={pt.y}
                               r="8"
-                              fill="#3B82F6"
+                              fill="var(--info)"
                               fillOpacity="0.25"
                             />
                           )}
@@ -569,8 +572,8 @@ export default function OverviewPage() {
                             cx={pt.x}
                             cy={pt.y}
                             r={isSelected ? "5" : "3.5"}
-                            fill={isSelected ? "#3B82F6" : "#E05D52"}
-                            stroke="#FFFFFF"
+                            fill="var(--info)"
+                            stroke="var(--card)"
                             strokeWidth="2"
                             className="transition-all hover:r-6"
                           />
@@ -582,7 +585,7 @@ export default function OverviewPage() {
 
                 {/* Bottom Timeline Axis */}
                 <div
-                  className="grid gap-1 pt-2 text-center text-xs font-mono text-[#737373] dark:text-neutral-400"
+                  className="grid gap-1 pt-2 text-center text-xs font-mono text-muted-foreground "
                   style={{ gridTemplateColumns: `repeat(${timeline.length}, minmax(0, 1fr))` }}
                 >
                   {timeline.map((d, i) => {
@@ -594,8 +597,8 @@ export default function OverviewPage() {
                         onClick={() => setSelectedPointIndex(i)}
                         className={`py-1 px-0.5 rounded-md truncate transition-colors text-[10px] sm:text-xs ${
                           isSelected
-                            ? "font-bold text-[#1E2021] dark:text-white bg-[#F4F2ED] dark:bg-[#222425]"
-                            : "hover:text-[#1E2021]"
+                            ? "font-bold text-foreground  bg-muted "
+                            : "hover:text-foreground"
                         }`}
                         title={d.date_range}
                       >
@@ -611,31 +614,31 @@ export default function OverviewPage() {
         </div>
 
         {/* Secondary Section: Order Feasibility & Delay Sensitivity Stress Test */}
-        <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="bg-card  border border-border  rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <div className="size-6 rounded-md bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] flex items-center justify-center">
+                <div className="size-6 rounded-md bg-primary  text-primary-foreground  flex items-center justify-center">
                   <ShieldCheck className="size-3.5" />
                 </div>
-                <h2 className="text-base sm:text-lg font-bold text-[#1E2021] dark:text-white font-display">
+                <h2 className="text-base sm:text-lg font-bold text-foreground  font-display">
                   Order Feasibility &amp; Delay Sensitivity Stress Test
                 </h2>
               </div>
-              <p className="text-xs text-[#737373] dark:text-neutral-400 mt-0.5">
+              <p className="text-xs text-muted-foreground  mt-0.5">
                 Stress-test customer payment delays (0 to 60 days) against your policy cash reserve floor to evaluate absolute liquidity resilience.
               </p>
             </div>
 
             {/* Mode Switcher */}
-            <div className="inline-flex p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl text-xs font-semibold self-start md:self-auto">
+            <div className="inline-flex p-1 bg-muted  rounded-xl text-xs font-semibold self-start md:self-auto">
               <button
                 type="button"
                 onClick={() => setSecondaryGraphTab("sensitivity")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   secondaryGraphTab === "sensitivity"
-                    ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
-                    : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                    ? "bg-card  text-foreground  shadow-xs"
+                    : "text-muted-foreground  hover:text-foreground"
                 }`}
               >
                 Delay Sensitivity Cliff
@@ -645,8 +648,8 @@ export default function OverviewPage() {
                 onClick={() => setSecondaryGraphTab("verdicts")}
                 className={`px-3 py-1.5 rounded-lg transition-all ${
                   secondaryGraphTab === "verdicts"
-                    ? "bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white shadow-xs"
-                    : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021]"
+                    ? "bg-card  text-foreground  shadow-xs"
+                    : "text-muted-foreground  hover:text-foreground"
                 }`}
               >
                 Verdict Distribution
@@ -669,24 +672,24 @@ export default function OverviewPage() {
                       onClick={() => setSelectedDelayIndex(i)}
                       className={`cursor-pointer p-3.5 rounded-xl border transition-all text-left flex flex-col justify-between ${
                         isSelected
-                          ? "border-[#1E2021] dark:border-white bg-[#FAF9F7] dark:bg-[#222425] shadow-xs ring-1 ring-[#1E2021] dark:ring-white"
-                          : "border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] hover:border-[#737373]"
+                          ? "border-border  bg-background  shadow-xs ring-1 ring-ring "
+                          : "border-border  bg-card  hover:border-border"
                       }`}
                     >
                       <div>
-                        <div className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400">
+                        <div className="text-[11px] font-semibold text-muted-foreground ">
                           {sc.label}
                         </div>
-                        <div className="mt-2 text-base font-bold font-mono text-[#1E2021] dark:text-white">
+                        <div className="mt-2 text-base font-bold font-mono text-foreground ">
                           {formatMoney(sc.projected_trough_minor)}
                         </div>
                       </div>
 
-                      <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between text-[11px]">
-                        <span className="tabular text-[#525252] dark:text-neutral-300">
+                      <div className="mt-3 pt-2 border-t border-border  flex items-center justify-between text-[11px]">
+                        <span className="tabular text-muted-foreground ">
                           Floor {formatMoney(sc.reserve_floor_minor)}
                         </span>
-                        <span className="text-xs text-[#737373] dark:text-neutral-400">
+                        <span className="text-xs text-muted-foreground ">
                           {statusBadge(sc.status)}
                         </span>
                       </div>
@@ -697,19 +700,19 @@ export default function OverviewPage() {
 
               {/* Sensitivity Cliff Visual Chart */}
               {activeDelayScenario && (
-                <div className="p-4 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl space-y-3">
+                <div className="p-4 bg-background  border border-border  rounded-xl space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div className="text-[#1E2021] dark:text-white">
-                      <span className="text-[#737373] dark:text-neutral-400">Scenario: </span>
+                    <div className="text-foreground ">
+                      <span className="text-muted-foreground ">Scenario: </span>
                       <span className="font-semibold">{activeDelayScenario.label}</span>
                     </div>
-                    <span className="text-xs text-[#737373] dark:text-neutral-400">
-                      Policy Reserve Floor: <span className="font-mono font-medium text-[#1E2021] dark:text-white">{formatMoney(reserveFloorMinor)}</span>
+                    <span className="text-xs text-muted-foreground ">
+                      Policy Reserve Floor: <span className="font-mono font-medium text-foreground ">{formatMoney(reserveFloorMinor)}</span>
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#525252] dark:text-neutral-300 pt-1">
-                    <strong className="text-[#1E2021] dark:text-white font-medium">Recommendation: </strong>
+                  <p className="text-xs text-muted-foreground  pt-1">
+                    <strong className="text-foreground  font-medium">Recommendation: </strong>
                     {activeDelayScenario.recommendation}
                   </p>
                 </div>
@@ -719,70 +722,70 @@ export default function OverviewPage() {
             <div className="space-y-4 pt-2">
               {/* Verdict Distribution breakdown */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
-                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Feasible As-Is</span>
-                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                <div className="p-3.5 bg-background  border border-border  rounded-xl">
+                  <span className="text-[11px] font-semibold text-muted-foreground  uppercase">Feasible As-Is</span>
+                  <div className="text-xl font-bold font-display text-foreground  mt-1">
                     {data.verdict_distribution.feasible_as_is_pct.toFixed(0)}%
                   </div>
-                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                  <p className="text-[11px] text-muted-foreground  mt-1">
                     {data.verdict_distribution.feasible_as_is_count} deals
                   </p>
                 </div>
-                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
-                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Deposit Required</span>
-                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                <div className="p-3.5 bg-background  border border-border  rounded-xl">
+                  <span className="text-[11px] font-semibold text-muted-foreground  uppercase">Deposit Required</span>
+                  <div className="text-xl font-bold font-display text-foreground  mt-1">
                     {data.verdict_distribution.deposit_required_pct.toFixed(0)}%
                   </div>
-                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                  <p className="text-[11px] text-muted-foreground  mt-1">
                     {data.verdict_distribution.deposit_required_count} deals
                   </p>
                 </div>
-                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
-                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Split Milestones</span>
-                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                <div className="p-3.5 bg-background  border border-border  rounded-xl">
+                  <span className="text-[11px] font-semibold text-muted-foreground  uppercase">Split Milestones</span>
+                  <div className="text-xl font-bold font-display text-foreground  mt-1">
                     {data.verdict_distribution.split_milestones_pct.toFixed(0)}%
                   </div>
-                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                  <p className="text-[11px] text-muted-foreground  mt-1">
                     {data.verdict_distribution.split_milestones_count} deals (split disabled)
                   </p>
                 </div>
-                <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
-                  <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Financing Needed</span>
-                  <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">
+                <div className="p-3.5 bg-background  border border-border  rounded-xl">
+                  <span className="text-[11px] font-semibold text-muted-foreground  uppercase">Financing Needed</span>
+                  <div className="text-xl font-bold font-display text-foreground  mt-1">
                     {data.verdict_distribution.financing_needed_pct.toFixed(0)}%
                   </div>
-                  <p className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                  <p className="text-[11px] text-muted-foreground  mt-1">
                     {data.verdict_distribution.financing_needed_count} deals
                   </p>
                 </div>
               </div>
 
               {/* Stacked visualization bar */}
-              <div className="h-3 w-full rounded-full overflow-hidden flex bg-[#E8E6E1] dark:bg-[#2A2C2D]">
+              <div className="h-3 w-full rounded-full overflow-hidden flex bg-muted ">
                 <div
-                  className="h-full bg-[#1E2021] dark:bg-white"
+                  className="h-full bg-primary "
                   style={{ width: `${data.verdict_distribution.feasible_as_is_pct}%` }}
                   title={`Feasible As-Is (${data.verdict_distribution.feasible_as_is_pct.toFixed(0)}%)`}
                 />
                 <div
-                  className="h-full bg-[#525252] dark:bg-neutral-400"
+                  className="h-full bg-muted "
                   style={{ width: `${data.verdict_distribution.deposit_required_pct}%` }}
                   title={`Deposit Required (${data.verdict_distribution.deposit_required_pct.toFixed(0)}%)`}
                 />
                 <div
-                  className="h-full bg-[#8C8C8C] dark:bg-neutral-600"
+                  className="h-full bg-muted "
                   style={{ width: `${data.verdict_distribution.split_milestones_pct}%` }}
                   title={`Split Milestones (${data.verdict_distribution.split_milestones_pct.toFixed(0)}%)`}
                 />
                 <div
-                  className="h-full bg-[#B8B6B0] dark:bg-neutral-700"
+                  className="h-full bg-muted "
                   style={{ width: `${data.verdict_distribution.financing_needed_pct}%` }}
                   title={`Financing Needed (${data.verdict_distribution.financing_needed_pct.toFixed(0)}%)`}
                 />
               </div>
 
               {warnings.has("VERDICT_DISTRIBUTION_EXCLUDES_DECLINED_AND_UNCLASSIFIED") && (
-                <p className="text-[11px] text-[#737373] dark:text-neutral-400">
+                <p className="text-[11px] text-muted-foreground ">
                   Note: Declined and extension-only orders are excluded from this classified distribution.
                 </p>
               )}
@@ -793,15 +796,15 @@ export default function OverviewPage() {
         {/* Bottom Section: 2 Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Recent Evaluations */}
-          <div className="lg:col-span-7 bg-white dark:bg-[#181A1B] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-card  rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-3">
-                <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                <h2 className="text-base font-bold text-foreground  font-display">
                   Recent evaluations
                 </h2>
                 <Link
                   href={`/deals${query}`}
-                  className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
+                  className="text-xs font-semibold text-primary  hover:underline"
                 >
                   View All
                 </Link>
@@ -810,7 +813,7 @@ export default function OverviewPage() {
               {/* List of recent settlements */}
               <div className="space-y-1 pt-1">
                 {data.recent_settlements.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-[#737373] dark:text-neutral-400">
+                  <div className="py-8 text-center text-xs text-muted-foreground ">
                     No order evaluations recorded yet.
                   </div>
                 ) : (
@@ -818,24 +821,24 @@ export default function OverviewPage() {
                     <Link
                       key={item.id}
                       href={`/deals/${item.deal_id}${query}`}
-                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] rounded-xl transition-colors block"
+                      className="py-3 px-3 flex items-center justify-between gap-3 hover:bg-background  rounded-xl transition-colors block"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="size-9 rounded-full bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center font-bold text-xs shrink-0 font-display">
+                        <div className="size-9 rounded-full bg-background  text-foreground  flex items-center justify-center font-bold text-xs shrink-0 font-display">
                           {item.customer_name ? item.customer_name.charAt(0) : "D"}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-[#1E2021] dark:text-white truncate font-display">
+                          <div className="text-xs font-bold text-foreground  truncate font-display">
                             {item.customer_name || "Unassigned Customer"}
                           </div>
-                          <div className="text-[11px] text-[#737373] dark:text-neutral-400 font-mono">
+                          <div className="text-[11px] text-muted-foreground  font-mono">
                             {item.order_no ? `${item.order_no} • ` : ""}{item.public_ref}
                           </div>
                         </div>
                       </div>
 
                       <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                        <div className="text-xs font-bold font-mono text-[#1E2021] dark:text-white">
+                        <div className="text-xs font-bold font-mono text-foreground ">
                           {formatMoney(item.amount_minor)}
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -848,24 +851,24 @@ export default function OverviewPage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-3 flex items-center justify-between text-xs text-[#737373] dark:text-neutral-400">
+            <div className="mt-4 pt-3 flex items-center justify-between text-xs text-muted-foreground ">
               <span>{data.recent_settlements.length} recent evaluations shown</span>
-              <Link href={`/deals/new${query}`} className="font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline flex items-center gap-1">
+              <Link href={`/deals/new${query}`} className="font-semibold text-primary  hover:underline flex items-center gap-1">
                 Evaluate next order <ArrowRight className="size-3" />
               </Link>
             </div>
           </div>
 
           {/* Right Column: Balance by currency / Reserve Status */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#181A1B] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-card  rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-3">
-                <h2 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+                <h2 className="text-base font-bold text-foreground  font-display">
                   Balance by currency
                 </h2>
                 <Link
                   href={`/deals/sources${query}`}
-                  className="text-xs font-semibold text-[#004D3B] dark:text-[#B5F2C6] hover:underline"
+                  className="text-xs font-semibold text-primary  hover:underline"
                 >
                   Manage
                 </Link>
@@ -874,7 +877,7 @@ export default function OverviewPage() {
               {/* Currency Account Cards */}
               <div className="space-y-4 pt-2">
                 {data.currency_balances.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-[#737373] dark:text-neutral-400">
+                  <div className="py-6 text-center text-xs text-muted-foreground ">
                     {warnings.has("NEGATIVE_BALANCE_NOT_REPRESENTABLE_IN_CURRENCY_ALLOCATION")
                       ? "Negative opening balance cannot be allocated in percentage breakdown."
                       : "No baseline balance recorded."}
@@ -884,19 +887,19 @@ export default function OverviewPage() {
                     <div key={c.code} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
-                          <div className="size-6 rounded-md bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-neutral-200 font-bold flex items-center justify-center text-[11px] font-mono">
+                          <div className="size-6 rounded-md bg-background  text-foreground  font-bold flex items-center justify-center text-[11px] font-mono">
                             {c.symbol}
                           </div>
-                          <span className="font-semibold text-[#1E2021] dark:text-white">{c.name}</span>
+                          <span className="font-semibold text-foreground ">{c.name}</span>
                         </div>
-                        <span className="font-bold font-mono text-[#1E2021] dark:text-white">
+                        <span className="font-bold font-mono text-foreground ">
                           {formatMoney(c.amount_minor)}
                         </span>
                       </div>
 
-                      <div className="h-1.5 w-full bg-[#F4F2ED] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-muted  rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#1E2021] dark:bg-neutral-300"
+                          className="h-full rounded-full bg-primary "
                           style={{ width: `${c.pct_allocation}%` }}
                         />
                       </div>
@@ -907,13 +910,13 @@ export default function OverviewPage() {
             </div>
 
             {/* Cash Floor Policy Indicator */}
-            <div className="mt-5 p-3.5 bg-[#FAF9F7] dark:bg-[#222425] rounded-xl text-xs space-y-1">
+            <div className="mt-5 p-3.5 bg-background  rounded-xl text-xs space-y-1">
               <div className="flex items-center justify-between font-semibold">
-                <span className="text-[#1E2021] dark:text-white flex items-center gap-1.5">
-                  <ShieldCheck className="size-4 text-[#004D3B] dark:text-[#B5F2C6]" />
+                <span className="text-foreground  flex items-center gap-1.5">
+                  <ShieldCheck className="size-4 text-primary " />
                   Active Cash Floor Policy
                 </span>
-                <span className="text-[#004D3B] dark:text-[#B5F2C6] font-mono">
+                <span className="text-primary  font-mono">
                   {formatMoney(reserveFloorMinor)}
                 </span>
               </div>

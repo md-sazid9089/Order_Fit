@@ -198,7 +198,7 @@ export function Footer() {
         </div>
 
         {/* Copyright Bar */}
-        <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E6F4F1]/50 gap-4">
+        <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E6F4F1]/80 gap-4">
           <p className="text-center sm:text-left">© 2026 OrderFit Inc. All rights reserved. International commercial software.</p>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <a href="#privacy" className="hover:text-white transition-colors">Privacy</a>

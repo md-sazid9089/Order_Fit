@@ -35,43 +35,43 @@ export function DealEvaluationInspector({
 
   const decisionStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
     accept_as_is: {
-      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
-      text: "text-[#004D3B] dark:text-[#34D399]",
-      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
+      bg: "bg-muted",
+      text: "text-primary",
+      border: "border-border",
       label: "Accept As-Is",
     },
     accept_with_changes: {
-      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
-      text: "text-[#8A5A00] dark:text-amber-400",
-      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
+      bg: "bg-muted",
+      text: "text-warning",
+      border: "border-border",
       label: "Accept with Changes (Negotiate)",
     },
     decline_or_renegotiate: {
-      bg: "bg-[#F4F2ED] dark:bg-[#222425]",
-      text: "text-[#991B1B] dark:text-red-400",
-      border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
+      bg: "bg-muted",
+      text: "text-danger",
+      border: "border-border",
       label: "Decline / Renegotiate",
     },
   };
 
   const currentDecision = decisionStyles[evaluation.decision] || {
-    bg: "bg-[#F4F2ED] dark:bg-[#222425]",
-    text: "text-[#525252] dark:text-neutral-300",
-    border: "border-[#E8E6E1] dark:border-[#2A2C2D]",
+    bg: "bg-muted",
+    text: "text-muted-foreground",
+    border: "border-border",
     label: evaluation.decision.replaceAll("_", " "),
   };
 
   return (
-    <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] overflow-hidden shadow-xs">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
       {/* Top Header / Meta bar */}
-      <div className="p-5 border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B] flex flex-wrap items-center justify-between gap-4">
+      <div className="p-5 border-b border-border bg-muted flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2C302F] text-[#004D3B] dark:text-[#B5F2C6]">
+          <div className="p-2 rounded-xl bg-card border border-border text-primary">
             <Activity className="size-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
+              <h3 className="text-base font-bold text-foreground font-display">
                 Engine Evaluation Results & Warnings
               </h3>
               <span
@@ -80,26 +80,26 @@ export function DealEvaluationInspector({
                 {currentDecision.label}
               </span>
               {evaluation.is_stale && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#8A5A00] dark:text-amber-400 border border-[#E8E6E1] dark:border-[#2A2C2D]">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-warning border border-border">
                   Stale
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#737373] dark:text-neutral-400 mt-0.5 font-mono">
+            <p className="text-xs text-muted-foreground mt-0.5 font-mono">
               Evaluated {new Date(evaluation.evaluated_at).toLocaleString()} · Calculator {evaluation.calculator_version} · Snapshot {evaluation.snapshot_id.slice(0, 8)}
             </p>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center p-1 rounded-xl bg-neutral-200/60 dark:bg-neutral-800 text-xs font-medium">
+        <div className="flex items-center p-1 rounded-xl bg-muted/60  text-xs font-medium">
           <button
             type="button"
             onClick={() => setActiveTab("summary")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "summary"
-                ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                ? "bg-card text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Summary
@@ -109,8 +109,8 @@ export function DealEvaluationInspector({
             onClick={() => setActiveTab("scenarios")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "scenarios"
-                ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                ? "bg-card text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Scenarios & Breaches
@@ -120,8 +120,8 @@ export function DealEvaluationInspector({
             onClick={() => setActiveTab("sensitivity")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "sensitivity"
-                ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                ? "bg-card text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Sensitivity Scan
@@ -131,8 +131,8 @@ export function DealEvaluationInspector({
             onClick={() => setActiveTab("gaps")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "gaps"
-                ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                ? "bg-card text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Gaps & VOI ({evaluation.coverage_gaps.length + evaluation.voi_questions.length})
@@ -142,8 +142,8 @@ export function DealEvaluationInspector({
             onClick={() => setActiveTab("raw")}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
               activeTab === "raw"
-                ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                ? "bg-card text-foreground shadow-xs font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <FileCode className="size-3.5" />
@@ -157,56 +157,56 @@ export function DealEvaluationInspector({
         <div className="p-6 space-y-6">
           {/* Key Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B]">
-              <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+            <div className="p-4 rounded-xl border border-border bg-muted">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Base Lowest Balance
               </span>
-              <div className="text-xl font-bold font-mono text-[#1E2021] dark:text-white mt-1">
+              <div className="text-xl font-bold font-mono text-foreground mt-1">
                 {formatMinor(
                   evaluation.as_is.scenarios.find((x) => x.scenario === "base")?.lowest_balance_minor,
                   currency
                 )}
               </div>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1 block">
+              <span className="text-[11px] text-muted-foreground mt-1 block">
                 As-is offered terms
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B]">
-              <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+            <div className="p-4 rounded-xl border border-border bg-muted">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Lowest Headroom
               </span>
-              <div className="text-xl font-bold font-mono text-[#1E2021] dark:text-white mt-1">
+              <div className="text-xl font-bold font-mono text-foreground mt-1">
                 {formatMinor(
                   evaluation.as_is.scenarios.find((x) => x.scenario === "base")?.lowest_headroom_minor,
                   currency
                 )}
               </div>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1 block">
+              <span className="text-[11px] text-muted-foreground mt-1 block">
                 Buffer above required reserve
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B]">
-              <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+            <div className="p-4 rounded-xl border border-border bg-muted">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Incremental Profit
               </span>
-              <div className="text-xl font-bold font-mono text-[#004D3B] dark:text-[#B5F2C6] mt-1">
+              <div className="text-xl font-bold font-mono text-primary mt-1">
                 {formatMinor(evaluation.as_is.base_incremental_profit_minor, currency)}
               </div>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1 block">
+              <span className="text-[11px] text-muted-foreground mt-1 block">
                 Order net contribution
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B]">
-              <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
+            <div className="p-4 rounded-xl border border-border bg-muted">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Recommended Strategy
               </span>
-              <div className="text-base font-bold text-[#1E2021] dark:text-white mt-1 truncate" title={evaluation.recommended_option_key ?? "None"}>
+              <div className="text-base font-bold text-foreground mt-1 truncate" title={evaluation.recommended_option_key ?? "None"}>
                 {evaluation.recommended_option_key || "No recommendation"}
               </div>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1 block">
+              <span className="text-[11px] text-muted-foreground mt-1 block">
                 {evaluation.ranked_candidates.length} alternative options ranked
               </span>
             </div>
@@ -215,12 +215,12 @@ export function DealEvaluationInspector({
           {/* Ranked Candidates Table */}
           {evaluation.ranked_candidates.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white flex items-center gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
                 <Layers className="size-4" />
                 <span>Ranked Commercial Options</span>
               </h4>
-              <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
+              <div className="border border-border rounded-xl overflow-hidden divide-y divide-border text-xs">
+                <div className="p-3 bg-muted font-semibold text-muted-foreground grid grid-cols-12 gap-2">
                   <span className="col-span-1">Rank</span>
                   <span className="col-span-4">Option Key / Strategy</span>
                   <span className="col-span-2 text-right">Profit</span>
@@ -230,27 +230,27 @@ export function DealEvaluationInspector({
                 {evaluation.ranked_candidates.map((cand, idx) => (
                   <div
                     key={cand.option_key}
-                    className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors"
+                    className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-muted transition-colors"
                   >
-                    <span className="col-span-1 font-mono font-bold text-[#1E2021] dark:text-white">
+                    <span className="col-span-1 font-mono font-bold text-foreground">
                       #{cand.rank ?? idx + 1}
                     </span>
-                    <span className="col-span-4 font-mono truncate font-semibold text-[#1E2021] dark:text-white">
+                    <span className="col-span-4 font-mono truncate font-semibold text-foreground">
                       {cand.option_key}
                     </span>
-                    <span className="col-span-2 font-mono text-right font-medium text-[#004D3B] dark:text-[#B5F2C6]">
+                    <span className="col-span-2 font-mono text-right font-medium text-primary">
                       {formatMinor(cand.base_incremental_profit_minor, currency)}
                     </span>
-                    <span className="col-span-2 font-mono text-right text-[#525252] dark:text-neutral-300">
+                    <span className="col-span-2 font-mono text-right text-muted-foreground">
                       {formatMinor(cand.borrowed_minor, currency)}
                     </span>
                     <span className="col-span-3 text-right">
                       {cand.hard_feasible ? (
-                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#004D3B] dark:text-[#34D399] border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full bg-muted text-primary border border-border font-medium text-[10px]">
                           Feasible
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#991B1B] dark:text-red-400 border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full bg-muted text-danger border border-border font-medium text-[10px]">
                           Breach Floor
                         </span>
                       )}
@@ -264,10 +264,10 @@ export function DealEvaluationInspector({
           {/* Model Assumptions & Reason Codes */}
           {evaluation.assumptions.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Deterministic Model Assumptions
               </h4>
-              <ul className="list-disc pl-5 text-xs text-[#525252] dark:text-neutral-300 space-y-1">
+              <ul className="list-disc pl-5 text-xs text-muted-foreground space-y-1">
                 {evaluation.assumptions.map((assump, i) => (
                   <li key={i}>{assump}</li>
                 ))}
@@ -280,7 +280,7 @@ export function DealEvaluationInspector({
       {/* Tab 2: Scenarios & Stress Breaches */}
       {activeTab === "scenarios" && (
         <div className="p-6 space-y-5">
-          <p className="text-xs text-[#737373] dark:text-neutral-400 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             OrderFit runs every confirmed deal against 3 standardized stress scenarios: Base (on-time), Downside (payment delays), and Severe (delays + supplier overruns).
           </p>
 
@@ -288,18 +288,18 @@ export function DealEvaluationInspector({
             {evaluation.baseline.map((sc) => (
               <div
                 key={sc.scenario}
-                className="p-5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B] space-y-3"
+                className="p-5 rounded-xl border border-border bg-muted space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-display font-bold uppercase text-xs text-[#1E2021] dark:text-white">
+                  <span className="font-display font-bold uppercase text-xs text-foreground">
                     {sc.scenario} Scenario
                   </span>
                   {sc.hard_feasible ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399]">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-primary">
                       Feasible
                     </span>
                   ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-danger">
                       Floor Breach
                     </span>
                   )}
@@ -307,27 +307,27 @@ export function DealEvaluationInspector({
 
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-[#737373] dark:text-neutral-400">Lowest Balance:</span>
-                    <span className="font-mono font-bold text-[#1E2021] dark:text-white">
+                    <span className="text-muted-foreground">Lowest Balance:</span>
+                    <span className="font-mono font-bold text-foreground">
                       {formatMinor(sc.lowest_balance_minor, currency)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#737373] dark:text-neutral-400">Lowest Headroom:</span>
-                    <span className="font-mono font-medium text-[#1E2021] dark:text-white">
+                    <span className="text-muted-foreground">Lowest Headroom:</span>
+                    <span className="font-mono font-medium text-foreground">
                       {formatMinor(sc.lowest_headroom_minor, currency)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#737373] dark:text-neutral-400">First Breach Date:</span>
-                    <span className="font-mono text-[#1E2021] dark:text-white">
+                    <span className="text-muted-foreground">First Breach Date:</span>
+                    <span className="font-mono text-foreground">
                       {sc.first_breach_date || "None"}
                     </span>
                   </div>
                 </div>
 
                 {sc.breaches.length > 0 && (
-                  <div className="pt-2 border-t border-[#E8E6E1] dark:border-[#2C302F] text-[11px] text-rose-700 dark:text-rose-400 space-y-1">
+                  <div className="pt-2 border-t border-border text-[11px] text-danger  space-y-1">
                     <span className="font-semibold block">Detected Breaches:</span>
                     {sc.breaches.map((b, i) => (
                       <div key={i} className="font-mono">
@@ -345,12 +345,12 @@ export function DealEvaluationInspector({
       {/* Tab 3: Sensitivity Scan */}
       {activeTab === "sensitivity" && (
         <div className="p-6 space-y-4">
-          <p className="text-xs text-[#737373] dark:text-neutral-400">
+          <p className="text-xs text-muted-foreground">
             Multi-variable sensitivity results scanning payment delays and cost overruns:
           </p>
           {evaluation.sensitivity.length > 0 ? (
-            <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-              <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
+            <div className="border border-border rounded-xl overflow-hidden divide-y divide-border text-xs">
+              <div className="p-3 bg-muted font-semibold text-muted-foreground grid grid-cols-12 gap-2">
                 <span className="col-span-4">Tested Variable</span>
                 <span className="col-span-2 text-right">Tested Value</span>
                 <span className="col-span-3 text-center">Engine Verdict</span>
@@ -359,35 +359,35 @@ export function DealEvaluationInspector({
               {evaluation.sensitivity.map((sens, idx) => (
                 <div
                   key={idx}
-                  className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30"
+                  className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-muted"
                 >
-                  <span className="col-span-4 font-mono font-medium text-[#1E2021] dark:text-white">
+                  <span className="col-span-4 font-mono font-medium text-foreground">
                     {sens.field.replaceAll("_", " ")}
                   </span>
-                  <span className="col-span-2 font-mono text-right font-bold text-[#1E2021] dark:text-white">
+                  <span className="col-span-2 font-mono text-right font-bold text-foreground">
                     {sens.tested_value}
                   </span>
                   <span className="col-span-3 text-center">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-muted border border-border ${
                         sens.decision === "accept_as_is"
-                          ? "text-[#004D3B] dark:text-[#34D399]"
+                          ? "text-primary"
                           : sens.decision === "accept_with_changes"
-                          ? "text-[#8A5A00] dark:text-amber-400"
-                          : "text-[#991B1B] dark:text-red-400"
+                          ? "text-warning"
+                          : "text-danger"
                       }`}
                     >
                       {sens.decision.replaceAll("_", " ")}
                     </span>
                   </span>
-                  <span className="col-span-3 font-mono text-right text-[#004D3B] dark:text-[#B5F2C6]">
+                  <span className="col-span-3 font-mono text-right text-primary">
                     {sens.profit_minor ? formatMinor(sens.profit_minor, currency) : "—"}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#737373] dark:text-neutral-400">
+            <p className="text-xs text-muted-foreground">
               No sensitivity points registered for this evaluation.
             </p>
           )}
@@ -399,28 +399,28 @@ export function DealEvaluationInspector({
         <div className="p-6 space-y-6">
           {/* Coverage Gaps */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white flex items-center gap-2">
-              <AlertCircle className="size-4 text-amber-600" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <AlertCircle className="size-4 text-warning" />
               <span>Coverage Gaps & Incomplete Evidence ({evaluation.coverage_gaps.length})</span>
             </h4>
             {evaluation.coverage_gaps.length > 0 ? (
-              <div className="divide-y divide-[#E8E6E1] dark:divide-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden">
+              <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
                 {evaluation.coverage_gaps.map((gap, i) => (
-                  <div key={i} className="p-3.5 bg-white dark:bg-[#1E2021] text-xs space-y-1">
+                  <div key={i} className="p-3.5 bg-card text-xs space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-semibold text-[#1E2021] dark:text-white">
+                      <span className="font-mono font-semibold text-foreground">
                         {gap.code}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase font-mono">
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-muted  uppercase font-mono">
                         {gap.resolution}
                       </span>
                     </div>
-                    <p className="text-[#525252] dark:text-neutral-300">{gap.message}</p>
+                    <p className="text-muted-foreground">{gap.message}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">
+              <p className="text-xs text-success ">
                 ✓ Full documentary coverage through {evaluation.coverage_through}.
               </p>
             )}
@@ -429,13 +429,13 @@ export function DealEvaluationInspector({
           {/* Value of Information Questions */}
           {evaluation.voi_questions.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white flex items-center gap-2">
-                <HelpCircle className="size-4 text-sky-600" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <HelpCircle className="size-4 text-info" />
                 <span>Value of Information (Clarifications That Could Change the Verdict)</span>
               </h4>
-              <ul className="divide-y divide-[#E8E6E1] dark:divide-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden">
+              <ul className="divide-y divide-border border border-border rounded-xl overflow-hidden">
                 {evaluation.voi_questions.map((q, i) => (
-                  <li key={i} className="p-3.5 bg-white dark:bg-[#1E2021] text-xs text-[#1E2021] dark:text-white">
+                  <li key={i} className="p-3.5 bg-card text-xs text-foreground">
                     {q}
                   </li>
                 ))}
@@ -447,21 +447,21 @@ export function DealEvaluationInspector({
 
       {/* Tab 5: Raw JSON with Copy */}
       {activeTab === "raw" && (
-        <div className="p-4 bg-[#FAF9F7] dark:bg-[#151718] relative">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E8E6E1] dark:border-[#2C302F]">
-            <span className="text-xs font-mono text-[#737373] dark:text-neutral-400">
+        <div className="p-4 bg-muted relative">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
+            <span className="text-xs font-mono text-muted-foreground">
               Deterministic Evaluation Payload (v1)
             </span>
             <button
               type="button"
               onClick={handleCopyJson}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2C302F] hover:bg-neutral-50 dark:hover:bg-neutral-800 text-xs font-medium text-[#1E2021] dark:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border hover:bg-muted  text-xs font-medium text-foreground transition-colors cursor-pointer"
             >
-              {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+              {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
               <span>{copied ? "Copied!" : "Copy JSON"}</span>
             </button>
           </div>
-          <pre className="text-xs font-mono text-[#1E2021] dark:text-neutral-200 overflow-auto max-h-[420px] p-3 rounded-xl bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] whitespace-pre-wrap leading-relaxed">
+          <pre className="text-xs font-mono text-foreground overflow-auto max-h-[420px] p-3 rounded-xl bg-card border border-border whitespace-pre-wrap leading-relaxed">
             {JSON.stringify(evaluation, null, 2)}
           </pre>
         </div>
@@ -600,7 +600,7 @@ export function DealCashSeriesViewer({
         ) : seriesPoints.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">No daily points were saved for this option and scenario.</p>
         ) : (
-          <div className="max-h-[420px] overflow-auto rounded-xl border border-border">
+          <div tabIndex={0} role="region" aria-label="Daily cash series" className="max-h-[420px] overflow-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <caption className="sr-only">Daily cash low point and floor for the selected option and scenario</caption>
               <thead className="sticky top-0 bg-muted text-left text-muted-foreground">

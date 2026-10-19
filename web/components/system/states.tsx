@@ -22,6 +22,7 @@ export function ErrorState({
   message,
   onRetry,
   retrying,
+  retryLabel = "Try again",
   reference,
   className,
 }: {
@@ -29,6 +30,7 @@ export function ErrorState({
   message: ReactNode;
   onRetry?: () => void;
   retrying?: boolean;
+  retryLabel?: string;
   reference?: string | null;
   className?: string;
 }) {
@@ -46,7 +48,7 @@ export function ErrorState({
             disabled={retrying}
             className="inline-flex h-9 items-center rounded-lg border border-border-strong bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
           >
-            {retrying ? "Retrying…" : "Try again"}
+            {retrying ? "Retrying…" : retryLabel}
           </button>
         )
       }
