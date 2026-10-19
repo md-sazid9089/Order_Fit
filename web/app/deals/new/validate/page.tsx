@@ -267,17 +267,6 @@ export default function ValidatePage() {
             <ArrowLeft className="size-4" />
           </Link>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-0.5">
-              <Link href={`/deals${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-                Deals Pipeline
-              </Link>
-              <span className="text-[#A3A3A3]">/</span>
-              <Link href={`/deals/new${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-                New Order
-              </Link>
-              <span className="text-[#A3A3A3]">/</span>
-              <span className="font-semibold text-[#1E2021] dark:text-white">Validate</span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
               Validate Parameters &amp; Costs
             </h1>
