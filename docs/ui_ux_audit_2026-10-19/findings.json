@@ -14,6 +14,8 @@
     "root_cause_pattern": "mock-as-real",
     "effort": "M",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Removed the fabricated intake path; the real API-backed order flow is the only path.",
     "related": ["UX-002", "UX-003"]
   },
   {
@@ -31,6 +33,8 @@
     "root_cause_pattern": "mock-as-real",
     "effort": "M",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Removed browser-generated validation figures; financial output is rendered from persisted engine results.",
     "related": ["UX-001", "UX-003"]
   },
   {
@@ -48,6 +52,8 @@
     "root_cause_pattern": "mock-as-real; localStorage used as persistence",
     "effort": "M",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Removed the localStorage-backed confirmation screen and fake persisted reference.",
     "related": ["UX-001", "UX-002"]
   },
   {
@@ -65,6 +71,8 @@
     "root_cause_pattern": "no-route-boundaries",
     "effort": "S",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Added branded not-found, error, and global-error boundaries.",
     "related": ["UX-005"]
   },
   {
@@ -82,6 +90,8 @@
     "root_cause_pattern": "auth-redirect-reason",
     "effort": "S",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Sign-in distinguishes a missing session from an expired session and preserves a safe return path.",
     "related": ["UX-004"]
   },
   {
@@ -99,6 +109,8 @@
     "root_cause_pattern": "no-shared-stat-tile",
     "effort": "S",
     "confidence": "high",
+    "final_status": "fixed",
+    "resolution": "Pipeline uses shared StatTile values and responsive grid sizing.",
     "related": []
   },
   {
@@ -116,6 +128,8 @@
     "root_cause_pattern": "no-responsive-card-pattern",
     "effort": "S",
     "confidence": "medium",
+    "final_status": "fixed",
+    "resolution": "The intake mock was removed; the real new-order form has responsive controls.",
     "related": ["UX-001"]
   },
   {
@@ -133,6 +147,8 @@
     "root_cause_pattern": "no-shared-data-table",
     "effort": "S",
     "confidence": "medium",
+    "final_status": "fixed",
+    "resolution": "The pipeline uses an empty state and cards below the table breakpoint.",
     "related": []
   },
   {
@@ -150,6 +166,8 @@
     "root_cause_pattern": "admin-per-page-guard",
     "effort": "M",
     "confidence": "medium",
+    "final_status": "fixed",
+    "resolution": "Admin layout is the sole guard and backend failures retain the current page with retry copy.",
     "related": []
   },
   {
@@ -167,6 +185,8 @@
     "root_cause_pattern": "stub-pages",
     "effort": "S",
     "confidence": "medium",
+    "final_status": "fixed",
+    "resolution": "The legacy path redirects to the real deals pipeline.",
     "related": ["UX-001"]
   },
   {
@@ -184,6 +204,8 @@
     "root_cause_pattern": "static-overclaim",
     "effort": "S",
     "confidence": "low",
+    "final_status": "fixed",
+    "resolution": "Admin security content now derives from the read-only capability model and avoids unsupported claims.",
     "related": []
   }
 ]
