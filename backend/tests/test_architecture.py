@@ -12,7 +12,7 @@ from pathlib import Path
 PKG = Path(__file__).resolve().parents[1] / "orderfit"
 
 ENGINE_ALLOWED_THIRD_PARTY = {"pydantic", "pydantic_core"}
-AI_SDKS = {"anthropic", "openai", "freellmpool", "langchain_anthropic", "langchain_openai", "google"}
+AI_SDKS = {"anthropic", "openai", "langchain_anthropic", "langchain_openai", "google"}
 
 
 def _imports(path: Path) -> set[str]:

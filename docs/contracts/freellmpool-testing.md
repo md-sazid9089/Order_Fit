@@ -1,4 +1,7 @@
-# FreeLLMPool testing contract
+# Retired: FreeLLMPool testing contract
+
+> Historical contract retained for reference. The current runtime supports OpenAI only;
+> none of the configuration or behaviors below are active.
 
 `LLM_MODE=live` and `LLM_PROVIDER=freellmpool` explicitly select credential-free
 FreeLLMPool calls. `FREELLMPOOL_MODEL` must name an enabled, packaged keyless route

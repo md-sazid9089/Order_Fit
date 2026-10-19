@@ -47,8 +47,6 @@ def process_environment(values, inherited, *, worker=False):
     else:
         environment.pop("RESEND_API_KEY", None)
         environment.pop("ACCOUNT_EMAIL_WORKER_ENABLED", None)
-    if environment.get("LLM_PROVIDER") == "freellmpool":
-        environment.pop("OPENAI_API_KEY", None)
     return environment
 
 

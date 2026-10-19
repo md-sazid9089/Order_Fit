@@ -5,4 +5,6 @@ ASCII digits only. List conditions (for example "subject to board approval") and
 that the supported term fields cannot express (new fees, bank or payee changes, other
 products) under unsupported_clauses. Stance is accept, reject, partial or unclear. Report
 acceptance only for a plain unconditional agreement to the exact proposed terms; a human
-records acceptance and you never accept on anyone's behalf.
+records acceptance and you never accept on anyone's behalf. If the reply clearly proposes or
+changes a supported term without accepting the exact proposal, use stance "partial". Use
+"unclear" only when no position or supported proposed term can be understood.

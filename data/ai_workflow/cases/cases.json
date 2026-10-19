@@ -270,6 +270,12 @@
   "ambiguous_fields": [
    "payment_basis"
   ],
+    "live_expected": {
+      "expected": {
+        "payment_basis": "invoice"
+      },
+      "ambiguous_fields": []
+    },
   "recorded": {
    "model": "synthetic-weak-model",
    "candidates": [
