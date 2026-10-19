@@ -12,9 +12,11 @@ import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { SmoothScrollProvider } from "@/components/layout/smooth-scroll-provider";
 
 export default function Home() {
   return (
+    <SmoothScrollProvider>
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] antialiased selection:bg-[#B5F2C6] selection:text-[#004D3B]">
       {/* Top Announcement Bar */}
       <AnnouncementBanner />
@@ -76,5 +78,6 @@ export default function Home() {
       {/* Footer */}
       <Footer />
     </div>
+    </SmoothScrollProvider>
   );
 }
