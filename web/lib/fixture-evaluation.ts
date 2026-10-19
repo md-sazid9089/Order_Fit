@@ -529,3 +529,101 @@ export function createMockSeriesPoints(
   });
 }
 
+export function createMockOptionCatalogue(evalId: string): any {
+  return {
+    evaluation_id: evalId,
+    is_stale: false,
+    options: [
+      {
+        option_key: "dep40",
+        hard_feasible: true,
+        base_incremental_profit_minor: "13280000",
+        parameters: {
+          kind: "accept",
+          deposit_pct: 40,
+          extension: { days: 0, surcharge_bps: 0 },
+          eligible_cost_keys: [],
+          offer_id: null,
+          draw_minor: "0",
+        },
+      },
+      {
+        option_key: "dep40+ext30",
+        hard_feasible: true,
+        base_incremental_profit_minor: "13120000",
+        parameters: {
+          kind: "accept",
+          deposit_pct: 40,
+          extension: { days: 30, surcharge_bps: 120 },
+          eligible_cost_keys: ["c2"],
+          offer_id: null,
+          draw_minor: "0",
+        },
+      },
+      {
+        option_key: "accept_as_is",
+        hard_feasible: false,
+        base_incremental_profit_minor: "14000000",
+        parameters: {
+          kind: "accept",
+          deposit_pct: 0,
+          extension: { days: 0, surcharge_bps: 0 },
+          eligible_cost_keys: [],
+          offer_id: null,
+          draw_minor: "0",
+        },
+      },
+    ],
+  };
+}
+
+export function createMockPreparationState(dealId: string): any {
+  return {
+    deal_id: dealId,
+    forks: [],
+    messages: [
+      {
+        identity: {
+          message_id: "msg-001",
+          party_id: "00000000-0000-0000-0000-000000000006",
+          party_role: "customer",
+          recipient: "procurement@apexretailers.com",
+          channel: "email",
+          subject: "Proposed order terms for review · PO-3950",
+          body: "Dear Apex Retailers Team,\n\nThank you for the opportunity to partner on order PO-3950. Based on our manufacturing cashflow analysis, we can accept this production run with revised terms: a 40% upfront deposit ($144,000) prior to tooling, with the balance due Net 45 from delivery on 14 Dec 2026.\n\nPlease confirm if this revised schedule meets your approval.\n\nWarm regards,\nCommercial Lead",
+          evaluation_id: "00000000-0000-0000-0000-000000000003",
+          option: {
+            option_key: "dep40",
+            hard_feasible: true,
+            base_incremental_profit_minor: "13280000",
+            parameters: {
+              kind: "accept",
+              deposit_pct: 40,
+              extension: { days: 0, surcharge_bps: 0 },
+              eligible_cost_keys: [],
+              offer_id: null,
+              draw_minor: "0",
+            },
+          },
+          revision: 1,
+        },
+        preparation_hash: "mock-prep-hash-40",
+        provenance: "live",
+        is_stale: false,
+        reviewed: true,
+        blockers: [],
+        edit_sentences: [
+          "Thank you for the opportunity to partner on order PO-3950.",
+          "Please confirm if this revised schedule meets your approval.",
+        ],
+      },
+    ],
+    replies: [],
+    acceptances: [],
+    clause_assessments: [],
+    operations: [],
+    has_more: false,
+  };
+}
+
+
