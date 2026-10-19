@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /** The one layout for every sign-in, sign-up and account-recovery screen: brand, one card, one task. */
@@ -44,3 +45,25 @@ export function AuthField({ label, hint, ...input }: React.InputHTMLAttributes<H
 
 export const authPrimary =
   "inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60";
+
+/** Password input with a show/hide toggle that keeps the label and focus ring of AuthField. */
+export function PasswordField({ label, hint, visible, onToggle, ...input }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; visible: boolean; onToggle: () => void }) {
+  return (
+    <div>
+      <label htmlFor={input.id} className="block text-sm font-medium text-foreground">{label}</label>
+      <div className="relative">
+        <input {...input} type={visible ? "text" : "password"} className={`${authControl} pr-12`} />
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          className="absolute right-1 top-1/2 mt-[3px] grid size-10 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {visible ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+        </button>
+      </div>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}

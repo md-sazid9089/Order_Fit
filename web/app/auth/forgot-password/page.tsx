@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
 
   if (recovery !== "available") {
     return (
-      <AuthFrame title="Password reset isn't available here" description={recovery === "unavailable" ? "OrderFit couldn't confirm whether email recovery is available right now. Try again in a moment." : "This OrderFit workspace doesn't send password-reset emails."}>
+      <AuthFrame title="Password recovery isn't available here" description={recovery === "unavailable" ? "OrderFit couldn't confirm whether email recovery is available right now. Try again in a moment." : "This OrderFit workspace doesn't send password-reset emails."}>
         <div className="space-y-4 text-sm leading-6 text-muted-foreground">
           <p>If you&apos;re still signed in on another device, change your password in Settings. There is no administrator override for a forgotten password.</p>
           {recovery === "unavailable" && <button type="button" className={authPrimary} onClick={() => void caps.refetch()}>Try again</button>}

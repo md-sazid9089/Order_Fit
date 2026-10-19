@@ -24,10 +24,10 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   expect((await health.json()).ready).toBe(true);
 
   await page.goto("/auth/signup");
-  await page.getByPlaceholder("Full Name*").fill("OrderFit E2E Owner");
-  await page.getByPlaceholder("Business / Company Name*").fill(`E2E Business ${suffix}`);
-  await page.getByPlaceholder("Email*").fill(`orderfit-e2e-${suffix}@example.invalid`);
-  await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
+  await page.getByLabel("Full name", { exact: true }).fill("OrderFit E2E Owner");
+  await page.getByLabel("Business / Company name", { exact: true }).fill(`E2E Business ${suffix}`);
+  await page.getByLabel("Email", { exact: true }).fill(`orderfit-e2e-${suffix}@example.invalid`);
+  await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();

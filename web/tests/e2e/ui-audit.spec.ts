@@ -38,10 +38,10 @@ test("mobile workspace fits the viewport and recovers an expired CSRF challenge"
   const suffix = randomUUID().slice(0, 8);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/auth/signup");
-  await page.getByPlaceholder("Full Name*").fill("Synthetic UI Audit");
-  await page.getByPlaceholder("Business / Company Name*").fill(`Audit ${suffix}`);
-  await page.getByPlaceholder("Email*").fill(`audit-${suffix}@example.invalid`);
-  await page.getByPlaceholder("Password (min. 12 characters)*").fill(`Audit-${randomUUID()}`);
+  await page.getByLabel("Full name", { exact: true }).fill("Synthetic UI Audit");
+  await page.getByLabel("Business / Company name", { exact: true }).fill(`Audit ${suffix}`);
+  await page.getByLabel("Email", { exact: true }).fill(`audit-${suffix}@example.invalid`);
+  await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(`Audit-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
