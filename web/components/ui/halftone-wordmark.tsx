@@ -95,7 +95,7 @@ export function HalftoneWordmark({
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
-  const opts = React.useRef({
+  const options = React.useMemo(() => ({
     wordmark,
     dotGap,
     radius,
@@ -106,21 +106,7 @@ export function HalftoneWordmark({
     warm,
     fontFamily,
     fontWeight,
-  });
-  opts.current = {
-    wordmark,
-    dotGap,
-    radius,
-    grain,
-    interactive,
-    background,
-    ink,
-    warm,
-    fontFamily,
-    fontWeight,
-  };
-
-  const key = [wordmark, dotGap, grain, fontFamily, fontWeight, background, ink, warm].join("|");
+  }), [background, dotGap, fontFamily, fontWeight, grain, ink, interactive, radius, warm, wordmark]);
 
   React.useEffect(() => {
     const container = containerRef.current;
@@ -146,11 +132,11 @@ export function HalftoneWordmark({
     let count = 0;
     let grainTile: HTMLCanvasElement | null = null;
 
-    const inkRgb = hwfHex(opts.current.ink) || [255, 250, 236];
-    const warmRgb = hwfHex(opts.current.warm) || [181, 242, 198];
+    const inkRgb = hwfHex(options.ink) || [255, 250, 236];
+    const warmRgb = hwfHex(options.warm) || [181, 242, 198];
 
     const layout = () => {
-      const o = opts.current;
+      const o = options;
       const rect = container.getBoundingClientRect();
       w = Math.max(1, Math.round(rect.width));
       h = Math.max(1, Math.round(rect.height));
@@ -234,7 +220,7 @@ export function HalftoneWordmark({
     };
 
     const draw = (now: number) => {
-      const o = opts.current;
+      const o = options;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = o.background;
       ctx.fillRect(0, 0, w, h);
@@ -340,7 +326,7 @@ export function HalftoneWordmark({
     };
 
     const onMove = (e: PointerEvent) => {
-      if (!opts.current.interactive) return;
+      if (!options.interactive) return;
       const p = toLocal(e);
       px = p[0];
       py = p[1];
@@ -354,7 +340,7 @@ export function HalftoneWordmark({
     };
 
     const onDown = (e: PointerEvent) => {
-      if (!opts.current.interactive || reduced) return;
+      if (!options.interactive || reduced) return;
       const p = toLocal(e);
       ring = { x: p[0], y: p[1], t: performance.now() };
       wake();
@@ -398,7 +384,7 @@ export function HalftoneWordmark({
       container.removeEventListener("pointerleave", onLeave);
       container.removeEventListener("pointerdown", onDown);
     };
-  }, [key]);
+  }, [options]);
 
   return (
     <div
