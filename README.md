@@ -262,11 +262,8 @@ P1 wires this strict contract into runtime startup. Missing DB/auth settings fai
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LLM_MODE` | `off` | Explicit off/recorded/live; no automatic live fallback |
-| `LLM_PROVIDER` | `openai` | Explicit `openai` or keyless `freellmpool`; no paid fallback |
-| `FREELLMPOOL_MODEL` | *(empty)* | Explicit tested `provider/model` for FreeLLMPool |
-| `FREELLMPOOL_STATE_DIR`, `FREELLMPOOL_MIN_INTERVAL_SECONDS` | `./var/freellmpool`, `35` | Advisory quota counters and spacing between free request starts per worker |
 | `LLM_RECORDINGS_DIR` | *(empty)* | Folder of recorded extraction responses for `LLM_MODE=recorded` |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | *(empty)* | Server-only; required for live OpenAI, unused by FreeLLMPool |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | *(empty)* | Server-only; required for live OpenAI |
 | `DATABASE_URL` | *(empty)* | Restricted SQLAlchemy psycopg runtime URL |
 | `DATABASE_URL_DIRECT` | *(empty)* | Required migrator-only direct URL, no runtime fallback |
 | `SESSION_SECRET` | *(required P1)* | At least 32 characters, server-only |
@@ -286,10 +283,9 @@ Frontend settings are read from `web/.env.local`. See [web/.env.example](web/.en
 
 ## Testing
 
-For synthetic live AI testing without an OpenAI key, see the
-[FreeLLMPool guide](docs/deployment/freellmpool.md). Both extraction and natural-language
-what-if use the native integration; no proxy process is required. The smoke check
-fails if either task silently uses a deterministic fallback.
+Live AI calls use OpenAI and require an API key and model configuration. Offline
+tests should use recorded mode; they make no provider calls and do not establish
+live-model quality. Never put the API key in frontend configuration.
 
 ```bash
 cd backend

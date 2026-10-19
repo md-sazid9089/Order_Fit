@@ -25,8 +25,7 @@ test("an unknown or missing provenance fails closed to the no-AI template label"
   }
 });
 
-test("provider prefixes are stripped and model names are bounded", () => {
-  assert.equal(m.modelLabel("freellmpool:ovh/model"), "ovh/model");
+test("recording prefix is stripped and model names are bounded", () => {
   assert.equal(m.modelLabel(null), null);
   assert.equal(m.modelLabel("x".repeat(200)).length, 60);
 });

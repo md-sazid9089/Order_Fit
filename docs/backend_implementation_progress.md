@@ -1,5 +1,55 @@
 # Backend implementation progress
 
+## 20 October 2026: live OpenAI proposal workflow verification
+
+Ran the synthetic AI evaluation suite with `LLM_MODE=live`, configured model
+`gpt-6-luna`, and credentials loaded from the ignored backend environment file.
+The final run passed **49/49 cases**: extraction 13/13, what-if 16/16, reply
+reading 13/13, clause interpretation 4/4 and explanations 3/3. All cases used
+live model output; zero unsafe proposal changes were recorded. This exercises
+the AI proposal boundary with synthetic text, not authenticated persistence,
+database-backed job recovery, browser journeys, hosted configuration or real
+business documents.
+
+Live evaluation surfaced and fixed several issues: OpenAI's structured-output
+schema rejected a discriminated `oneOf`; flat what-if DTOs now map explicit day
+values into the typed domain contract; unsupported-language replies no longer
+merge model terms; payment-day unit formatting is canonicalized only for an
+explicit number-plus-days value and still must pass source grounding; ambiguous
+bare Net/day clauses retain the complete deterministic anchor hypotheses; and
+slot explanations use readable priority labels and reject unsupported
+resilience/trade-off claims. The evaluator now distinguishes live labels from
+weak replay recordings and accepts semantically equivalent grounded quotes.
+
+Verification: focused architecture/runtime/contracts/agent/AI suite **214
+passed**; Ruff passed; `uv lock --check` passed; frontend provenance unit tests
+**5 passed**. The final live report is an ignored local artifact at
+`var/ai-eval-live.json`; it is not committed. No configured/shared database or
+hosted service was contacted. Persisted AI job workflows and production
+provider behavior remain unverified. The repository-wide backend run completed
+with **821 passed, 2 failed, 2 skipped**. The two failures were stale test
+assumptions about limiter scope and logger state; the updated affected test files
+pass (**63 passed**) and the focused suite was rerun (**214 passed**). The entire
+14-minute suite was not repeated after those test-only corrections.
+
+## 19 October 2026: OpenAI-only live model provider
+
+The live model integration now has one provider: OpenAI Responses API with typed
+structured output. Removed FreeLLMPool dispatch, configuration fields and
+package. The user-restored historical probes/tests and setup pages remain in the
+repository for reference; provider test modules are skipped and their setup
+pages are marked retired. The `off` and `recorded` modes remain available and
+never make live provider calls.
+This does not move financial arithmetic or decision authority to OpenAI; the
+deterministic engine and human-confirmation/approval boundaries remain unchanged.
+
+Verification: focused contracts/runtime/architecture/agent/P4/AI-eval suite
+**183 passed**; focused frontend provenance suite **5 passed**; Ruff and
+`uv lock --check` passed after removing the dependency. Live OpenAI calls/quality,
+hosted config and deployment were not run at that time. Historical FreeLLMPool
+probe and integration entries below are retained as past evidence, not current
+capability or supported configuration.
+
 ## 19 October 2026: account recovery and emailed invitations backend
 
 Implemented locally from `42e9bc2` against

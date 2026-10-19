@@ -322,6 +322,14 @@ def merge_reply(body, baseline, reading):
     (a hold); nothing the model says can add acceptance or clear a deterministic flag.
     Returns (candidates, baseline_stance, stance_disagreement).
     """
+    from orderfit.services.language import detect
+
+    # A reply in an unsupported or mixed language is a human-review hold. The model
+    # can still help label the language, but its interpretation must not become a
+    # candidate fact until a reviewer can read and confirm the source.
+    if not detect(body)[2]:
+        return list(baseline), baseline_stance(body, baseline), False
+
     seen = {(t.field, t.value, t.quote) for t in baseline}
     merged = list(baseline) + [t for t in reading.terms if (t.field, t.value, t.quote) not in seen]
     if reading.conditions or reading.unsupported_clauses or reading.stance in {"reject", "partial"}:

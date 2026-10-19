@@ -384,18 +384,6 @@ wheels = [
 ]
 
 [[package]]
-name = "freellmpool"
-version = "0.13.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/00/40/1221b6464fa820270d4cf42cf670dfcc97c40089c5f1225cd7f904c7b7a5/freellmpool-0.13.0.tar.gz", hash = "sha256:a977f29e1bbf6a4e61aa6eaf3663335ac379f35767bfac28ec6d07875784d8b0", size = 1351197, upload-time = "2026-08-30T02:04:58.252Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/a1/28424f2a7583ef32be013d0f6e04fdda92ebfe858d5d0cfeb427341536bb/freellmpool-0.13.0-py3-none-any.whl", hash = "sha256:b5dfd3e48097a426623ee4553ad8003045aa7deef679f3417a72b91f8277946f", size = 266452, upload-time = "2026-08-30T02:04:57.09Z" },
-]
-
-[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -723,7 +711,6 @@ dependencies = [
     { name = "boto3" },
     { name = "cryptography" },
     { name = "fastapi" },
-    { name = "freellmpool" },
     { name = "httpx" },
     { name = "openai" },
     { name = "psycopg", extra = ["binary", "pool"] },
@@ -756,7 +743,6 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.37.32,<2" },
     { name = "cryptography", specifier = ">=49,<51" },
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "freellmpool", specifier = "==0.13.0" },
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28,<1" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.23,<5" },

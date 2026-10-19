@@ -14,10 +14,10 @@ export type ProvenanceInfo = {
 
 const KNOWN: ReadonlySet<string> = new Set(["live", "recorded", "template", "typed", "manual"]);
 
-/** Strip the internal provider prefix a stored model name carries ("recorded:", "freellmpool:"). */
+/** Strip the internal source prefix a stored model name carries. */
 export function modelLabel(model: string | null | undefined): string | null {
   if (!model) return null;
-  const clean = model.replace(/^(recorded|freellmpool):/, "").trim();
+  const clean = model.replace(/^recorded:/, "").trim();
   return clean ? clean.slice(0, 60) : null;
 }
 

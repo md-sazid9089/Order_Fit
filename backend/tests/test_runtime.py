@@ -35,14 +35,12 @@ def test_runtime_worker_never_falls_back_to_api_or_owner():
         process_environment({"DATABASE_URL": "api-url"}, {}, worker=True)
 
 
-def test_free_runtime_forwards_selection_and_drops_paid_provider_key():
+def test_runtime_forwards_openai_credentials_only_from_explicit_environment():
     values = {"DATABASE_URL": "api-url", "WORKER_DATABASE_URL": "worker-url",
-              "LLM_MODE": "live", "LLM_PROVIDER": "freellmpool",
-              "FREELLMPOOL_MODEL": "ovh/synthetic-model", "FREELLMPOOL_STATE_DIR": "var/free",
-              "OPENAI_API_KEY": "never-forward-to-free-worker"}
+              "LLM_MODE": "live", "OPENAI_API_KEY": "explicit-provider-secret",
+              "OPENAI_MODEL": "gpt-synthetic"}
     worker = process_environment(values, {}, worker=True)
     assert worker["DATABASE_URL"] == "worker-url"
-    assert worker["LLM_PROVIDER"] == "freellmpool" and worker["LLM_MODE"] == "live"
-    assert worker["FREELLMPOOL_MODEL"] == "ovh/synthetic-model"
-    assert worker["FREELLMPOOL_STATE_DIR"] == "var/free"
-    assert "OPENAI_API_KEY" not in worker
+    assert worker["LLM_MODE"] == "live"
+    assert worker["OPENAI_API_KEY"] == "explicit-provider-secret"
+    assert worker["OPENAI_MODEL"] == "gpt-synthetic"

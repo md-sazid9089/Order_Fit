@@ -1,10 +1,15 @@
 """Real FreeLLMPool adapter and wire shaping over an injected, provider-free transport."""
 
+import pytest
+
+pytest.skip("FreeLLMPool is retired; this historical adapter suite is not part of the OpenAI runtime",
+            allow_module_level=True)
+
+# ruff: noqa: E402
 import asyncio
 import json
 from unittest.mock import AsyncMock
 
-import pytest
 from freellmpool.client import HTTPResult
 
 from orderfit.agent import llm

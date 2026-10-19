@@ -54,6 +54,14 @@ def facts(evaluation: EvaluationResultV1, option: OptionResult, owner) -> dict[s
     """Resolve every slot from engine/policy values. These strings are the only figures shown."""
     tightest = min(option.scenarios, key=lambda s: int(s.lowest_headroom_minor))
     tolerance = option.tolerance
+    priority_labels = {
+        "profit": "profit",
+        "robustness": "robustness",
+        "independence_any": "independence from any single customer",
+        "independence_customer": "independence from this customer",
+        "simplicity": "simplicity",
+        "low_financing_cost": "low financing cost",
+    }
     return {
         "decision": evaluation.decision.replace("_", " "),
         "hard_feasibility": "passes all hard constraints" if option.hard_feasible else "fails at least one hard constraint",
@@ -70,7 +78,7 @@ def facts(evaluation: EvaluationResultV1, option: OptionResult, owner) -> dict[s
             f"{tolerance.status.replace('_', ' ')}; observed safe days {tolerance.observed_safe_days}; "
             f"scan cap {tolerance.scan_cap_days} days"
         ),
-        "goal_priorities": ", ".join(p.replace("_", " ") for p in owner.priorities),
+        "goal_priorities": ", ".join(priority_labels[p] for p in owner.priorities),
         "goal_target_scenario": owner.target_scenario,
         "goal_min_profit": f"{owner.min_order_profit_minor} minor units",
     }
@@ -112,6 +120,22 @@ def problems(sentences: list[str], allowed_slots) -> list[str]:
             found.append("number")
         if FORBIDDEN_TERMS.search(bare):
             found.append("term")
+    for sentence in sentences:
+        words = set(re.findall(r"[a-z]+", PLACEHOLDER.sub(" ", sentence.lower())))
+        slots = set(PLACEHOLDER.findall(sentence))
+        if words & {"resilience", "resilient", "weakness", "exposed", "vulnerable"} and not slots & {
+            "headroom_base", "headroom_downside", "headroom_severe"
+        }:
+            found.append("unsupported-resilience-claim")
+        if words & {"tradeoff", "trade", "balances", "balancing"} and not (
+            slots & {"base_profit", "profit_given_up"}
+            and slots & {"headroom_base", "headroom_downside", "headroom_severe"}
+        ):
+            found.append("unsupported-tradeoff")
+        if words & {"target", "goal"} and not slots & {"goal_target_scenario", "goal_priorities", "target_status"}:
+            found.append("unsupported-goal-claim")
+        if re.search(r"\bmeets?\s+for\b", sentence, re.I):
+            found.append("unclear-target-wording")
     return found
 
 
