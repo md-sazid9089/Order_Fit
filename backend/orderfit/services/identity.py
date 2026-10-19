@@ -25,6 +25,7 @@ from orderfit.contracts.resources import (
     StepUpView,
 )
 from orderfit.services.pagination import CursorCodec, cursor_key
+from orderfit.services.password_policy import check_new_password
 from orderfit.store.db import Scope, apply_timeouts, digest_token, set_context
 from orderfit.store.repositories import IdentityRepository
 
@@ -191,6 +192,8 @@ class IdentityService:
         signup = isinstance(data, SignUp)
         purpose = "signup" if signup else "signin"
         email = data.email.strip().lower()
+        if signup:
+            check_new_password(data.password.get_secret_value(), email=email)
         throttles = self.rate_limit(email, source, purpose)
         with self.database.engine.begin() as c:
             user = IdentityRepository.lookup(c, email)
@@ -335,6 +338,10 @@ class IdentityService:
         ):
             raise ApplicationError(401, "INVALID_CREDENTIALS")
         self.rate_release(throttles)
+        check_new_password(
+            data.new_password.get_secret_value(), email=email,
+            current=data.current_password.get_secret_value(),
+        )
         hashed = hash_password(data.new_password.get_secret_value())
         notice = self.account_mail.prepare("password_changed", email) if self.account_mail.enabled("email_verification_enabled") else None
         with self.database.engine.begin() as c:

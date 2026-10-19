@@ -2614,3 +2614,31 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   Deployment remains BLOCKED: database owner must review/apply `0021_admin_reads`
   and `0022_baseline_duplicates`, verify runtime grants, then recreate API,
   worker and web. No healthy hosted startup or full-suite rerun is claimed here.
+
+
+### 19 October 2026 — Manual-test findings: password policy, closed offers, worker failures
+
+- **Password policy** (`orderfit/services/password_policy.py`, wired into sign-up and
+  password change in `services/identity.py`): refuses the account email or its local part,
+  common/decorated/leetspeak base words, keyboard walks, sequences, repeated patterns and
+  reuse of the current password (`422 WEAK_PASSWORD` / `PASSWORD_REUSED`). Length stays in
+  the request contracts. The embedded word list is a compact screen, not a breach corpus.
+- **Closed offers** (`store/repositories.py::_row_to_offer`): a closed offer is now
+  `supported=false, unavailable_reason="Offer is closed."`. Previously `OfferView` rejected
+  it, so archiving any offer returned `503 DEPENDENCY_UNAVAILABLE`, which stranded orders
+  behind `STALE_LENDER_REFERENCE` after a lender edit. Closed offers were already excluded
+  from reviews and snapshots.
+- **Worker** (`workflow/worker.py::classify_unexpected_failure`): unexpected exceptions are
+  logged (`job_failed operation_id kind error_type origin`, never the message); database
+  connectivity errors (`OperationalError`) join `RetryableJobError` as retryable. The
+  operation attempt budget still bounds retries.
+- **Evidence:** 23 new pure tests plus a DB regression
+  (`test_archiving_an_offer_returns_a_closed_view_and_removes_it_from_the_review`) that
+  fails on the previous `repositories.py` and passes now. Non-database backend modules
+  (271 tests) and the offer-related DB modules (18 tests) pass. Live local checks on a
+  rebuilt image: weak passwords and sign-up refused with 422; a strong password changes and
+  restores; the stale offer archives (200); the loan commit completes end to end.
+- **Not done / caveats:** CI `tests`/`security` on main fail because GitHub refuses to start
+  jobs (account payment/spending limit), not because of test results. Full DB suite, engine
+  suite, web checks and the hosted deployment were not re-run. Frontend does not yet show
+  the new `WEAK_PASSWORD` message specifically.

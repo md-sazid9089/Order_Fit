@@ -10,7 +10,9 @@ import signal
 import threading
 from uuid import uuid4
 
+import psycopg
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from orderfit.agent.nodes.compute import compute
 from orderfit.contracts.configuration import RuntimeConfiguration
@@ -238,10 +240,8 @@ def run_once(operations, worker, handlers, runtime=None):
             code="ANALYSIS-LIMIT", field=None,
             message="The analysis exceeded the process time or memory limit. Reduce the analysis size before retrying.",
             blocking=True, resolution="correct_input")])
-    except RetryableJobError:
-        result, retry = failure("TRANSIENT_JOB_FAILURE"), True
-    except Exception:
-        result = failure("JOB_FAILED")
+    except Exception as exc:  # noqa: BLE001 - every outcome is classified, logged and finished
+        result, retry = classify_unexpected_failure(claim, job, exc)
     finally:
         stopped.set()
         thread.join(timeout=2)
@@ -250,6 +250,34 @@ def run_once(operations, worker, handlers, runtime=None):
 
 
 LOG = logging.getLogger("orderfit.worker")
+
+# Connectivity faults that a later attempt can reasonably survive. The operation's attempt
+# budget (operation_finish) still bounds the retries.
+_TRANSIENT_DATABASE_ERRORS = (OperationalError, psycopg.OperationalError)
+
+
+def _origin(exc: BaseException) -> str:
+    """Innermost frame as module:line; never the exception message (it may echo inputs)."""
+    tb = exc.__traceback__
+    while tb is not None and tb.tb_next is not None:
+        tb = tb.tb_next
+    if tb is None:
+        return "unknown"
+    return f"{tb.tb_frame.f_globals.get('__name__', '?')}:{tb.tb_lineno}"
+
+
+def classify_unexpected_failure(claim, job, exc: BaseException):
+    """Map an unexpected handler exception to (result, retry), recording why it happened."""
+    retryable = isinstance(exc, (RetryableJobError, *_TRANSIENT_DATABASE_ERRORS))
+    LOG.log(
+        logging.WARNING if retryable else logging.ERROR,
+        "%s operation_id=%s kind=%s error_type=%s origin=%s",
+        "job_retryable" if retryable else "job_failed",
+        claim["id"], job.kind, type(exc).__name__, _origin(exc),
+    )
+    if retryable:
+        return failure("TRANSIENT_JOB_FAILURE"), True
+    return failure("JOB_FAILED"), False
 
 
 def install_shutdown_handlers(stop: threading.Event):
