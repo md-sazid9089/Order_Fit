@@ -11,7 +11,8 @@ import { createDecisionExport, downloadExport } from "@/lib/p7-api";
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
 import { DecisionGuide } from "@/components/decision-guide";
 import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
-import { Download, Landmark, Edit3, ChevronRight, ArrowRight, FileText, CheckCircle2, MessageSquare, History } from "lucide-react";
+import { Download, Landmark, Edit3, ChevronRight, ArrowRight, ArrowLeft, FileText, CheckCircle2, MessageSquare, History } from "lucide-react";
+import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 
 function DealDetailSkeleton() {
   return (
@@ -121,35 +122,23 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
         {/* Top Header & Stepper */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
-          <div className="flex items-center gap-3">
-            <Link href={`/deals?businessId=${businessId}`} className="text-xs text-[#737373] hover:text-[#1E2021] dark:text-neutral-400 dark:hover:text-white transition-colors">
-              ← Deals Pipeline
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href={`/deals?businessId=${businessId}`}
+              className="p-2 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#525252] dark:text-neutral-300 hover:text-[#1E2021] transition-colors shrink-0"
+              title="Return to Deals Pipeline"
+            >
+              <ArrowLeft className="size-4" />
             </Link>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
+                Order Review &amp; Evaluation
+              </h1>
+            </div>
           </div>
 
           {/* Stepper Indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400">
-            <Link href={`/deals/new?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-              1. Ingest
-            </Link>
-            <ChevronRight className="size-3 text-[#A3A3A3]" />
-            <Link href={`/deals/new/validate?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-              2. Validate
-            </Link>
-            <ChevronRight className="size-3 text-[#A3A3A3]" />
-            <Link href={`/deals/${dealId}/confirm?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-              3. Confirm
-            </Link>
-            <ChevronRight className="size-3 text-[#A3A3A3]" />
-            <span className="font-bold text-[#1E2021] dark:text-white flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
-              4. Compute
-            </span>
-            <ChevronRight className="size-3 text-[#A3A3A3]" />
-            <Link href={`/deals/${dealId}/negotiate?businessId=${businessId}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-              5. Approve
-            </Link>
-          </div>
+          <DealsWorkflowStepper currentStep={4} businessId={businessId} dealId={dealId} />
         </div>
 
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}

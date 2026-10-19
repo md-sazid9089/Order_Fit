@@ -410,36 +410,81 @@ function SkeletonDashboard({
     >
       <span className="sr-only">Loading pipeline data…</span>
 
-      {/* Top Header Controls Bar */}
+      {/* Top Header Bar */}
       <div className="flex items-center justify-between gap-4">
         <div>
           <Skeleton className="h-8 w-44 rounded-xl" />
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center flex-wrap gap-2.5">
           <Skeleton className="h-8 w-20 rounded-xl" />
         </div>
       </div>
 
-      {/* 4 Summary Metric Cards */}
+      {/* 4 Summary Metric Cards matching exact layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-
-      {/* Status Alert Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-        <div className="space-y-1.5 flex-1 min-w-0 max-w-full">
-          <Skeleton className="h-4 w-52" />
-          <Skeleton className="h-3.5 w-96 max-w-full" />
+        {/* Card 1: Opening Cash Balance */}
+        <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-4 w-12 rounded-full" />
+            </div>
+            <Skeleton className="mt-3 h-8 w-32" />
+          </div>
+          <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
+            <Skeleton className="h-3 w-28" />
+          </div>
         </div>
-        <Skeleton className="h-9 w-36 rounded-xl shrink-0" />
+
+        {/* Card 2: Default Cash Reserve */}
+        <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-4 w-12 rounded-full" />
+            </div>
+            <Skeleton className="mt-3 h-8 w-28" />
+          </div>
+          <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
+            <Skeleton className="h-3 w-44" />
+          </div>
+        </div>
+
+        {/* Card 3: Lowest Evaluated Trough */}
+        <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-36" />
+              <Skeleton className="h-4 w-20 rounded-full" />
+            </div>
+            <Skeleton className="mt-3 h-8 w-32" />
+          </div>
+          <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
+            <Skeleton className="h-3 w-36" />
+          </div>
+        </div>
+
+        {/* Card 4: Loaded Order Alerts */}
+        <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-4 w-20 rounded-full" />
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Skeleton className="size-6 rounded-lg" />
+              <Skeleton className="h-8 w-28" />
+            </div>
+          </div>
+          <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
+            <Skeleton className="h-3 w-40" />
+          </div>
+        </div>
       </div>
 
       {/* Tabs and Search Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5 p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl">
+        <div className="inline-flex flex-wrap gap-1 p-1 bg-[#F4F2ED] dark:bg-[#222425] rounded-xl">
           <Skeleton className="h-7 w-20 rounded-lg" />
           <Skeleton className="h-7 w-28 rounded-lg" />
           <Skeleton className="h-7 w-32 rounded-lg" />
@@ -448,50 +493,54 @@ function SkeletonDashboard({
         <Skeleton className="h-9 w-full md:w-80 rounded-xl" />
       </div>
 
-      {/* Actual 10-Row Deals Data Table */}
+      {/* Actual Deals Data Table Skeleton */}
       <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-xs">
           <thead>
             <tr className="border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
               {tableHeaders.map((h, i) => (
-                <th key={i} className="px-4 py-3 font-semibold">
-                  <Skeleton className="h-3 w-20" />
+                <th key={i} className="px-4 py-3 font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider text-[10px]">
+                  {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
-            {Array.from({ length: 10 }).map((_, r) => (
-              <tr key={r} className="align-top">
+            {Array.from({ length: 6 }).map((_, r) => (
+              <tr key={r} className="align-top hover:bg-[#FAF9F7]/50 dark:hover:bg-[#222425]/50 transition-colors">
                 {/* Col 1: Order Reference + Customer */}
                 <td className="px-4 py-4 space-y-1.5">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-3 w-36" />
+                  <Skeleton className="h-4 w-28 rounded" />
+                  <Skeleton className="h-3 w-36 rounded" />
                 </td>
 
-                {/* Col 2: Order Value + Profit */}
+                {/* Col 2: Financials (Order Value + Profit) */}
                 <td className="px-4 py-4 space-y-1.5">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-4 w-24 rounded" />
+                  <Skeleton className="h-3 w-32 rounded" />
                 </td>
 
-                {/* Col 3: Delivery + Terms */}
+                {/* Col 3: Timeline & Terms */}
                 <td className="px-4 py-4 space-y-1.5">
-                  <Skeleton className="h-3.5 w-24" />
-                  <Skeleton className="h-3 w-20" />
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="size-3 rounded-full" />
+                    <Skeleton className="h-3.5 w-28 rounded" />
+                  </div>
+                  <Skeleton className="h-3 w-24 rounded" />
                 </td>
 
                 {/* Col 4: Engine Verdict */}
-                <td className="px-4 py-4">
-                  <Skeleton className="h-3.5 w-48" />
+                <td className="px-4 py-4 space-y-1.5 max-w-md">
+                  <Skeleton className="h-3.5 w-full max-w-[280px] rounded" />
+                  <Skeleton className="h-3 w-44 rounded" />
                 </td>
 
-                {/* Col 5: Decision Status Pill */}
+                {/* Col 5: Decision Status */}
                 <td className="px-4 py-4">
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </td>
 
-                {/* Col 6: Action Button */}
+                {/* Col 6: Action */}
                 <td className="px-4 py-4">
                   <Skeleton className="h-8 w-28 rounded-xl" />
                 </td>
@@ -501,12 +550,11 @@ function SkeletonDashboard({
         </table>
       </div>
 
-      {/* Actual Pagination Bar Skeleton */}
+      {/* Pagination Bar Skeleton */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-        <Skeleton className="h-4 w-44" />
+        <Skeleton className="h-4 w-48 rounded" />
         <div className="flex items-center gap-1.5">
           <Skeleton className="h-8 w-20 rounded-xl" />
-          <Skeleton className="size-8 rounded-xl" />
           <Skeleton className="size-8 rounded-xl" />
           <Skeleton className="h-8 w-16 rounded-xl" />
         </div>
