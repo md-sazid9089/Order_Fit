@@ -28,7 +28,6 @@ export function PageFrame({ title, intro, action, children }: { title: string; i
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
-            {intro && <p className="text-xs text-[#737373] dark:text-neutral-400 mt-1 max-w-3xl leading-relaxed">{intro}</p>}
           </div>
           {action && <div className="shrink-0">{action}</div>}
         </header>
