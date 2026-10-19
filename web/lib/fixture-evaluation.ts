@@ -11,7 +11,8 @@ export function createMockEvaluationBundle(
     costItems?: Array<{ name: string; amount: number; date: string; deferrable?: boolean; kind?: string }>;
   } | null
 ): { deal: Deal; evaluation: Evaluation; review: Review } {
-  const simulatedId = "00000000-0000-0000-0000-000000000002";
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const simulatedId = UUID_REGEX.test(dealRef) ? dealRef : "00000000-0000-0000-0000-000000000002";
   const evalId = "00000000-0000-0000-0000-000000000003";
   const snapshotId = "00000000-0000-0000-0000-000000000004";
   const constraintsId = "00000000-0000-0000-0000-000000000005";
@@ -103,10 +104,85 @@ export function createMockEvaluationBundle(
   const review: Review = {
     deal_id: simulatedId,
     version: 1,
-    input_version: 1,
-    financial_revision: 1,
-    candidate_snapshot: null,
-    snapshot_hash: "mock-hash",
+    input_version: 3,
+    financial_revision: 20,
+    candidate_snapshot: {
+      schema_version: "confirmed-input.v1",
+      business_id: businessId || "e55482bc-1f2a-4017-a0dd-d3eeda7aabbd",
+      deal_id: simulatedId,
+      input_version: 3,
+      financial_revision: 20,
+      source_revisions: [
+        {
+          resource_kind: "payee",
+          resource_id: "c0c41819-2638-408f-b568-da9f95f402a5",
+          revision: 1,
+          content_hash: "bfb75d02b3297c6778b8f4b1a3e1e4addbd6683de1c63c3ba370b119b208f2a8",
+        },
+        {
+          resource_kind: "customer",
+          resource_id: "99a92c34-757c-4bcd-b252-e385afba5df4",
+          revision: 1,
+          content_hash: "7a8b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
+        },
+        {
+          resource_kind: "constraints",
+          resource_id: constraintsId,
+          revision: 1,
+          content_hash: "4fb9fbebc390b0fa79362e5741891d4a71da5ecd9629b6524635026ecdf8bb3c",
+        },
+      ],
+      start_date: "2026-11-02",
+      currency: "USD",
+      exponent: 2,
+      opening_cash_minor: "21500000",
+      reserve_minor: "6000000",
+      baseline_revision: 1,
+      coverage_through: "2027-02-15",
+      balance_evidence: [],
+      baseline_events: [],
+      order: {
+        customer_id: customerId,
+        order_date: "2026-11-02",
+        order_value_minor: orderValueMinor,
+        invoice_date: "2026-12-14",
+        delivery_date: deliveryDate,
+        payment_basis: "delivery",
+        payment_days: paymentDays,
+        costs: costItems,
+      },
+      offers: [],
+      owner: {
+        cash_reserve_floor_minor: "6000000",
+        min_gross_margin_pct: "15.0",
+      },
+      strategy_space: {
+        deposit_pct_options: [0, 20, 30, 40, 50],
+        financing_options: [],
+      },
+      scenarios: {
+        downside: {
+          customer_delay_days: 14,
+          ar_delay_days: 14,
+          cost_overrun_bps: 500,
+        },
+        severe: {
+          customer_delay_days: 30,
+          ar_delay_days: 30,
+          cost_overrun_bps: 1200,
+        },
+      },
+      analysis: {
+        cash_burn_daily_minor: "45000",
+      },
+      assumptions: [
+        "Supplier terms require 50% advance deposit at order booking",
+        "Final balance settlement on container physical delivery",
+      ],
+      conflict_resolutions: [],
+      coverage_acknowledgement: null,
+    } as any,
+    snapshot_hash: "4fb9fbebc390b0fa79362e5741891d4a71da5ecd9629b6524635026ecdf8bb3c",
     findings: [],
     required_field_ids: [],
   };
@@ -374,3 +450,82 @@ export function createMockEvaluationBundle(
 
   return { deal, evaluation, review };
 }
+
+export function createMockSeriesPoints(
+  scenario: "base" | "downside" | "severe",
+  optionKey: string
+): { date: string; candidate_trough_minor: string; reserve_minor: string }[] {
+  // Deterministic daily date points from 2026-11-02 through 2026-12-28
+  const dates = [
+    "2026-11-02",
+    "2026-11-04",
+    "2026-11-09",
+    "2026-11-16",
+    "2026-11-23",
+    "2026-11-30",
+    "2026-12-04",
+    "2026-12-07",
+    "2026-12-10",
+    "2026-12-14",
+    "2026-12-21",
+    "2026-12-28",
+  ];
+
+  const reserveMinor = "6000000"; // $60,000 reserve floor
+
+  // Different profiles depending on whether as-is (unmitigated shortfall) or mitigated (dep40)
+  const isAsIs = optionKey === "accept_as_is";
+
+  return dates.map((date) => {
+    let troughMinor: string;
+
+    if (isAsIs) {
+      if (date === "2026-11-02") troughMinor = "21500000";
+      else if (date === "2026-11-04") troughMinor = "12500000";
+      else if (date === "2026-11-09") troughMinor = "12200000";
+      else if (date === "2026-11-16") troughMinor = "11800000";
+      else if (date === "2026-11-23") troughMinor = "10500000";
+      else if (date === "2026-11-30") troughMinor = "9200000";
+      else if (date === "2026-12-04") troughMinor = "8400000";
+      else if (date === "2026-12-07") {
+        // Supplier balance due: triggers shortfall in as-is
+        troughMinor = scenario === "severe" ? "-12760000" : scenario === "downside" ? "-7400000" : "-5900000";
+      } else if (date === "2026-12-10") {
+        troughMinor = scenario === "severe" ? "-15760000" : scenario === "downside" ? "-10400000" : "-8900000";
+      } else if (date === "2026-12-14") {
+        troughMinor = scenario === "severe" ? "-16760000" : scenario === "downside" ? "-11400000" : "-9900000";
+      } else if (date === "2026-12-21") {
+        troughMinor = scenario === "severe" ? "-14000000" : scenario === "downside" ? "-9000000" : "8000000";
+      } else {
+        troughMinor = scenario === "severe" ? "9700000" : scenario === "downside" ? "14200000" : "15700000";
+      }
+    } else {
+      // dep40 or dep40+ext30 candidate option: customer 40% upfront deposit injects +$144,000 early
+      if (date === "2026-11-02") troughMinor = "21500000";
+      else if (date === "2026-11-04") troughMinor = "26900000"; // deposit arrived, materials paid
+      else if (date === "2026-11-09") troughMinor = "26500000";
+      else if (date === "2026-11-16") troughMinor = "25800000";
+      else if (date === "2026-11-23") troughMinor = "24200000";
+      else if (date === "2026-11-30") troughMinor = "22800000";
+      else if (date === "2026-12-04") troughMinor = "21900000";
+      else if (date === "2026-12-07") {
+        troughMinor = scenario === "severe" ? "1230000" : scenario === "downside" ? "6712000" : "8212000";
+      } else if (date === "2026-12-10") {
+        troughMinor = scenario === "severe" ? "980000" : scenario === "downside" ? "6200000" : "7800000";
+      } else if (date === "2026-12-14") {
+        troughMinor = scenario === "severe" ? "850000" : scenario === "downside" ? "5900000" : "7500000";
+      } else if (date === "2026-12-21") {
+        troughMinor = scenario === "severe" ? "2100000" : scenario === "downside" ? "8500000" : "12400000";
+      } else {
+        troughMinor = scenario === "severe" ? "12000000" : scenario === "downside" ? "18500000" : "24800000";
+      }
+    }
+
+    return {
+      date,
+      candidate_trough_minor: troughMinor,
+      reserve_minor: reserveMinor,
+    };
+  });
+}
+
