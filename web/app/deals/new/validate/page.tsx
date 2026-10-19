@@ -255,7 +255,7 @@ export default function ValidatePage() {
   const currentPo = encodeURIComponent(dealId || poNumber.trim() || "PO-8841");
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
+    <main className="p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
       {/* Top Header & Stepper */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">
@@ -471,7 +471,7 @@ export default function ValidatePage() {
         </div>
 
         <div className="overflow-x-auto w-full">
-          <table className="w-full table-fixed text-left border-collapse text-xs">
+          <table className="w-full table-fixed text-left border-collapse text-xs min-w-[720px]">
             <thead>
               <tr className="border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                 <th className="py-3 px-4 w-[28%]">Cost Description</th>
@@ -638,7 +638,7 @@ export default function ValidatePage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 shrink-0 self-end xl:self-center w-full sm:w-auto">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 self-stretch sm:self-end xl:self-center w-full sm:w-auto">
           <Link
             href={`/deals/new${query}`}
             className="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-xl bg-[#FAF9F7] dark:bg-[#2C302F] hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] border border-[#E8E6E1] dark:border-[#383C3B] text-[#525252] dark:text-neutral-200 hover:text-[#1E2021] text-xs font-semibold transition-colors"

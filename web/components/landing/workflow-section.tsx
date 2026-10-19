@@ -51,7 +51,7 @@ export function WorkflowSection() {
           <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block font-sans">
             End-to-End Decision Journey
           </span>
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4 break-words">
             How OrderFit Evaluates &amp; Secures an Order
           </h2>
           <p className="font-sans text-base sm:text-lg text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
@@ -66,7 +66,7 @@ export function WorkflowSection() {
             return (
               <div
                 key={s.num}
-                className="rounded-3xl bg-white border border-[#ECEAE4] p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between relative group"
+                className="rounded-3xl bg-white border border-[#ECEAE4] p-5 sm:p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between relative group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">

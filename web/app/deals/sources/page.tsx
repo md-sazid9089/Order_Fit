@@ -52,8 +52,8 @@ export default function SourcesPage() {
   }
   function savePolicy(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business || !policy) return; const data = new FormData(e.currentTarget); const { constraints_id: _id, version: _version, ...owner } = policy.owner; void _id; void _version; void run(() => mutate(`/businesses/${businessId}/constraints`, "POST", { expected_financial_revision: business.financial_revision, reserve_minor: text(data, "reserve"), owner, scenarios: policy.scenarios, strategy_space: { ...policy.strategy_space, offer_ids: selected }, make_default: true }), "New default policy saved. Select this policy on new orders, or update the policy in an existing order's input editor."); }
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div>

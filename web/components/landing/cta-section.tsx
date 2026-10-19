@@ -19,10 +19,10 @@ export function CtaSection() {
     <section className="py-16 md:py-24 bg-[#F7F6F5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Newsletter CTA Light Card */}
-        <div className="rounded-4xl bg-white border border-[#ECEAE4] text-[#1A1A1A] px-6 pt-16 pb-8 sm:px-12 sm:pt-20 sm:pb-10 text-center shadow-sm overflow-hidden">
+        <div className="rounded-4xl bg-white border border-[#ECEAE4] text-[#1A1A1A] px-4 pt-10 pb-6 sm:px-8 sm:pt-16 sm:pb-8 lg:px-12 lg:pt-20 lg:pb-10 text-center shadow-sm overflow-hidden">
           <div className="max-w-3xl mx-auto flex flex-col items-center">
             
-            <h2 className="font-heading font-medium text-[2rem] sm:text-[2.5rem] md:text-[3rem] leading-[110%] tracking-tight text-[#1A1A1A] mb-4">
+            <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3rem] leading-[110%] tracking-tight text-[#1A1A1A] mb-4 break-words">
               Insights in your inbox
             </h2>
 

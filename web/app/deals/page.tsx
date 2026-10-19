@@ -132,8 +132,8 @@ export default function DealsPage() {
   const safe = trough.headroom !== null && /^-?\d+$/.test(trough.headroom) && BigInt(trough.headroom) >= BigInt(0);
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div>

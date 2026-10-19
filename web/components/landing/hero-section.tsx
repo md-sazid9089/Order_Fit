@@ -20,10 +20,10 @@ export function HeroSection() {
         {/* Main Hero Header */}
         <div className="text-center max-w-6xl mx-auto mb-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.75rem] xl:text-[4.25rem] tracking-tight leading-[1.12] mb-6">
-            <span className="block font-sans font-medium text-[#1A1A1A] dark:text-[#F3F4F6] sm:whitespace-nowrap">
+            <span className="block font-sans font-medium text-[#1A1A1A] dark:text-[#F3F4F6]">
               Stress-test orders, protect cash flow,
             </span>
-            <span className="block font-serif italic font-normal text-[#1A1A1A] dark:text-[#F3F4F6] tracking-tight sm:tracking-normal mt-1 sm:mt-2 sm:whitespace-nowrap">
+            <span className="block font-serif italic font-normal text-[#1A1A1A] dark:text-[#F3F4F6] tracking-tight sm:tracking-normal mt-1 sm:mt-2">
               negotiate safe terms.
             </span>
           </h1>

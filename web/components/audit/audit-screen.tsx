@@ -25,7 +25,7 @@ function Log() {
     {log.isError && <QueryError error={log.error} retry={() => void log.refetch()} retrying={log.isFetching} />}
     {log.isSuccess && !rows.length && <p className="text-sm text-neutral-600">No entries recorded yet.</p>}
     <ul className="divide-y">{rows.map(r => <li key={r.sequence} className="space-y-1 py-2 text-sm">
-      <div className="flex flex-wrap items-baseline gap-x-3"><span className="font-mono text-xs text-neutral-500">#{r.sequence}</span><strong className="capitalize">{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-neutral-600" : "font-semibold text-amber-800"}>{r.outcome}</span><span className="text-neutral-600">by {auditActorLabel(r, session.user_id)} ({r.tier})</span><span className="ml-auto text-xs text-neutral-500">{r.at ? when(r.at) : ""}</span></div>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1"><span className="font-mono text-xs text-neutral-500">#{r.sequence}</span><strong className="capitalize">{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-neutral-600" : "font-semibold text-amber-800"}>{r.outcome}</span><span className="text-neutral-600">by {auditActorLabel(r, session.user_id)} ({r.tier})</span><span className="sm:ml-auto text-xs text-neutral-500">{r.at ? when(r.at) : ""}</span></div>
       <details><summary className="cursor-pointer text-xs text-neutral-600">Details and hashes</summary>
         <dl className="mt-2 grid gap-1 text-xs sm:grid-cols-[8rem_1fr]">
           {r.entity && <><dt>Entity</dt><dd>{r.entity}</dd></>}{r.dealId && <><dt>Order id</dt><dd className="break-all font-mono">{r.dealId}</dd></>}
@@ -58,9 +58,9 @@ function Export() {
     <p className="text-sm text-neutral-700">Downloads a JSON file of canonical rows with their hashes so the chain links can be checked by a verifier that has the file. That check has limits (below): it does not by itself prove the history is complete. Leave the range empty to export everything. Per-order decision records are exported from each order&apos;s page.</p>
     <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><p className="font-semibold">Limits of the verification</p><ul className="list-disc pl-5">{AUDIT_EXPORT_LIMITS.map(l => <li key={l}>{l}</li>)}</ul></div>
     <form onSubmit={download} className="flex flex-wrap items-end gap-3">
-      <label className="text-sm">From sequence (optional)<input className={field} inputMode="numeric" value={from} onChange={e => setFrom(e.target.value)} /></label>
-      <label className="text-sm">To sequence (optional)<input className={field} inputMode="numeric" value={to} onChange={e => setTo(e.target.value)} /></label>
-      <button className={primary} disabled={busy}>{busy ? "Preparing…" : "Download audit export"}</button>
+      <label className="text-sm w-full sm:w-auto">From sequence (optional)<input className={field} inputMode="numeric" value={from} onChange={e => setFrom(e.target.value)} /></label>
+      <label className="text-sm w-full sm:w-auto">To sequence (optional)<input className={field} inputMode="numeric" value={to} onChange={e => setTo(e.target.value)} /></label>
+      <button className={`${primary} w-full sm:w-auto`} disabled={busy}>{busy ? "Preparing…" : "Download audit export"}</button>
     </form>
     {rangeError && <Alert>{rangeError}</Alert>}{error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
     {last && <div className="space-y-1 text-sm"><p>Exported {last.rows.length} rows{last.head_hash ? `; chain head #${last.head_sequence} ${last.head_hash.slice(0, 16)}…` : ""}.</p>

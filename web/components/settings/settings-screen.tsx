@@ -25,7 +25,7 @@ export function SettingsScreen() {
   const [tab, setTab] = useState<Tab>("user");
   const tabs: { id: Tab; label: string }[] = [{ id: "user", label: "Your profile" }, { id: "company", label: "Company profile" }];
   return <PageFrame title="Settings" intro="Your profile and your company's profile. Security controls such as audit, tenant isolation and approvals cannot be switched off from here.">
-    <div role="tablist" aria-label="Settings sections" className="flex gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-neutral-900 text-white" : "bg-white"}`}>{t.label}</button>)}</div>
+    <div role="tablist" aria-label="Settings sections" className="flex flex-wrap gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-neutral-900 text-white" : "bg-white"}`}>{t.label}</button>)}</div>
     <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>{tab === "user" ? <UserProfile /> : <CompanyProfile />}</div>
   </PageFrame>;
 }
@@ -56,7 +56,7 @@ function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (se
     <label className="block text-sm">Language<select className={field} value={draft.language} onChange={e => setDraft({ ...draft, language: e.target.value as ProfileDraft["language"] })}><option value="en">English</option><option value="bn">Bangla</option></select></label>
     <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={draft.in_app_notifications} onChange={e => setDraft({ ...draft, in_app_notifications: e.target.checked })} /><span>Create in-app notifications for me. When off, no new notification rows are created for you; email delivery does not exist.</span></label>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-    <button className={primary} disabled={busy || !changed || !valid}>{busy ? "Saving…" : "Save profile"}</button>
+    <button className={`${primary} w-full sm:w-auto`} disabled={busy || !changed || !valid}>{busy ? "Saving…" : "Save profile"}</button>
     <div className="space-y-1 border-t pt-3 text-sm text-neutral-700"><h3 className="font-semibold">Security status</h3>
       <p>Multi-factor authentication: {session.mfa_supported ? "available" : "not supported yet"}.</p>
       <p>Email verification: {session.email_verified ? "verified" : "not supported yet"}.</p>
@@ -101,7 +101,7 @@ function PasswordPanel() {
     <label className="block text-sm">New password<input type="password" autoComplete="new-password" className={field} value={next} onChange={e => setNext(e.target.value)} />{shown("next")}</label>
     <label className="block text-sm">Repeat new password<input type="password" autoComplete="new-password" className={field} value={confirm} onChange={e => setConfirm(e.target.value)} />{shown("confirm")}</label>
     {error && <Alert>{error}</Alert>}
-    <button className={primary} disabled={busy}>{busy ? "Changing…" : "Change password"}</button>
+    <button className={`${primary} w-full sm:w-auto`} disabled={busy}>{busy ? "Changing…" : "Change password"}</button>
   </form>;
 }
 
@@ -144,7 +144,7 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
       <label className="block text-sm">Tax ID<input className={field} value={draft.tax_id} maxLength={100} onChange={e => set({ tax_id: e.target.value })} /></label>
     </fieldset>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-    {editable && <button className={primary} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
+    {editable && <button className={`${primary} w-full sm:w-auto`} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
     <p className="text-xs text-neutral-600">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
   </form>;
 }

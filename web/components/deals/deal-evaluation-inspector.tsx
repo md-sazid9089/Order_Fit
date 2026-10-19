@@ -94,11 +94,11 @@ export function DealEvaluationInspector({
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center p-1 rounded-xl bg-neutral-200/60 dark:bg-neutral-800 text-xs font-medium">
+        <div className="flex flex-wrap sm:flex-nowrap items-center p-1 rounded-xl bg-neutral-200/60 dark:bg-neutral-800 text-xs font-medium max-w-full overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("summary")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "summary"
                 ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
                 : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
@@ -109,7 +109,7 @@ export function DealEvaluationInspector({
           <button
             type="button"
             onClick={() => setActiveTab("scenarios")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "scenarios"
                 ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
                 : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
@@ -120,7 +120,7 @@ export function DealEvaluationInspector({
           <button
             type="button"
             onClick={() => setActiveTab("sensitivity")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "sensitivity"
                 ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
                 : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
@@ -131,7 +131,7 @@ export function DealEvaluationInspector({
           <button
             type="button"
             onClick={() => setActiveTab("gaps")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "gaps"
                 ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
                 : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
@@ -142,7 +142,7 @@ export function DealEvaluationInspector({
           <button
             type="button"
             onClick={() => setActiveTab("raw")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap ${
               activeTab === "raw"
                 ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
                 : "text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
@@ -221,44 +221,46 @@ export function DealEvaluationInspector({
                 <Layers className="size-4" />
                 <span>Ranked Commercial Options</span>
               </h4>
-              <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
-                  <span className="col-span-1">Rank</span>
-                  <span className="col-span-4">Option Key / Strategy</span>
-                  <span className="col-span-2 text-right">Profit</span>
-                  <span className="col-span-2 text-right">Borrowing</span>
-                  <span className="col-span-3 text-right">Status</span>
-                </div>
-                {evaluation.ranked_candidates.map((cand, idx) => (
-                  <div
-                    key={cand.option_key}
-                    className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors"
-                  >
-                    <span className="col-span-1 font-mono font-bold text-[#1E2021] dark:text-white">
-                      #{cand.rank ?? idx + 1}
-                    </span>
-                    <span className="col-span-4 font-mono truncate font-semibold text-[#1E2021] dark:text-white">
-                      {cand.option_key}
-                    </span>
-                    <span className="col-span-2 font-mono text-right font-medium text-[#004D3B] dark:text-[#B5F2C6]">
-                      {formatMinor(cand.base_incremental_profit_minor, currency)}
-                    </span>
-                    <span className="col-span-2 font-mono text-right text-[#525252] dark:text-neutral-300">
-                      {formatMinor(cand.borrowed_minor, currency)}
-                    </span>
-                    <span className="col-span-3 text-right">
-                      {cand.hard_feasible ? (
-                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#004D3B] dark:text-[#34D399] border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
-                          Feasible
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#991B1B] dark:text-red-400 border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
-                          Breach Floor
-                        </span>
-                      )}
-                    </span>
+              <div className="overflow-x-auto rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+                <div className="min-w-[560px] divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
+                  <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
+                    <span className="col-span-1">Rank</span>
+                    <span className="col-span-4">Option Key / Strategy</span>
+                    <span className="col-span-2 text-right">Profit</span>
+                    <span className="col-span-2 text-right">Borrowing</span>
+                    <span className="col-span-3 text-right">Status</span>
                   </div>
-                ))}
+                  {evaluation.ranked_candidates.map((cand, idx) => (
+                    <div
+                      key={cand.option_key}
+                      className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors"
+                    >
+                      <span className="col-span-1 font-mono font-bold text-[#1E2021] dark:text-white">
+                        #{cand.rank ?? idx + 1}
+                      </span>
+                      <span className="col-span-4 font-mono truncate font-semibold text-[#1E2021] dark:text-white">
+                        {cand.option_key}
+                      </span>
+                      <span className="col-span-2 font-mono text-right font-medium text-[#004D3B] dark:text-[#B5F2C6]">
+                        {formatMinor(cand.base_incremental_profit_minor, currency)}
+                      </span>
+                      <span className="col-span-2 font-mono text-right text-[#525252] dark:text-neutral-300">
+                        {formatMinor(cand.borrowed_minor, currency)}
+                      </span>
+                      <span className="col-span-3 text-right">
+                        {cand.hard_feasible ? (
+                          <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#004D3B] dark:text-[#34D399] border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
+                            Feasible
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] text-[#991B1B] dark:text-red-400 border border-[#E8E6E1] dark:border-[#2A2C2D] font-medium text-[10px]">
+                            Breach Floor
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -351,42 +353,44 @@ export function DealEvaluationInspector({
             Multi-variable sensitivity results scanning payment delays and cost overruns:
           </p>
           {evaluation.sensitivity.length > 0 ? (
-            <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-              <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
-                <span className="col-span-4">Tested Variable</span>
-                <span className="col-span-2 text-right">Tested Value</span>
-                <span className="col-span-3 text-center">Engine Verdict</span>
-                <span className="col-span-3 text-right">Net Profit</span>
-              </div>
-              {evaluation.sensitivity.map((sens, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30"
-                >
-                  <span className="col-span-4 font-mono font-medium text-[#1E2021] dark:text-white">
-                    {sens.field.replaceAll("_", " ")}
-                  </span>
-                  <span className="col-span-2 font-mono text-right font-bold text-[#1E2021] dark:text-white">
-                    {sens.tested_value}
-                  </span>
-                  <span className="col-span-3 text-center">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${
-                        sens.decision === "accept_as_is"
-                          ? "text-[#004D3B] dark:text-[#34D399]"
-                          : sens.decision === "accept_with_changes"
-                          ? "text-[#8A5A00] dark:text-amber-400"
-                          : "text-[#991B1B] dark:text-red-400"
-                      }`}
-                    >
-                      {sens.decision.replaceAll("_", " ")}
-                    </span>
-                  </span>
-                  <span className="col-span-3 font-mono text-right text-[#004D3B] dark:text-[#B5F2C6]">
-                    {sens.profit_minor ? formatMinor(sens.profit_minor, currency) : "—"}
-                  </span>
+            <div className="overflow-x-auto rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+              <div className="min-w-[540px] divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
+                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
+                  <span className="col-span-4">Tested Variable</span>
+                  <span className="col-span-2 text-right">Tested Value</span>
+                  <span className="col-span-3 text-center">Engine Verdict</span>
+                  <span className="col-span-3 text-right">Net Profit</span>
                 </div>
-              ))}
+                {evaluation.sensitivity.map((sens, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30"
+                  >
+                    <span className="col-span-4 font-mono font-medium text-[#1E2021] dark:text-white">
+                      {sens.field.replaceAll("_", " ")}
+                    </span>
+                    <span className="col-span-2 font-mono text-right font-bold text-[#1E2021] dark:text-white">
+                      {sens.tested_value}
+                    </span>
+                    <span className="col-span-3 text-center">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${
+                          sens.decision === "accept_as_is"
+                            ? "text-[#004D3B] dark:text-[#34D399]"
+                            : sens.decision === "accept_with_changes"
+                            ? "text-[#8A5A00] dark:text-amber-400"
+                            : "text-[#991B1B] dark:text-red-400"
+                        }`}
+                      >
+                        {sens.decision.replaceAll("_", " ")}
+                      </span>
+                    </span>
+                    <span className="col-span-3 font-mono text-right text-[#004D3B] dark:text-[#B5F2C6]">
+                      {sens.profit_minor ? formatMinor(sens.profit_minor, currency) : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <p className="text-xs text-[#737373] dark:text-neutral-400">
@@ -638,52 +642,54 @@ export function DealCashSeriesViewer({
             No series points recorded for this selection.
           </div>
         ) : viewMode === "table" ? (
-          <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-            <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
-              <span className="col-span-3">Date</span>
-              <span className="col-span-3 text-right">Daily Trough</span>
-              <span className="col-span-3 text-right">Reserve Floor</span>
-              <span className="col-span-3 text-right">Headroom / Status</span>
-            </div>
-            <div className="max-h-[360px] overflow-auto divide-y divide-[#E8E6E1] dark:divide-[#2C302F]">
-              {seriesPoints.map((pt, i) => {
-                const trough = BigInt(pt.candidate_trough_minor || "0");
-                const reserve = BigInt(pt.reserve_minor || "0");
-                const headroom = trough - reserve;
-                const isBreach = headroom < BigInt(0);
+          <div className="overflow-x-auto rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+            <div className="min-w-[520px] divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
+              <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
+                <span className="col-span-3">Date</span>
+                <span className="col-span-3 text-right">Daily Trough</span>
+                <span className="col-span-3 text-right">Reserve Floor</span>
+                <span className="col-span-3 text-right">Headroom / Status</span>
+              </div>
+              <div className="max-h-[360px] overflow-auto divide-y divide-[#E8E6E1] dark:divide-[#2C302F]">
+                {seriesPoints.map((pt, i) => {
+                  const trough = BigInt(pt.candidate_trough_minor || "0");
+                  const reserve = BigInt(pt.reserve_minor || "0");
+                  const headroom = trough - reserve;
+                  const isBreach = headroom < BigInt(0);
 
-                return (
-                  <div
-                    key={i}
-                    className="p-2.5 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors font-mono"
-                  >
-                    <span className="col-span-3 text-[#1E2021] dark:text-white font-medium">
-                      {pt.date}
-                    </span>
-                    <span
-                      className={`col-span-3 text-right font-bold ${
-                        isBreach ? "text-rose-600 dark:text-rose-400" : "text-[#1E2021] dark:text-white"
-                      }`}
+                  return (
+                    <div
+                      key={i}
+                      className="p-2.5 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors font-mono"
                     >
-                      {formatMinor(pt.candidate_trough_minor, currency)}
-                    </span>
-                    <span className="col-span-3 text-right text-[#525252] dark:text-neutral-400">
-                      {formatMinor(pt.reserve_minor, currency)}
-                    </span>
-                    <span className="col-span-3 text-right">
-                      {isBreach ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400 font-sans font-semibold text-[10px]">
-                          Breached ({formatMinor(headroom.toString(), currency)})
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399] font-sans font-medium text-[10px]">
-                          +{formatMinor(headroom.toString(), currency)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
+                      <span className="col-span-3 text-[#1E2021] dark:text-white font-medium">
+                        {pt.date}
+                      </span>
+                      <span
+                        className={`col-span-3 text-right font-bold ${
+                          isBreach ? "text-rose-600 dark:text-rose-400" : "text-[#1E2021] dark:text-white"
+                        }`}
+                      >
+                        {formatMinor(pt.candidate_trough_minor, currency)}
+                      </span>
+                      <span className="col-span-3 text-right text-[#525252] dark:text-neutral-400">
+                        {formatMinor(pt.reserve_minor, currency)}
+                      </span>
+                      <span className="col-span-3 text-right">
+                        {isBreach ? (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400 font-sans font-semibold text-[10px]">
+                            Breached ({formatMinor(headroom.toString(), currency)})
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399] font-sans font-medium text-[10px]">
+                            +{formatMinor(headroom.toString(), currency)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (

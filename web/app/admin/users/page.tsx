@@ -273,9 +273,9 @@ export default function AdminUsersPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-[#181A1B]/95 backdrop-blur-md border-b border-[#E8E6E1] dark:border-[#2A2C2D] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-[#181A1B]/95 backdrop-blur-md border-b border-[#E8E6E1] dark:border-[#2A2C2D] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
               <Link
                 href="/admin"
                 className="p-1.5 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] transition-colors shrink-0"
@@ -283,28 +283,28 @@ export default function AdminUsersPage() {
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                   <Link href="/admin" className="text-xs text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white transition-colors">
                     Admin Console
                   </Link>
                   <span className="text-[#A3A3A3] dark:text-[#737373] text-xs">/</span>
                   <span className="text-xs font-semibold text-[#1E2021] dark:text-[#F3F4F6]">User Management</span>
                 </div>
-                <h1 className="text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">
+                <h1 className="text-sm sm:text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">
                   Database User Credentials & Membership Roles
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               <ThemeToggle variant="icon" />
 
               <button
                 type="button"
                 onClick={handleExportCsv}
                 disabled={users.length === 0}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] dark:bg-[#222425] text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-[#F3F4F6] border border-[#E8E6E1] dark:border-[#2A2C2D] transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Download className="size-3.5 text-[#525252] dark:text-[#A3A3A3]" />
                 <span className="hidden sm:inline">Export CSV</span>
@@ -313,22 +313,23 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 onClick={() => setIsProvisionOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-[#181A1B] text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-[#181A1B] text-xs font-semibold transition-all shadow-xs cursor-pointer"
               >
                 <Plus className="size-3.5" />
-                <span>Invite User</span>
+                <span className="hidden sm:inline">Invite User</span>
+                <span className="sm:hidden">Invite</span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Main Content Workspace */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
           {toastMessage && (
             <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-white" />
-                <span>{toastMessage}</span>
+                <CheckCircle2 className="size-4 text-white shrink-0" />
+                <span className="break-words">{toastMessage}</span>
               </div>
               <button onClick={() => setToastMessage(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/70">
                 <X className="size-3.5" />
@@ -337,7 +338,7 @@ export default function AdminUsersPage() {
           )}
 
           {/* Database Metric Telemetry Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
               <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
                 Total Database Users
@@ -455,7 +456,7 @@ export default function AdminUsersPage() {
           {/* Database Users Table */}
           <div className="bg-white border border-[#E8E6E1] rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                 <thead>
                   <tr className="bg-[#FAF9F7] border-b border-[#E8E6E1] text-[#737373] font-semibold">
                     <th className="py-3 px-4">User Details</th>
@@ -563,7 +564,7 @@ export default function AdminUsersPage() {
       {/* Invite User Modal */}
       {isProvisionOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-[#1E2021] font-display">Invite User to Organization</h3>
@@ -591,7 +592,7 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-[#1E2021] mb-1">Target Organization</label>
                   <select
@@ -647,7 +648,7 @@ export default function AdminUsersPage() {
       {/* Edit Role Modal */}
       {editingUser && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-[#1E2021] font-display">Update Security Role</h3>
@@ -706,7 +707,7 @@ export default function AdminUsersPage() {
       {/* Revoke Access Modal */}
       {revokingUser && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-[#E8E6E1] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-[#991B1B] font-display">Revoke Access</h3>

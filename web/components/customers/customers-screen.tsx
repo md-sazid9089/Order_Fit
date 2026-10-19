@@ -67,24 +67,24 @@ export function CustomersScreen() {
   const activeSelectedId = chosen ? chosen.id : selectedId;
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full min-h-screen bg-[#FAF9F7] dark:bg-[#121314] text-[#1E2021] dark:text-neutral-100">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0 min-h-screen bg-[#FAF9F7] dark:bg-[#121314] text-[#1E2021] dark:text-neutral-100">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E8E6E1] dark:border-[#2C302F]">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] shadow-xs">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] shadow-xs shrink-0">
                 <Users className="size-5" />
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-[#1E2021] dark:text-white">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-[#1E2021] dark:text-white truncate">
                   Customers & Ledger
                 </h1>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <Link
               href={`/deals/new?businessId=${businessId}`}
               className={buttonPrimary}
@@ -381,7 +381,7 @@ function History({ customer }: { customer: CustomerView }) {
 
         {/* Date Selector Form */}
         <form
-          className="flex items-center gap-2"
+          className="flex flex-wrap items-center gap-2"
           onSubmit={(e: FormEvent) => {
             e.preventDefault();
             if (historyDateValid(draft)) setAsOf(draft);
@@ -650,7 +650,7 @@ function Invoices({ customer }: { customer: CustomerView }) {
       {/* Structured Clean Table */}
       {items.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[560px]">
             <thead className="bg-[#FAF9F7] dark:bg-[#181A1B] text-neutral-500 border-b border-[#E8E6E1] dark:border-[#2C302F]">
               <tr>
                 <th className="py-2.5 px-3 font-semibold">Reference</th>

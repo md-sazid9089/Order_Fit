@@ -23,13 +23,13 @@ export function useScoped() {
 
 export function PageFrame({ title, intro, action, children }: { title: string; intro?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight break-words">{title}</h1>
           </div>
-          {action && <div className="shrink-0">{action}</div>}
+          {action && <div className="flex flex-wrap items-center gap-2 max-w-full">{action}</div>}
         </header>
         {children}
       </div>

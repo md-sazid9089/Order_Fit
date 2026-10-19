@@ -196,37 +196,39 @@ export default function AdminOverviewPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-xl bg-[#1E2021] text-white">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
+              <div className="p-2 rounded-xl bg-[#1E2021] text-white shrink-0">
                 <Server className="size-4" />
               </div>
-              <div>
-                <h1 className="text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight flex items-center gap-2">
-                  <span>Admin Panel</span>
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">
+                  Admin Panel
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               <ThemeToggle variant="icon" />
 
               <button
                 type="button"
                 onClick={() => void handleRunHealthCheck()}
                 disabled={isVerifying}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Activity className={`size-3.5 ${isVerifying ? "animate-spin text-[#1E2021]" : "text-[#1E2021]"}`} />
-                <span>{isVerifying ? "Verifying..." : "Verify DB Health"}</span>
+                <span className="hidden sm:inline">{isVerifying ? "Verifying..." : "Verify DB Health"}</span>
+                <span className="sm:hidden">{isVerifying ? "..." : "Verify"}</span>
               </button>
 
               <Link
                 href="/deals"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#1E2021] hover:bg-black text-white text-xs font-semibold transition-all shadow-xs"
               >
-                <span>Exit to App</span>
+                <span className="hidden sm:inline">Exit to App</span>
+                <span className="sm:hidden">Exit</span>
                 <ArrowRight className="size-3.5" />
               </Link>
             </div>
@@ -234,18 +236,18 @@ export default function AdminOverviewPage() {
         </header>
 
         {/* Main Content Workspace */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
           {/* Top Header Bar */}
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight break-words">
               Admin Panel
             </h1>
           </div>
           {toastMessage && (
             <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-white" />
-                <span>{toastMessage}</span>
+                <CheckCircle2 className="size-4 text-white shrink-0" />
+                <span className="break-words">{toastMessage}</span>
               </div>
               <button onClick={() => setToastMessage(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/70">
                 <X className="size-3.5" />
@@ -254,7 +256,7 @@ export default function AdminOverviewPage() {
           )}
 
           {/* Database-grounded KPI Telemetry Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
               <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
                 Database Status

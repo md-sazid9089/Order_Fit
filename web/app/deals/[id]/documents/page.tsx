@@ -323,7 +323,7 @@ export default function DealDocumentsPage({
   const docById = new Map(docs.map((d) => [d.id, d]));
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1560px] mx-auto w-full space-y-6 min-w-0">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1560px] mx-auto w-full space-y-6 min-w-0">
       {/* Top Header & Navigation Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">

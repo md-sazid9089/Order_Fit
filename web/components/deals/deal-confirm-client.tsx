@@ -106,7 +106,7 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
   };
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
+    <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
       {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">
@@ -257,7 +257,7 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
             </div>
 
             {/* 5-Column Metrics Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
               {/* Gross Revenue */}
               <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
@@ -347,7 +347,7 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
             {/* Clean, Full-Width Structured Table */}
             <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full text-left text-xs border-collapse min-w-[560px]">
                   <thead>
                     <tr className="bg-[#FAF9F7] dark:bg-[#151718] border-b border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-bold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                       <th scope="col" className="py-3 px-4">Obligation Description</th>
@@ -451,7 +451,7 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
           <Link
             href={isManualIntake ? `/deals/new${query}` : `/deals/new/validate${query}`}
             className="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] text-xs font-semibold text-[#525252] dark:text-neutral-300 transition-colors"

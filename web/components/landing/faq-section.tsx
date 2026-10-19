@@ -59,7 +59,7 @@ export function FaqSection() {
         
         {/* Settle Section 12 Header */}
         <div className="text-center mb-14">
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-[#1A1A1A]">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-[#1A1A1A] break-words">
             Frequently asked questions
           </h2>
         </div>
@@ -72,7 +72,7 @@ export function FaqSection() {
               <div key={idx} className="transition-colors">
                 <button
                   onClick={() => toggle(idx)}
-                  className="flex w-full min-h-16 cursor-pointer items-center justify-between px-6 py-5 sm:px-8 text-left font-semibold text-base sm:text-lg text-[#1A1A1A] hover:bg-[#F7F6F5]/50 transition-colors focus:outline-none"
+                  className="flex w-full min-h-16 cursor-pointer items-center justify-between px-4 py-4 sm:px-8 sm:py-5 text-left font-semibold text-base sm:text-lg text-[#1A1A1A] hover:bg-[#F7F6F5]/50 transition-colors focus:outline-none"
                   aria-expanded={isOpen}
                 >
                   <span className="font-heading font-medium text-base sm:text-lg pr-4">
@@ -86,7 +86,7 @@ export function FaqSection() {
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 pt-1 sm:px-8 text-sm sm:text-base text-[#526975] leading-relaxed animate-in fade-in-50 duration-150">
+                  <div className="px-4 pb-5 pt-1 sm:px-8 sm:pb-6 text-sm sm:text-base text-[#526975] leading-relaxed animate-in fade-in-50 duration-150">
                     <p>{faq.answer}</p>
                   </div>
                 )}
