@@ -15,14 +15,12 @@ import { getCachedSession, fetchSession } from "@/lib/session-store";
 export type { NavItem } from "@/lib/p7-model";
 
 export const ADMIN_NAVIGATION_ITEMS: readonly NavItem[] = [
-  { href: "/admin", label: "Platform Overview" },
-  { href: "/admin/users", label: "User Management" },
-  { href: "/admin/orders", label: "Orders Management" },
-  { href: "/admin/tenants", label: "Tenant Namespaces" },
-  { href: "/admin/engine", label: "Engine Invariants" },
-  { href: "/admin/security", label: "Security & Gates" },
-  { href: "/admin/logs", label: "Cluster Audit Log" },
-  { href: "/admin/system", label: "System & Nodes" },
+  { href: "/admin", label: "Platform overview" },
+  { href: "/admin/users", label: "Accounts" },
+  { href: "/admin/tenants", label: "Businesses" },
+  { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/system", label: "System health" },
+  { href: "/admin/security", label: "Security model" },
 ];
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -61,14 +59,12 @@ const LABELS: Record<string, string> = {
   "/users": "User Management",
   "/orders": "Orders Management",
   "/settings": "Settings",
-  "/admin": "Admin Panel",
-  "/admin/users": "User Management",
-  "/admin/orders": "Orders Management",
-  "/admin/tenants": "Tenant Namespaces",
-  "/admin/engine": "Engine Invariants",
-  "/admin/security": "Security & Gates",
-  "/admin/logs": "Cluster Audit Log",
-  "/admin/system": "System & Nodes",
+  "/admin": "Platform overview",
+  "/admin/users": "Accounts",
+  "/admin/orders": "Orders",
+  "/admin/tenants": "Businesses",
+  "/admin/security": "Security model",
+  "/admin/system": "System health",
 };
 
 export type AppSidebarProps = {
@@ -194,13 +190,12 @@ export function AppSidebar({
     activeLinks.push({ href: "/admin", label: "Admin Panel" });
   }
 
+  // The most specific matching link is current ("/admin/orders" beats "/admin"); prefixes match whole segments only.
   const activeCurrent =
     current ??
-    (pathname === "/admin"
-      ? "/admin"
-      : activeLinks.find(
-          (item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(item.href))
-        )?.href ?? null);
+    (activeLinks
+      .filter((item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(`${item.href}/`)))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null);
 
   const effectiveCompanyName =
     companyName ||
@@ -324,7 +319,7 @@ export function AppSidebar({
 
         {/* Footer controls */}
         <div className="p-3 border-t border-[#E8E6E1] dark:border-[#2A2C2D] overflow-hidden space-y-2 shrink-0">
-          {isAdminMode ? (
+          {isAdminMode && (
             <div className="space-y-2">
               {showExpanded ? (
                 <>
@@ -336,10 +331,6 @@ export function AppSidebar({
                     <ArrowLeft className="size-3.5" />
                     <span>Exit to Business App</span>
                   </Link>
-
-                  <div className="text-center font-mono text-[10px] text-[#737373] dark:text-[#A3A3A3]">
-                    Role: <span className="text-[#1E2021] dark:text-white font-bold">{effectiveRoleLabel}</span>
-                  </div>
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 py-1">
@@ -350,14 +341,11 @@ export function AppSidebar({
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
-                  <span className="font-mono text-[9px] text-[#737373] dark:text-[#A3A3A3] uppercase" title={effectiveRoleLabel}>
-                    {isPlatformAdmin ? "ADM" : "USR"}
-                  </span>
                 </div>
               )}
             </div>
-          ) : (
-            onSignOut && (
+          )}
+          {onSignOut && (
               <button
                 type="button"
                 onClick={() => {
@@ -374,9 +362,8 @@ export function AppSidebar({
                 <div className="size-4 flex items-center justify-center shrink-0">
                   <LogOut className="size-3.5" />
                 </div>
-                {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
+                {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign out</span>}
               </button>
-            )
           )}
         </div>
       </div>
