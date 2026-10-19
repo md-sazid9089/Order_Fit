@@ -42,7 +42,7 @@ import {
 import { useScope } from "@/components/layout/auth-shell";
 import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
-import { SkeletonForm } from "@/components/ui/skeleton";
+import { SkeletonForm, SkeletonManualOrderForm } from "@/components/ui/skeleton";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 
 interface UploadedFile {
@@ -1477,15 +1477,14 @@ export default function NewDealPage() {
             </p>
           )}
 
-          {loading && (
+          {loading ? (
             <div role="status" aria-busy="true" className="space-y-4">
               <span className="sr-only">Loading your business…</span>
-              <SkeletonForm fields={4} />
+              <SkeletonManualOrderForm />
             </div>
-          )}
-
-          {/* CLEAN & MINIMAL MANUAL ORDER FORM */}
-          <form
+          ) : (
+            /* CLEAN & MINIMAL MANUAL ORDER FORM */
+            <form
             onSubmit={(e) => {
               e.preventDefault();
               const targetRef = reference.trim() || generatePoRef();
@@ -1993,6 +1992,7 @@ export default function NewDealPage() {
               );
             })()}
           </form>
+          )}
         </div>
       )}
     </main>

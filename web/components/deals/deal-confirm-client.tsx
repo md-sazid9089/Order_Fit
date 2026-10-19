@@ -34,19 +34,23 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isManualIntake, setIsManualIntake] = useState(false);
 
-  // Dynamic values populated from localStorage if present
   const [dealTerms, setDealTerms] = useState({
     poNumber: id,
     customerName: "Apex Retailers Inc",
     orderValue: 360000,
+    orderDate: "2026-10-15",
+    invoiceDate: "",
     deliveryDate: "14 Dec 2026",
     paymentDays: 45,
     paymentAnchor: "delivery",
+    targetScenario: "downside",
+    customerDepositPct: 0,
+    cashReserveFloor: "$100,000.00",
     costItems: [
-      { id: "c1", name: "Raw Material Supplier Deposit", amount: 90000, date: "04 Nov 2026", deferrable: false },
-      { id: "c2", name: "Supplier Balance on Delivery", amount: 90000, date: "07 Dec 2026", deferrable: true },
-      { id: "c3", name: "Tooling, Plates & Labour", amount: 30000, date: "10 Dec 2026", deferrable: false },
-      { id: "c4", name: "Outbound Freight & Logistics", amount: 10000, date: "14 Dec 2026", deferrable: false },
+      { id: "c1", name: "Raw Material Supplier Deposit", amount: 90000, date: "04 Nov 2026", deferrable: false, kind: "materials" },
+      { id: "c2", name: "Supplier Balance on Delivery", amount: 90000, date: "07 Dec 2026", deferrable: true, kind: "subcontractor" },
+      { id: "c3", name: "Tooling, Plates & Labour", amount: 30000, date: "10 Dec 2026", deferrable: false, kind: "labour" },
+      { id: "c4", name: "Outbound Freight & Logistics", amount: 10000, date: "14 Dec 2026", deferrable: false, kind: "freight" },
     ],
   });
 
@@ -61,17 +65,22 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
           setDealTerms({
             poNumber: data.poNumber || id,
             customerName: data.customerName || "Apex Retailers Inc",
-            orderValue: data.orderValue || 360000,
+            orderValue: Number(data.orderValue) || 360000,
+            orderDate: data.orderDate || "2026-10-15",
+            invoiceDate: data.invoiceDate || "",
             deliveryDate: data.deliveryDate || "14 Dec 2026",
-            paymentDays: data.paymentTermsDays || 45,
+            paymentDays: Number(data.paymentTermsDays) || 45,
             paymentAnchor: data.paymentTermsAnchor || "delivery",
+            targetScenario: data.targetScenario || "downside",
+            customerDepositPct: Number(data.customerDepositPct) || 0,
+            cashReserveFloor: data.cashReserveFloor || "$100,000.00",
             costItems: data.costItems && Array.isArray(data.costItems) && data.costItems.length > 0
               ? data.costItems
               : [
-                  { id: "c1", name: "Raw Material Supplier Deposit", amount: 90000, date: "04 Nov 2026", deferrable: false },
-                  { id: "c2", name: "Supplier Balance on Delivery", amount: 90000, date: "07 Dec 2026", deferrable: true },
-                  { id: "c3", name: "Tooling, Plates & Labour", amount: 30000, date: "10 Dec 2026", deferrable: false },
-                  { id: "c4", name: "Outbound Freight & Logistics", amount: 10000, date: "14 Dec 2026", deferrable: false },
+                  { id: "c1", name: "Raw Material Supplier Deposit", amount: 90000, date: "04 Nov 2026", deferrable: false, kind: "materials" },
+                  { id: "c2", name: "Supplier Balance on Delivery", amount: 90000, date: "07 Dec 2026", deferrable: true, kind: "subcontractor" },
+                  { id: "c3", name: "Tooling, Plates & Labour", amount: 30000, date: "10 Dec 2026", deferrable: false, kind: "labour" },
+                  { id: "c4", name: "Outbound Freight & Logistics", amount: 10000, date: "14 Dec 2026", deferrable: false, kind: "freight" },
                 ],
           });
         }
@@ -82,6 +91,8 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
   }, [id]);
 
   const totalIncrementalCosts = dealTerms.costItems.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+  const projectedGrossProfit = dealTerms.orderValue - totalIncrementalCosts;
+  const grossMarginPct = dealTerms.orderValue > 0 ? ((projectedGrossProfit / dealTerms.orderValue) * 100).toFixed(1) : "0.0";
 
   const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
 
@@ -100,22 +111,17 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">
           <Link
-            href={isManualIntake ? `/deals/new${query}` : `/deals/new/validate${query}`}
+            href={
+              isManualIntake
+                ? `/deals/new${query}`
+                : `/deals/new/validate${query}${id && id !== "new" ? `&poNumber=${encodeURIComponent(id)}` : ""}`
+            }
             className="p-2 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#525252] dark:text-neutral-300 hover:text-[#1E2021] transition-colors shrink-0"
             title={isManualIntake ? "Return to Order Input" : "Return to Validation Step"}
           >
             <ArrowLeft className="size-4" />
           </Link>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-0.5">
-              <Link href={`/deals${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-                Deals Pipeline
-              </Link>
-              <span className="text-[#A3A3A3]">/</span>
-              <span className="text-[#737373] dark:text-neutral-400">Deal {id}</span>
-              <span className="text-[#A3A3A3]">/</span>
-              <span className="font-semibold text-[#1E2021] dark:text-white">Confirm Terms</span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
               {isAmbiguousCase
                 ? "Contract Terms Clarification (Value of Information)"
@@ -230,64 +236,90 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
         /* CASE B: Standard Order Confirmation */
         <div className="space-y-6">
           {/* Extracted Contract Terms Summary */}
-          <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EEEA] dark:border-[#2C302F]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white flex items-center gap-2">
-                <FileText className="size-4" />
-                <span>Extracted Commercial Terms</span>
-              </h3>
-              <div className="flex items-center gap-1.5 text-xs text-[#525252] dark:text-neutral-400">
-                <Lock className="size-3 text-[#737373]" />
-                <span>Cryptographic Citation Verified</span>
+          <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-6 shadow-xs space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#F0EEEA] dark:border-[#2C302F]">
+              <div className="flex items-center gap-2">
+                <FileText className="size-4 text-[#1E2021] dark:text-white" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white">
+                  Validated Commercial Terms &amp; Parameters
+                </h3>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <CheckCircle2 className="size-3" />
+                  <span>Integer Cent Precision (ADR 0001)</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FAF9F7] text-[#525252] dark:bg-[#2C302F] dark:text-neutral-300 border border-[#E8E6E1] dark:border-[#383C3B]">
+                  <Lock className="size-3 text-[#737373]" />
+                  <span>{isManualIntake ? "Direct Manual Entry" : "Audit Verified"}</span>
+                </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {/* 5-Column Metrics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+              {/* Gross Revenue */}
               <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
-                <div className="text-[10px] font-semibold uppercase text-[#737373] dark:text-neutral-400">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                   Gross Revenue
                 </div>
-                <div className="text-lg font-bold font-mono text-[#1E2021] dark:text-white">
-                  ${dealTerms.orderValue.toLocaleString()}.00
+                <div className="text-base sm:text-lg font-bold font-mono text-[#1E2021] dark:text-white">
+                  ${dealTerms.orderValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div className="text-[10px] text-[#737373] dark:text-neutral-500">
-                  [{dealTerms.poNumber} {isManualIntake ? "Manual Entry" : "p.1"}]
+                <div className="text-[10px] text-[#737373] dark:text-neutral-500 truncate">
+                  PO: {dealTerms.poNumber}
                 </div>
               </div>
 
+              {/* Customer */}
               <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
-                <div className="text-[10px] font-semibold uppercase text-[#737373] dark:text-neutral-400">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
+                  Customer
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-[#1E2021] dark:text-white truncate" title={dealTerms.customerName}>
+                  {dealTerms.customerName}
+                </div>
+                <div className="text-[10px] text-[#737373] dark:text-neutral-500">
+                  {dealTerms.customerDepositPct > 0 ? `${dealTerms.customerDepositPct}% Upfront Deposit` : "No Deposit (Net Terms)"}
+                </div>
+              </div>
+
+              {/* Delivery Date */}
+              <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                   Delivery Date
                 </div>
-                <div className="text-lg font-bold font-mono text-[#1E2021] dark:text-white">
+                <div className="text-base sm:text-lg font-bold font-mono text-[#1E2021] dark:text-white">
                   {dealTerms.deliveryDate}
                 </div>
                 <div className="text-[10px] text-[#737373] dark:text-neutral-500">
-                  [{dealTerms.poNumber} {isManualIntake ? "Manual Entry" : "p.1"}]
+                  Order Date: {dealTerms.orderDate || "Not Set"}
                 </div>
               </div>
 
+              {/* Payment Terms */}
               <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
-                <div className="text-[10px] font-semibold uppercase text-[#737373] dark:text-neutral-400">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                   Payment Terms
                 </div>
-                <div className="text-lg font-bold font-mono text-[#1E2021] dark:text-white">
-                  Net {dealTerms.paymentDays} Calendar
+                <div className="text-base sm:text-lg font-bold font-mono text-[#1E2021] dark:text-white">
+                  Net {dealTerms.paymentDays} Days
                 </div>
-                <div className="text-[10px] text-[#737373] dark:text-neutral-500">
-                  [{dealTerms.poNumber} · {dealTerms.paymentAnchor} Anchor]
+                <div className="text-[10px] text-[#737373] dark:text-neutral-500 capitalize">
+                  Anchor: {dealTerms.paymentAnchor === "delivery" ? "After Delivery" : dealTerms.paymentAnchor === "invoice" ? "After Invoice" : "Ambiguous"}
                 </div>
               </div>
 
+              {/* Incremental Costs */}
               <div className="p-3.5 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
-                <div className="text-[10px] font-semibold uppercase text-[#737373] dark:text-neutral-400">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                   Incremental Costs
                 </div>
-                <div className="text-lg font-bold font-mono text-[#1E2021] dark:text-white">
-                  ${totalIncrementalCosts.toLocaleString()}.00
+                <div className="text-base sm:text-lg font-bold font-mono text-[#1E2021] dark:text-white">
+                  ${totalIncrementalCosts.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div className="text-[10px] text-[#737373] dark:text-neutral-500">
-                  [{isManualIntake ? "Direct Input" : "Quote SQ-4029 p.2"}]
+                <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
+                  {grossMarginPct}% Margin (${projectedGrossProfit.toLocaleString()})
                 </div>
               </div>
             </div>
@@ -295,60 +327,104 @@ export function DealConfirmClient({ id }: DealConfirmClientProps) {
 
           {/* Incremental Cost Schedule Card */}
           <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EEEA] dark:border-[#2C302F]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white flex items-center gap-2">
-                <Layers className="size-4" />
-                <span>Production Cost Milestones</span>
-              </h3>
-              <span className="text-[11px] font-mono text-[#737373] dark:text-neutral-400">
-                {dealTerms.costItems.length} Line Items Reconciled
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#F0EEEA] dark:border-[#2C302F]">
+              <div className="flex items-center gap-2">
+                <Layers className="size-4 text-[#1E2021] dark:text-white" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white">
+                  Production Cost Milestones &amp; Flexibility
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#737373] dark:text-neutral-400">
+                  Total Obligations: <strong className="text-[#1E2021] dark:text-white font-mono">${totalIncrementalCosts.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>
+                </span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#FAF9F7] dark:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#383C3B] text-[#525252] dark:text-neutral-300">
+                  {dealTerms.costItems.length} Line Items
+                </span>
+              </div>
             </div>
 
-            <div className="divide-y divide-[#E8E6E1] dark:divide-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden text-xs">
-              <div className="p-3.5 flex items-center justify-between bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 text-[11px] uppercase">
-                <span>Obligation Description</span>
-                <div className="flex items-center gap-8">
-                  <span>Due Date</span>
-                  <span>Amount</span>
-                  <span>Flexibility</span>
-                </div>
+            {/* Clean, Full-Width Structured Table */}
+            <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-[#FAF9F7] dark:bg-[#151718] border-b border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-bold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
+                      <th scope="col" className="py-3 px-4">Obligation Description</th>
+                      <th scope="col" className="py-3 px-4">Category</th>
+                      <th scope="col" className="py-3 px-4">Due Date</th>
+                      <th scope="col" className="py-3 px-4 text-right">Amount ($)</th>
+                      <th scope="col" className="py-3 px-4 text-center">Flexibility</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8E6E1] dark:divide-[#2C302F]">
+                    {dealTerms.costItems.map((item, idx) => (
+                      <tr
+                        key={item.id || idx}
+                        className="hover:bg-[#FAF9F7]/70 dark:hover:bg-[#2C302F]/30 transition-colors"
+                      >
+                        {/* Description */}
+                        <td className="py-3.5 px-4 font-semibold text-[#1E2021] dark:text-white">
+                          <div className="flex items-center gap-2">
+                            <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
+                            <span>{item.name}</span>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3.5 px-4 text-[#737373] dark:text-neutral-400">
+                          <span className="capitalize font-medium">
+                            {item.kind ? item.kind.replace(/_/g, " ") : "Supplier Payment"}
+                          </span>
+                        </td>
+
+                        {/* Due Date */}
+                        <td className="py-3.5 px-4 font-mono text-[#525252] dark:text-neutral-300">
+                          {item.date}
+                        </td>
+
+                        {/* Amount */}
+                        <td className="py-3.5 px-4 font-mono font-bold text-right text-[#1E2021] dark:text-white text-sm">
+                          ${Number(item.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+
+                        {/* Flexibility */}
+                        <td className="py-3.5 px-4 text-center">
+                          {item.deferrable ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              <span className="size-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                              <span>+30d Deferrable</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#FAF9F7] text-[#737373] dark:bg-[#2C302F] dark:text-neutral-400 border border-[#E8E6E1] dark:border-[#383C3B]">
+                              <span>Fixed</span>
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              {dealTerms.costItems.map((item) => (
-                <div key={item.id} className="p-3.5 flex items-center justify-between hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/40">
-                  <span className="font-semibold text-[#1E2021] dark:text-white">
-                    {item.name}
-                  </span>
-                  <div className="flex items-center gap-8 font-mono">
-                    <span className="text-[#525252] dark:text-neutral-400">{item.date}</span>
-                    <span className="font-bold text-[#1E2021] dark:text-white">${Number(item.amount).toLocaleString()}.00</span>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded border ${
-                        item.deferrable
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                          : "bg-[#FAF9F7] dark:bg-[#2C302F] border-[#E8E6E1] dark:border-[#383C3B] text-[#737373] dark:text-neutral-400"
-                      }`}
-                    >
-                      {item.deferrable ? "+30d Deferrable" : "Fixed"}
-                    </span>
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* Owner Confirmation Toggle */}
             <div
               onClick={() => setIsConfirmedByOwner(!isConfirmedByOwner)}
-              className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] flex items-center gap-3 cursor-pointer hover:border-[#1E2021] dark:hover:border-neutral-300 transition-colors"
+              className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-3 select-none ${
+                isConfirmedByOwner
+                  ? "bg-[#FAF9F7] dark:bg-[#151718] border-[#1E2021] dark:border-neutral-400"
+                  : "bg-white dark:bg-[#1E2021] border-[#E8E6E1] dark:border-[#2C302F] hover:border-[#1E2021]"
+              }`}
             >
               <input
                 type="checkbox"
                 checked={isConfirmedByOwner}
                 onChange={(e) => setIsConfirmedByOwner(e.target.checked)}
-                className="size-4 accent-[#1E2021] cursor-pointer"
+                className="size-4 accent-[#1E2021] cursor-pointer shrink-0"
               />
-              <div className="text-xs text-[#1E2021] dark:text-white font-semibold">
-                I confirm that the above commercial terms and production obligations are accurate and ready for deterministic engine evaluation (Step 4: Compute).
+              <div className="text-xs text-[#1E2021] dark:text-white font-medium leading-relaxed">
+                I confirm that the commercial parameters, milestone dates, and incremental obligations above are accurate and ready for deterministic financial engine evaluation (Step 4: Compute).
               </div>
             </div>
           </div>

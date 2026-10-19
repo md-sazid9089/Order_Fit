@@ -335,6 +335,80 @@ function SkeletonForm({
 }
 
 /**
+ * Skeleton screen dedicated to the Manual Order Form on /deals/new.
+ * Exactly mirrors:
+ * 1. Commercial Parameters & Order Terms (10 inputs across 5 columns in 2 rows)
+ * 2. Production Costs & Supplier Obligations (dashed empty state or line items table)
+ * 3. Financial Summary Bar & Proceed Action (4 metric blocks + confirm button)
+ */
+function SkeletonManualOrderForm({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="skeleton-manual-order-form"
+      className={cn("space-y-6 w-full animate-pulse motion-reduce:animate-none", className)}
+      {...props}
+    >
+      {/* 1. Commercial Parameters Card Skeleton */}
+      <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-4 rounded-md" />
+            <Skeleton className="h-3.5 w-64" />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="size-3 rounded-full" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+
+        {/* 10 inputs arranged in a 5-col grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-24" />
+                {i === 0 && <Skeleton className="h-2.5 w-14" />}
+              </div>
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Production Obligations Card Skeleton */}
+      <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 w-full">
+        <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-4 rounded-md" />
+            <Skeleton className="h-3.5 w-56" />
+          </div>
+          <Skeleton className="h-7 w-28 rounded-xl" />
+        </div>
+
+        {/* Dashed placeholder container */}
+        <div className="py-8 text-center border-2 border-dashed border-[#E8E6E1] dark:border-[#2C302F] rounded-xl flex flex-col items-center justify-center space-y-2.5">
+          <Skeleton className="h-3.5 w-96 max-w-[80%]" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+
+      {/* 3. Financial Summary Bar & Action Skeleton */}
+      <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 xl:gap-8 flex-1">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-2.5 w-20" />
+              <Skeleton className="h-7 w-28" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-10 w-full sm:w-56 rounded-xl shrink-0" />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Chart or analytics telemetry skeleton placeholder.
  */
 interface SkeletonChartProps extends React.ComponentProps<"div"> {
@@ -791,6 +865,7 @@ export {
   SkeletonTable,
   SkeletonList,
   SkeletonForm,
+  SkeletonManualOrderForm,
   SkeletonChart,
   SkeletonDashboard,
   SkeletonOverview,
