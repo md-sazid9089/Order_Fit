@@ -4,7 +4,8 @@ import * as React from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { SESSION_EXPIRED_EVENT } from "@/lib/orderfit-api"
-import { expiryRedirect } from "@/lib/session-expiry"
+import { signInRedirect } from "@/lib/session-expiry"
+import { getCachedSession } from "@/lib/session-store"
 import { resetSessionState } from "@/lib/session-reset"
 import { Toaster } from "@/components/ui/sonner"
 import { SmoothScrollProvider } from "@/components/layout/smooth-scroll-provider"
@@ -49,7 +50,7 @@ function SessionExpiryHandler({ queryClient }: { queryClient: QueryClient }) {
   const router = useRouter()
   React.useEffect(() => {
     function expired() {
-      const target = expiryRedirect(window.location.pathname)
+      const target = signInRedirect(window.location.pathname, window.location.search, getCachedSession() !== null)
       if (!target) return
       resetSessionState(queryClient)
       router.replace(target)
