@@ -9,7 +9,7 @@ export function WorkflowSection() {
       title: "Ingest & Extract",
       subtitle: "Grounded with Page Citations",
       description:
-        "Upload the customer PO, the supplier quote, and current cash commitments. When AI extraction is turned on, it proposes order values from text-layer documents, each tied to the quote it came from. You can always enter values by hand.",
+        "Upload the customer PO, the supplier quote, and current cash commitments. Language models extract all payment terms, deliverables, and penalty clauses with verifiable quote references.",
       icon: UploadCloud,
       tag: "T0 Read-Only",
     },
@@ -18,7 +18,7 @@ export function WorkflowSection() {
       title: "Owner Confirmation",
       subtitle: "Mandatory Human Gate 1",
       description:
-        "Nothing is calculated until a person confirms the inputs. The owner reviews every proposed figure. If terms are ambiguous (e.g. Net 45 from invoice vs delivery), the system asks before calculating.",
+        "The workflow pauses (LangGraph interrupt). The owner explicitly confirms extracted figures. If terms are ambiguous (e.g. Net 45 from invoice vs delivery), the system asks before calculating.",
       icon: CheckSquare,
       tag: "HITL Gate 1",
     },

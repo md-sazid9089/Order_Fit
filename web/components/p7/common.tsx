@@ -6,16 +6,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useScope } from "@/components/layout/auth-shell";
 import { describeP7Error, roleLabel } from "@/lib/p7-model";
 import { getBusiness } from "@/lib/p7-api";
-import { ApiError } from "@/lib/orderfit-api";
-import { PageHeader } from "@/components/system/page-header";
-import { InlineAlert } from "@/components/system/inline-alert";
-import { ErrorState } from "@/components/system/states";
 
-export const panel = "space-y-4 rounded-2xl border border-border bg-card p-5 text-card-foreground";
-export const button = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border-strong bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-50";
-export const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50";
-export const danger = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-danger/40 bg-card px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger-soft disabled:opacity-50";
-export const field = "mt-1.5 block min-h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
+export const panel = "space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs";
+export const button = "rounded-xl border border-[#E8E6E1] dark:border-[#383C3B] bg-[#FAF9F7] dark:bg-[#2C302F] px-3.5 py-2 text-xs font-semibold text-[#525252] dark:text-neutral-200 hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] transition-colors disabled:opacity-40 cursor-pointer";
+export const primary = "rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 px-4 py-2 text-xs font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5";
+export const danger = "rounded-xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 px-3.5 py-2 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 cursor-pointer";
+export const field = "mt-1.5 block w-full rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#151718] p-2.5 text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors";
 export const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString() : "not yet");
 
 /** Session, role and the query-key prefix for this user and business. Keys include both so no cache entry can cross a scope. */
@@ -25,18 +21,25 @@ export function useScoped() {
   return { session, businessId, membership, role: membership?.role, businessName: membership?.business_name ?? "", key, roleText: roleLabel(membership?.role) };
 }
 
-export function PageFrame({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function PageFrame({ title, intro, action, children }: { title: string; intro?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
-    <main className="mx-auto w-full max-w-[1200px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title={title} description={intro} />
-      {children}
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight break-words">{title}</h1>
+          </div>
+          {action && <div className="flex flex-wrap items-center gap-2 max-w-full">{action}</div>}
+        </header>
+        {children}
+      </div>
     </main>
   );
 }
 
 export function Alert({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "ok" | "info" | "warn" }) {
-  const mapped = ({ error: "danger", ok: "success", info: "info", warn: "warning" } as const)[tone];
-  return <InlineAlert tone={mapped}>{children}</InlineAlert>;
+  const style = { error: "bg-red-50 text-red-800", ok: "bg-green-50 text-green-900", info: "bg-neutral-100 text-neutral-800", warn: "bg-amber-50 text-amber-900" }[tone];
+  return <p role={tone === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${style}`}>{children}</p>;
 }
 
 import { Skeleton, SkeletonText, SkeletonTable, SkeletonList } from "@/components/ui/skeleton";
@@ -88,9 +91,10 @@ export function Loading({
 /** A failed read with a retry. The message comes from the API's curated error, never from raw exception text. */
 export function QueryError({ error, retry, retrying }: { error: unknown; retry: () => void; retrying?: boolean }) {
   const { message, sessionExpired } = describeP7Error(error);
-  const reference = error instanceof ApiError ? error.requestId : null;
-  if (sessionExpired) return <InlineAlert tone="danger" action={<Link className="font-semibold text-primary underline" href="/auth/signin">Sign in again</Link>}>{message}</InlineAlert>;
-  return <ErrorState title="This couldn&apos;t load" message={message} onRetry={retry} retrying={retrying} reference={reference} />;
+  return <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+    <p>{message}</p>
+    {sessionExpired ? <p><Link className="underline" href="/auth/signin">Sign in again</Link></p> : <button type="button" className={button} disabled={retrying} onClick={retry}>{retrying ? "Retrying…" : "Retry"}</button>}
+  </div>;
 }
 
 export function NotPermitted({ what, needs }: { what: string; needs: string }) {

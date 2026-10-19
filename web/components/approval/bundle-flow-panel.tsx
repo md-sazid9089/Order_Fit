@@ -14,7 +14,7 @@ export function BundleFlowPanel({ title, intro, flow, currency, children }: { ti
   const { view, stage, approval, run, operation, grant, busy, loading, error } = flow;
   return <section className={panel}>
     <h2 className="text-lg font-semibold">{title}</h2><p className="text-sm">{intro}</p>
-    {error && <p role="alert" className="rounded bg-danger-soft p-3 text-sm">{error}</p>}
+    {error && <p role="alert" className="rounded bg-red-50 p-3 text-sm">{error}</p>}
     {children}
     {loading && !view && (
       <div role="status" aria-busy="true" className="space-y-3 pt-2">

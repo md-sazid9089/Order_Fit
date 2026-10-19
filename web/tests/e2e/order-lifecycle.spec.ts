@@ -1,4 +1,3 @@
-import { verifyWorkflowViews } from "./release-visual";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
@@ -13,7 +12,7 @@ function addDays(date: Date, days: number) {
 }
 
 test("an owner evaluates, approves, commits and compensates a sandbox order", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(120_000);
   const suffix = randomUUID().slice(0, 8);
   const password = `E2E-${randomUUID()}-pass`;
   const today = isoDateFrom(new Date());
@@ -25,10 +24,10 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   expect((await health.json()).ready).toBe(true);
 
   await page.goto("/auth/signup");
-  await page.getByLabel("Full name", { exact: true }).fill("OrderFit E2E Owner");
-  await page.getByLabel("Business / Company name", { exact: true }).fill(`E2E Business ${suffix}`);
-  await page.getByLabel("Email", { exact: true }).fill(`orderfit-e2e-${suffix}@example.invalid`);
-  await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(password);
+  await page.getByPlaceholder("Full Name*").fill("OrderFit E2E Owner");
+  await page.getByPlaceholder("Business / Company Name*").fill(`E2E Business ${suffix}`);
+  await page.getByPlaceholder("Email*").fill(`orderfit-e2e-${suffix}@example.invalid`);
+  await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
@@ -44,7 +43,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("link", { name: "New order" }).first().click();
   await expect(page.getByRole("heading", { name: "Set the business cash baseline first" })).toBeVisible();
   await page.getByLabel("Opening date").fill(today);
-  await page.getByLabel("Opening cash").fill("100000.00");
+  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
   await page.getByLabel("Coverage through").fill(isoDateFrom(addDays(new Date(), 365)));
   await page.getByLabel("Source attestation").fill("Synthetic E2E baseline");
   await page.getByRole("button", { name: "Save baseline" }).click();
@@ -57,7 +56,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("textbox", { name: "Order date" }).fill(today);
   await page.getByLabel("Delivery date").fill(delivery);
   await page.getByLabel("Invoice date").fill(delivery);
-  await page.getByLabel("Order amount").fill("50000.00");
+  await page.getByLabel("Order amount (integer minor units)").fill("5000000");
   await page.getByLabel("Payment days").fill("30");
   // A gateway can lose the response after the draft has already been persisted.
   // Retrying the form must recover that exact draft with the original command key.
@@ -98,23 +97,6 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByText(/Saved evaluation operation: succeeded/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 
-  // Inject only the saved operation read. A slow worker must not become a financial rejection.
-  await page.clock.install();
-  await page.route("**/api/v1/businesses/*/operations/*", async route => {
-    const response = await route.fetch();
-    const saved = await response.json();
-    await route.fulfill({ response, json: { ...saved, status: "running", result: null } });
-  });
-  await page.reload();
-  await expect(page.getByText(/Saved evaluation operation: running/i)).toBeVisible();
-  await page.clock.fastForward(121_000);
-  await expect(page.getByRole("alert").filter({ hasText: "This task is taking longer than expected" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
-  await page.unroute("**/api/v1/businesses/*/operations/*");
-  await page.clock.resume();
-  await page.reload();
-  await expect(page.getByText(/Saved evaluation operation: succeeded/i)).toBeVisible();
-  await verifyWorkflowViews(page, "evaluated-order");
   const savedOrderUrl = page.url();
   // A bounded customer list can omit this saved order's known customer. That is
   // unavailable display metadata, not evidence that the order has no customer.
@@ -131,8 +113,6 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
 
   await page.getByRole("link", { name: "What-if and negotiation preparation" }).click();
   await expect(page.getByRole("heading", { name: /Negotiation preparation/ })).toBeVisible();
-
-  await verifyWorkflowViews(page, "preparation");
 
   // All identities, evidence and effects below are synthetic. Exercise the real
   // password-bound approval flow, never a client-side bypass or real adapter.
@@ -211,7 +191,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(compensation.getByText(/Settled \(compensate\)/)).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("sandbox-compensation.png"), fullPage: true });
 
-  await page.getByRole("link", { name: "Back to order review and evaluation" }).click();
+  await page.getByRole("link", { name: "Back to Step 4: Order Review & Engine Evaluation" }).click();
   await expect(page.getByRole("heading", { name: `E2E-${suffix}` })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 

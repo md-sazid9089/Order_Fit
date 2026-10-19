@@ -20,13 +20,13 @@ export function RiskScreen() {
   return <PageFrame title="Risk and constraints" intro={<>The default policy used by new evaluations. Policies are immutable versions: changing one creates a new version and never rewrites an order that already uses an earlier one. Edit under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
     {policies.isPending && <Loading what="the policy" />}
     {policies.isError && <QueryError error={policies.error} retry={() => void policies.refetch()} retrying={policies.isFetching} />}
-    {policies.isSuccess && !current && <p className={panel}>No policy is saved for this business. <Link className="underline" href={`/deals/new?businessId=${businessId}`}>Set up your first order and policy</Link>.</p>}
+    {policies.isSuccess && !current && <p className={panel}>No policy is saved for this business.</p>}
     {current && <section className={panel}>
       <h2 className="text-lg font-semibold">{current.is_default ? "Default policy" : "Latest policy"} (version {current.version})</h2>
       <dl className="grid gap-1 text-sm sm:grid-cols-[16rem_1fr]">
         <dt>Cash reserve</dt><dd className="font-mono">{money(current.reserve_minor)}</dd>
-        <dt>Priorities, in order</dt><dd>{current.owner.priorities.map(p => ({ independence_customer: "Less dependence on customer deposits", independence_supplier: "Less dependence on supplier extensions", independence_finance: "Less dependence on financing" } as Record<string, string>)[p] ?? p.replaceAll("_", " ")).join(", ") || "none"}</dd>
-        <dt>Target scenario</dt><dd>{current.owner.target_scenario === "base" ? "As expected" : current.owner.target_scenario === "downside" ? "Downside stress" : "Severe stress"}</dd>
+        <dt>Priorities, in order</dt><dd>{current.owner.priorities.map(p => p.replaceAll("_", " ")).join(", ") || "none"}</dd>
+        <dt>Target scenario</dt><dd>{current.owner.target_scenario}</dd>
         <dt>Minimum order profit</dt><dd className="font-mono">{money(current.owner.min_order_profit_minor)}</dd>
         <dt>Maximum financing cost</dt><dd className="font-mono">{money(current.owner.max_financing_cost_minor)}</dd>
         <dt>Close-call margin</dt><dd>{bpsText(current.owner.close_call_bps)}</dd>
@@ -38,7 +38,7 @@ export function RiskScreen() {
         <dt>Downside stress</dt><dd>{current.scenarios.downside.order_receipt_delay_days} days late order receipt, {current.scenarios.downside.ar_delay_days} days late receivables, cost overrun {bpsText(current.scenarios.downside.cost_overrun_bps)}</dd>
         <dt>Severe stress</dt><dd>{current.scenarios.severe.order_receipt_delay_days} days late order receipt, {current.scenarios.severe.ar_delay_days} days late receivables, cost overrun {bpsText(current.scenarios.severe.cost_overrun_bps)}</dd>
       </dl>
-      {policies.data && policies.data.items.length > 1 && <p className="text-xs text-muted-foreground">{policies.data.items.length} versions are saved; the default is shown.</p>}
+      {policies.data && policies.data.items.length > 1 && <p className="text-xs text-neutral-600">{policies.data.items.length} versions are saved; the default is shown.</p>}
     </section>}
     <CollectionPages query={policies} noun="policies" />
   </PageFrame>;

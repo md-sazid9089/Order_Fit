@@ -8,7 +8,7 @@ import ts from "typescript";
 function load(file, requires = {}, extra = {}) {
   const mod = { exports: {} };
   const code = ts.transpileModule(readFileSync(new URL(`../lib/${file}`, import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { module: mod, exports: mod.exports, require: name => requires[name] ?? (name === "./error-copy" ? load("error-copy.ts") : undefined), Intl, URLSearchParams, BigInt, Date, Promise, ...extra });
+  vm.runInNewContext(code, { module: mod, exports: mod.exports, require: name => requires[name], Intl, URLSearchParams, BigInt, Date, Promise, ...extra });
   return mod.exports;
 }
 const approval = load("approval-model.ts");

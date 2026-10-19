@@ -1,10 +1,5 @@
-import { redirect } from "next/navigation";
+import { UnavailablePage } from "@/components/unavailable-notice";
 
-type Props = { searchParams: Promise<{ businessId?: string }> };
-
-// What-if planning and sandbox actions happen on a saved, evaluated order (its Negotiate page),
-// so this legacy path forwards to the pipeline with the business scope intact.
-export default async function SandboxRedirect({ searchParams }: Props) {
-  const { businessId } = await searchParams;
-  redirect(`/deals${businessId ? `?businessId=${encodeURIComponent(businessId)}` : ""}`);
+export default function Page() {
+  return <UnavailablePage title="What-if planning" reason="Open a saved, evaluated order to compare what-if scenarios and review sandbox actions. Each sandbox send or commitment requires approval from an authorized person." href="/deals" linkLabel="Go to saved orders" />;
 }

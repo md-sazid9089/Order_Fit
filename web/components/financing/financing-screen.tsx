@@ -21,11 +21,11 @@ export function FinancingScreen() {
   return <PageFrame title="Financing" intro={<>Offers recorded for this business. An offer here is a recorded proposal used in evaluations: availability and approval are never assumed, and no lender is contacted. Add or change offers under <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Cash and financing</Link>.</>}>
     {offers.isPending && <Loading what="financing offers" />}
     {offers.isError && <QueryError error={offers.error} retry={() => void offers.refetch()} retrying={offers.isFetching} />}
-    {offers.isSuccess && !offers.data.items.length && <p className={panel}>No financing offers are saved. <Link className="underline" href={`/deals/sources?businessId=${businessId}`}>Record a financing offer</Link>.</p>}
+    {offers.isSuccess && !offers.data.items.length && <p className={panel}>No financing offers are saved.</p>}
     <CollectionPages query={offers} noun="offers" />
     {offers.isSuccess && offers.data.items.map(o => <section key={o.id} className={panel}>
-      <div className="flex flex-wrap items-center gap-3"><h2 className="min-w-0 flex-1 text-lg font-semibold">{o.name}</h2><span className="text-sm text-muted-foreground">{o.kind.replaceAll("_", " ")} · {o.status.replaceAll("_", " ")}{o.archived_at ? " · archived" : ""}</span></div>
-      {o.supported && !o.archived_at ? <p className="text-sm text-success">Supported: can be selected for evaluation under your policy.</p> : <p className="text-sm text-warning">Not selectable{o.archived_at ? ": archived" : o.unavailable_reason ? `: ${o.unavailable_reason}` : ": this kind of financing is not supported yet"}.</p>}
+      <div className="flex flex-wrap items-center gap-3"><h2 className="min-w-0 flex-1 text-lg font-semibold">{o.name}</h2><span className="text-sm text-neutral-600">{o.kind.replaceAll("_", " ")} · {o.status.replaceAll("_", " ")}{o.archived_at ? " · archived" : ""}</span></div>
+      {o.supported && !o.archived_at ? <p className="text-sm text-green-800">Supported: can be selected for evaluation under your policy.</p> : <p className="text-sm text-amber-800">Not selectable{o.archived_at ? ": archived" : o.unavailable_reason ? `: ${o.unavailable_reason}` : ": this kind of financing is not supported yet"}.</p>}
       {o.terms && <dl className="grid gap-1 text-sm sm:grid-cols-[14rem_1fr]">
         <dt>Principal range</dt><dd className="font-mono">{money(o.terms.min_minor)} to {money(o.terms.max_minor)} in steps of {money(o.terms.step_minor)}</dd>
         <dt>Term</dt><dd>{o.terms.term_days} days, flat-term interest {bpsText(o.terms.interest_bps)}</dd>
