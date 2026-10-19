@@ -180,7 +180,7 @@ export function OrderSimulator() {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] mb-3">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] mb-3 break-words">
             Illustration: how terms can move cash.
           </h2>
           <p className="font-sans text-base sm:text-lg text-[#526975] dark:text-[#9CA3AF]">
@@ -217,7 +217,7 @@ export function OrderSimulator() {
           </div>
 
           {/* Simulator Content Area */}
-          <div className="p-6 sm:p-10">
+          <div className="p-4 sm:p-8 lg:p-10">
             
             {/* Header with Title and Presets */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 mb-8">
@@ -288,7 +288,7 @@ export function OrderSimulator() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               {/* Sliders Control Column (5 Cols) - Smooth neutral background */}
-              <div className="lg:col-span-5 space-y-6 bg-[#FAF9F7] dark:bg-[#202223] p-6 sm:p-7 rounded-3xl">
+              <div className="lg:col-span-5 space-y-6 bg-[#FAF9F7] dark:bg-[#202223] p-4 sm:p-6 lg:p-7 rounded-2xl sm:rounded-3xl">
                 <div>
                   <div className="flex justify-between items-center text-xs font-semibold mb-2">
                     <span className="text-[#1A1A1A] dark:text-white font-sans">Customer Advance Deposit</span>

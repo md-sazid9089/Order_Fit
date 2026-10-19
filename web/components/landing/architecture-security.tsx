@@ -84,7 +84,7 @@ export function ArchitectureSecurity() {
           <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] uppercase mb-3 inline-block font-sans">
             Architectural Rigor &amp; Defense
           </span>
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-center text-[#1A1A1A] mb-4 break-words">
             Deterministic Decision Engine — Not AI Hallucinations
           </h2>
           <p className="font-sans text-base sm:text-lg text-[#526975] leading-relaxed max-w-2xl mx-auto font-normal">
@@ -103,7 +103,7 @@ export function ArchitectureSecurity() {
             {adrs.map((adr) => (
               <div
                 key={adr.id}
-                className="rounded-3xl bg-white border border-[#ECEAE4] p-6 sm:p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between group"
+                className="rounded-3xl bg-white border border-[#ECEAE4] p-5 sm:p-7 shadow-xs hover:shadow-md hover:border-[#DDD9D0] transition-all flex flex-col justify-between group"
               >
                 <div>
                   <span className="text-xs font-bold text-[#093A2F] uppercase tracking-wider block mb-2 font-mono">
@@ -141,7 +141,7 @@ export function ArchitectureSecurity() {
         </div>
 
         {/* 5-Tier Permission Hierarchy Table */}
-        <div className="rounded-3xl bg-white text-[#1A1A1A] border border-[#ECEAE4] p-6 sm:p-8 shadow-xs">
+        <div className="rounded-3xl bg-white text-[#1A1A1A] border border-[#ECEAE4] p-4 sm:p-8 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#ECEAE4] gap-3 mb-6">
             <div>
               <span className="text-xs font-bold text-[#093A2F] uppercase tracking-wider block mb-1 font-sans">
