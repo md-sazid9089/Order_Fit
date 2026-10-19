@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { acceptInvitation, getSession } from "@/lib/p7-api";
 import { acceptedByEarlierAttempt, describeP7Error, newMemberships, readInvitationToken, roleLabel } from "@/lib/p7-model";
 import type { MembershipView, SessionView } from "@/lib/generated-api";
+import { AuthField, AuthFrame, authPrimary } from "@/components/auth/auth-frame";
+import { InlineAlert } from "@/components/system/inline-alert";
+import { capabilityState, getAccountAccess, registerInvitedAccount } from "@/lib/account-access-api";
 
 function subscribe(onChange: () => void) { window.addEventListener("hashchange", onChange); return () => window.removeEventListener("hashchange", onChange); }
 const readHash = () => window.location.hash;
@@ -55,28 +58,62 @@ export function AcceptInvitation() {
     } finally { setBusy(false); }
   }
 
-  const card = "w-full max-w-md space-y-4 rounded-2xl border border-neutral-200 bg-white p-8";
-  return <main className="grid min-h-screen place-items-center bg-[#f7f6f5] p-6"><div className={card}>
-    <Link href="/" className="text-xl font-bold">OrderFit</Link>
-    <h1 className="text-2xl font-semibold">Accept an invitation</h1>
-    {result ? <div className="space-y-3" role="status">
-      <p>Invitation accepted. {result.added.length ? `You now belong to ${result.added.map(m => `${m.business_name} as ${roleLabel(m.role)}`).join(", ")}.` : "Your memberships were updated."}</p>
-      <Link className="inline-block rounded-lg bg-neutral-900 px-4 py-2 text-white" href={result.added[0] ? `/deals?businessId=${encodeURIComponent(result.added[0].business_id)}` : "/deals"}>Open OrderFit</Link>
+  const failure = (text: string) => <InlineAlert tone="danger">{text}</InlineAlert>;
+  return <AuthFrame title="Accept an invitation">
+    {result ? <div className="space-y-4">
+      <InlineAlert tone="success">Invitation accepted. {result.added.length ? `You now belong to ${result.added.map(m => `${m.business_name} as ${roleLabel(m.role)}`).join(", ")}.` : "Your memberships were updated."}</InlineAlert>
+      <Link className={authPrimary} href={result.added[0] ? `/deals?businessId=${encodeURIComponent(result.added[0].business_id)}` : "/deals"}>Open OrderFit</Link>
     </div>
-    : spent ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>
-    : !token ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">This page needs the full invitation link, including the part after the # sign. Open the link you were given again.</p>
-    : session.isPending ? (
-      <div className="flex items-center gap-2 text-neutral-500 py-2" role="status">
-        <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
-        <span className="text-xs font-medium">Verifying invitation…</span>
-      </div>
-    )
-    : signedOut ? <div className="space-y-3 text-sm"><p>You need to be signed in to accept an invitation. <Link className="underline" href="/auth/signin?next=/auth/invitations/accept">Sign in</Link> or <Link className="underline" href="/auth/signup">create an account</Link>. After signing in, open the invitation link from your email again.</p><p className="text-neutral-600">The one-time token is not stored or carried through sign-in, for your safety.</p></div>
-    : session.isError ? <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-3 text-sm text-red-800"><p>{describeP7Error(session.error).message}</p><button type="button" className="underline" onClick={() => void session.refetch()}>Retry</button></div>
-    : <div className="space-y-3 text-sm">
-        <p>Signed in as <strong>{session.data.email}</strong>. Accepting adds this business to your account with the role the owner chose. The link works once.</p>
-        {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
-        {!spent && <button type="button" disabled={busy} onClick={() => void accept()} className="w-full rounded-lg bg-neutral-900 p-3 text-white disabled:opacity-50">{busy ? "Accepting…" : "Accept invitation"}</button>}
+    : spent ? failure(error)
+    : !token ? failure("This page needs the full invitation link, including the part after the # sign. Open the link you were given again.")
+    : session.isPending ? <p role="status" className="text-center text-sm text-muted-foreground">Checking your sign-in…</p>
+    : signedOut ? <SignedOutInvitee token={token} />
+    : session.isError ? <InlineAlert tone="danger" action={<button type="button" className="font-semibold text-primary underline" onClick={() => void session.refetch()}>Try again</button>}>{describeP7Error(session.error).message}</InlineAlert>
+    : <div className="space-y-4 text-sm">
+        <p className="leading-6 text-muted-foreground">Signed in as <span className="font-medium text-foreground">{session.data.email}</span>. Accepting adds this business to your account with the role the owner chose. The link works once.</p>
+        {error && failure(error)}
+        <button type="button" disabled={busy} onClick={() => void accept()} className={authPrimary}>{busy ? "Accepting…" : "Accept invitation"}</button>
       </div>}
-  </div></main>;
+  </AuthFrame>;
+}
+
+/**
+ * Signed out: an existing account signs in and reopens the link; a new person may create an account from the invitation
+ * when the workspace allows it. Registration creates no business, membership or session; acceptance stays explicit.
+ */
+function SignedOutInvitee({ token }: { token: string }) {
+  const caps = useQuery({ queryKey: ["account-access"], queryFn: ({ signal }) => getAccountAccess(signal), retry: false, staleTime: 60_000 });
+  const registration = capabilityState(caps.data, caps.isError, "invitation_registration");
+  const [fullName, setFullName] = useState(""); const [password, setPassword] = useState(""); const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [done, setDone] = useState(false); const [exists, setExists] = useState(false);
+  async function register(e: FormEvent) {
+    e.preventDefault(); setError("");
+    if (!fullName.trim()) { setError("Enter your full name."); return; }
+    if (password.length < 12) { setError("Use a password of at least 12 characters."); return; }
+    if (password !== confirm) { setError("The two passwords don't match."); return; }
+    setBusy(true);
+    try { await registerInvitedAccount(token, fullName, password); setDone(true); }
+    catch (cause) {
+      if (cause instanceof ApiError && cause.code === "ACCOUNT_EXISTS") setExists(true);
+      else setError(describeP7Error(cause).message);
+    } finally { setPassword(""); setConfirm(""); setBusy(false); }
+  }
+  const signIn = <Link className={authPrimary} href="/auth/signin?next=/auth/invitations/accept">Sign in</Link>;
+  if (done) return <div className="space-y-4"><InlineAlert tone="success">Account created. Sign in, then open the invitation link from your email again to join the business.</InlineAlert>{signIn}</div>;
+  if (exists) return <div className="space-y-4"><InlineAlert tone="info">An account with this email already exists. Sign in, then open the invitation link again.</InlineAlert>{signIn}</div>;
+  return <div className="space-y-5 text-sm">
+    <div className="space-y-3">
+      <p className="leading-6 text-muted-foreground">Already have an OrderFit account? Sign in, then open the invitation link again. The one-time link isn&apos;t carried through sign-in, for your safety.</p>
+      {signIn}
+    </div>
+    {registration === "available" && <form onSubmit={register} className="space-y-4 border-t border-border pt-5" noValidate>
+      <h2 className="text-base font-semibold text-foreground">Create invited account</h2>
+      <p className="text-muted-foreground">Your account uses the email address the invitation was sent to.</p>
+      {error && <InlineAlert tone="danger">{error}</InlineAlert>}
+      <AuthField label="Full name" autoComplete="name" required value={fullName} onChange={e => setFullName(e.target.value)} />
+      <AuthField label="Password" type="password" autoComplete="new-password" required minLength={12} value={password} onChange={e => setPassword(e.target.value)} hint="At least 12 characters." />
+      <AuthField label="Confirm password" type="password" autoComplete="new-password" required minLength={12} value={confirm} onChange={e => setConfirm(e.target.value)} />
+      <button type="submit" className={authPrimary} disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
+    </form>}
+  </div>;
 }

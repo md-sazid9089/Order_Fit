@@ -1,59 +1,87 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowLeft, Mail } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { AuthField, AuthFrame, authPrimary } from "@/components/auth/auth-frame";
+import { InlineAlert } from "@/components/system/inline-alert";
+import { capabilityState, getAccountAccess, requestPasswordReset } from "@/lib/account-access-api";
+import { emailValid } from "@/lib/p7-model";
+
+const RESEND_SECONDS = 60;
 
 export default function ForgotPasswordPage() {
+  const caps = useQuery({ queryKey: ["account-access"], queryFn: ({ signal }) => getAccountAccess(signal), retry: false, staleTime: 60_000 });
+  const recovery = capabilityState(caps.data, caps.isError, "password_recovery");
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [sentAt, setSentAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (sentAt === null) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [sentAt]);
+  const wait = sentAt === null ? 0 : Math.max(0, RESEND_SECONDS - Math.floor((now - sentAt) / 1000));
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!emailValid(email)) { setError("Enter a complete email address, like name@business.com."); return; }
+    setBusy(true);
+    setError("");
+    try {
+      await requestPasswordReset(email);
+      // Every accepted request shows the same receipt, so the page never reveals whether an account exists.
+      setSentAt(Date.now());
+      setNow(Date.now());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The request couldn't be sent. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (caps.isPending) {
+    return <AuthFrame title="Reset your password"><p role="status" className="text-center text-sm text-muted-foreground">Checking what this workspace supports…</p></AuthFrame>;
+  }
+
+  if (recovery !== "available") {
+    return (
+      <AuthFrame title="Password reset isn't available here" description={recovery === "unavailable" ? "OrderFit couldn't confirm whether email recovery is available right now. Try again in a moment." : "This OrderFit workspace doesn't send password-reset emails."}>
+        <div className="space-y-4 text-sm leading-6 text-muted-foreground">
+          <p>If you&apos;re still signed in on another device, change your password in Settings. There is no administrator override for a forgotten password.</p>
+          {recovery === "unavailable" && <button type="button" className={authPrimary} onClick={() => void caps.refetch()}>Try again</button>}
+          <Link href="/auth/signin" className="block text-center font-medium text-primary underline">Back to sign in</Link>
+        </div>
+      </AuthFrame>
+    );
+  }
+
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-[#F7F6F5] dark:bg-[#1E2021] text-[#1A1A1A] dark:text-[#F3F4F6] flex flex-col justify-between selection:bg-neutral-300 dark:selection:bg-neutral-700 selection:text-neutral-900 dark:selection:text-white font-sans w-full max-w-full overflow-x-hidden">
-      {/* Top Navigation Bar */}
-      <header className="w-full max-w-[1560px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group outline-none">
-          <span className="font-display text-2xl font-bold tracking-tight text-[#1E2021] dark:text-white group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
-            OrderFit
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-4 sm:gap-6 text-sm text-[#737373] dark:text-neutral-400 font-medium">
-          <ThemeToggle variant="pill" />
-          <Link href="/auth/signin" className="hover:text-[#1E2021] dark:hover:text-white transition-colors outline-none">
-            Log In
-          </Link>
-          <Link href="/auth/signup" className="hover:text-[#1E2021] dark:hover:text-white transition-colors outline-none">
-            Sign Up
-          </Link>
-        </div>
-      </header>
-
-      {/* Honest notice: no reset backend exists */}
-      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-10 w-full max-w-full">
-        <div className="w-full max-w-[440px] bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-8 md:p-10 shadow-xs dark:shadow-none">
-          {/* Top Icon Badge */}
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-center text-[#1E2021] dark:text-white mb-5 shadow-xs">
-            <Mail className="size-5 text-[#004D3B] dark:text-[#B5F2C6]" />
-          </div>
-
-          {/* Heading */}
-          <h1 className="text-xl sm:text-2xl font-bold text-center text-[#1E2021] dark:text-white mb-2 font-display tracking-tight">
-            Password recovery isn&apos;t available yet
-          </h1>
-          <p className="text-center text-xs sm:text-sm text-[#737373] dark:text-neutral-400 leading-relaxed mb-6">
-            This release has no email-based password reset. If you are signed in on another device, change your
-            password in Settings. Otherwise ask a business owner or administrator for help with your account.
+    <AuthFrame title="Reset your password" description="We'll email a reset link if the address belongs to an account with a verified email.">
+      {sentAt !== null ? (
+        <div className="space-y-4">
+          <InlineAlert tone="success" title="Request received">
+            If an eligible account exists, we&apos;ll email a reset link.
+          </InlineAlert>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Recovery requires an email address you verified in Settings. Resetting your password does not remove a passkey requirement.
           </p>
-          <Link
-            href="/auth/signin"
-            className="w-full py-2.5 px-4 rounded-xl bg-transparent hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs sm:text-sm font-medium text-[#737373] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white transition-colors flex items-center justify-center gap-2 outline-none"
-          >
-            <ArrowLeft className="size-3.5" />
-            <span>Back to Log In</span>
-          </Link>
+          <button type="button" className={authPrimary} disabled={wait > 0 || busy} onClick={() => setSentAt(null)}>
+            {wait > 0 ? `Send another link in ${wait}s` : "Send another link"}
+          </button>
+          <Link href="/auth/signin" className="block text-center text-sm font-medium text-primary underline">Back to sign in</Link>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="w-full max-w-[1560px] mx-auto px-4 sm:px-6 py-4 text-center text-xs text-[#737373] dark:text-neutral-400">
-        &copy; {new Date().getFullYear()} OrderFit Inc. All rights reserved.
-      </footer>
-    </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-4" noValidate>
+          {error && <InlineAlert tone="danger">{error}</InlineAlert>}
+          <AuthField label="Email address" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@business.com" />
+          <button type="submit" className={authPrimary} disabled={busy}>{busy ? "Sending…" : "Send reset link"}</button>
+          <Link href="/auth/signin" className="block text-center text-sm font-medium text-primary underline">Back to sign in</Link>
+        </form>
+      )}
+    </AuthFrame>
   );
 }

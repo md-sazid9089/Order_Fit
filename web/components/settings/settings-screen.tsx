@@ -11,6 +11,8 @@ import { buildBusinessProfileWrite, buildPasswordChange, buildProfileWrite, can,
 import type { BusinessView, SessionView } from "@/lib/generated-api";
 import { useScope } from "@/components/layout/scope";
 import { PasskeyPanel } from "@/components/settings/passkey-panel";
+import { StatusBadge } from "@/components/system/status-badge";
+import { capabilityState, getAccountAccess, requestEmailVerification } from "@/lib/account-access-api";
 import { Alert, Loading, PageFrame, QueryError, field, panel, primary, useCommand, useScoped, when } from "@/components/p7/common";
 
 type Tab = "user" | "company";
@@ -34,7 +36,7 @@ function UserProfile() {
   const { session, replaceSession } = useScope();
   const queryClient = useQueryClient();
   // The form is keyed by the saved profile version, so a successful save re-initializes it from the server's answer.
-  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><PasswordPanel /><PasskeyPanel /></div>;
+  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><EmailVerificationPanel /><PasswordPanel /><PasskeyPanel /></div>;
 }
 
 function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (session: SessionView) => void }) {
@@ -57,10 +59,7 @@ function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (se
     <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={draft.in_app_notifications} onChange={e => setDraft({ ...draft, in_app_notifications: e.target.checked })} /><span>Create in-app notifications for me. When off, no new notification rows are created for you; email delivery does not exist.</span></label>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
     <button className={primary} disabled={busy || !changed || !valid}>{busy ? "Saving…" : "Save profile"}</button>
-    <div className="space-y-1 border-t pt-3 text-sm text-neutral-700"><h3 className="font-semibold">Security status</h3>
-      <p>Multi-factor authentication: {session.mfa_supported ? "available" : "not supported yet"}.</p>
-      <p>Email verification: {session.email_verified ? "verified" : "not supported yet"}.</p>
-      <p>This session expires {when(session.expires_at)}.</p></div>
+    <p className="border-t border-border pt-3 text-sm text-muted-foreground">This session expires {when(session.expires_at)}.</p>
   </form>;
 }
 
@@ -147,4 +146,45 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
     {editable && <button className={primary} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
     <p className="text-xs text-neutral-600">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
   </form>;
+}
+
+/**
+ * Email verification decides whether this account can recover a forgotten password by email. Requesting a link needs
+ * the current password; the link must then be opened while signed in to this same account.
+ */
+function EmailVerificationPanel() {
+  const { session } = useScope();
+  const caps = useQuery({ queryKey: ["account-access"], queryFn: ({ signal }) => getAccountAccess(signal), retry: false, staleTime: 60_000 });
+  const verification = capabilityState(caps.data, caps.isError, "email_verification");
+  const recovery = capabilityState(caps.data, caps.isError, "password_recovery");
+  const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [requested, setRequested] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setError("");
+    if (!password) { setError("Enter your current password."); return; }
+    setBusy(true);
+    try { await requestEmailVerification(password); setRequested(true); }
+    catch (cause) { setError(describeP7Error(cause).message); }
+    finally { setPassword(""); setBusy(false); }
+  }
+  return <section className={panel} aria-labelledby="email-verification-title">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="email-verification-title" className="text-lg font-semibold">Email and account recovery</h2>
+      <StatusBadge tone={session.email_verified ? "success" : "warning"}>{session.email_verified ? "Email verified" : "Email not verified"}</StatusBadge>
+    </div>
+    <p className="text-sm text-muted-foreground">
+      {session.email_verified
+        ? recovery === "available" && session.password_recovery_eligible ? `If you forget your password, a reset link can be sent to ${session.email}.` : "Your email is verified. Password reset by email is not offered in this workspace."
+        : `Verify ${session.email} so a forgotten password can be reset by email. Until then, a forgotten password cannot be recovered.`}
+    </p>
+    {!session.email_verified && verification === "available" && (requested
+      ? <Alert tone="ok">Verification email requested. Open the link and confirm while signed in to this account.</Alert>
+      : <form onSubmit={submit} className="space-y-3" noValidate>
+          <label className="block text-sm font-medium">Current password<input type="password" autoComplete="current-password" className={field} value={password} onChange={e => setPassword(e.target.value)} /></label>
+          {error && <Alert>{error}</Alert>}
+          <button className={primary} disabled={busy}>{busy ? "Requesting…" : "Send verification email"}</button>
+        </form>)}
+    {!session.email_verified && verification === "disabled" && <Alert tone="info">This workspace doesn&apos;t send verification emails.</Alert>}
+    {!session.email_verified && verification === "unavailable" && <Alert tone="warn">Email verification can&apos;t be confirmed as available right now. <button type="button" className="font-semibold text-primary underline" onClick={() => void caps.refetch()}>Check again</button></Alert>}
+    <p className="text-sm text-muted-foreground">Passkey sign-in: {session.mfa_enabled ? "on for this account" : session.mfa_supported ? "available; add a passkey below" : "not available in this workspace"}.</p>
+  </section>;
 }
