@@ -2621,8 +2621,10 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
 - **Password policy** (`orderfit/services/password_policy.py`, wired into sign-up and
   password change in `services/identity.py`): refuses the account email or its local part,
   common/decorated/leetspeak base words, keyboard walks, sequences, repeated patterns and
-  reuse of the current password (`422 WEAK_PASSWORD` / `PASSWORD_REUSED`). Length stays in
-  the request contracts. The embedded word list is a compact screen, not a breach corpus.
+  reuse of the current password (`422 WEAK_PASSWORD` / `PASSWORD_REUSED`). Also applied to
+  password-reset confirmation and invitation registration (`services/account_access.py`,
+  email-independent rules only, since the email is unknown until the token is redeemed).
+  Length stays in the request contracts. The embedded word list is a compact screen, not a breach corpus.
 - **Closed offers** (`store/repositories.py::_row_to_offer`): a closed offer is now
   `supported=false, unavailable_reason="Offer is closed."`. Previously `OfferView` rejected
   it, so archiving any offer returned `503 DEPENDENCY_UNAVAILABLE`, which stranded orders
