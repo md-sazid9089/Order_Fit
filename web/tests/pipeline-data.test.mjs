@@ -36,6 +36,13 @@ function fixture({ count = 20, known = false, related } = {}) {
   return { calls, deals, load: loader(read), peak: () => peak, peakCustomers: () => peakCustomers };
 }
 
+test("a saved evaluation that cannot be read fails the pipeline instead of appearing unevaluated", async () => {
+  for (const status of [404, 409, 503]) {
+    const f = fixture({ count: 1, known: true, related: async () => { throw new ApiError(status); } });
+    await assert.rejects(f.load("business-a", 0), error => error.status === status);
+  }
+});
+
 test("a full pipeline caps customer lookups at four and retains all labels and stale flags", async () => {
   const f = fixture();
   const signal = new AbortController().signal;
@@ -71,10 +78,13 @@ test("first-page labels avoid extra customer requests and duplicate references r
 });
 
 test("missing related records remain explicit gaps while technical failures reject the page", async () => {
-  const missing = fixture({ count: 1, related: async () => { throw new ApiError(404); } });
+  const missing = fixture({ count: 1, related: async path => {
+    if (path.includes("/customers/")) throw new ApiError(404);
+    return { id: "e0", is_stale: true };
+  } });
   const result = await missing.load("a", 0);
   assert.equal(Object.keys(result.customers).length, 0);
-  assert.equal(Object.keys(result.evaluations).length, 0);
+  assert.equal(Object.keys(result.evaluations).length, 1);
   const broken = fixture({ related: async () => { throw new ApiError(503); } });
   await assert.rejects(broken.load("a", 0), error => error.status === 503);
   assert.ok(broken.calls.length <= 9, "A failed batch must not launch the remaining queue");

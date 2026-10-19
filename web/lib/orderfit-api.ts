@@ -31,9 +31,21 @@ export function isSessionExpired(status: number, code: string): boolean {
   return (status === 401 && code !== "INVALID_CREDENTIALS") || (status === 403 && code === "SESSION_REAUTH_REQUIRED");
 }
 
+/** Downloads use the same structured error contract as JSON commands. */
+export async function downloadFailure(response: Response): Promise<never> {
+  const body: Envelope | null = await response.json?.().catch(() => null) ?? null;
+  const code = body?.error?.code ?? "DOWNLOAD_FAILED";
+  if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  const retryAfterSeconds = parseRetryAfter(response.headers?.get?.("Retry-After"));
+  throw new ApiError(userMessage(code, response.status, body?.error?.message, retryAfterSeconds), code, response.status, {
+    requestId: body?.error?.request_id ?? response.headers?.get?.("X-Request-ID"),
+    retryable: body?.error?.retryable, details: body?.error?.details, retryAfterSeconds,
+  });
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
-  try { response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
+  try { response = await fetch(`${ROOT}${path}`, { ...init, signal: typeof AbortSignal !== "undefined" ? (init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000)) : init.signal, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
   catch (cause) { const name = (cause as { name?: string } | null)?.name; throw name === "AbortError" || name === "TimeoutError" ? cause : new NetworkError(); }
   const UNREADABLE = Symbol("unreadable");
   const parsed = await response.json().catch(() => UNREADABLE) as (T & Envelope) | typeof UNREADABLE;
@@ -51,7 +63,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     });
   }
   // A success that cannot be read (an HTML page from a proxy, a truncated body) is not treated as success.
-  if (parsed === UNREADABLE) {
+  if (parsed === UNREADABLE || (parsed !== null && typeof parsed !== "object")) {
     if (response.status === 204 || response.status === 205) return {} as T;
     throw new ApiError(userMessage("MALFORMED_RESPONSE", response.status), "MALFORMED_RESPONSE", response.status, { retryable: true });
   }
