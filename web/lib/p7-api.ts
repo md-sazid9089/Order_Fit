@@ -1,6 +1,6 @@
 // Typed client for the P7 supporting operations. Every write goes through the serialized, CSRF-protected, idempotent
 // `mutate` path, so a lost response is retried with the same command key. Reads are plain authenticated GETs.
-import { ApiError, NetworkError, downloadFailure, apiPath, get, mutate } from "./orderfit-api";
+import { ApiError, NetworkError, SESSION_EXPIRED_EVENT, apiPath, get, mutate } from "./orderfit-api";
 import { exportDownloadPath, flagResolvePath } from "./p7-model";
 import type { CashEventView, CashEventWrite, OfferView, PasswordChange, PayeeView, AccountCreate, AccountVerification, AccountView, Acknowledgement, AuditExport, BusinessProfileWrite, BusinessView, Capabilities, CustomerHistory, CustomerView, DealView, ExportView, FlagResolution, InvitationAccept, InvitationCreate, InvitationView, InvoiceImport, Member, MembershipWrite, Notification, NotificationsRead, Page_AccountView_, Page_AuditRow_, Page_InvoiceView_, Page_Member_, Page_Notification_, Page_CashEventView_, Page_ConstraintsView_, Page_OfferView_, Page_CustomerView_, Page_PayeeView_, ProfileWrite, RevisionReason, SessionView, Series } from "./generated-api";
 
@@ -68,8 +68,9 @@ export async function downloadExport(businessId: string, exported: ExportView, f
   const path = exportDownloadPath(businessId, exported.download_url);
   if (!path) throw new ApiError("The export link was not in the expected form, so it was not opened.", "INVALID_EXPORT_LINK", 0);
   let response: Response;
-  try { response = await fetch(apiPath(path), { credentials: "include", cache: "no-store", signal: AbortSignal.timeout(30_000) }); } catch { throw new NetworkError(); }
-  if (!response.ok) return downloadFailure(response);
+  try { response = await fetch(apiPath(path), { credentials: "include", cache: "no-store" }); } catch { throw new NetworkError(); }
+  if (response.status === 401 && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  if (!response.ok) throw new ApiError("Could not download the export.", response.status === 409 ? "EXPORT_EXPIRED" : response.status === 401 ? "UNAUTHENTICATED" : "DOWNLOAD_FAILED", response.status);
   saveBlob(await response.blob(), fileName);
 }
 

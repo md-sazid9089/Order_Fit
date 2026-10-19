@@ -15,12 +15,14 @@ import { getCachedSession, fetchSession } from "@/lib/session-store";
 export type { NavItem } from "@/lib/p7-model";
 
 export const ADMIN_NAVIGATION_ITEMS: readonly NavItem[] = [
-  { href: "/admin", label: "Platform overview" },
-  { href: "/admin/users", label: "Accounts" },
-  { href: "/admin/tenants", label: "Businesses" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/system", label: "System health" },
-  { href: "/admin/security", label: "Security model" },
+  { href: "/admin", label: "Platform Overview" },
+  { href: "/admin/users", label: "User Management" },
+  { href: "/admin/orders", label: "Orders Management" },
+  { href: "/admin/tenants", label: "Tenant Namespaces" },
+  { href: "/admin/engine", label: "Engine Invariants" },
+  { href: "/admin/security", label: "Security & Gates" },
+  { href: "/admin/logs", label: "Cluster Audit Log" },
+  { href: "/admin/system", label: "System & Nodes" },
 ];
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -59,12 +61,14 @@ const LABELS: Record<string, string> = {
   "/users": "User Management",
   "/orders": "Orders Management",
   "/settings": "Settings",
-  "/admin": "Platform overview",
-  "/admin/users": "Accounts",
-  "/admin/orders": "Orders",
-  "/admin/tenants": "Businesses",
-  "/admin/security": "Security model",
-  "/admin/system": "System health",
+  "/admin": "Admin Panel",
+  "/admin/users": "User Management",
+  "/admin/orders": "Orders Management",
+  "/admin/tenants": "Tenant Namespaces",
+  "/admin/engine": "Engine Invariants",
+  "/admin/security": "Security & Gates",
+  "/admin/logs": "Cluster Audit Log",
+  "/admin/system": "System & Nodes",
 };
 
 export type AppSidebarProps = {
@@ -190,12 +194,13 @@ export function AppSidebar({
     activeLinks.push({ href: "/admin", label: "Admin Panel" });
   }
 
-  // The most specific matching link is current ("/admin/orders" beats "/admin"); prefixes match whole segments only.
   const activeCurrent =
     current ??
-    (activeLinks
-      .filter((item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(`${item.href}/`)))
-      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null);
+    (pathname === "/admin"
+      ? "/admin"
+      : activeLinks.find(
+          (item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(item.href))
+        )?.href ?? null);
 
   const effectiveCompanyName =
     companyName ||
@@ -207,10 +212,10 @@ export function AppSidebar({
   const renderSidebarContent = (isMobileView = false) => {
     const showExpanded = isMobileView || isExpanded;
     return (
-      <div className="flex flex-col justify-between h-full min-h-0 bg-card">
+      <div className="flex flex-col justify-between h-full min-h-0 bg-white dark:bg-[#181A1B]">
         <div className="flex-1 overflow-y-auto">
           {/* Header branding */}
-          <div className="h-16 border-b border-border flex items-center justify-between px-4 overflow-hidden shrink-0">
+          <div className="h-16 border-b border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between px-4 overflow-hidden shrink-0">
             {showExpanded ? (
               <div className="flex items-center justify-between w-full">
                 <Link
@@ -218,8 +223,8 @@ export function AppSidebar({
                   onClick={() => isMobileView && setMobileOpen(false)}
                   className="flex items-center gap-2 overflow-hidden"
                 >
-                  <span className="font-display text-xl font-bold tracking-tight text-foreground whitespace-nowrap">OrderFit</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
+                  <span className="font-display text-xl font-bold tracking-tight text-[#1E2021] dark:text-white whitespace-nowrap">OrderFit</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#EFECE6] dark:bg-[#282A2B] text-[#525252] dark:text-[#A3A3A3] whitespace-nowrap">
                     {isAdminMode ? "Control" : "Copilot"}
                   </span>
                 </Link>
@@ -227,7 +232,7 @@ export function AppSidebar({
                   <button
                     type="button"
                     onClick={() => setMobileOpen(false)}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    className="p-1.5 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425] transition-colors shrink-0"
                     title="Close navigation"
                     aria-label="Close navigation"
                   >
@@ -239,8 +244,8 @@ export function AppSidebar({
                     onClick={togglePin}
                     className={`p-1.5 rounded-lg transition-colors shrink-0 ${
                       isPinned
-                        ? "text-foreground hover:bg-muted"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "text-[#1E2021] dark:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
+                        : "text-[#737373] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
                     }`}
                     title={isPinned ? "Click to collapse on hover out" : "Click to lock sidebar open"}
                     aria-label={isPinned ? "Click to collapse on hover out" : "Click to lock sidebar open"}
@@ -254,7 +259,7 @@ export function AppSidebar({
                 <button
                   type="button"
                   onClick={togglePin}
-                  className="size-10 rounded-xl text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+                  className="size-10 rounded-xl text-[#1E2021] dark:text-[#F3F4F6] hover:bg-[#F4F2ED] dark:hover:bg-[#222425] flex items-center justify-center transition-colors"
                   title="Expand and lock sidebar open"
                   aria-label="Expand and lock sidebar open"
                 >
@@ -267,18 +272,18 @@ export function AppSidebar({
           {/* Tenant / Company card */}
           <div className="p-3">
             {showExpanded ? (
-              <div className="p-3 bg-muted border border-border rounded-xl flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-muted text-foreground flex items-center justify-center shrink-0">
+              <div className="p-3 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-[#EFECE6] dark:bg-[#282A2B] text-[#1E2021] dark:text-white flex items-center justify-center shrink-0">
                   {isAdminMode ? <Server className="size-4" /> : <Building2 className="size-4" />}
                 </div>
                 <div className="overflow-hidden whitespace-nowrap">
-                  <div className="font-semibold text-xs text-foreground truncate">{effectiveCompanyName}</div>
-                  <div className="text-[10px] text-muted-foreground font-mono">{currency ? `${currency} · ` : ""}{effectiveRoleLabel}</div>
+                  <div className="font-semibold text-xs text-[#1E2021] dark:text-[#F3F4F6] truncate">{effectiveCompanyName}</div>
+                  <div className="text-[10px] text-[#737373] dark:text-[#A3A3A3] font-mono">{currency ? `${currency} · ` : ""}{effectiveRoleLabel}</div>
                 </div>
               </div>
             ) : (
               <div
-                className="size-11 mx-auto bg-muted border border-border rounded-xl flex items-center justify-center text-foreground"
+                className="size-11 mx-auto bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl flex items-center justify-center text-[#1E2021] dark:text-[#F3F4F6]"
                 title={currency ? `${effectiveCompanyName} (${currency})` : effectiveCompanyName}
               >
                 {isAdminMode ? <Server className="size-4" /> : <Building2 className="size-4" />}
@@ -303,8 +308,8 @@ export function AppSidebar({
                   onClick={() => isMobileView && setMobileOpen(false)}
                   className={`flex items-center h-11 rounded-xl text-xs font-medium transition-colors ${
                     active
-                      ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-[#1E2021] dark:bg-[#2E3032] text-white font-semibold shadow-xs"
+                      : "text-[#525252] dark:text-[#A3A3A3] hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#222425]"
                   } ${showExpanded ? "w-full px-3.5 gap-3" : "w-11 mx-auto justify-center px-0"}`}
                 >
                   <div className="size-5 flex items-center justify-center shrink-0">
@@ -318,34 +323,41 @@ export function AppSidebar({
         </div>
 
         {/* Footer controls */}
-        <div className="p-3 border-t border-border overflow-hidden space-y-2 shrink-0">
-          {isAdminMode && (
+        <div className="p-3 border-t border-[#E8E6E1] dark:border-[#2A2C2D] overflow-hidden space-y-2 shrink-0">
+          {isAdminMode ? (
             <div className="space-y-2">
               {showExpanded ? (
                 <>
                   <Link
                     href="/deals"
                     onClick={() => isMobileView && setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold transition-colors w-full shadow-xs"
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-[#F3F4F6] text-xs font-semibold transition-colors w-full shadow-xs"
                   >
                     <ArrowLeft className="size-3.5" />
                     <span>Exit to Business App</span>
                   </Link>
+
+                  <div className="text-center font-mono text-[10px] text-[#737373] dark:text-[#A3A3A3]">
+                    Role: <span className="text-[#1E2021] dark:text-white font-bold">{effectiveRoleLabel}</span>
+                  </div>
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 py-1">
                   <Link
                     href="/deals"
-                    className="size-10 rounded-xl bg-muted hover:bg-muted border border-border text-foreground flex items-center justify-center transition-colors"
+                    className="size-10 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] hover:bg-[#F4F2ED] dark:hover:bg-[#2A2C2D] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-[#F3F4F6] flex items-center justify-center transition-colors"
                     title="Exit to Business App"
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
+                  <span className="font-mono text-[9px] text-[#737373] dark:text-[#A3A3A3] uppercase" title={effectiveRoleLabel}>
+                    {isPlatformAdmin ? "ADM" : "USR"}
+                  </span>
                 </div>
               )}
             </div>
-          )}
-          {onSignOut && (
+          ) : (
+            onSignOut && (
               <button
                 type="button"
                 onClick={() => {
@@ -355,15 +367,16 @@ export function AppSidebar({
                 disabled={busy}
                 title="Sign out"
                 aria-label="Sign out"
-                className={`flex items-center h-9 rounded-xl text-xs font-medium text-muted-foreground hover:text-danger hover:bg-muted transition-colors disabled:opacity-50 ${
+                className={`flex items-center h-9 rounded-xl text-xs font-medium text-[#737373] dark:text-[#A3A3A3] hover:text-[#991B1B] dark:hover:text-[#FCA5A5] hover:bg-[#FEF2F2] dark:hover:bg-[#DC2626]/20 transition-colors disabled:opacity-50 ${
                   showExpanded ? "w-full px-3 gap-2.5" : "w-9 mx-auto justify-center px-0"
                 }`}
               >
                 <div className="size-4 flex items-center justify-center shrink-0">
                   <LogOut className="size-3.5" />
                 </div>
-                {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign out</span>}
+                {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
               </button>
+            )
           )}
         </div>
       </div>
@@ -379,7 +392,7 @@ export function AppSidebar({
             <button
               type="button"
               aria-label="Open navigation"
-              className="flex size-10 items-center justify-center rounded-xl bg-card border border-border shadow-xs hover:bg-muted text-foreground transition-colors"
+              className="flex size-10 items-center justify-center rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] shadow-xs hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-[#1E2021] dark:text-[#F3F4F6] transition-colors"
             >
               <Menu className="size-5" />
             </button>
@@ -387,7 +400,7 @@ export function AppSidebar({
           <SheetContent
             side="left"
             showCloseButton={false}
-            className="w-72 sm:w-80 p-0 border-r border-border bg-card gap-0 overflow-hidden"
+            className="w-72 sm:w-80 p-0 border-r border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] gap-0 overflow-hidden"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
@@ -410,7 +423,7 @@ export function AppSidebar({
         aria-label="Sidebar"
         onMouseEnter={() => !isPinned && setIsHovered(true)}
         onMouseLeave={() => !isPinned && setIsHovered(false)}
-        className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-card border-r border-border flex-col justify-between transition-[width] duration-300 ease-in-out ${
+        className={`hidden lg:flex fixed top-0 left-0 h-screen overflow-y-auto bg-white dark:bg-[#181A1B] border-r border-[#E8E6E1] dark:border-[#2A2C2D] flex-col justify-between transition-[width] duration-300 ease-in-out ${
           isPinned ? "w-64 z-30" : isHovered ? "w-64 z-50 shadow-2xl" : "w-[72px] z-30"
         }`}
       >

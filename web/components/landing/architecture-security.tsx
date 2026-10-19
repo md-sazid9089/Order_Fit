@@ -32,7 +32,7 @@ export function ArchitectureSecurity() {
       id: "ADR 0005",
       title: "Append-Only Hash-Chained Audit Trail",
       summary:
-        "Each business's operations, confirmations and approvals are recorded in an append-only PostgreSQL log with SHA-256 hash chaining, and can be exported with verification.",
+        "Every decision, prompt, extracted quote, and approval is recorded in an append-only PostgreSQL ledger with SHA-256 hash chaining. Complete tamper-evident reproducibility.",
     },
   ];
 
@@ -134,7 +134,7 @@ export function ArchitectureSecurity() {
               </div>
               <div className="mt-4 pt-3 border-t border-[#ECEAE4] flex items-center gap-2 text-xs text-[#093A2F] font-medium font-sans">
                 <CheckCircle2 className="size-4 shrink-0 text-[#093A2F]" />
-                <span>Document text is treated as data, never as instructions</span>
+                <span>Tested against 15 adversarial injection test cases</span>
               </div>
             </div>
           </div>

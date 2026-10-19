@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyAdminSessionServer } from "@/lib/auth-server";
 import { UnavailableNotice } from "@/components/unavailable-notice";
-import { AdminShell } from "@/components/admin/admin-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +22,7 @@ export default async function AdminLayout({
 
   // 1. Unauthenticated visitors are bounced to the sign-in page
   if (!sessionToken) {
-    redirect("/auth/signin?return=%2Fadmin");
+    redirect("/auth/signin");
   }
 
   // 2. Validate session and retrieve authoritative role from backend
@@ -41,14 +40,14 @@ export default async function AdminLayout({
   }
 
   if (!auth.authenticated) {
-    redirect("/auth/signin?return=%2Fadmin");
+    redirect("/auth/signin");
   }
 
-  // 3. Keep the verified session and return non-admins to their authorized workspace.
+  // 3. Authenticated non-admin users are strictly denied and redirected to /deals
   if (!auth.isAdmin) {
-    redirect("/deals?notice=platform-access-required");
+    redirect("/deals");
   }
 
-  // 4. Verified platform administrator: one shared admin shell for every page.
-  return <AdminShell email={auth.email}>{children}</AdminShell>;
+  // 4. Verified platform administrator: allow rendering of protected admin pages
+  return <>{children}</>;
 }

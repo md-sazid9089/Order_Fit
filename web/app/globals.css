@@ -1,55 +1,28 @@
-@import "@fontsource/ibm-plex-sans/latin-400.css";
-@import "@fontsource/ibm-plex-sans/latin-500.css";
-@import "@fontsource/ibm-plex-sans/latin-600.css";
-@import "@fontsource/ibm-plex-sans/latin-700.css";
-@import "@fontsource/ibm-plex-mono/latin-400.css";
-@import "@fontsource/instrument-serif/latin-400-italic.css";
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Semantic tokens: every component should use these, never raw hex. Values live in :root / .dark below. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-muted-foreground: var(--muted-foreground);
   --color-destructive: var(--destructive);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-info: var(--info);
-  --color-info-soft: var(--info-soft);
-
-  /* One product family (IBM Plex Sans); Plex Mono for identifiers and code only. */
+  
+  /* Indisea Swiss Bauhaus Typography with IBM Plex Sans & IBM Plex Mono */
   --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-radio-grotesk: 'IBM Plex Sans', system-ui, sans-serif;
   --font-neue-machina: 'IBM Plex Mono', monospace, sans-serif;
   --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Playfair Display', 'Instrument Serif', Georgia, 'Times New Roman', serif;
 
-  /* Brand palette: landing page and brand moments only. Product UI uses the semantic tokens above. */
+  /* Settle Exact Brand Palette */
   --color-brand-pine-green: #004D3B;
   --color-brand-forest-green: #00382B;
   --color-brand-dark-teal: #093A2F;
@@ -69,6 +42,7 @@
   --color-brand-lighter-green: #529A86;
   --color-brand-light-teal: #E6F4F1;
 
+  /* Aliases for ease of use */
   --color-settle-pine: #004D3B;
   --color-settle-forest: #00382B;
   --color-settle-teal: #093A2F;
@@ -85,14 +59,13 @@
   --color-settle-red: #C53030;
   --color-settle-rose: #FFF0EB;
 
-  /* Calm radii: 8px controls, 12px small panels, 16px panels. */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
-  --radius-lg: 0.625rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.25rem;
-  --radius-4xl: 1.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-4xl: 2.5rem;
 }
 
 :root {
@@ -104,66 +77,51 @@
   --popover-foreground: #1A1A1A;
   --primary: #004D3B;
   --primary-foreground: #FFFAEC;
-  --secondary: #F0EEEA;
-  --secondary-foreground: #1A1A1A;
-  --muted: #F0EEEA;
-  --muted-foreground: #5A6B73;
-  --accent: #E6F4F1;
+  --secondary: #ECEAE4;
+  --secondary-foreground: #004D3B;
+  --muted: #ECEAE4;
+  --muted-foreground: #526975;
+  --accent: #B5F2C6;
   --accent-foreground: #004D3B;
-  --destructive: #B42318;
-  --border: #E5E2DC;
-  --border-strong: #C9C4BA;
+  --destructive: #C53030;
+  --border: #E5EBEA;
+  --border-strong: #A3A3A3;
   --surface: #FFFFFF;
-  --input: #D9D5CD;
+  --input: #E5EBEA;
   --ring: #004D3B;
-  --success: #1F7A4D;
-  --success-soft: #E8F5EE;
-  --warning: #A15C07;
-  --warning-soft: #FFF4E0;
-  --danger: #B42318;
-  --danger-soft: #FDECEA;
-  --info: #1D5C8C;
-  --info-soft: #EAF2F9;
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 }
 
 .dark {
-  --background: #141617;
+  --background: #1E2021;
   --foreground: #F3F4F6;
-  --card: #1C1F20;
+  --card: #181A1B;
   --card-foreground: #F3F4F6;
-  --popover: #1C1F20;
+  --popover: #181A1B;
   --popover-foreground: #F3F4F6;
-  --primary: #7FD1B0;
-  --primary-foreground: #102B22;
-  --secondary: #24282A;
+  --primary: #004D3B;
+  --primary-foreground: #FFFAEC;
+  --secondary: #222425;
   --secondary-foreground: #F3F4F6;
-  --muted: #24282A;
-  --muted-foreground: #A9B1B4;
-  --accent: #173A31;
+  --muted: #222425;
+  --muted-foreground: #A3A3A3;
+  --accent: #004D3B;
   --accent-foreground: #B5F2C6;
-  --destructive: #F2877C;
-  --border: #2C3031;
-  --border-strong: #454B4D;
-  --surface: #1C1F20;
-  --input: #3A3F41;
-  --ring: #7FD1B0;
-  --success: #5CC28E;
-  --success-soft: #13291E;
-  --warning: #F0B45A;
-  --warning-soft: #2E2210;
-  --danger: #F2877C;
-  --danger-soft: #33171A;
-  --info: #7DB7E6;
-  --info-soft: #13222F;
+  --destructive: #991B1B;
+  --border: #2A2C2D;
+  --border-strong: #525252;
+  --surface: #181A1B;
+  --input: #2A2C2D;
+  --ring: #004D3B;
 }
 
 @layer base {
   * {
     border-color: var(--border);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   html {
-    background-color: var(--background);
+    background-color: #F7F6F5;
     scroll-behavior: smooth;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     overflow-y: scroll; /* Keep scrollbar always visible to prevent layout shifts */
@@ -172,7 +130,7 @@
     scrollbar-color: #DDD9D0 #F7F6F5;
   }
   html.dark {
-    background-color: var(--background);
+    background-color: #1E2021;
     color-scheme: dark;
     scrollbar-color: #383B3D #181A1B;
   }
@@ -227,38 +185,15 @@
     pointer-events: none;
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: #F7F6F5;
+    color: #1A1A1A;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   html.dark body {
-    background-color: var(--background);
-    color: var(--foreground);
-  }
-  /* One visible focus treatment for every interactive element, in both themes. */
-  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-  ::selection {
-    background: color-mix(in oklab, var(--primary) 22%, transparent);
-    color: inherit;
-  }
-  input, select, textarea {
-    caret-color: var(--primary);
-  }
-  a {
-    text-underline-offset: 3px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+    background-color: #1E2021;
+    color: #F3F4F6;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -282,16 +217,10 @@
 }
 
 .font-serif, .font-fancy, .font-editorial {
-  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif !important;
+  font-family: 'Playfair Display', 'Instrument Serif', Georgia, 'Times New Roman', serif !important;
 }
 
 @layer utilities {
-  /* Money and counts: equal-width digits so columns align. */
-  .tabular {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-
   .font-small-caps {
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -357,7 +286,305 @@
     width: 100%;
   }
 
+  /* Dark mode overrides inspired by the Sign In & Sign Up pages (#1E2021, #181A1B, #222425, #2A2C2D) */
+  html.dark .bg-\[\#F7F6F5\],
+  html.dark .bg-\[\#f7f6f5\] {
+    background-color: #1E2021 !important;
+  }
 
+  html.dark .bg-\[\#F7F6F5\]\/95 {
+    background-color: rgba(30, 32, 33, 0.95) !important;
+  }
+
+  html.dark .bg-\[\#F7F6F5\]\/85 {
+    background-color: rgba(30, 32, 33, 0.85) !important;
+  }
+
+  html.dark .bg-\[\#F7F6F5\]\/60 {
+    background-color: rgba(24, 26, 27, 0.6) !important;
+  }
+
+  html.dark .bg-\[\#FAF9F7\] {
+    background-color: #222425 !important;
+  }
+
+  html.dark .bg-\[\#F4F2ED\] {
+    background-color: #232526 !important;
+  }
+
+  html.dark .bg-\[\#EFECE6\],
+  html.dark .bg-\[\#ECEAE4\] {
+    background-color: #282A2B !important;
+  }
+
+  html.dark .bg-white:not(button):not(a):not(input) {
+    background-color: #181A1B !important;
+  }
+
+  html.dark .bg-white\/95 {
+    background-color: rgba(24, 26, 27, 0.95) !important;
+  }
+
+  /* High-contrast action buttons in dark mode (inspired by login/signup primary button) */
+  html.dark button.bg-white,
+  html.dark a.bg-white {
+    background-color: #F3F4F6 !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-white:hover,
+  html.dark a.bg-white:hover {
+    background-color: #FFFFFF !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-white svg,
+  html.dark a.bg-white svg {
+    color: #181A1B !important;
+  }
+
+  /* Primary dark-styled action buttons in light mode become high-contrast light buttons in dark mode */
+  html.dark button.bg-\[\#1E2021\],
+  html.dark button.bg-neutral-900,
+  html.dark a.bg-neutral-900,
+  html.dark a.bg-\[\#1E2021\]:not([aria-current="page"]):not([href="/admin"]):not([href="/"]) {
+    background-color: #F3F4F6 !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-\[\#1E2021\]:hover,
+  html.dark button.bg-neutral-900:hover,
+  html.dark a.bg-neutral-900:hover,
+  html.dark a.bg-\[\#1E2021\]:hover:not([aria-current="page"]) {
+    background-color: #FFFFFF !important;
+    color: #181A1B !important;
+  }
+  html.dark button.bg-\[\#1E2021\] svg,
+  html.dark button.bg-neutral-900 svg,
+  html.dark a.bg-neutral-900 svg,
+  html.dark a.bg-\[\#1E2021\]:not([aria-current="page"]) svg {
+    color: #181A1B !important;
+  }
+
+  html.dark .bg-neutral-50,
+  html.dark .bg-neutral-100 {
+    background-color: #222425 !important;
+  }
+
+  html.dark .border-neutral-300,
+  html.dark .border-neutral-400 {
+    border-color: #373A3C !important;
+  }
+
+  /* Badges using dark bg */
+  html.dark span.bg-\[\#1E2021\] {
+    background-color: #2E3032 !important;
+    color: #F3F4F6 !important;
+    border: 1px solid #404244 !important;
+  }
+
+  /* Text Contrast Overrides */
+  html.dark .text-\[\#1A1A1A\],
+  html.dark .text-\[\#1E2021\],
+  html.dark .text-neutral-900,
+  html.dark .text-neutral-800,
+  html.dark .text-black {
+    color: #F3F4F6 !important;
+  }
+
+  html.dark .text-\[\#526975\],
+  html.dark .text-\[\#525252\],
+  html.dark .text-neutral-700,
+  html.dark .text-neutral-600 {
+    color: #D4D4D4 !important;
+  }
+
+  html.dark .text-\[\#737373\],
+  html.dark .text-neutral-500,
+  html.dark .text-neutral-400 {
+    color: #A3A3A3 !important;
+  }
+
+  html.dark .text-\[\#A3A3A3\] {
+    color: #A3A3A3 !important;
+  }
+
+  /* Brand Colors in Dark Mode */
+  html.dark .text-\[\#004D3B\],
+  html.dark .text-\[\#093A2F\] {
+    color: #34D399 !important;
+  }
+
+  /* Badges & Status Indicators */
+  /* Green Badges (Active, Evaluated, Operational, Verified) */
+  html.dark .bg-\[\#ECFDF5\],
+  html.dark .bg-\[\#D1FAE5\],
+  html.dark .bg-emerald-50,
+  html.dark .bg-green-50 {
+    background-color: rgba(5, 150, 105, 0.2) !important;
+    color: #6EE7B7 !important;
+    border-color: rgba(5, 150, 105, 0.4) !important;
+  }
+  html.dark .text-\[\#065F46\],
+  html.dark .text-\[\#059669\],
+  html.dark .text-emerald-800,
+  html.dark .text-green-800,
+  html.dark .text-green-900 {
+    color: #6EE7B7 !important;
+  }
+
+  /* Red Badges (Revoked, Suspended, Error, Critical) */
+  html.dark .bg-\[\#FEF2F2\],
+  html.dark .bg-\[\#FEE2E2\],
+  html.dark .bg-red-50 {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: #FCA5A5 !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+  }
+  html.dark .text-\[\#991B1B\],
+  html.dark .text-\[\#DC2626\],
+  html.dark .text-red-700,
+  html.dark .text-red-800,
+  html.dark .text-red-900 {
+    color: #FCA5A5 !important;
+  }
+
+  /* Amber Badges (Auditor, Pending, Warning, Medium Risk) */
+  html.dark .bg-\[\#FEF3C7\],
+  html.dark .bg-\[\#FFFBEB\],
+  html.dark .bg-amber-50 {
+    background-color: rgba(217, 119, 6, 0.2) !important;
+    color: #FCD34D !important;
+    border-color: rgba(217, 119, 6, 0.4) !important;
+  }
+  html.dark .text-\[\#92400E\],
+  html.dark .text-\[\#D97706\],
+  html.dark .text-amber-800,
+  html.dark .text-amber-900 {
+    color: #FCD34D !important;
+  }
+
+  /* Purple Badges (Risk Officer) */
+  html.dark .bg-\[\#EDE9FE\],
+  html.dark .bg-purple-50 {
+    background-color: rgba(139, 92, 246, 0.2) !important;
+    color: #C4B5FD !important;
+    border-color: rgba(139, 92, 246, 0.4) !important;
+  }
+  html.dark .text-\[\#5B21B6\],
+  html.dark .text-\[\#7C3AED\],
+  html.dark .text-purple-800 {
+    color: #C4B5FD !important;
+  }
+
+  /* Blue Badges (Nodes, Info) */
+  html.dark .bg-\[\#EFF6FF\],
+  html.dark .bg-blue-50 {
+    background-color: rgba(37, 99, 235, 0.2) !important;
+    color: #93C5FD !important;
+    border-color: rgba(37, 99, 235, 0.4) !important;
+  }
+  html.dark .text-\[\#2563EB\],
+  html.dark .text-blue-800 {
+    color: #93C5FD !important;
+  }
+
+  /* Neutral Badges (Viewer, Draft) */
+  html.dark .text-\[\#374151\] {
+    color: #D1D5DB !important;
+  }
+  html.dark .bg-\[\#F3F4F6\] {
+    background-color: #26282A !important;
+    color: #D1D5DB !important;
+  }
+
+  /* Borders & Dividers */
+  html.dark .border-\[\#E8E6E1\],
+  html.dark .border-\[\#ECEAE4\],
+  html.dark .border-\[\#E5EBEA\],
+  html.dark .border-\[\#DDD9D0\],
+  html.dark .border-\[\#F0EEEA\],
+  html.dark .border-\[\#F4F2ED\] {
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark .divide-\[\#F0EEEA\] > :not([hidden]) ~ :not([hidden]),
+  html.dark .divide-\[\#E8E6E1\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #2A2C2D !important;
+  }
+
+  /* Form Elements & Inputs */
+  html.dark input:not([type="checkbox"]):not([type="radio"]),
+  html.dark select,
+  html.dark textarea {
+    background-color: #222425 !important;
+    border-color: #2A2C2D !important;
+    color: #F3F4F6 !important;
+  }
+
+  html.dark select option {
+    background-color: #222425 !important;
+    color: #F3F4F6 !important;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #737373 !important;
+  }
+
+  html.dark input:focus,
+  html.dark select:focus,
+  html.dark textarea:focus {
+    border-color: #525252 !important;
+    background-color: #26282A !important;
+  }
+
+  /* Hover States */
+  html.dark .hover\:bg-\[\#F4F2ED\]:hover,
+  html.dark .hover\:bg-\[\#F7F6F5\]:hover,
+  html.dark .hover\:bg-neutral-100:hover,
+  html.dark .hover\:bg-\[\#FAF9F7\]:hover {
+    background-color: #262829 !important;
+  }
+
+  html.dark .hover\:border-\[\#1E2021\]:hover {
+    border-color: #525252 !important;
+  }
+
+  html.dark .group:hover .group-hover\:bg-\[\#1E2021\] {
+    background-color: #2E3032 !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Tables in Dark Mode */
+  html.dark table thead tr {
+    background-color: #222425 !important;
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark table thead th {
+    color: #A3A3A3 !important;
+  }
+
+  html.dark table tbody tr:hover {
+    background-color: rgba(38, 40, 42, 0.6) !important;
+  }
+
+  /* Modal Overlays */
+  html.dark .fixed.inset-0.bg-black\/40 {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+  }
+
+  html.dark aside[aria-label="Sidebar"] {
+    background-color: #181A1B !important;
+    border-color: #2A2C2D !important;
+  }
+
+  html.dark .bg-\[\#EAF7EE\] {
+    background-color: #0A2E23 !important;
+    color: #B5F2C6 !important;
+  }
+
+  html.dark .border-\[\#B5F2C6\] {
+    border-color: #004D3B !important;
+  }
 }
 
 /* Original-language review text: cover Bengali, Devanagari, Simplified Chinese and Arabic script
@@ -369,8 +596,3 @@
   line-height: 1.6;
 }
 .script-text:lang(zh-Hans) { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif; }
-
-@media (max-width: 767px) {
-  button { min-width: 44px; }
-  button, select, input:not([type="checkbox"]):not([type="radio"]), summary { min-height: 44px; }
-}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ApiError, get } from "@/lib/orderfit-api";
+import { get } from "@/lib/orderfit-api";
 
 type Page<T> = { items: T[]; next_cursor: string | null };
 
@@ -10,16 +10,12 @@ export function useCollection<T extends { id: string }>(path: string, enabled = 
   const query = useInfiniteQuery({
     queryKey: ["collection", path], enabled,
     initialPageParam: null as string | null,
-    queryFn: async ({ pageParam }) => {
-      const page = await get<Page<T>>(`${path}${path.includes("?") ? "&" : "?"}limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`);
-      if (!page || !Array.isArray(page.items) || page.items.some(item => !item || typeof item.id !== "string")) throw new ApiError("The service returned incomplete list data. Try loading it again.", "MALFORMED_RESPONSE", 200, { retryable: true });
-      return page;
-    },
+    queryFn: ({ pageParam }) => get<Page<T>>(`${path}${path.includes("?") ? "&" : "?"}limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`),
     getNextPageParam: page => page.next_cursor,
     retry: false,
   });
   const items = [...new Map((query.data?.pages.flatMap(page => page.items) ?? []).map(item => [item.id, item])).values()];
-  return { ...query, isSuccess: query.isSuccess, data: { items }, items };
+  return { ...query, isSuccess: !!query.data, data: { items }, items };
 }
 
 type Controls = {
@@ -31,10 +27,7 @@ type Controls = {
 
 export function CollectionPages({ query, noun }: { query: Controls; noun: string }) {
   return <div className="space-y-2 text-sm">
-    {/* The count is announced for assistive technology; sighted users only see loading or "more available". */}
-    <p role="status" className={query.isPending || query.hasNextPage ? "text-muted-foreground" : "sr-only"}>
-      {query.isPending ? `Loading ${noun}…` : query.hasNextPage ? `Showing the first ${query.items.length} ${noun}. More are available.` : `Showing all ${query.items.length} ${noun}.`}
-    </p>
+    <p role="status">{query.isPending ? `Loading ${noun}…` : `${query.items.length} ${noun} loaded.${query.hasNextPage ? " More available." : ""}`}</p>
     {query.isError && <p role="alert">{query.error?.message ?? `Could not load ${noun}.`} <button type="button" className="underline" disabled={query.isFetching} onClick={() => void (query.isFetchNextPageError ? query.fetchNextPage() : query.refetch())}>Retry {noun}</button></p>}
     {query.hasNextPage && <button type="button" className="rounded border px-3 py-2 disabled:opacity-40" disabled={query.isFetching} onClick={() => void query.fetchNextPage()}>{query.isFetchingNextPage ? `Loading ${noun}…` : `Load more ${noun}`}</button>}
   </div>;
