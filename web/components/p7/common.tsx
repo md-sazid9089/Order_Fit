@@ -6,12 +6,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useScope } from "@/components/layout/auth-shell";
 import { describeP7Error, roleLabel } from "@/lib/p7-model";
 import { getBusiness } from "@/lib/p7-api";
+import { ApiError } from "@/lib/orderfit-api";
+import { PageHeader } from "@/components/system/page-header";
+import { InlineAlert } from "@/components/system/inline-alert";
+import { ErrorState } from "@/components/system/states";
 
-export const panel = "space-y-3 rounded-xl border bg-white p-5";
-export const button = "rounded border border-neutral-400 px-3 py-2 text-sm disabled:opacity-40";
-export const primary = "rounded bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-40";
-export const danger = "rounded border border-red-600 px-3 py-2 text-sm text-red-700 disabled:opacity-40";
-export const field = "mt-1 block w-full rounded border border-neutral-300 bg-white p-2 text-sm";
+export const panel = "space-y-4 rounded-2xl border border-border bg-card p-5 text-card-foreground";
+export const button = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border-strong bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-50";
+export const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50";
+export const danger = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-danger/40 bg-card px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger-soft disabled:opacity-50";
+export const field = "mt-1.5 block min-h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
 export const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString() : "not yet");
 
 /** Session, role and the query-key prefix for this user and business. Keys include both so no cache entry can cross a scope. */
@@ -21,22 +25,18 @@ export function useScoped() {
   return { session, businessId, membership, role: membership?.role, businessName: membership?.business_name ?? "", key, roleText: roleLabel(membership?.role) };
 }
 
-export function PageFrame({ title, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function PageFrame({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <header className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
-        </header>
-        {children}
-      </div>
+    <main className="mx-auto w-full max-w-[1200px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader title={title} description={intro} />
+      {children}
     </main>
   );
 }
 
 export function Alert({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "ok" | "info" | "warn" }) {
-  const style = { error: "bg-red-50 text-red-800", ok: "bg-green-50 text-green-900", info: "bg-neutral-100 text-neutral-800", warn: "bg-amber-50 text-amber-900" }[tone];
-  return <p role={tone === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${style}`}>{children}</p>;
+  const mapped = ({ error: "danger", ok: "success", info: "info", warn: "warning" } as const)[tone];
+  return <InlineAlert tone={mapped}>{children}</InlineAlert>;
 }
 
 import { Skeleton, SkeletonText, SkeletonTable, SkeletonList } from "@/components/ui/skeleton";
@@ -88,10 +88,9 @@ export function Loading({
 /** A failed read with a retry. The message comes from the API's curated error, never from raw exception text. */
 export function QueryError({ error, retry, retrying }: { error: unknown; retry: () => void; retrying?: boolean }) {
   const { message, sessionExpired } = describeP7Error(error);
-  return <div role="alert" className="space-y-2 rounded-lg bg-red-50 p-3 text-sm text-red-800">
-    <p>{message}</p>
-    {sessionExpired ? <p><Link className="underline" href="/auth/signin">Sign in again</Link></p> : <button type="button" className={button} disabled={retrying} onClick={retry}>{retrying ? "Retrying…" : "Retry"}</button>}
-  </div>;
+  const reference = error instanceof ApiError ? error.requestId : null;
+  if (sessionExpired) return <InlineAlert tone="danger" action={<Link className="font-semibold text-primary underline" href="/auth/signin">Sign in again</Link>}>{message}</InlineAlert>;
+  return <ErrorState title="This couldn&apos;t load" message={message} onRetry={retry} retrying={retrying} reference={reference} />;
 }
 
 export function NotPermitted({ what, needs }: { what: string; needs: string }) {
