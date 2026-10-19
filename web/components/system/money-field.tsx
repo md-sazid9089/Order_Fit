@@ -5,7 +5,7 @@ import { cn } from "cn";
 import { toMajorText, toMinorUnits } from "@/lib/money-input";
 
 export const fieldControl =
-  "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground/70 transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
+  "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-border-strong focus-visible:border-ring disabled:opacity-60";
 
 /**
  * Money is typed in the business currency ("50,000.00") and handed to the API as an exact minor-unit string.

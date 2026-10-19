@@ -11,7 +11,7 @@ import type { AccountView, PayeeView } from "@/lib/generated-api";
 import { ArchiveAction } from "@/components/p7/archive-action";
 import { Alert, Loading, PageFrame, QueryError, button, danger, field, panel, primary, RevisionNotice, useBusinessRevision, useCommand, useScoped, when } from "@/components/p7/common";
 
-const STATUS_STYLE = { pending: "bg-amber-100 text-amber-900", verified: "bg-green-100 text-green-900", revoked: "bg-neutral-200 text-neutral-700" } as const;
+const STATUS_STYLE = { pending: "bg-amber-100 text-warning", verified: "bg-green-100 text-success", revoked: "bg-muted text-muted-foreground" } as const;
 
 /** Payee bank accounts. Only the last four characters are ever returned; verification is a human-recorded attestation. */
 export function PayeesScreen() {
@@ -33,7 +33,7 @@ function PayeeCard({ payee, financialRevision }: { payee: PayeeView; financialRe
   const [open, setOpen] = useState(false);
   const archived = !!payee.archived_at;
   return <section className={panel}>
-    <div className="flex flex-wrap items-center gap-3"><h2 className="min-w-0 flex-1 text-lg font-semibold">{payee.payee.name}</h2><span className="text-sm text-neutral-600">{payee.payee.kind} · {payee.payee.category.replaceAll("_", " ")}{archived ? " · archived" : ""}</span>
+    <div className="flex flex-wrap items-center gap-3"><h2 className="min-w-0 flex-1 text-lg font-semibold">{payee.payee.name}</h2><span className="text-sm text-muted-foreground">{payee.payee.kind} · {payee.payee.category.replaceAll("_", " ")}{archived ? " · archived" : ""}</span>
       <button type="button" className={button} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "Hide accounts" : "Accounts"}</button></div>
     {open && <Accounts payee={payee} />}
     <ArchiveAction noun="payee" permission="manage_finance" record={payee} financialRevision={financialRevision} archive={body => archivePayee(businessId, payee.id, body)} onChanged={() => void queryClient.invalidateQueries()} consequence="An archived payee can no longer receive new accounts and is not offered for new orders." />
@@ -51,10 +51,10 @@ function Accounts({ payee }: { payee: PayeeView }) {
   return <div className="space-y-3">
     {accounts.isPending && <Loading what="accounts" />}
     {accounts.isError && <QueryError error={accounts.error} retry={() => void accounts.refetch()} retrying={accounts.isFetching} />}
-    {accounts.isSuccess && !items.length && <p className="text-sm text-neutral-600">No accounts recorded for this payee.</p>}
+    {accounts.isSuccess && !items.length && <p className="text-sm text-muted-foreground">No accounts recorded for this payee.</p>}
     <ul className="divide-y">{items.map(a => <AccountRow key={a.id} account={a} payeeId={payee.id} manage={manage} onChanged={reload} />)}</ul>
     {accounts.hasNextPage && <button type="button" className={button} disabled={accounts.isFetchingNextPage} onClick={() => void accounts.fetchNextPage()}>{accounts.isFetchingNextPage ? "Loading…" : "Load more"}</button>}
-    {manage && !payee.archived_at ? <AddAccount payeeId={payee.id} onAdded={reload} /> : <p className="text-xs text-neutral-600">{payee.archived_at ? "This payee is archived, so accounts cannot be added." : "Only a risk officer or owner can add, verify or revoke accounts."}</p>}
+    {manage && !payee.archived_at ? <AddAccount payeeId={payee.id} onAdded={reload} /> : <p className="text-xs text-muted-foreground">{payee.archived_at ? "This payee is archived, so accounts cannot be added." : "Only a risk officer or owner can add, verify or revoke accounts."}</p>}
   </div>;
 }
 
@@ -70,16 +70,16 @@ function AddAccount({ payeeId, onAdded }: { payeeId: string; onAdded: () => void
     // The account number is cleared as soon as the request settles; it is never kept or shown again.
     if (result.ok) { setBank(""); setNumber(""); onAdded(); }
   }
-  return <form onSubmit={submit} className="space-y-3 rounded-lg bg-neutral-50 p-3">
+  return <form onSubmit={submit} className="space-y-3 rounded-lg bg-muted p-3">
     <h3 className="font-semibold">Add an account</h3>
     <label className="block text-sm">Bank name<input required className={field} value={bank} maxLength={2000} onChange={e => setBank(e.target.value)} /></label>
     <label className="block text-sm">Account number<input required className={field} value={number} autoComplete="off" spellCheck={false} onChange={e => setNumber(e.target.value)} aria-describedby="account-help" /></label>
-    <p id="account-help" className="text-xs text-neutral-600">4 to 64 letters or digits. Only the last four characters will ever be displayed. Adding an account changes the business record, so existing evaluations may need re-evaluation.</p>
+    <p id="account-help" className="text-xs text-muted-foreground">4 to 64 letters or digits. Only the last four characters will ever be displayed. Adding an account changes the business record, so existing evaluations may need re-evaluation.</p>
     <RevisionNotice revision={revision} error={revisionError} />
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
     {(() => { const why = busy ? "" : revision === undefined ? "Waiting for the current business revision to load." : !bank.trim() ? "Enter the bank name to continue." : !accountNumberValid(number) ? "Enter an account number of 4 to 64 letters or digits to continue." : ""; return <>
       <button className={primary} disabled={busy || !!why} aria-describedby={why ? "add-account-why" : undefined}>Add account</button>
-      {why && <p id="add-account-why" className="text-xs text-neutral-600">{why}</p>}</>; })()}
+      {why && <p id="add-account-why" className="text-xs text-muted-foreground">{why}</p>}</>; })()}
   </form>;
 }
 
@@ -93,16 +93,16 @@ function AccountRow({ account, payeeId, manage, onChanged }: { account: AccountV
   const done = () => { setMode(""); setText(""); onChanged(); };
   return <li className="space-y-2 py-3 text-sm">
     <div className="flex flex-wrap items-center gap-3"><span className="min-w-0 flex-1"><strong>{account.bank_name}</strong> · {maskedAccount(account)}</span><span className={`rounded px-2 py-0.5 text-xs font-semibold uppercase ${STATUS_STYLE[account.status]}`}>{account.status}</span></div>
-    <p className="text-neutral-700">{accountStatusText(account)}{account.verified_by ? ` Recorded by ${memberLabel(account.verified_by, session.user_id)}${account.verified_at ? ` at ${when(account.verified_at)}` : ""}.` : ""}</p>
+    <p className="text-muted-foreground">{accountStatusText(account)}{account.verified_by ? ` Recorded by ${memberLabel(account.verified_by, session.user_id)}${account.verified_at ? ` at ${when(account.verified_at)}` : ""}.` : ""}</p>
     {manage && (actions.verify || actions.revoke) && <div className="flex gap-3">
       {actions.verify && <button type="button" className={button} disabled={busy} onClick={() => { setMode(mode === "verify" ? "" : "verify"); setText(""); }}>{mode === "verify" ? "Cancel" : "Record verification"}</button>}
       {actions.revoke && <button type="button" className={danger} disabled={busy} onClick={() => { setMode(mode === "revoke" ? "" : "revoke"); setText(""); }}>{mode === "revoke" ? "Cancel" : "Revoke"}</button>}
     </div>}
-    {mode === "verify" && <form className="space-y-2 rounded-lg bg-neutral-50 p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { await verifyAccount(businessId, payeeId, account.id, buildAccountVerification(account, text, revision)); done(); }, "Verification recorded."); }}>
+    {mode === "verify" && <form className="space-y-2 rounded-lg bg-muted p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { await verifyAccount(businessId, payeeId, account.id, buildAccountVerification(account, text, revision)); done(); }, "Verification recorded."); }}>
       <label className="block">Evidence you checked (for example, a signed letter or a call back to a known number). At least 10 characters.<textarea className={field} value={text} maxLength={2000} onChange={e => setText(e.target.value)} /></label>
-      <p className="text-xs text-neutral-600">This records your attestation in the audit log. It is not a bank confirmation.</p>
+      <p className="text-xs text-muted-foreground">This records your attestation in the audit log. It is not a bank confirmation.</p>
       <button className={primary} disabled={busy || revision === undefined || !reasonValid(text)}>Record verification</button></form>}
-    {mode === "revoke" && <form className="space-y-2 rounded-lg bg-neutral-50 p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { await revokeAccount(businessId, payeeId, account.id, buildRevocation(account, text, revision)); done(); }, "Account revoked."); }}>
+    {mode === "revoke" && <form className="space-y-2 rounded-lg bg-muted p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { await revokeAccount(businessId, payeeId, account.id, buildRevocation(account, text, revision)); done(); }, "Account revoked."); }}>
       <label className="block">Reason (at least 10 characters)<textarea className={field} value={text} maxLength={2000} onChange={e => setText(e.target.value)} /></label>
       <button className={danger} disabled={busy || revision === undefined || !reasonValid(text)}>Revoke account</button></form>}
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}

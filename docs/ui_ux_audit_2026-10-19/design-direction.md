@@ -27,8 +27,8 @@ Mode by surface:
 | `muted-foreground` | `#5A6B73` | `#A9B1B4` | Secondary text (≥ 4.5:1 on surface and background) |
 | `border` | `#E5E2DC` | `#2C3031` | Hairlines |
 | `border-strong` | `#C9C4BA` | `#454B4D` | Input borders, hover |
-| `primary` | `#004D3B` pine | `#2F8F75` | The one primary action per view, links, selected state |
-| `primary-foreground` | `#FFFAEC` | `#FFFFFF` | Text on primary |
+| `primary` | `#004D3B` pine | `#7FD1B0` | The one primary action per view, links, selected state |
+| `primary-foreground` | `#FFFAEC` | `#102B22` | Text on primary |
 | `ring` | `#004D3B` | `#7FD1B0` | Focus ring (≥ 3:1 against both surfaces) |
 | `muted` | `#F0EEEA` | `#24282A` | Hover fills, segmented controls |
 | `success` / `success-soft` | `#1F7A4D` / `#E8F5EE` | `#5CC28E` / `#13291E` | Feasible, completed |

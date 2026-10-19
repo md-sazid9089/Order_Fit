@@ -76,6 +76,7 @@ $lines = @(
 $override = @("services:")
 foreach ($service in @("api", "migrate", "provision", "worker")) {
     $override += @("  ${service}:", "    image: $apiImage")
+    if ($service -eq "api") { $override += @("    environment:", "      ADMIN_READS_ENABLED: 'true'") }
 }
 $override += @("  web:", "    image: $webImage")
 [System.IO.File]::WriteAllLines($tempCompose, $override, [System.Text.UTF8Encoding]::new($false))
@@ -135,6 +136,7 @@ try {
     }
 
     $env:E2E_BASE_URL = "http://localhost:$webPort"
+    $env:E2E_COMPOSE_PROJECT = $project
     Push-Location (Join-Path $root "web")
     try {
         Write-Output "Isolated browser evidence: $testOutput"
@@ -169,7 +171,12 @@ try {
     Pop-Location -ErrorAction SilentlyContinue
     & docker compose @composeFiles --project-name $project --env-file $tempEnv down -v
     foreach ($testImage in @($apiImage, $webImage)) {
-        & docker image inspect $testImage *> $null
+        # Missing images after a build failure are expected; PowerShell 5 must
+        # still reach the private temporary-file cleanup below.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try { & docker image inspect $testImage *> $null }
+        finally { $ErrorActionPreference = $previousPreference }
         if ($LASTEXITCODE -eq 0) { & docker image rm $testImage }
     }
     if (Test-Path -LiteralPath $tempEnv) { Clear-Content -LiteralPath $tempEnv; Remove-Item -LiteralPath $tempEnv -Force }

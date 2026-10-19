@@ -10,7 +10,7 @@ import { Alert, Loading, NotPermitted, PageFrame, QueryError, button, field, pan
 /** The business's tamper-evident operation log (newest first) and its canonical export. Auditors, risk officers and owners only. */
 export function AuditScreen() {
   const { role } = useScoped();
-  return <PageFrame title="Operation Audit Log" intro="Every recorded action in this business, newest first, with the server's hash chain. Entries are append-only.">
+  return <PageFrame title="Operation audit log" intro="Every recorded action in this business, newest first, with the server's hash chain. Entries are append-only.">
     {can(role, "audit") ? <><Log /><Export /></> : <NotPermitted what="read the audit log" needs="Auditors, risk officers and owners can." />}
   </PageFrame>;
 }
@@ -23,10 +23,10 @@ function Log() {
     <h2 id="log-heading" className="text-lg font-semibold">Operation log</h2>
     {log.isPending && <Loading what="the audit log" />}
     {log.isError && <QueryError error={log.error} retry={() => void log.refetch()} retrying={log.isFetching} />}
-    {log.isSuccess && !rows.length && <p className="text-sm text-neutral-600">No entries recorded yet.</p>}
+    {log.isSuccess && !rows.length && <p className="text-sm text-muted-foreground">No entries recorded yet.</p>}
     <ul className="divide-y">{rows.map(r => <li key={r.sequence} className="space-y-1 py-2 text-sm">
-      <div className="flex flex-wrap items-baseline gap-x-3"><span className="font-mono text-xs text-neutral-500">#{r.sequence}</span><strong className="capitalize">{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-neutral-600" : "font-semibold text-amber-800"}>{r.outcome}</span><span className="text-neutral-600">by {auditActorLabel(r, session.user_id)} ({r.tier})</span><span className="ml-auto text-xs text-neutral-500">{r.at ? when(r.at) : ""}</span></div>
-      <details><summary className="cursor-pointer text-xs text-neutral-600">Details and hashes</summary>
+      <div className="flex flex-wrap items-baseline gap-x-3"><span className="font-mono text-xs text-muted-foreground">#{r.sequence}</span><strong>{humanAction(r.action)}</strong><span className={r.outcome === "success" || r.outcome === "ok" ? "text-muted-foreground" : "font-semibold text-warning"}>{r.outcome}</span><span className="text-muted-foreground">by {auditActorLabel(r, session.user_id)}</span><span className="ml-auto text-xs text-muted-foreground">{r.at ? when(r.at) : ""}</span></div>
+      <details><summary className="cursor-pointer text-xs text-muted-foreground">Details and hashes</summary>
         <dl className="mt-2 grid gap-1 text-xs sm:grid-cols-[8rem_1fr]">
           {r.entity && <><dt>Entity</dt><dd>{r.entity}</dd></>}{r.dealId && <><dt>Order id</dt><dd className="break-all font-mono">{r.dealId}</dd></>}
           <dt>Row hash</dt><dd className="break-all font-mono">{r.hash}</dd><dt>Previous hash</dt><dd className="break-all font-mono">{r.previousHash ?? "none (first entry)"}</dd>
@@ -55,8 +55,8 @@ function Export() {
   }
   return <section className={panel} aria-labelledby="export-heading">
     <h2 id="export-heading" className="text-lg font-semibold">Export the hash chain</h2>
-    <p className="text-sm text-neutral-700">Downloads a JSON file of canonical rows with their hashes so the chain links can be checked by a verifier that has the file. That check has limits (below): it does not by itself prove the history is complete. Leave the range empty to export everything. Per-order decision records are exported from each order&apos;s page.</p>
-    <div className="space-y-1 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><p className="font-semibold">Limits of the verification</p><ul className="list-disc pl-5">{AUDIT_EXPORT_LIMITS.map(l => <li key={l}>{l}</li>)}</ul></div>
+    <p className="text-sm text-muted-foreground">Downloads a JSON file of canonical rows with their hashes so the chain links can be checked by a verifier that has the file. That check has limits (below): it does not by itself prove the history is complete. Leave the range empty to export everything. Per-order decision records are exported from each order&apos;s page.</p>
+    <div className="space-y-1 rounded-lg bg-warning-soft p-3 text-sm text-warning"><p className="font-semibold">Limits of the verification</p><ul className="list-disc pl-5">{AUDIT_EXPORT_LIMITS.map(l => <li key={l}>{l}</li>)}</ul></div>
     <form onSubmit={download} className="flex flex-wrap items-end gap-3">
       <label className="text-sm">From sequence (optional)<input className={field} inputMode="numeric" value={from} onChange={e => setFrom(e.target.value)} /></label>
       <label className="text-sm">To sequence (optional)<input className={field} inputMode="numeric" value={to} onChange={e => setTo(e.target.value)} /></label>

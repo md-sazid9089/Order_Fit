@@ -50,8 +50,8 @@ export function OrderJourney({
     return null;
   };
   return (
-    <nav aria-label="Order progress" className={cn("w-full overflow-x-auto", className)}>
-      <ol className="flex min-w-max items-center gap-1 text-sm">
+    <nav aria-label="Order progress" className={cn("w-full min-w-0", className)}>
+      <ol className="flex flex-wrap items-center gap-1 text-sm">
         {STEPS.map((step, index) => {
           const state: StepState = complete || index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
           const href = state === "upcoming" ? null : hrefFor(step.key);
@@ -81,7 +81,7 @@ export function OrderJourney({
           );
           return (
             <li key={step.key} className="flex items-center gap-1" aria-current={state === "current" ? "step" : undefined}>
-              {index > 0 && <span aria-hidden className={cn("h-px w-4 sm:w-6", index <= currentIndex ? "bg-primary/50" : "bg-border-strong/60")} />}
+              {index > 0 && <span aria-hidden className={cn("hidden h-px w-4 lg:block", index <= currentIndex ? "bg-primary/50" : "bg-border-strong/60")} />}
               {href ? (
                 <Link href={href} className="rounded-full hover:bg-muted">
                   {content}
