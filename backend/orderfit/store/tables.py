@@ -44,6 +44,11 @@ app_user = Table(
     Column("full_name", String),
     Column("is_platform_admin", Boolean),
     Column("passkey_required", Boolean),
+    Column("email_verified_at", DateTime(timezone=True)),
+    Column("verified_email", String),
+    Column("credential_generation", BigInteger),
+    Column("status", String),
+    Column("mfa_enforced", Boolean),
     Column("preferences", JSONB),
     Column("version", Integer),
 )

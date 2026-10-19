@@ -5,6 +5,20 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+19 October account-access backend: new sole required schema head is
+`0023_account_access` after 0022. Default-off verified-email enrollment/password
+recovery, durable encrypted Resend account-mail outbox/callbacks, owner invitation
+list/reissue/email and invitee-only registration are implemented locally.
+Credential generation, NOWAIT-dependent revocation and session fencing retain
+passkeys and approval history. Final focused acceptance:187passed; broad run:
+806passed/1deselected/1stale-head-assertion failure, corrected and included in the
+passing final focus. No clean full rerun is claimed. Backend-only exports are
+current; frontend declarations/pages, shared DB migration, maintenance schedule,
+provider DNS/keys/real delivery/browser remain with their owners. No Neon migration
+or live send ran. See [implementation evidence](../../../docs/account_access_implementation_2026-10-19.md)
+and [release runbook](../../../docs/deployment/account-access.md). Earlier schema
+and disabled-capability snapshots below are historical, not today's source head.
+
 19 October Docker startup follow-up: read-only container checks found the active
 Neon DB at `0020_ai_workflow`, but the image requires `0022_baseline_duplicates`.
 API/worker crash loops were stopped; database owner must apply BOTH `0021_admin_reads`

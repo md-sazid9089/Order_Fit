@@ -6,6 +6,19 @@
 
 name: orderfit
 
+x-account-mail-environment: &account-mail-environment
+  ACCOUNT_EMAIL_MODE: ${ACCOUNT_EMAIL_MODE:-off}
+  ACCOUNT_EMAIL_ENVIRONMENT: ${ACCOUNT_EMAIL_ENVIRONMENT:-development}
+  EMAIL_VERIFICATION_ENABLED: ${EMAIL_VERIFICATION_ENABLED:-false}
+  PASSWORD_RECOVERY_ENABLED: ${PASSWORD_RECOVERY_ENABLED:-false}
+  INVITATION_EMAIL_ENABLED: ${INVITATION_EMAIL_ENABLED:-false}
+  PUBLIC_APP_ORIGIN: ${PUBLIC_APP_ORIGIN:-http://localhost:3000}
+  ACCOUNT_EMAIL_FROM: ${ACCOUNT_EMAIL_FROM:-accounts@example.test}
+  ACCOUNT_EMAIL_ACTIVE_KEY_ID: ${ACCOUNT_EMAIL_ACTIVE_KEY_ID:-}
+  ACCOUNT_EMAIL_ENCRYPTION_KEYS: '${ACCOUNT_EMAIL_ENCRYPTION_KEYS:-{}}'
+  ACCOUNT_EMAIL_SOURCE_LIMIT: ${ACCOUNT_EMAIL_SOURCE_LIMIT:-300}
+  RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+
 # Run the setup-profile provision job once after migration, before API/worker startup.
 # Credentials are injected separately; runtime startup rejects privileged logins.
 
@@ -69,6 +82,7 @@ services:
     build: ./backend
     image: orderfit-api:local
     environment:
+      <<: *account-mail-environment
       DATABASE_URL: ${DATABASE_URL:?Set the restricted runtime URL}
       DOCUMENT_DIR: /app/var/documents
       DOCUMENT_STORAGE_BACKEND: ${DOCUMENT_STORAGE_BACKEND:-filesystem}
@@ -116,6 +130,9 @@ services:
     healthcheck:
       disable: true
     environment:
+      <<: *account-mail-environment
+      ACCOUNT_EMAIL_WORKER_ENABLED: ${ACCOUNT_EMAIL_WORKER_ENABLED:-false}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       DATABASE_URL: ${WORKER_DATABASE_URL:?Set the restricted worker URL}
       DOCUMENT_DIR: /app/var/documents
       DOCUMENT_STORAGE_BACKEND: ${DOCUMENT_STORAGE_BACKEND:-filesystem}

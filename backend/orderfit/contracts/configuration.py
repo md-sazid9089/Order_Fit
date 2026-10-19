@@ -56,6 +56,19 @@ class RuntimeConfiguration(BaseSettings):
     expose_api_docs: bool = False
     # Read-only summaries also require the reviewed migration and API caller role.
     admin_reads_enabled: bool = False
+    account_email_mode: Literal["off", "recorded", "resend"] = "off"
+    account_email_environment: Literal["development", "staging", "production"] = "development"
+    email_verification_enabled: bool = False
+    password_recovery_enabled: bool = False
+    invitation_email_enabled: bool = False
+    public_app_origin: str | None = None
+    account_email_from: str | None = None
+    resend_api_key: SecretStr | None = None
+    resend_webhook_secret: SecretStr | None = None
+    account_email_active_key_id: str | None = None
+    account_email_encryption_keys: dict[str, SecretStr] = {}
+    account_email_source_limit: Annotated[int, Field(ge=15, le=100000)] = 300
+    account_email_worker_enabled: bool = False
     session_absolute_seconds: Literal[28800] = 28800
     session_idle_seconds: Literal[1800] = 1800
     step_up_seconds: Literal[300] = 300
@@ -70,6 +83,9 @@ class RuntimeConfiguration(BaseSettings):
 
     @model_validator(mode="after")
     def coherent(self):
+        from orderfit.services.mail_crypto import validate_mail_configuration
+
+        validate_mail_configuration(self)
         if bool(self.webauthn_rp_id) != bool(self.webauthn_origin):
             raise ValueError("WebAuthn RP and origin must be configured together")
         if self.webauthn_origin:
