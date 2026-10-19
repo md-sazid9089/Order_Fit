@@ -11,8 +11,6 @@ import { buildBusinessProfileWrite, buildPasswordChange, buildProfileWrite, can,
 import type { BusinessView, SessionView } from "@/lib/generated-api";
 import { useScope } from "@/components/layout/scope";
 import { PasskeyPanel } from "@/components/settings/passkey-panel";
-import { StatusBadge } from "@/components/system/status-badge";
-import { capabilityState, getAccountAccess, requestEmailVerification } from "@/lib/account-access-api";
 import { Alert, Loading, PageFrame, QueryError, field, panel, primary, useCommand, useScoped, when } from "@/components/p7/common";
 
 type Tab = "user" | "company";
@@ -27,7 +25,7 @@ export function SettingsScreen() {
   const [tab, setTab] = useState<Tab>("user");
   const tabs: { id: Tab; label: string }[] = [{ id: "user", label: "Your profile" }, { id: "company", label: "Company profile" }];
   return <PageFrame title="Settings" intro="Your profile and your company's profile. Security controls such as audit, tenant isolation and approvals cannot be switched off from here.">
-    <div role="tablist" aria-label="Settings sections" className="flex gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-primary text-primary-foreground" : "bg-card"}`}>{t.label}</button>)}</div>
+    <div role="tablist" aria-label="Settings sections" className="flex flex-wrap gap-2">{tabs.map(t => <button key={t.id} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`} type="button" onClick={() => setTab(t.id)} className={`rounded-lg border px-4 py-2 text-sm ${tab === t.id ? "bg-neutral-900 text-white" : "bg-white"}`}>{t.label}</button>)}</div>
     <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>{tab === "user" ? <UserProfile /> : <CompanyProfile />}</div>
   </PageFrame>;
 }
@@ -36,7 +34,7 @@ function UserProfile() {
   const { session, replaceSession } = useScope();
   const queryClient = useQueryClient();
   // The form is keyed by the saved profile version, so a successful save re-initializes it from the server's answer.
-  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><EmailVerificationPanel /><PasswordPanel /><PasskeyPanel /></div>;
+  return <div className="space-y-5"><ProfileForm key={session.profile_version} initial={{ full_name: session.profile.full_name, timezone: session.profile.preferences.timezone, language: session.profile.preferences.language, in_app_notifications: session.profile.preferences.in_app_notifications }} onSaved={next => { replaceSession(next); void queryClient.invalidateQueries(); }} /><PasswordPanel /><PasskeyPanel /></div>;
 }
 
 function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (session: SessionView) => void }) {
@@ -52,14 +50,17 @@ function ProfileForm({ initial, onSaved }: { initial: ProfileDraft; onSaved: (se
   }
   return <form onSubmit={save} className={panel}>
     <h2 className="text-lg font-semibold">Your profile</h2>
-    <p className="text-sm text-muted-foreground">Signed in as {session.email}. Your profile and preferences apply across every business you belong to.</p>
+    <p className="text-sm text-neutral-700">Signed in as {session.email}. Your profile and preferences apply across every business you belong to.</p>
     <label className="block text-sm">Full name<input required className={field} value={draft.full_name} maxLength={2000} onChange={e => setDraft({ ...draft, full_name: e.target.value })} /></label>
     <label className="block text-sm">Time zone<select className={field} value={draft.timezone} onChange={e => setDraft({ ...draft, timezone: e.target.value })}>{zones(draft.timezone).map(z => <option key={z} value={z}>{z}</option>)}</select></label>
     <label className="block text-sm">Language<select className={field} value={draft.language} onChange={e => setDraft({ ...draft, language: e.target.value as ProfileDraft["language"] })}><option value="en">English</option><option value="bn">Bangla</option></select></label>
     <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={draft.in_app_notifications} onChange={e => setDraft({ ...draft, in_app_notifications: e.target.checked })} /><span>Create in-app notifications for me. When off, no new notification rows are created for you; email delivery does not exist.</span></label>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-    <button className={primary} disabled={busy || !changed || !valid}>{busy ? "Saving…" : "Save profile"}</button>
-    <p className="border-t border-border pt-3 text-sm text-muted-foreground">This session expires {when(session.expires_at)}.</p>
+    <button className={`${primary} w-full sm:w-auto`} disabled={busy || !changed || !valid}>{busy ? "Saving…" : "Save profile"}</button>
+    <div className="space-y-1 border-t pt-3 text-sm text-neutral-700"><h3 className="font-semibold">Security status</h3>
+      <p>Multi-factor authentication: {session.mfa_supported ? "available" : "not supported yet"}.</p>
+      <p>Email verification: {session.email_verified ? "verified" : "not supported yet"}.</p>
+      <p>This session expires {when(session.expires_at)}.</p></div>
   </form>;
 }
 
@@ -92,15 +93,15 @@ function PasswordPanel() {
       }
     } finally { setCurrent(""); setNext(""); setConfirm(""); setBusy(false); }
   }
-  const shown = (name: "current" | "next" | "confirm") => touched && errors[name] ? <span role="alert" className="block text-xs text-danger">{errors[name]}</span> : null;
+  const shown = (name: "current" | "next" | "confirm") => touched && errors[name] ? <span role="alert" className="block text-xs text-red-700">{errors[name]}</span> : null;
   return <form onSubmit={submit} className={panel} noValidate>
     <h2 className="text-lg font-semibold">Change password</h2>
-    <p className="text-sm text-muted-foreground">Use at least {PASSWORD_MIN} characters. When it succeeds, every session of this account ends, including this one, and you sign in again with the new password. The passwords are never stored in this browser.</p>
+    <p className="text-sm text-neutral-700">Use at least {PASSWORD_MIN} characters. When it succeeds, every session of this account ends, including this one, and you sign in again with the new password. The passwords are never stored in this browser.</p>
     <label className="block text-sm">Current password<input type="password" autoComplete="current-password" className={field} value={current} onChange={e => setCurrent(e.target.value)} />{shown("current")}</label>
     <label className="block text-sm">New password<input type="password" autoComplete="new-password" className={field} value={next} onChange={e => setNext(e.target.value)} />{shown("next")}</label>
     <label className="block text-sm">Repeat new password<input type="password" autoComplete="new-password" className={field} value={confirm} onChange={e => setConfirm(e.target.value)} />{shown("confirm")}</label>
     {error && <Alert>{error}</Alert>}
-    <button className={primary} disabled={busy}>{busy ? "Changing…" : "Change password"}</button>
+    <button className={`${primary} w-full sm:w-auto`} disabled={busy}>{busy ? "Changing…" : "Change password"}</button>
   </form>;
 }
 
@@ -133,7 +134,7 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
   }
   return <form onSubmit={save} className={panel}>
     <h2 className="text-lg font-semibold">{businessName || "Company profile"}</h2>
-    <p className="text-sm text-muted-foreground">Currency {business.currency} (fixed, amounts use minor units with {business.exponent} decimal places). {editable ? "As an owner you can edit these details." : `Your role (${roleText}) can read but not edit them; only an owner can.`}</p>
+    <p className="text-sm text-neutral-700">Currency {business.currency} (fixed, amounts use minor units with {business.exponent} decimal places). {editable ? "As an owner you can edit these details." : `Your role (${roleText}) can read but not edit them; only an owner can.`}</p>
     <fieldset disabled={!editable || busy} className="space-y-3">
       <label className="block text-sm">Company name<input required className={field} value={draft.name} maxLength={2000} onChange={e => set({ name: e.target.value })} /></label>
       <label className="block text-sm">Time zone<select className={field} value={draft.timezone} onChange={e => set({ timezone: e.target.value })}>{zones(draft.timezone).map(z => <option key={z} value={z}>{z}</option>)}</select></label>
@@ -143,48 +144,7 @@ function CompanyForm({ business, editable, businessName, roleText, reload }: { b
       <label className="block text-sm">Tax ID<input className={field} value={draft.tax_id} maxLength={100} onChange={e => set({ tax_id: e.target.value })} /></label>
     </fieldset>
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
-    {editable && <button className={primary} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
-    <p className="text-xs text-muted-foreground">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
+    {editable && <button className={`${primary} w-full sm:w-auto`} disabled={busy || !changed || !companyDraftValid(draft)}>{busy ? "Saving…" : "Save company profile"}</button>}
+    <p className="text-xs text-neutral-600">Saving changes the business record version (currently {business.version}). Cash baseline, policy and financing are managed under Cash and financing.</p>
   </form>;
-}
-
-/**
- * Email verification decides whether this account can recover a forgotten password by email. Requesting a link needs
- * the current password; the link must then be opened while signed in to this same account.
- */
-function EmailVerificationPanel() {
-  const { session } = useScope();
-  const caps = useQuery({ queryKey: ["account-access"], queryFn: ({ signal }) => getAccountAccess(signal), retry: false, staleTime: 60_000 });
-  const verification = capabilityState(caps.data, caps.isError, "email_verification");
-  const recovery = capabilityState(caps.data, caps.isError, "password_recovery");
-  const [password, setPassword] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [requested, setRequested] = useState(false);
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setError("");
-    if (!password) { setError("Enter your current password."); return; }
-    setBusy(true);
-    try { await requestEmailVerification(password); setRequested(true); }
-    catch (cause) { setError(describeP7Error(cause).message); }
-    finally { setPassword(""); setBusy(false); }
-  }
-  return <section className={panel} aria-labelledby="email-verification-title">
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <h2 id="email-verification-title" className="text-lg font-semibold">Email and account recovery</h2>
-      <StatusBadge tone={session.email_verified ? "success" : "warning"}>{session.email_verified ? "Email verified" : "Email not verified"}</StatusBadge>
-    </div>
-    <p className="text-sm text-muted-foreground">
-      {session.email_verified
-        ? recovery === "available" && session.password_recovery_eligible ? `If you forget your password, a reset link can be sent to ${session.email}.` : "Your email is verified. Password reset by email is not offered in this workspace."
-        : verification === "available" && recovery === "available" ? `Verify ${session.email} to enable password recovery by email.` : "Email verification and password recovery are not enabled here. Keep access to your password and any configured passkeys."}
-    </p>
-    {!session.email_verified && verification === "available" && (requested
-      ? <Alert tone="ok">Verification email requested. Open the link and confirm while signed in to this account.</Alert>
-      : <form onSubmit={submit} className="space-y-3" noValidate>
-          <label className="block text-sm font-medium">Current password<input type="password" autoComplete="current-password" className={field} value={password} onChange={e => setPassword(e.target.value)} /></label>
-          {error && <Alert>{error}</Alert>}
-          <button className={primary} disabled={busy}>{busy ? "Requesting…" : "Send verification email"}</button>
-        </form>)}
-    {!session.email_verified && verification === "disabled" && <Alert tone="info">This workspace doesn&apos;t send verification emails.</Alert>}
-    {!session.email_verified && verification === "unavailable" && <Alert tone="warn">Email verification can&apos;t be confirmed as available right now. <button type="button" className="font-semibold text-primary underline" onClick={() => void caps.refetch()}>Check again</button></Alert>}
-    <p className="text-sm text-muted-foreground">Passkey sign-in: {session.mfa_enabled ? "on for this account" : session.mfa_supported ? "available; add a passkey below" : "not available in this workspace"}.</p>
-  </section>;
 }

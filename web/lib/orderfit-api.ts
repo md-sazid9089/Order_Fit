@@ -1,24 +1,12 @@
 import { API_URL } from "./api";
-import { parseRetryAfter, userMessage } from "./error-copy";
 
 const ROOT = `${API_URL.replace(/\/$/, "")}/api/v1`;
 
 import type { BusinessOverviewView } from "./generated-api";
 export type { MembershipView as Membership, SessionView as Session, BusinessView as Business, ConstraintsView as Constraints, CustomerView as Customer, DealView as Deal, Review, Operation, EvaluationResultV1 as Evaluation } from "./generated-api";
 export type { DraftInputs, CostInput, Evidence, BaselineView, ConstraintsView, OfferView, PayeeView, TermLoanTerms, ExportView, BusinessOverviewView, OverviewKPISummary, OverviewCashflowSummary, OverviewCashflowPoint, OverviewDelayScenario, OverviewVerdictDistribution, OverviewRecentSettlement, OverviewCurrencyBalance } from "./generated-api";
-export type Envelope = { error?: { code?: string; message?: string; request_id?: string; retryable?: boolean; details?: Record<string, unknown> & { current_version?: number } } };
-export type ApiErrorExtra = { requestId?: string | null; retryable?: boolean; retryAfterSeconds?: number | null; details?: Record<string, unknown> | null };
-/**
- * An HTTP answer that was not a success. `message` is already user-facing copy (see lib/error-copy.ts); `code` is for
- * program logic only and is never shown. `requestId` lets support match a report to the server log.
- */
-export class ApiError extends Error {
-  readonly requestId: string | null; readonly retryable: boolean; readonly retryAfterSeconds: number | null; readonly details: Record<string, unknown> | null;
-  constructor(message: string, readonly code: string, readonly status: number, extra: ApiErrorExtra = {}) {
-    super(message); this.name = "ApiError";
-    this.requestId = extra.requestId ?? null; this.retryable = extra.retryable ?? (status === 429 || status === 503); this.retryAfterSeconds = extra.retryAfterSeconds ?? null; this.details = extra.details ?? null;
-  }
-}
+export type Envelope = { error?: { code?: string; message?: string; details?: { current_version?: number } } };
+export class ApiError extends Error { constructor(message: string, readonly code: string, readonly status: number) { super(message); this.name = "ApiError"; } }
 
 /** The request never produced an HTTP answer (offline, DNS, reset, abort). The outcome of a write is unknown. */
 export class NetworkError extends Error { constructor(message = "The network request did not complete.") { super(message); this.name = "NetworkError"; } }
@@ -31,43 +19,21 @@ export function isSessionExpired(status: number, code: string): boolean {
   return (status === 401 && code !== "INVALID_CREDENTIALS") || (status === 403 && code === "SESSION_REAUTH_REQUIRED");
 }
 
-/** Downloads use the same structured error contract as JSON commands. */
-export async function downloadFailure(response: Response): Promise<never> {
-  const body: Envelope | null = await response.json?.().catch(() => null) ?? null;
-  const code = body?.error?.code ?? "DOWNLOAD_FAILED";
-  if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-  const retryAfterSeconds = parseRetryAfter(response.headers?.get?.("Retry-After"));
-  throw new ApiError(userMessage(code, response.status, body?.error?.message, retryAfterSeconds), code, response.status, {
-    requestId: body?.error?.request_id ?? response.headers?.get?.("X-Request-ID"),
-    retryable: body?.error?.retryable, details: body?.error?.details, retryAfterSeconds,
-  });
-}
-
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
-  try { response = await fetch(`${ROOT}${path}`, { ...init, signal: typeof AbortSignal !== "undefined" ? (init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000)) : init.signal, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
+  try { response = await fetch(`${ROOT}${path}`, { ...init, credentials: "include", cache: "no-store", headers: { Accept: "application/json", ...init.headers } }); }
   catch (cause) { const name = (cause as { name?: string } | null)?.name; throw name === "AbortError" || name === "TimeoutError" ? cause : new NetworkError(); }
-  const UNREADABLE = Symbol("unreadable");
-  const parsed = await response.json().catch(() => UNREADABLE) as (T & Envelope) | typeof UNREADABLE;
-  const retryAfterSeconds = parseRetryAfter(response.headers?.get?.("Retry-After"));
+  const body = await response.json().catch(() => ({})) as T & Envelope;
   if (!response.ok) {
-    const body = parsed === UNREADABLE ? null : parsed;
     const error = body?.error;
     const code = error?.code ?? "REQUEST_FAILED";
     if (isSessionExpired(response.status, code) && typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-    throw new ApiError(userMessage(code, response.status, error?.message, retryAfterSeconds), code, response.status, {
-      requestId: error?.request_id ?? response.headers?.get?.("X-Request-ID") ?? null,
-      retryable: error?.retryable,
-      retryAfterSeconds,
-      details: error?.details ?? null,
-    });
+    const fallback = response.status >= 500
+      ? "The service is temporarily unavailable. Retry the same action when it recovers."
+      : `Request failed (${response.status})`;
+    throw new ApiError(error?.message ?? fallback, code, response.status);
   }
-  // A success that cannot be read (an HTML page from a proxy, a truncated body) is not treated as success.
-  if (parsed === UNREADABLE || (parsed !== null && typeof parsed !== "object")) {
-    if (response.status === 204 || response.status === 205) return {} as T;
-    throw new ApiError(userMessage("MALFORMED_RESPONSE", response.status), "MALFORMED_RESPONSE", response.status, { retryable: true });
-  }
-  return parsed;
+  return body;
 }
 
 export async function get<T>(path: string, options: Pick<RequestInit, "signal"> = {}): Promise<T> { return request<T>(path, options); }
@@ -116,8 +82,7 @@ async function write<T>(path: string, method: "POST" | "PATCH", payload: Payload
   } catch (error) {
     // A server/proxy failure can hide a committed command, just like a lost response.
     // Only a definitive client rejection releases the key; retries must recover the same write.
-    // An operation still running, a timed-out upload or an unreadable success may also hide a committed write.
-    if (error instanceof ApiError && error.status < 500 && !["OPERATION_IN_PROGRESS", "REQUEST_TIMEOUT", "MALFORMED_RESPONSE"].includes(error.code)) resolved();
+    if (error instanceof ApiError && error.status < 500) resolved();
     throw error;
   }
 }

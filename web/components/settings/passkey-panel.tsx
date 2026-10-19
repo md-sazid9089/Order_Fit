@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useScope } from "@/components/layout/scope";
 import { enrollPasskey } from "@/lib/passkeys";
-import { ApiError } from "@/lib/orderfit-api";
 import { resetSessionState } from "@/lib/session-reset";
 import { field, panel, primary } from "@/components/p7/common";
 
@@ -25,7 +24,7 @@ export function PasskeyPanel() {
       resetSessionState(queryClient);
       router.replace("/auth/signin");
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : "Passkey setup did not finish. Check your authenticator and try again; use HTTPS or localhost in a supported browser.");
+      setError(cause instanceof Error ? cause.message : "Passkey setup failed.");
     } finally { setBusy(false); }
   }
   return <section className={panel} aria-labelledby="passkey-title">
@@ -34,8 +33,8 @@ export function PasskeyPanel() {
     {!session.mfa_supported ? <p className="mt-2 text-sm">Passkey setup needs the deployment’s trusted hostname and origin configuration.</p> : <form onSubmit={submit} className="mt-3 space-y-3">
       <p className="text-sm">Sign in within the last five minutes before setup. Enrollment signs out all devices; sign in again with your passkey. There is no password-only recovery.</p>
       <label className="block text-sm">Current password<input type="password" autoComplete="current-password" required className={field} value={password} onChange={event => setPassword(event.target.value)} /></label>
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      <button type="submit" className={primary} disabled={busy || !password}>{busy ? "Waiting for authenticator…" : session.mfa_enabled ? "Add backup passkey" : "Enable passkey MFA"}</button>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      <button type="submit" className={`${primary} w-full sm:w-auto`} disabled={busy || !password}>{busy ? "Waiting for authenticator…" : session.mfa_enabled ? "Add backup passkey" : "Enable passkey MFA"}</button>
     </form>}
   </section>;
 }
