@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import { ReactLenis, useLenis } from "lenis/react";
 import type Lenis from "lenis";
 import gsap from "gsap";
@@ -31,14 +31,8 @@ export const useSmoothScroll = () => useContext(SmoothScrollContext);
 /**
  * Internal listener for anchor clicks, GSAP ticker sync, and scroll progress tracking
  */
-function SmoothScrollTelemetry({
-  onProgressChange,
-}: {
-  onProgressChange: (progress: number) => void;
-}) {
-  const lenis = useLenis((lenisInstance) => {
-    onProgressChange(lenisInstance.progress);
-  });
+function SmoothScrollTelemetry() {
+  const lenis = useLenis();
 
   // Sync Lenis with GSAP ticker for 60/120fps hardware-accelerated animations
   useEffect(() => {
@@ -111,16 +105,27 @@ function SmoothScrollTelemetry({
 /**
  * Top slim progress bar that indicates scroll depth across the entire page
  */
-export function ScrollProgressBar({ progress }: { progress: number }) {
+export function ScrollProgressBar({ progress }: { progress?: number } = {}) {
+  const barRef = React.useRef<HTMLDivElement>(null);
+
+  const onScroll = React.useCallback((lenis: Lenis) => {
+    if (barRef.current) {
+      barRef.current.style.transform = `scaleX(${lenis.progress})`;
+    }
+  }, []);
+
+  useLenis(onScroll, []);
+
   return (
     <div
       className="fixed top-0 left-0 right-0 h-[3px] z-[60] pointer-events-none bg-transparent"
       aria-hidden="true"
     >
       <div
+        ref={barRef}
         className="h-full bg-gradient-to-r from-[#004D3B] via-[#529A86] to-[#B5F2C6] transition-transform duration-75 ease-out origin-left shadow-[0_0_8px_rgba(181,242,198,0.6)]"
         style={{
-          transform: `scaleX(${progress})`,
+          transform: progress !== undefined ? `scaleX(${progress})` : "scaleX(0)",
         }}
       />
     </div>
@@ -150,7 +155,6 @@ export function SmoothScrollProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
     getReducedMotionSnapshot,
@@ -192,6 +196,17 @@ export function SmoothScrollProvider({
     scrollTo(0, { duration, offset: 0 });
   };
 
+  const contextValue = React.useMemo(
+    () => ({
+      scrollTo,
+      scrollToTop,
+      get progress() {
+        return lenisInstanceRef.current?.progress ?? 0;
+      },
+    }),
+    []
+  );
+
   return (
     <ReactLenis
       root
@@ -210,15 +225,9 @@ export function SmoothScrollProvider({
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       }}
     >
-      <SmoothScrollContext.Provider
-        value={{
-          scrollTo,
-          scrollToTop,
-          progress: scrollProgress,
-        }}
-      >
-        <SmoothScrollTelemetry onProgressChange={setScrollProgress} />
-        <ScrollProgressBar progress={scrollProgress} />
+      <SmoothScrollContext.Provider value={contextValue}>
+        <SmoothScrollTelemetry />
+        <ScrollProgressBar />
         {children}
       </SmoothScrollContext.Provider>
     </ReactLenis>
