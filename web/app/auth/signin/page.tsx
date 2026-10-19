@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
-import { safeNext, signInNotice } from "@/lib/session-expiry";
+import { safeNext, safeReturnPath, signInNotice } from "@/lib/session-expiry";
 import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
 import { signInWithPasskey } from "@/lib/passkeys";
@@ -42,7 +42,8 @@ export default function SignInPage() {
         session = await signInWithPasskey(normalizedEmail, password);
       }
       setCachedSession(session);
-      router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/overview");
+      const params = new URLSearchParams(window.location.search);
+      router.replace(safeNext(params.get("next")) ?? safeReturnPath(params.get("return")) ?? "/overview");
     } catch (cause) {
       if (cause instanceof ApiError && (cause.code === "INVALID_CREDENTIALS" || cause.status === 401)) {
         setError("Invalid email or password.");
