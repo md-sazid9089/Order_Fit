@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
@@ -36,7 +36,6 @@ function getInitialBusinessId(sess: Session | null): string {
 export function AuthShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(getCachedSession);
   const [businessId, setBusinessId] = useState<string>(() => getInitialBusinessId(getCachedSession()));
@@ -114,17 +113,17 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
   if (!scope) {
     return (
-      <main className="min-h-screen bg-muted flex items-center justify-center p-8 text-muted-foreground">
+      <main className="min-h-screen bg-[#f7f6f5] flex items-center justify-center p-8 text-neutral-700">
         {error ? (
-          <p role="alert" className="rounded-lg bg-danger-soft p-3 text-danger">
+          <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">
             {error}{" "}
             <button className="underline" onClick={() => window.location.reload()}>
               Retry
             </button>
           </p>
         ) : (
-          <div className="flex items-center gap-2.5 text-muted-foreground">
-            <div className="size-4 animate-spin rounded-full border-2 border-border border-t-neutral-800" />
+          <div className="flex items-center gap-2.5 text-neutral-400">
+            <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
             <span className="text-xs font-medium tracking-wide">Loading…</span>
           </div>
         )}
@@ -148,36 +147,31 @@ export function AuthShell({ children }: { children: ReactNode }) {
     "/useraccess": "User Management",
     "/users": "User Management",
     "/settings": "Settings",
-    "/financing": "Financing",
-    "/risk-constraints": "Risk and constraints",
     "/admin": "Admin Panel",
   };
   const title = (current && SIDEBAR_ROUTE_NAMES[current]) || SIDEBAR_ROUTE_NAMES[pathname] || links.find(l => l.href === current)?.label || "OrderFit";
   const isAdmin = Boolean(scope.session.is_platform_admin === true);
   return <ScopeContext.Provider value={scope}>
-    <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:p-3 focus:text-foreground">Skip to content</a>
-    <div className="min-h-screen bg-muted text-foreground font-sans flex flex-row selection:bg-neutral-300 selection:text-foreground">
+    <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
       <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} isAdmin={isAdmin} />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 h-16 bg-card/95 backdrop-blur-md border-b border-border px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1440px] mx-auto h-full flex items-center justify-between gap-3">
-            {/* Each page owns its single <h1>; the bar repeats the location as a label, not a second heading. */}
-            <p className="hidden sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-foreground font-display leading-tight">{title}</p>
-            <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2 text-sm pl-10 sm:pl-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-3">
+            <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">{title}</h1>
+            <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2 text-sm pl-9 sm:pl-0">
               <ThemeToggle variant="icon" />
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
-              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[5rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-border bg-card px-3 py-1.5 text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[5.5rem] sm:max-w-[14rem] xl:max-w-none truncate rounded-xl border border-[#E8E6E1] bg-white px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
                 {scope.session.memberships.length === 0 && <option value="">No business</option>}
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>
-              {canPrepare && businessId && <Link href={`/deals/new${query}`} aria-label="Evaluate New Order" className="inline-flex shrink-0 items-center gap-1.5 min-h-11 min-w-11 p-2 xl:px-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span className="hidden xl:inline">Evaluate New Order</span></Link>}
+              {canPrepare && businessId && <Link href={`/deals/new${query}`} aria-label="Evaluate New Order" className="inline-flex shrink-0 items-center gap-1.5 p-2 xl:px-4 rounded-xl bg-[#1E2021] hover:bg-[#2C302F] text-white text-xs font-semibold transition-all active:scale-[0.98] shadow-xs"><Plus className="size-3.5" /><span className="hidden xl:inline">Evaluate New Order</span></Link>}
             </div>
           </div>
         </header>
-        {searchParams.get("notice") === "platform-access-required" && <p role="status" className="mx-4 mt-3 rounded-xl bg-info-soft p-3 text-sm text-info">Platform administration requires a service operator account. Your business workspace is available below.</p>}
-        {error && <p role="alert" className="mx-4 mt-3 rounded-lg bg-danger-soft p-3 text-danger sm:mx-6 lg:mx-8">{error}</p>}
-        {businessId ? <div id="main-content" tabIndex={-1} key={businessId} className="flex-1 min-w-0">{children}</div> : <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><p className="rounded-xl bg-card p-5 max-w-[1440px] mx-auto">Your account has no business membership, so there is nothing to show yet.</p></main>}
+        {error && <p role="alert" className="mx-4 mt-3 rounded-lg bg-red-50 p-3 text-red-800 sm:mx-6 lg:mx-8">{error}</p>}
+        {businessId ? <div key={businessId} className="flex-1 min-w-0">{children}</div> : <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><p className="rounded-xl bg-white p-5 max-w-[1560px] mx-auto">Your account has no business membership, so there is nothing to show yet.</p></main>}
       </div>
     </div>
   </ScopeContext.Provider>;

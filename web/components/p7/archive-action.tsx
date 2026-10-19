@@ -27,7 +27,7 @@ export function ArchiveAction({ noun, permission, record, financialRevision, arc
   }
   return <div className="w-full space-y-2">
     <button type="button" className={danger} aria-expanded={open} onClick={() => setOpen(!open)}>Archive {noun}</button>
-    {open && <form onSubmit={submit} className="space-y-2 rounded-lg border border-red-200 bg-danger-soft p-3 text-sm">
+    {open && <form onSubmit={submit} className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
       <p>{consequence} Records that already use it keep their history. Archiving cannot be undone from this screen.</p>
       <label className="block">Reason (10 to 2000 characters)<textarea className={field} value={reason} maxLength={2000} onChange={e => setReason(e.target.value)} /></label>
       {error && <Alert>{error}</Alert>}

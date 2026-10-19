@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, useReducedMotion, type HTMLMotionProps, type Variants } from "motion/react";
+import { motion, type HTMLMotionProps, type Variants } from "motion/react";
 
 export type RevealDirection = "up" | "down" | "left" | "right" | "none";
 
@@ -29,7 +29,6 @@ export function ScrollReveal({
   staggerChildren = 0,
   ...props
 }: ScrollRevealProps) {
-  const reduceMotion = useReducedMotion();
   const getInitialPosition = () => {
     switch (direction) {
       case "up":
@@ -66,9 +65,6 @@ export function ScrollReveal({
       },
     },
   };
-
-  // Reduced motion: content is simply present, with no entrance animation.
-  if (reduceMotion) return <div className={className}>{children}</div>;
 
   return (
     <motion.div

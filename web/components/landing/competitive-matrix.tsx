@@ -56,7 +56,7 @@ export function CompetitiveMatrix() {
       fpa: false,
       spreadsheet: "Manual",
       llm: false,
-      note: "When a customer counter-offers, old approvals turn stale; you review the reply and re-run the evaluation before anything new is approved.",
+      note: "When a customer counter-offers, old approvals turn stale and the model re-plans automatically.",
     },
     {
       feature: "Mandatory Human-in-the-Loop Approvals",

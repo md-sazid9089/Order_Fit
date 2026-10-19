@@ -21,7 +21,6 @@ export async function loadPipeline(businessId: string, offset: number, signal?: 
     read<Page<Deal>>(`deals?limit=${limit}&offset=${offset}`),
     optional(read<BaselineView>("baseline")),
   ]);
-  if (!Array.isArray(deals?.items)) throw new ApiError("The service returned incomplete order data. Try loading it again.", "MALFORMED_RESPONSE", 200, { retryable: true });
   const [customerPage, constraints] = await Promise.all([
     read<Page<Customer>>("customers"), read<Page<Constraints>>("constraints?default_only=true"),
   ]);
@@ -48,8 +47,8 @@ export async function loadPipeline(businessId: string, offset: number, signal?: 
   // Preserve parallel evaluation loading for the common case with known labels.
   // IDs come only from this 20-order page; never fetch an unbounded collection.
   await Promise.all(evaluationIds.map(async id => {
-    const evaluation = await read<Evaluation>(`evaluations/${id}`);
-    byEvaluation[id] = evaluation;
+    const evaluation = await optional(read<Evaluation>(`evaluations/${id}`));
+    if (evaluation) byEvaluation[id] = evaluation;
   }));
   signal?.throwIfAborted();
   const evaluations: Record<string, Evaluation> = {};

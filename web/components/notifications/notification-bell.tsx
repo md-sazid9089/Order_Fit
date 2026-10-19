@@ -9,7 +9,7 @@ import { isUnread, maxNotificationId, safeActionPath, unreadCount, unreadLabel }
 import { Alert, QueryError, button, useCommand, useScoped, when } from "@/components/p7/common";
 import { SkeletonList } from "@/components/ui/skeleton";
 
-const SEVERITY: Record<string, string> = { info: "bg-muted text-foreground", warning: "bg-warning-soft text-warning", critical: "bg-danger-soft text-danger" };
+const SEVERITY: Record<string, string> = { info: "bg-neutral-100 text-neutral-800", warning: "bg-amber-100 text-amber-900", critical: "bg-red-100 text-red-800" };
 
 /** The signed-in user's own notifications for the selected business. Rows are recipient-specific; nothing here is shared. */
 export function NotificationBell() {
@@ -46,12 +46,12 @@ export function NotificationBell() {
   return <div className="relative" ref={box}>
     <button type="button" aria-haspopup="dialog" aria-expanded={open} aria-label={unread ? `Notifications, ${badge} unread` : "Notifications"} className="relative rounded-lg border px-2.5 py-1.5" onClick={() => { setOpen(!open); if (!open) { clear(); void refresh(); } }}>
       <Bell className="size-4" aria-hidden="true" />
-      {badge && <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-danger px-1 text-center text-[10px] font-semibold leading-4 text-background">{badge}</span>}
+      {badge && <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">{badge}</span>}
     </button>
-    {open && <div role="dialog" aria-label="Notifications" className="absolute right-0 z-40 mt-2 w-80 max-w-[90vw] space-y-2 rounded-xl border bg-card p-3 text-sm shadow-lg">
+    {open && <div role="dialog" aria-label="Notifications" className="absolute right-0 z-40 mt-2 w-80 max-w-[90vw] space-y-2 rounded-xl border bg-white p-3 text-sm shadow-lg">
       <div className="flex items-center justify-between gap-2"><h2 className="font-semibold">Notifications</h2>
         <button type="button" className={button} disabled={busy || unread === 0 || !throughId} onClick={() => void run(async () => { await markNotificationsRead(businessId, { through_id: throughId! }); await refresh(); })}>Mark all read</button></div>
-      {more && unread > 0 && <p className="text-xs text-muted-foreground">Older notifications are not all shown. Marking all read also marks those older than the newest shown.</p>}
+      {more && unread > 0 && <p className="text-xs text-neutral-600">Older notifications are not all shown. Marking all read also marks those older than the newest shown.</p>}
       {error && <Alert>{error}</Alert>}
       {query.isPending && (
         <div role="status" aria-busy="true" className="py-2">
@@ -60,14 +60,14 @@ export function NotificationBell() {
         </div>
       )}
       {query.isError && !query.isFetching && <QueryError error={query.error} retry={() => void query.refetch()} />}
-      {query.isSuccess && !items.length && <p className="text-muted-foreground">No notifications for you in this business.</p>}
+      {query.isSuccess && !items.length && <p className="text-neutral-600">No notifications for you in this business.</p>}
       <ul className="max-h-96 space-y-2 overflow-auto">
         {items.map(n => {
           const href = safeActionPath(n.action_url, businessId);
-          return <li key={n.id} className={`space-y-1 rounded-lg border p-2 ${isUnread(n) ? "border-neutral-400 bg-muted" : "text-muted-foreground"}`}>
+          return <li key={n.id} className={`space-y-1 rounded-lg border p-2 ${isUnread(n) ? "border-neutral-400 bg-neutral-50" : "text-neutral-600"}`}>
             <div className="flex items-center gap-2"><span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${SEVERITY[n.severity] ?? SEVERITY.info}`}>{n.severity}</span><strong className="min-w-0 flex-1">{n.title}</strong>{isUnread(n) && <span className="size-2 rounded-full bg-red-600" aria-label="Unread" />}</div>
             <p>{n.message}</p>
-            <p className="text-xs text-muted-foreground">{when(n.created_at)}</p>
+            <p className="text-xs text-neutral-500">{when(n.created_at)}</p>
             <div className="flex gap-3 text-xs">{href && <Link className="underline" href={href} onClick={() => setOpen(false)}>Open</Link>}{isUnread(n) && <button type="button" className="underline disabled:opacity-40" disabled={busy} onClick={() => void run(async () => { await markNotificationRead(businessId, n.id); await refresh(); })}>Mark read</button>}</div>
           </li>;
         })}
