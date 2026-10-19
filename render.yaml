@@ -30,6 +30,20 @@ services:
     preDeployCommand: alembic upgrade head
 
     envVars:
+      # Account mail remains off until schema/frontend/provider staging gates pass.
+      - key: ACCOUNT_EMAIL_MODE
+        value: "off"
+      - key: ACCOUNT_EMAIL_ENVIRONMENT
+        value: "production"
+      - key: EMAIL_VERIFICATION_ENABLED
+        value: "false"
+      - key: PASSWORD_RECOVERY_ENABLED
+        value: "false"
+      - key: INVITATION_EMAIL_ENABLED
+        value: "false"
+      # Set PUBLIC_APP_ORIGIN, ACCOUNT_EMAIL_FROM, ACCOUNT_EMAIL_ACTIVE_KEY_ID,
+      # ACCOUNT_EMAIL_ENCRYPTION_KEYS and RESEND_WEBHOOK_SECRET as dashboard secrets
+      # before enabling; never inject RESEND_API_KEY into the API service.
       # ── Neon database (runtime restricted login) ──
       - key: DATABASE_URL
         sync: false          # set manually in dashboard — secret
@@ -88,6 +102,20 @@ services:
     dockerCommand: python -m orderfit.workflow.worker
 
     envVars:
+      - key: ACCOUNT_EMAIL_MODE
+        value: "off"
+      - key: ACCOUNT_EMAIL_ENVIRONMENT
+        value: "production"
+      - key: EMAIL_VERIFICATION_ENABLED
+        value: "false"
+      - key: PASSWORD_RECOVERY_ENABLED
+        value: "false"
+      - key: INVITATION_EMAIL_ENABLED
+        value: "false"
+      - key: ACCOUNT_EMAIL_WORKER_ENABLED
+        value: "false"
+      # Same origin/sender/versioned keyring as API; RESEND_API_KEY is worker-only.
+      # See docs/deployment/account-access.md for the complete settings and gates.
       # Worker uses its own restricted database login.
       - key: DATABASE_URL
         sync: false          # set to the WORKER_DATABASE_URL value (worker login)

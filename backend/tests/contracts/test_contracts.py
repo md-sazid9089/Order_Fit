@@ -370,7 +370,12 @@ def test_generated_contract_artifacts_and_ownership():
     assert len({(e.path, e.method) for e in ENDPOINTS}) == len(ENDPOINTS)
     for endpoint in ENDPOINTS:
         assert endpoint.service and endpoint.storage and endpoint.phase and endpoint.verification
-        assert endpoint.permission in {"public", "self", "platform_admin"} | PERMISSIONS.keys()
+        assert endpoint.permission in {"public", "self", "platform_admin", "provider_signature"} | PERMISSIONS.keys()
+    webhook = spec["paths"]["/api/v1/webhooks/resend"]["post"]
+    assert webhook["security"] == []
+    assert {parameter["name"] for parameter in webhook["parameters"]} == {"svix-id", "svix-timestamp", "svix-signature"}
+    assert webhook["x-capability"] == "account_email_mode=resend"
+    assert spec["paths"]["/api/v1/admin/overview"]["get"]["x-capability"] == "admin_reads_enabled"
     for name, content in artifacts().items():
         assert (DEST / name).read_text(encoding="utf-8") == content
     # All generated schemas are valid JSON Schema and every local reference resolves.

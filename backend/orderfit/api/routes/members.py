@@ -42,8 +42,21 @@ def member_revoke(business_id: UUID, user_id: UUID, data: RevisionReason, reques
 def invitation_create(business_id: UUID, data: InvitationCreate, request: Request):
     # The one-time link is never written to the replay cache (token hashed at rest only).
     return command(request, business_id, data, "manage_members",
-                   lambda c, s, _: membership.invite(c, s, data),
+                   lambda c, s, svc: membership.invite(c, s, data, svc.account_mail),
                    cache=lambda view: view.model_copy(update={"invitation_url": None}))
+
+
+@router.get("/invitations", response_model=Page[InvitationView], operation_id="invitations")
+def invitations(business_id: UUID, request: Request, cursor: str | None = Query(None, max_length=2048),
+                limit: int = Query(50, ge=1, le=100)):
+    return read(request, business_id, "manage_members",
+                lambda c, s, svc: membership.list_invitations(c, s, svc.cursors, cursor, limit))
+
+
+@router.post("/invitations/{invitation_id}/reissue", response_model=InvitationView, status_code=201, operation_id="invitation_reissue")
+def invitation_reissue(business_id: UUID, invitation_id: UUID, data: RevisionReason, request: Request):
+    return command(request, business_id, data, "manage_members",
+                   lambda c, s, svc: membership.reissue_invitation(c, s, invitation_id, data, svc.account_mail))
 
 
 @router.post("/invitations/{invitation_id}/revoke", response_model=InvitationView, operation_id="invitation_revoke")
