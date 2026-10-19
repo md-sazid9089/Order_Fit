@@ -10,7 +10,7 @@ from sqlalchemy import text
 from orderfit.api.errors import ApplicationError
 from orderfit.api.main import create_app
 from orderfit.contracts.financial import CostInput, Evidence, TermLoanTerms
-from orderfit.contracts.primitives import ReasonCommand
+from orderfit.contracts.primitives import ReasonCommand, RevisionReason
 from orderfit.contracts.resources import (
     BaselineBalance,
     BaselineWrite,
@@ -207,6 +207,38 @@ def test_offer_update_keeps_exact_lender_evidence_and_snapshot_sources(postgres,
         refs = {(ref.resource_kind, ref.resource_id) for ref in review.candidate_snapshot.source_revisions}
         assert ("offer", str(updated.id)) in refs
         assert ("payee", str(lenders[1].id)) in refs
+
+
+def test_archiving_an_offer_returns_a_closed_view_and_removes_it_from_the_review(postgres, accounts):
+    """Regression: archive used to raise a validation error (HTTP 503) for every closed offer."""
+    account = accounts[0]
+    deal, _ = setup_deal(postgres, account)
+    with postgres["database"].tenant(account.token, account.business_id, "prepare") as (c, scope):
+        revision = BusinessRepository.get_profile(c, account.business_id).financial_revision
+        lender = PayeeRepository.create_payee(c, scope, PayeeCreate(
+            expected_financial_revision=revision,
+            payee=PayeeInput(name="Synthetic archive lender", kind="lender", category="finance",
+                terms_days=30, terms_note=None, delay_tolerance_note=None,
+                risk_rating="low", known_domains=[])))
+        terms = TermLoanTerms(name="Synthetic archived loan", kind="term_loan", interest_method="flat_term",
+            interest_bps=100, fee_bps=0, fee_flat_minor="0", fee_at="draw", lead_days=0,
+            min_minor="1000", max_minor="1000", step_minor="1000", term_days=30,
+            available_from=deal.start_date, valid_until=date(2027, 11, 2), status="active",
+            payee_id=lender.id, payee_version=lender.version, account_id=None,
+            account_version=None, evidence=[evidence()])
+        revision = BusinessRepository.get_profile(c, account.business_id).financial_revision
+        offer = OfferRepository.create_offer(c, scope, OfferCreate(expected_financial_revision=revision, terms=terms))
+        assert offer.supported is True
+        revision = BusinessRepository.get_profile(c, account.business_id).financial_revision
+        closed = OfferRepository.archive_offer(c, scope, offer.id, RevisionReason(
+            expected_version=offer.version, expected_financial_revision=revision,
+            reason="Replaced by a fresh offer"))
+        assert closed.supported is False
+        assert closed.unavailable_reason == "Offer is closed."
+        assert closed.archived_at is not None
+        review = DealRepository.build_review(c, account.business_id, deal.id)
+        assert review.candidate_snapshot is not None, review.findings
+        assert review.candidate_snapshot.offers == []
 
 
 @pytest.mark.parametrize("error", [TimeoutError, MemoryError])

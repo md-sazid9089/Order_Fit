@@ -863,6 +863,7 @@ class PayeeRepository:
 
 def _row_to_offer(row, fin_rev: int) -> OfferView:
     is_term_loan = row["kind"] == "term_loan"
+    closed = row["status"] == "closed"
     complete = is_term_loan and all(
         row[key] is not None
         for key in (
@@ -901,9 +902,12 @@ def _row_to_offer(row, fin_rev: int) -> OfferView:
             offer_id=row["id"],
             version=row["version"],
         ) if complete else None,
-        supported=complete,
-        unavailable_reason=None if complete else (
-            "Offer is incomplete or lacks lender, account, date, or evidence provenance."
+        # A closed (archived) offer is retained as evidence but is never offered to the engine.
+        supported=complete and not closed,
+        unavailable_reason=None if complete and not closed else (
+            "Offer is closed."
+            if closed
+            else "Offer is incomplete or lacks lender, account, date, or evidence provenance."
             if is_term_loan
             else "Only fixed term loans are currently supported by the calculation engine"
         ),
