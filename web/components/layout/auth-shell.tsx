@@ -147,6 +147,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
     "/useraccess": "User Management",
     "/users": "User Management",
     "/settings": "Settings",
+    "/financing": "Financing",
+    "/risk-constraints": "Risk and constraints",
     "/admin": "Admin Panel",
   };
   const title = (current && SIDEBAR_ROUTE_NAMES[current]) || SIDEBAR_ROUTE_NAMES[pathname] || links.find(l => l.href === current)?.label || "OrderFit";
@@ -157,7 +159,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
-            <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">{title}</h1>
+            {/* Each page owns its single <h1>; the bar repeats the location as a label, not a second heading. */}
+            <p className="hidden sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">{title}</p>
             <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
               <ThemeToggle variant="icon" />
               {businessId && <NotificationBell />}

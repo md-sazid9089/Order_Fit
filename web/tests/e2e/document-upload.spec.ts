@@ -49,7 +49,7 @@ test("an owner uploads a text-layer PDF and safely falls back to manual review w
   await page.getByRole("button", { name: "Create account", exact: true }).click();
   await page.getByRole("link", { name: "New order" }).first().click();
   await page.getByLabel("Opening date").fill(today);
-  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
+  await page.getByLabel("Opening cash").fill("100000.00");
   await page.getByLabel("Coverage through").fill(isoDateFrom(addDays(new Date(), 365)));
   await page.getByLabel("Source attestation").fill("Synthetic PDF E2E baseline");
   await page.getByRole("button", { name: "Save baseline" }).click();
@@ -60,7 +60,7 @@ test("an owner uploads a text-layer PDF and safely falls back to manual review w
   await page.getByRole("textbox", { name: "Order date" }).fill(today);
   await page.getByLabel("Delivery date").fill(delivery);
   await page.getByLabel("Invoice date").fill(delivery);
-  await page.getByLabel("Order amount (integer minor units)").fill("5000000");
+  await page.getByLabel("Order amount").fill("50000.00");
   await page.getByLabel("Payment days").fill("30");
   await page.getByRole("button", { name: "Save and review" }).click();
   await expect(page.getByRole("heading", { name: `PDF-${suffix}` })).toBeVisible();
