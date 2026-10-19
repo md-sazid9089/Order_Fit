@@ -96,6 +96,15 @@ export default function AdminUsersPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // User Aggregate Stats
+  const [stats, setStats] = useState({
+    distinctUserCount: 0,
+    totalMemberships: 0,
+    privilegedCount: 0,
+    activeCount: 0,
+    revokedCount: 0,
+  });
+
   const loadDatabaseUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -108,13 +117,23 @@ export default function AdminUsersPage() {
         return;
       }
 
+      const aggregation = await loadAggregatedUsers(sess);
+      setUsers(aggregation.users);
+      setStats({
+        distinctUserCount: aggregation.distinctUserCount,
+        totalMemberships: aggregation.totalMemberships,
+        privilegedCount: aggregation.privilegedCount,
+        activeCount: aggregation.activeCount,
+        revokedCount: aggregation.revokedCount,
+      });
+
       const memberships = sess.memberships ?? [];
       if (memberships.length > 0 && !newTenantId) {
         setNewTenantId(memberships[0].business_id);
+      } else if (aggregation.users.length > 0 && !newTenantId) {
+        const firstBiz = aggregation.users.find((u) => u.businessId)?.businessId;
+        if (firstBiz) setNewTenantId(firstBiz);
       }
-
-      const aggregation = await loadAggregatedUsers(sess);
-      setUsers(aggregation.users);
     } catch {
       router.replace("/auth/signin");
     } finally {
@@ -128,6 +147,19 @@ export default function AdminUsersPage() {
     }, 0);
     return () => clearTimeout(initial);
   }, [loadDatabaseUsers]);
+
+  const availableTenants = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of session?.memberships ?? []) {
+      if (m.business_id) map.set(m.business_id, m.business_name);
+    }
+    for (const u of users) {
+      if (u.businessId && u.tenantName && u.tenantName !== "No Organization") {
+        map.set(u.businessId, u.tenantName);
+      }
+    }
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [session, users]);
 
   const tenantsList = useMemo(() => {
     const list = new Set(users.map((u) => u.tenantName));
@@ -476,6 +508,77 @@ export default function AdminUsersPage() {
               </button>
             </div>
           )}
+
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-1">
+              <span className="text-[11px] font-semibold text-[#737373] dark:text-[#A3A3A3] uppercase tracking-wider">
+                Total Registered Users
+              </span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-[#1E2021] dark:text-white font-display">
+                  {stats.distinctUserCount}
+                </span>
+                <span className="text-[11px] text-[#059669] dark:text-[#34D399] font-medium">
+                  Canonical Accounts
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                Distinct accounts across all tenants
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-1">
+              <span className="text-[11px] font-semibold text-[#737373] dark:text-[#A3A3A3] uppercase tracking-wider">
+                Privileged Accounts
+              </span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-[#1E2021] dark:text-white font-display">
+                  {stats.privilegedCount}
+                </span>
+                <span className="text-[11px] text-[#5B21B6] dark:text-[#C4B5FD] font-medium">
+                  Elevated Access
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                Platform Admins, Owners & Risk Officers
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-1">
+              <span className="text-[11px] font-semibold text-[#737373] dark:text-[#A3A3A3] uppercase tracking-wider">
+                Active Memberships
+              </span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-[#1E2021] dark:text-white font-display">
+                  {stats.activeCount}
+                </span>
+                <span className="text-[11px] text-[#059669] dark:text-[#34D399] font-medium">
+                  Authorized
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                Active tenant assignments in good standing
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-1">
+              <span className="text-[11px] font-semibold text-[#737373] dark:text-[#A3A3A3] uppercase tracking-wider">
+                Revoked / Suspended
+              </span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-[#1E2021] dark:text-white font-display">
+                  {stats.revokedCount}
+                </span>
+                <span className="text-[11px] text-[#DC2626] dark:text-[#F87171] font-medium">
+                  {stats.revokedCount > 0 ? "Access Revoked" : "Zero Revocations"}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-[#A3A3A3]">
+                Deactivated or suspended memberships
+              </p>
+            </div>
+          </div>
 
           {/* Search & Filters Card */}
           <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-4 shadow-xs space-y-4">
@@ -978,9 +1081,9 @@ export default function AdminUsersPage() {
                     onChange={(e) => setNewTenantId(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white cursor-pointer focus:outline-none"
                   >
-                    {session?.memberships?.map((m) => (
-                      <option key={m.business_id} value={m.business_id}>
-                        {m.business_name}
+                    {availableTenants.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
                       </option>
                     ))}
                   </select>

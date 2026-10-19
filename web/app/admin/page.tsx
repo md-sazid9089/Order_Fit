@@ -135,10 +135,10 @@ export default function AdminOverviewPage() {
 
       setMetrics({
         distinctUsers,
-        totalMemberships: userAggregation.totalMemberships,
-        privilegedUsers: userAggregation.privilegedCount,
-        activeMemberships: userAggregation.activeCount,
-        revokedMemberships: userAggregation.revokedCount,
+        totalMemberships: globalOverview?.total_memberships ?? userAggregation.totalMemberships,
+        privilegedUsers: globalOverview?.privileged_users ?? userAggregation.privilegedCount,
+        activeMemberships: globalOverview?.active_memberships ?? userAggregation.activeCount,
+        revokedMemberships: globalOverview?.revoked_memberships ?? userAggregation.revokedCount,
         activeTenants,
         totalOrders,
         pipelineLabel,

@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { formatMinor } from "@/lib/approval-model";
 import { getSession, getBusiness } from "@/lib/p7-api";
 import { get, type Deal } from "@/lib/orderfit-api";
-import { exportToCsv, fetchAdminOrders, type AdminDatabaseOrder } from "@/lib/admin-api";
+import { exportToCsv, fetchAdminOrders, fetchAdminTenants, type AdminDatabaseOrder } from "@/lib/admin-api";
 import type { SessionView } from "@/lib/generated-api";
 import {
   Package,
@@ -66,8 +66,17 @@ export default function AdminOrdersPage() {
         return;
       }
 
-      // Try global admin order reader if enabled
-      const globalOrders = await fetchAdminOrders(100);
+      // Try global admin order and tenant readers if enabled
+      const [globalOrders, globalTenants] = await Promise.all([
+        fetchAdminOrders(100),
+        fetchAdminTenants(100),
+      ]);
+      const tenantNameMap = new Map<string, string>();
+      if (globalTenants?.items) {
+        for (const t of globalTenants.items) {
+          tenantNameMap.set(t.id, t.name);
+        }
+      }
 
       const memberships = sess.memberships ?? [];
       const collectedOrders: AdminDatabaseOrder[] = [];
@@ -117,7 +126,7 @@ export default function AdminOrdersPage() {
               id: go.id,
               poNumber: `PO-${go.id.slice(0, 8).toUpperCase()}`,
               customerName: "External Enterprise Order",
-              tenantName: `Tenant (${go.business_id.slice(0, 8)})`,
+              tenantName: tenantNameMap.get(go.business_id) || `Tenant (${go.business_id.slice(0, 8)})`,
               businessId: go.business_id,
               orderAmountMinor: Number(go.order_value_minor) || 0,
               currency: go.currency,

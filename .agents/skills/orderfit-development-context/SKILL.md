@@ -5,6 +5,19 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+20 October global admin & user management update: required schema head is now
+`0024_admin_user_management` (after `0023_account_access`). Repaired missing
+user visibility for global administrator accounts: granted `orderfit_admin_api`
+to `orderfit_runtime`, added SELECT grants and RLS read policy on `membership`
+and `app_user` for `orderfit_admin_reader`, and upgraded `admin_read_users` to
+aggregate multi-tenant memberships via JSONB without user row duplication.
+`ADMIN_READS_ENABLED=true` configured in backend environment. Enhanced
+`loadAggregatedUsers` in frontend to ingest all registered database users when
+authorized as platform administrator. Next.js build passes cleanly in 4.2s;
+121 frontend tests pass; 90 backend tests pass (81 contract, 9 RBAC security).
+Zero RLS bypasses, zero table owner privilege leaks. Live Neon DB verified with
+all 17 registered users retrieved.
+
 20 October provider update: OpenAI Responses API is the only supported live
 model provider. A live run using `gpt-6-luna` passed all 49 synthetic cases
 across five AI proposal tasks with zero unsafe changes. This is proposal-layer
