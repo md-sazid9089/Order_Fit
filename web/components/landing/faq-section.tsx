@@ -22,7 +22,7 @@ const faqs: FAQItem[] = [
   {
     question: "What happens if an enterprise customer pays 30 or 60 days late?",
     answer:
-      "OrderFit runs an exhaustive linear delay stress test through 90 days of potential payment delay (ADR 0002). It pinpoints the exact calendar day your cash reserve would break and automatically sizes an advance deposit or supplier extension to keep your operating cash positive regardless of payment delays.",
+      "OrderFit runs an exhaustive linear delay stress test through 90 days of potential payment delay (ADR 0002). It pinpoints the calendar day your cash reserve would break and compares supported deposit, supplier-extension and term-loan options within your policy. When no option is safe, it says so and recommends declining.",
   },
   {
     question: "How does OrderFit ingest orders and supplier quotes?",
@@ -42,7 +42,7 @@ const faqs: FAQItem[] = [
   {
     question: "What happens when a customer counter-offers?",
     answer:
-      "When a customer replies with revised terms (e.g., '30% deposit instead of 40%'), any prior approvals instantly become stale. OrderFit extracts the reply, re-validates the timeline, and re-computes headroom automatically through up to 3 negotiation rounds (ADR 0004).",
+      "When a customer replies with revised terms (e.g., '30% deposit instead of 40%'), any prior approvals instantly become stale. You record the reply and review the terms it proposes; after you confirm them, the engine re-evaluates the order. Up to 3 negotiation rounds are supported (ADR 0004).",
   },
 ];
 

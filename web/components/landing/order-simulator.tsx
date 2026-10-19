@@ -189,7 +189,7 @@ export function OrderSimulator() {
               href="/auth/signup"
               className="font-medium text-[#004D3B] dark:text-[#34D399] underline underline-offset-4 hover:text-[#00382B] dark:hover:text-[#6EE7B7]"
             >
-              Request a live demo
+              Create an account
             </Link>
           </p>
         </div>

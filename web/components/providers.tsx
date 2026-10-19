@@ -8,7 +8,6 @@ import { signInRedirect } from "@/lib/session-expiry"
 import { getCachedSession } from "@/lib/session-store"
 import { resetSessionState } from "@/lib/session-reset"
 import { Toaster } from "@/components/ui/sonner"
-import { SmoothScrollProvider } from "@/components/layout/smooth-scroll-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -32,9 +31,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <SessionExpiryHandler queryClient={queryClient} />
-        <SmoothScrollProvider>
-          {children}
-        </SmoothScrollProvider>
+        {/* Smooth scrolling is a landing-page effect only (app/page.tsx); product screens scroll natively. */}
+        {children}
         <Toaster />
       </QueryClientProvider>
     </ThemeProvider>
