@@ -103,9 +103,9 @@ export default function AdminTenantsPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
               <Link
                 href="/admin"
                 className="p-1.5 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] transition-colors shrink-0"
@@ -113,21 +113,21 @@ export default function AdminTenantsPage() {
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                   <Link href="/admin" className="text-xs text-[#737373] hover:text-[#1E2021] transition-colors">
                     Admin Console
                   </Link>
                   <span className="text-[#A3A3A3] text-xs">/</span>
                   <span className="text-xs font-semibold text-[#1E2021]">Tenant Namespaces</span>
                 </div>
-                <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">
+                <h1 className="text-sm sm:text-base font-bold text-[#1E2021] font-display leading-tight truncate">
                   PostgreSQL Isolated Business Namespaces
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               <ThemeToggle variant="icon" />
 
               <button
@@ -137,19 +137,19 @@ export default function AdminTenantsPage() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF9F7] text-[#525252] hover:text-[#1E2021] border border-[#E8E6E1] transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-                <span>Refresh</span>
+                <span className="hidden sm:inline">Refresh</span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Main Content Workspace */}
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
           {toastMessage && (
             <div className="p-4 rounded-xl bg-[#1E2021] text-white text-xs font-medium flex items-center justify-between shadow-lg animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-white" />
-                <span>{toastMessage}</span>
+                <CheckCircle2 className="size-4 text-white shrink-0" />
+                <span className="break-words">{toastMessage}</span>
               </div>
               <button onClick={() => setToastMessage(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/70">
                 <X className="size-3.5" />
@@ -158,7 +158,7 @@ export default function AdminTenantsPage() {
           )}
 
           {/* Database Metric Telemetry Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 shadow-xs">
               <div className="text-[11px] font-semibold text-[#737373] uppercase tracking-wider">
                 Database Organizations
@@ -221,7 +221,7 @@ export default function AdminTenantsPage() {
           {/* Tenant Namespaces Table */}
           <div className="bg-white border border-[#E8E6E1] rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                 <thead>
                   <tr className="bg-[#FAF9F7] border-b border-[#E8E6E1] text-[#737373] font-semibold">
                     <th className="py-3 px-4">Organization Name</th>

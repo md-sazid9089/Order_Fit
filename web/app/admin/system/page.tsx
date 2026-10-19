@@ -52,9 +52,9 @@ export default function AdminSystemPage() {
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
       <AppSidebar variant="admin" />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
               <Link
                 href="/admin"
                 className="p-1.5 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] transition-colors shrink-0"
@@ -62,7 +62,7 @@ export default function AdminSystemPage() {
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">System status</h1>
+              <h1 className="text-sm sm:text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">System status</h1>
             </div>
             <div className="flex items-center gap-2.5">
               <ThemeToggle variant="icon" />
@@ -78,12 +78,12 @@ export default function AdminSystemPage() {
             </div>
           </div>
         </header>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full flex-1 min-w-0">
           <div className="max-w-2xl space-y-4">
-            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-5 shadow-xs">
+            <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 sm:p-5 shadow-xs">
               <div className="text-sm font-bold text-[#1E2021]">{state.label}</div>
               <p className="text-xs text-[#525252] mt-1">{state.detail}</p>
-              <dl className="grid grid-cols-3 gap-4 mt-4 text-xs">
+              <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 text-xs">
                 <div><dt className="text-[#737373] uppercase tracking-wider text-[11px]">API reachable</dt><dd className="font-semibold">{flag(probe?.connected)}</dd></div>
                 <div><dt className="text-[#737373] uppercase tracking-wider text-[11px]">Ready</dt><dd className="font-semibold">{flag(probe?.ready)}</dd></div>
                 <div><dt className="text-[#737373] uppercase tracking-wider text-[11px]">Database</dt><dd className="font-semibold">{flag(probe?.database)}</dd></div>

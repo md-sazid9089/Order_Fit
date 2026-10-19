@@ -28,9 +28,9 @@ export default function AdminEnginePage() {
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
       <AppSidebar variant="admin" />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
               <Link
                 href="/admin"
                 className="p-1.5 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] transition-colors shrink-0"
@@ -38,12 +38,12 @@ export default function AdminEnginePage() {
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">Deterministic engine</h1>
+              <h1 className="text-sm sm:text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">Deterministic engine</h1>
             </div>
             <ThemeToggle variant="icon" />
           </div>
         </header>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full flex-1 min-w-0">
           <div className="max-w-2xl space-y-3 text-sm text-[#525252]">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Not editable in this release</p>
             <p>

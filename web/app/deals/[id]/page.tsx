@@ -478,8 +478,8 @@ export default function DealDetailPage({
     : { label: "Pending", textColor: "text-[#737373] dark:text-neutral-400" };
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Navigation Header & Stepper */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
           <div className="flex items-center gap-3 min-w-0">
@@ -1041,7 +1041,7 @@ export default function DealDetailPage({
                           </span>
                         </div>
                         <div className="overflow-x-auto">
-                          <table className="w-full text-left text-xs border-collapse">
+                          <table className="w-full text-left text-xs border-collapse min-w-[550px]">
                             <thead>
                               <tr className="border-b border-[#E8E6E1] dark:border-[#2A2C2D] text-[10px] uppercase font-bold text-[#737373] dark:text-neutral-400 bg-[#FAF9F7]/50 dark:bg-[#222425]/50">
                                 <th scope="col" className="py-2.5 px-4">Resource Kind</th>

@@ -34,7 +34,7 @@ export function PasskeyPanel() {
       <p className="text-sm">Sign in within the last five minutes before setup. Enrollment signs out all devices; sign in again with your passkey. There is no password-only recovery.</p>
       <label className="block text-sm">Current password<input type="password" autoComplete="current-password" required className={field} value={password} onChange={event => setPassword(event.target.value)} /></label>
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <button type="submit" className={primary} disabled={busy || !password}>{busy ? "Waiting for authenticator…" : session.mfa_enabled ? "Add backup passkey" : "Enable passkey MFA"}</button>
+      <button type="submit" className={`${primary} w-full sm:w-auto`} disabled={busy || !password}>{busy ? "Waiting for authenticator…" : session.mfa_enabled ? "Add backup passkey" : "Enable passkey MFA"}</button>
     </form>}
   </section>;
 }

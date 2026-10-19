@@ -1241,7 +1241,7 @@ export function LiquidSculpture({
   return (
     <div
       ref={rootRef}
-      className={`relative w-full overflow-hidden select-none touch-none bg-transparent ${className}`}
+      className={`relative w-full overflow-hidden select-none touch-pan-y bg-transparent ${className}`}
       style={{
         backgroundColor: "transparent",
         isolation: "isolate",

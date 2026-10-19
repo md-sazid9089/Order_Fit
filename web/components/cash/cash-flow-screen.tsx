@@ -111,7 +111,7 @@ export function CashFlowScreen() {
             </h2>
           </div>
           {low && flow.isSuccess && (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="text-[#737373] dark:text-neutral-400">Lowest Balance:</span>
               <span className="font-mono font-bold text-[#1E2021] dark:text-white">
                 {formatMinor(low.balanceMinor, currency)}
@@ -155,7 +155,7 @@ export function CashFlowScreen() {
 
         {flow.isSuccess && (
           <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse min-w-[500px]">
               <caption className="sr-only">Running cash balance</caption>
               <thead>
                 <tr className="border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
@@ -218,7 +218,7 @@ export function CashFlowScreen() {
 
       {/* 2. BASELINE CASH EVENTS */}
       <section className={panel} aria-labelledby="events-heading">
-        <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
           <div className="flex items-center gap-2">
             <Layers className="size-4 text-[#1E2021] dark:text-white" />
             <h2 id="events-heading" className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">

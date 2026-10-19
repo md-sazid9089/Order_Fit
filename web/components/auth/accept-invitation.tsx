@@ -55,8 +55,8 @@ export function AcceptInvitation() {
     } finally { setBusy(false); }
   }
 
-  const card = "w-full max-w-md space-y-4 rounded-2xl border border-neutral-200 bg-white p-8";
-  return <main className="grid min-h-screen place-items-center bg-[#f7f6f5] p-6"><div className={card}>
+  const card = "w-full max-w-md space-y-4 rounded-2xl border border-neutral-200 bg-white p-5 sm:p-8";
+  return <main className="grid min-h-screen place-items-center bg-[#f7f6f5] p-3.5 sm:p-6 w-full min-w-0"><div className={card}>
     <Link href="/" className="text-xl font-bold">OrderFit</Link>
     <h1 className="text-2xl font-semibold">Accept an invitation</h1>
     {result ? <div className="space-y-3" role="status">

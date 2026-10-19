@@ -14,7 +14,7 @@ export function FeaturePillars() {
           <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] dark:text-[#34D399] uppercase mb-3 inline-block">
             Core Decision Capabilities
           </span>
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6]">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] break-words">
             Can you afford that next big commercial order?
           </h2>
           <p className="font-sans text-lg md:text-xl text-[#526975] dark:text-[#9CA3AF] leading-relaxed max-w-2xl mx-auto mt-4 font-normal">
@@ -26,10 +26,10 @@ export function FeaturePillars() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           
           {/* Card 1: Cash Feasibility Engine */}
-          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-8 sm:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
+          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
             <div>
               {/* Real Photography Header: Financial Runway Analytics */}
-              <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
+              <div className="relative h-48 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 lg:-mx-10 lg:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
                 <Image
                   fill
                   sizes="(max-width: 1024px) 100vw, 33vw"
@@ -59,10 +59,10 @@ export function FeaturePillars() {
           </div>
 
           {/* Card 2: Procurement & Quote Ingestion */}
-          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-8 sm:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
+          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
             <div>
               {/* Real Photography Header: Precision Manufacturing & Component Ingestion */}
-              <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
+              <div className="relative h-48 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 lg:-mx-10 lg:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
                 <Image
                   fill
                   sizes="(max-width: 1024px) 100vw, 33vw"
@@ -92,10 +92,10 @@ export function FeaturePillars() {
           </div>
 
           {/* Card 3: Working Capital & Counter-Offer Planner */}
-          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-8 sm:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
+          <div className="rounded-4xl bg-white dark:bg-[#1E2021] border border-[#ECEAE4] dark:border-[#2E3235] p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden">
             <div>
               {/* Real Photography Header: Commercial Fulfillment & Warehouse Logistics */}
-              <div className="relative h-48 -mx-8 -mt-8 sm:-mx-10 sm:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
+              <div className="relative h-48 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 lg:-mx-10 lg:-mt-10 mb-6 overflow-hidden border-b border-[#ECEAE4] dark:border-[#2E3235] group">
                 <Image
                   fill
                   sizes="(max-width: 1024px) 100vw, 33vw"

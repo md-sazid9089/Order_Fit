@@ -532,8 +532,8 @@ export function PreparationWorkspace({
   const selectedOpt = catalogue?.options.find(o => o.option_key === option);
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full bg-[#FAF9F7] dark:bg-[#121314] min-h-screen text-[#1E2021] dark:text-neutral-100">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0 bg-[#FAF9F7] dark:bg-[#121314] min-h-screen text-[#1E2021] dark:text-neutral-100">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Header & Stepper */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E8E6E1] dark:border-[#2C302F]">
           <div className="flex items-center gap-3 min-w-0">

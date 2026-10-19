@@ -470,7 +470,7 @@ export default function NewDealPage() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
+    <main className="p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
       {/* Top Header & Navigation Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">
@@ -616,7 +616,7 @@ export default function NewDealPage() {
           {/* ========================================================================= */}
           <div className="space-y-3">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 w-full">
               {/* Card 1: Purchase Order or Contract (MANDATORY) */}
               <div
                 className={`bg-white dark:bg-[#1E2021] border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 transition-all ${
@@ -1008,7 +1008,7 @@ export default function NewDealPage() {
           {/* ========================================================================= */}
           <div className="space-y-3">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 w-full">
               {/* Card 4: Bills Due, Payroll, Receivables (OPTIONAL) */}
               <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
                 <div>

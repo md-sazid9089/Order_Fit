@@ -40,9 +40,9 @@ export default function AdminSecurityPage() {
       <AppSidebar variant="admin" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 pl-11 lg:pl-0">
               <Link
                 href="/admin"
                 className="p-1.5 rounded-xl bg-[#FAF9F7] hover:bg-[#F4F2ED] border border-[#E8E6E1] text-[#525252] hover:text-[#1E2021] transition-colors shrink-0"
@@ -50,15 +50,15 @@ export default function AdminSecurityPage() {
               >
                 <ArrowLeft className="size-4" />
               </Link>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
                   <Link href="/admin" className="text-xs text-[#737373] hover:text-[#1E2021] transition-colors">
                     Admin Console
                   </Link>
                   <span className="text-[#A3A3A3] text-xs">/</span>
                   <span className="text-xs font-semibold text-[#1E2021]">Security</span>
                 </div>
-                <h1 className="text-base font-bold text-[#1E2021] font-display leading-tight">
+                <h1 className="text-sm sm:text-base font-bold text-[#1E2021] font-display leading-tight truncate">
                   Permission Gate (T0-T4) & Threat Defense
                 </h1>
               </div>
@@ -66,29 +66,28 @@ export default function AdminSecurityPage() {
 
             <div className="flex items-center gap-2.5">
               <ThemeToggle variant="icon" />
-
             </div>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1">
+        <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1560px] mx-auto w-full space-y-6 flex-1 min-w-0">
 
           {/* T0-T4 Permission Gate Table */}
-          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-base font-bold text-[#1E2021]">Permission Gate Hierarchy (Tiers T0 through T4)</h2>
                 <p className="text-xs text-[#737373] mt-0.5">
                   Autonomous agents cannot dispatch external proposals or commit cash without human step-up authorization (REQ-08).
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FAF9F7] border border-[#E8E6E1] text-[#1E2021]">
+              <span className="self-start sm:self-auto px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#FAF9F7] border border-[#E8E6E1] text-[#1E2021] shrink-0">
                 Zero Autonomous Escape
               </span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs min-w-[650px]">
                 <thead>
                   <tr className="border-b border-[#E8E6E1] bg-[#FAF9F7] text-[11px] font-semibold uppercase tracking-wider text-[#737373]">
                     <th className="py-3 px-4">Tier</th>
