@@ -1,4 +1,9 @@
-# Test OrderFit's AI workflow with FreeLLMPool
+# Retired: FreeLLMPool AI workflow test
+
+> Historical documentation retained for reference. FreeLLMPool has been removed from
+> OrderFit's runtime, and these instructions do not work with the current application.
+> Use [the OpenAI workflow plan](../AI_WORKFLOW_PLAN.md) and
+> [the synthetic AI evaluation script](../../scripts/ai_eval.py) instead.
 
 This is a synthetic-data testing integration. The default OpenAI Responses provider
 remains available separately. FreeLLMPool uses its pinned native library through

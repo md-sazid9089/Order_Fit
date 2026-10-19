@@ -83,6 +83,9 @@ def test_valid_clause_proposal_keeps_quote_and_generates_labels(tmp_path):
         _clause_settings(tmp_path, [{"payment_basis": "delivery", "payment_days": 45, "quote": "net 45"}])))
     assert proposal.provenance == "recorded" and proposal.code is None
     assert proposal.readings[0].label == "45 calendar days after delivery"
+    assert {(r.payment_basis, r.payment_days) for r in proposal.readings} == {
+        ("order", 45), ("invoice", 45), ("delivery", 45)
+    }
 
 
 # ---------------------------------------------------------------- C5 explanations
@@ -103,6 +106,8 @@ def _evaluation():
         ("Cash is tight but nothing here is linked.", "no-slot"),
         ("See {invented_slot}.", "unknown-slot"),
         ("Broken {base_profit placeholder.", "malformed-placeholder"),
+        ("Resilience is weakest in {tightest_scenario}.", "unsupported-resilience-claim"),
+        ("The option meets for {goal_target_scenario}.", "unclear-target-wording"),
     ],
 )
 def test_explanation_guards_reject_figures_terms_and_unlinked_claims(sentence, reason):
@@ -119,7 +124,7 @@ def test_slot_only_text_resolves_from_engine_facts_and_signals_carry_no_figures(
     assert not explanations.problems(sentences, explanations.SLOT_MEANING)
     text = explanations.resolve(sentences, resolved)
     assert str(option.base_incremental_profit_minor) in text[1]
-    assert "profit, independence any, simplicity" in text[0]
+    assert "profit, independence from any single customer, simplicity" in text[0]
     assert explanations.fact_ids(option.option_key, sentences)[0].startswith(option.option_key + ":")
     signals = explanations.signals(evaluation, option, snapshot.owner)
     assert not any(ch.isdigit() for ch in json.dumps(signals))

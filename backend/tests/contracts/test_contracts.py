@@ -453,6 +453,8 @@ def test_configuration_is_explicit_and_live_fails_closed(monkeypatch):
     with pytest.raises(ValidationError):
         RuntimeConfiguration(**data, llm_mode="live")
     with pytest.raises(ValidationError):
+        RuntimeConfiguration(**(data | {"llm_provider": "freellmpool"}))
+    with pytest.raises(ValidationError):
         RuntimeConfiguration(**(data | {"allowed_origins": ["*"]}))
     for invalid_origin in ("http://localhost:3000@evil.invalid", "https://example.invalid/path", "http://example.invalid", "https://user:pass@example.invalid"):
         with pytest.raises(ValidationError):
@@ -463,28 +465,6 @@ def test_configuration_is_explicit_and_live_fails_closed(monkeypatch):
         _ = Settings(
             database_url="postgresql+psycopg://runtime:synthetic@localhost/test"
         ).migration_url
-
-
-def test_freellmpool_is_local_filesystem_only():
-    data = {
-        "database_url": "postgresql+psycopg://runtime:synthetic@localhost/test",
-        "session_secret": "s" * 32,
-        "account_fingerprint_key": "f" * 32,
-        "account_fingerprint_key_version": 1,
-        "document_dir": "./var/documents",
-        "allowed_origins": ["http://localhost:3000"],
-        "llm_mode": "live",
-        "llm_provider": "freellmpool",
-        "freellmpool_model": "ovh/Mistral-Small-3.2-24B-Instruct-2506",
-    }
-    assert RuntimeConfiguration(**data).llm_provider == "freellmpool"
-    with pytest.raises(ValidationError, match="loopback"):
-        RuntimeConfiguration(**(data | {"allowed_origins": ["https://app.example.invalid"]}))
-    with pytest.raises(ValidationError, match="loopback"):
-        RuntimeConfiguration(**(data | {
-            "document_storage_backend": "s3", "document_s3_bucket": "synthetic",
-            "document_s3_region": "synthetic",
-        }))
 
 
 @pytest.mark.parametrize("value", [1, "true", 1.0])

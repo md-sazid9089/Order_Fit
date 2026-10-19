@@ -19,7 +19,6 @@ dependencies = [
   "sqlalchemy>=2.0.36",
   "alembic>=1.14",
   "openai>=2,<3",
-  "freellmpool==0.13.0",
   "argon2-cffi>=25,<26",
   "tzdata>=2025",
   "pypdf>=6.20.1",

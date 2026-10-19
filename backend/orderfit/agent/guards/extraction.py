@@ -30,6 +30,15 @@ def harden(candidates: list[Candidate]) -> tuple[list[Candidate], list[Finding]]
     findings: list[Finding] = []
     result: list[Candidate] = []
     for item in candidates:
+        if item.field == "payment_days" and item.status == "extracted" and item.normalized_value:
+            # Correct a frequent formatting slip without inventing or promoting a
+            # candidate: the model sometimes places its explicit day unit in the
+            # normalized value. Quote grounding still verifies the number in source.
+            day_value = re.fullmatch(
+                r"\s*(\d{1,3})\s*(?:calendar\s+)?days?\s*", item.normalized_value, re.I
+            )
+            if day_value:
+                item = item.model_copy(update={"normalized_value": day_value.group(1)})
         if (
             item.field == "payment_basis"
             and item.status == "extracted"

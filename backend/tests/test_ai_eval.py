@@ -3,6 +3,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 from orderfit.services.language import SUPPORTED
 
 SPEC = importlib.util.spec_from_file_location("ai_eval", Path(__file__).parents[2] / "scripts" / "ai_eval.py")
@@ -17,10 +19,37 @@ def _cases():
 
 def test_grader_rejects_fallback_as_model_pass(tmp_path, monkeypatch):
     monkeypatch.setattr(ai_eval, "RECORDINGS", tmp_path)
-    report = asyncio.run(ai_eval.run("openai", "recorded", 1, recordings=tmp_path))
+    report = asyncio.run(ai_eval.run("recorded", 1, recordings=tmp_path))
     missing = next(row for row in report["cases"] if row["id"] == "extract-basic")
     assert not missing["pass_k"]
     assert missing["model_passes"] == 0
+
+
+def test_openai_whatif_output_schema_avoids_unsupported_oneof():
+    schema = ai_eval.llm.ModelWhatIfIntent.model_json_schema()
+
+    def contains_oneof(value):
+        if isinstance(value, dict):
+            return "oneOf" in value or any(contains_oneof(item) for item in value.values())
+        if isinstance(value, list):
+            return any(contains_oneof(item) for item in value)
+        return False
+
+    assert not contains_oneof(schema)
+
+
+def test_whatif_flat_schema_normalizes_explicit_delay_day_slot():
+    output = ai_eval.llm.ModelWhatIfIntent.model_validate({
+        "changes": [{"kind": "ar_delay_days", "days": 15}],
+    })
+    assert [change.model_dump(mode="json") for change in ai_eval.llm.ModelWhatIfIntent.to_domain(output)] == [
+        {"kind": "ar_delay_days", "value": 15}
+    ]
+    conflicting = ai_eval.llm.ModelWhatIfIntent.model_validate({
+        "changes": [{"kind": "ar_delay_days", "value": 14, "days": 15}],
+    })
+    with pytest.raises(ValueError, match="conflicting delay values"):
+        ai_eval.llm.ModelWhatIfIntent.to_domain(conflicting)
 
 
 def test_reply_baseline_catches_conditions_and_bank_change():
@@ -33,7 +62,7 @@ def test_reply_baseline_catches_conditions_and_bank_change():
 
 
 def test_committed_corpus_passes_with_zero_unsafe_changes_and_every_task_retained():
-    report = asyncio.run(ai_eval.run("openai", "recorded", 1))
+    report = asyncio.run(ai_eval.run("recorded", 1))
     failing = [row["id"] for row in report["cases"] if not row["pass_k"]]
     assert not failing, failing
     assert {"extract", "whatif", "reply", "clause", "explain"} <= set(report["tasks"])
@@ -42,7 +71,7 @@ def test_committed_corpus_passes_with_zero_unsafe_changes_and_every_task_retaine
 
 
 def test_a_language_is_qualified_only_by_passing_extract_and_reply_cases():
-    report = asyncio.run(ai_eval.run("openai", "recorded", 1))
+    report = asyncio.run(ai_eval.run("recorded", 1))
     # The supported set in code and the evaluated set must stay identical.
     assert set(report["languages"]) == SUPPORTED - {"other", "unknown"} == set(ai_eval.SUPPORTED_LANGUAGES)
     for language, summary in report["languages"].items():
@@ -50,7 +79,7 @@ def test_a_language_is_qualified_only_by_passing_extract_and_reply_cases():
         assert summary["qualified"], language
     # Remove a language's reply cases and it is no longer qualified.
     cases = [c for c in _cases() if not (c.get("language") == "hi" and c["task"] == "reply")]
-    reduced = asyncio.run(ai_eval.run("openai", "recorded", 1, cases=cases))
+    reduced = asyncio.run(ai_eval.run("recorded", 1, cases=cases))
     assert reduced["languages"]["hi"]["qualified"] is False
 
 
@@ -60,7 +89,7 @@ def test_an_unsafe_model_change_removes_the_model_path(tmp_path):
             "recorded": {"model": "synthetic-weak-model",
                          "intent": {"changes": [{"kind": "deposit_pct", "value": 90}]}}}
     ai_eval.write_recordings([case], tmp_path)
-    report = asyncio.run(ai_eval.run("openai", "recorded", 1, cases=[case], recordings=tmp_path))
+    report = asyncio.run(ai_eval.run("recorded", 1, cases=[case], recordings=tmp_path))
     row = report["cases"][0]
     assert row["unsafe_changes"] == 1 and not row["pass_k"]
     assert report["tasks"]["whatif"]["model_path_retained"] is False

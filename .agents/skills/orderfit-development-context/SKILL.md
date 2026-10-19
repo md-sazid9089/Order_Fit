@@ -5,6 +5,14 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
+20 October provider update: OpenAI Responses API is the only supported live
+model provider. A live run using `gpt-6-luna` passed all 49 synthetic cases
+across five AI proposal tasks with zero unsafe changes. This is proposal-layer
+synthetic evidence, not persisted end-to-end or hosted acceptance. Older
+FreeLLMPool files restored in commit 21e5edf are historical; their setup docs are
+marked retired and their test modules are skipped. See the latest provider entry
+in `docs/backend_implementation_progress.md`.
+
 19 October account-access backend: new sole required schema head is
 `0023_account_access` after 0022. Default-off verified-email enrollment/password
 recovery, durable encrypted Resend account-mail outbox/callbacks, owner invitation
@@ -208,7 +216,7 @@ figures; OpenAI proposes evidence-backed facts/language; humans approve actions.
 | P5 | Local preparation gate passed: isolated forks, exact reviewed drafts, human-reviewed customer/supplier/lender replies, attestations and persisted session UI. The order-detail Decision guide now makes the stored evaluation's alerts, coverage gaps and high-value clarification questions actionable without changing inputs or calculations. Preparation alone cannot dispatch; P6 separately authorizes sandbox effects. Live language/dialogue-quality acceptance is unverified. |
 | P6 | Local gate passed: exact-bundle approval, session-bound step-up, fenced durable execution, sandbox effects, serialized commitment gate with engine-derived baseline projection, rounds, compensation. Real adapters do not exist. |
 | P7 | Members/invitations, account evidence, notifications, exports/history implemented. Session reauthentication tests and supporting-list continuation repaired; current local verification is in the remediation report. |
-| P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, live OpenAI, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
+| P8 | `/ready`, graceful worker shutdown, same-origin proxy, Render/Neon runbooks and disposable browser E2E are verified locally. **Hosted acceptance, persisted/hosted OpenAI workflow, S3 provisioning/restore drill and PgBouncer-under-Neon are unverified.** |
 
 The [original stress report](../../../docs/backend_stress_test_report_2026-10-16.md)
 remains historical evidence. Its ST-01 through ST-06 and bounded local ST-09

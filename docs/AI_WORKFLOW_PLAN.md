@@ -1,8 +1,8 @@
 # OrderFit AI workflow plan
 
-Status: C1-C6 and F1-F5 are implemented in code (18 October 2026) and verified offline against recorded synthetic cases and a disposable PostgreSQL 17; no live OpenAI or FreeLLMPool quality run has been made for them (see "Implementation status"). C7-C10 remain proposals. It consolidates the earlier AI strategy and AI role assessments into one list of additions that make the AI more meaningful without breaking the product's invariants: the engine owns every figure, the owner confirms facts and approves actions, and model output is a proposal.
+Status: C1-C6 and F1-F5 are implemented in code and passed a live OpenAI run of all 49 synthetic AI cases on 20 October 2026. This qualifies the proposal paths against this synthetic corpus; it is not persisted workflow, hosted service, or production acceptance. C7-C10 remain proposals. It consolidates the earlier AI strategy and AI role assessments into one list of additions that make the AI more meaningful without breaking the product's invariants: the engine owns every figure, the owner confirms facts and approves actions, and model output is a proposal.
 
-Provider policy: FreeLLMPool is for testing only. The hosted website uses the OpenAI API (`LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL`; the configuration validator already requires all three for live OpenAI mode).
+Provider policy: OpenAI is the only live model provider. `OPENAI_API_KEY` and `OPENAI_MODEL` are required for live mode; configuration validation fails closed if either is missing. `off` and `recorded` modes remain available without provider calls.
 
 ## Current AI in the code
 
@@ -16,15 +16,12 @@ Provider policy: FreeLLMPool is for testing only. The hosted website uses the Op
 | Drafts | `services/preparation.py` | Deterministic templates; `prompts/draft_message.md` is not wired (C7) |
 | Ranking, money, approvals | engine, workflow | Deterministic; no model authority |
 
-FreeLLMPool live mode is configuration-restricted to loopback origins and filesystem
-document storage.
-
 ## Implementation status (18 October 2026)
 
 | Item | State | Evidence and limits |
 |---|---|---|
-| F1-F3 | Implemented | Shared structured call, `*.system.md` prompts, FreeLLMPool production guard |
-| F4 | Implemented | `scripts/ai_eval.py`, 49 synthetic cases, 5 task types, committed recordings, `data/ai_workflow/report.json`; recorded results prove the replay path and guards, not live-model quality |
+| F1-F3 | Implemented | Shared OpenAI structured call, `*.system.md` prompts, explicit live credentials/model validation |
+| F4 | Implemented; live synthetic pass verified 20 Oct 2026 | `scripts/ai_eval.py`, 49 synthetic cases, 5 task types, committed recordings, ignored live report at `var/ai-eval-live.json`; all cases passed with configured OpenAI model `gpt-6-luna`; zero unsafe proposal changes. This is not a database-backed end-to-end or hosted acceptance |
 | F5 | Implemented | `ProvenanceBadge` on extraction candidates, forks, clause readings, replies, explanations and messages; AI kinds are `live`/`recorded`, everything else is labelled template/typed/manual |
 | C1 | Implemented | Prompt rules plus deterministic guards: unrecognised basis, conflicting values, two stated totals, multi-date quotes, computed sums; guards only lower a status |
 | C2 | Implemented | Typed terms, conditions, unsupported clauses and stance, each verbatim-quoted; one fabricated quote invalidates the reading; stance never sets acceptance; reviewer disagreement shown; persisted in the reply payload |
@@ -37,14 +34,14 @@ A language counts as supported only while `scripts/ai_eval.py` shows passing ext
 
 ## Tier 0: foundation
 
-These make every later AI addition work identically on FreeLLMPool and OpenAI.
+These make every AI task share the same OpenAI structured-call boundary and prompt rules.
 
 | # | Addition | Why | Where |
 |---|---|---|---|
-| F1 | One shared structured-call helper for both providers | Provider dispatch, error mapping and provenance are duplicated in `extract` and `propose_intent`; every new task would copy it again | `agent/llm.py` |
-| F2 | Shared system prompts in prompt files, included in `prompt_hash` | FreeLLMPool gets payment-basis instructions that OpenAI does not (`llm.py` system messages differ), so test results do not transfer; `prompt_hash` covers only `extract_order.md` (`workflow/extraction.py`) | `agent/prompts/*.system.md`, `workflow/extraction.py` |
-| F3 | Production guard: reject `LLM_PROVIDER=freellmpool` when any allowed origin is not loopback or storage is S3 | No production flag exists; hosted deployments always use non-loopback origins | `contracts/configuration.py` |
-| F4 | Provider-agnostic evaluation harness | Implemented for recorded extraction/what-if and deterministic reply baselines. Synthetic cases, committed recordings, code grounding/safety grader and JSON reports live in `scripts/ai_eval.py`, `data/ai_workflow/` and `docs/evaluation.md`. Recorded results prove replay-path correctness, not live-model quality. |
+| F1 | One shared OpenAI structured-call helper | Error mapping and provenance are consistent across extraction, what-if, reply, clause, and explanation tasks | `agent/llm.py` |
+| F2 | Shared system prompts in prompt files, included in `prompt_hash` | Task instructions must be consistent and versioned with the structured OpenAI call | `agent/prompts/*.system.md`, `workflow/extraction.py` |
+| F3 | Keep the OpenAI Responses API as the only live provider; require explicit credentials and model configuration | Prevents unexpected provider routing and keeps provider credentials server-side | `contracts/configuration.py`, `agent/llm.py` |
+| F4 | OpenAI evaluation harness with recorded offline mode | Implemented for recorded extraction/what-if and deterministic reply baselines. Synthetic cases, committed recordings, code grounding/safety grader and JSON reports live in `scripts/ai_eval.py`, `data/ai_workflow/` and `docs/evaluation.md`. Recorded results prove replay-path correctness, not live-model quality. |
 | F5 | Provenance badge on every AI output (live / recorded / template, model) | Makes AI use and fallback visible to the owner and reviewers; check current UI coverage first | web review screens |
 
 ## Tier 1: core AI capabilities, in priority order
@@ -99,8 +96,8 @@ Starting language set: English, Bengali, Hindi and Simplified Chinese. A languag
 
 ## Measuring value
 
-For each capability, F4 compares the AI path with its non-AI baseline on held-out synthetic cases: field accuracy against labelled values, quote grounding, preserved conditions and ambiguities, unsafe changes (target zero), fallback rate, latency and token use, reported per language for C6. Fallback or recorded results are reported separately and never counted as live-model success. A FreeLLMPool pass shows the pipeline works; OpenAI quality is established only by running the same cases against OpenAI.
+For each capability, F4 compares the AI path with its non-AI baseline on held-out synthetic cases: field accuracy against labelled values, quote grounding, preserved conditions and ambiguities, unsafe changes (target zero), fallback rate, latency and token use, reported per language for C6. Fallback or recorded results are reported separately and never counted as live-model success. OpenAI quality is established only by running the same cases against OpenAI; that live run is not yet verified.
 
 ## Switching to OpenAI
 
-Set `LLM_PROVIDER=openai`, `OPENAI_API_KEY` and `OPENAI_MODEL`, then rerun the F4 cases and record the results before describing the live capability as verified.
+Set `LLM_MODE=live`, `OPENAI_API_KEY` and `OPENAI_MODEL`, then rerun the F4 cases and record the results before describing the live capability as verified.
