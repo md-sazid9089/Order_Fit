@@ -1,12 +1,31 @@
 # Database handout: account recovery and invitation delivery
 
-Date: 19 October 2026. Status: schema proposal and implementation assignment;
-no SQL migration has been written or applied by this handout. Database changes
-ARE required. Coordinate with [backend plan](account_access_backend_plan.md) and
+Date: 19 October 2026. Status: migration `0023_account_access` is now written and
+tested on disposable PostgreSQL; no Neon/shared migration has been applied.
+Review and deploy the provided migration rather than creating a second one.
+Coordinate with [backend plan](account_access_backend_plan.md) and
 [shared account-access.v1 contract](contracts/account-access-v1.md). The shared
 contract owns policy/expiry/API semantics; this document owns persistence and
 privilege requirements. Exact helper signatures must be agreed with backend
-before migration work is merged.
+before any follow-up SQL changes. Actual files:
+`backend/migrations/versions/0023_account_access.py` and
+`backend/migrations/sql/0023_account_access.sql`. Use the
+[release runbook](deployment/account-access.md) for role/configuration/cleanup
+steps and the [implementation report](account_access_implementation_2026-10-19.md)
+for verified gates. The design below is retained for review; the manual SQL is
+authoritative for exact helper signatures and grants.
+
+Implemented resolutions: reset/session issuance serialize through the user row;
+credential-change trigger takes dependent row locks with NOWAIT and returns a
+retryable 55P03 on a conflicting session/profile/passkey transaction. Session
+generation is checked on resolution. A reset does not delete step-up rows because
+approvals reference them: it marks grants consumed and revokes sessions. The new
+helper owner is `orderfit_account_owner`; API/worker startup rejects membership
+in that role. The 15-second bounded transport fits a 60-second lease without an
+extra heartbeat thread. Global cleanup remains migrator-only and must be arranged
+separately before hosted enablement. Recipient fingerprint-key rotation is not
+implemented; keep that existing secret stable until a reviewed suppression
+migration. These are the actual choices superseding alternative patterns below.
 
 ## Preflight and migration ownership
 
@@ -42,7 +61,7 @@ SQL signatures with backend fixtures. No replacement identity/invitation tables.
 | `account_access_token` | UUID PK; user FK; purpose `verify_email|reset_password`; unique 32-byte token digest; exact normalized email; credential generation at issue; created/expiry; consumed/revoked timestamps; expiry > creation and purpose max lifetime; no raw token or password. Partial unique `(user_id,purpose)` for unconsumed/unrevoked rows; revoke expired live row before issuing another. |
 | `account_mail_outbox` | UUID PK; kind `verify_email|reset_password|password_changed|invitation`; user FK and/or invitation reference as appropriate; nullable business UUID; exact encrypted canonical payload + key ID + nonce; immutable template version/payload digest/provider dedupe key; link expiry; queued/attempt/lease timestamps and lease token; status, attempt count, provider email ID, safe failure code, provider acceptance/delivery timestamps; permanent uniqueness on semantic mail identity. |
 | `account_mail_event` | provider + unique event ID (Svix delivery ID), provider email ID, event type/time, received time, minimal processing state; optional outbox reference for events arriving before publication; no raw body or recipient list. |
-| `account_mail_suppression` | keyed normalized-recipient fingerprint (same key derivation contract in API and worker), cause `bounce|complaint`, created time, optional reviewed-clear metadata; narrow helper reads/updates only. Keep key version for rotation. |
+| `account_mail_suppression` | 32-byte keyed normalized-recipient fingerprint PK (same derivation and stable key in API/worker), cause `bounce|complaint`, created time; private helper access only. No online fingerprint rotation or generic suppression-clear endpoint in this release. |
 
 Outbox invitation references must be composite `(business_id,invitation_id)` to
 existing invitation `(business_id,id)`. Account-email rows have no tenant; never

@@ -1,10 +1,19 @@
 # Frontend handout: account recovery and emailed invitations
 
-Date: 19 October 2026. Status: implementation handoff; backend APIs described here
-are proposed, not available today. Read the
+Date: 19 October 2026. Status: backend routes are implemented locally; shared DB
+migration, frontend integration and live delivery remain pending. Read the
 [shared account-access.v1 contract](contracts/account-access-v1.md) first.
 [Backend owner plan](account_access_backend_plan.md) and
 [database owner handout](account_access_database_handoff.md) use that same contract.
+
+Implementation update: consume `docs/contracts/frontend-api.d.ts` / `openapi.json`
+and [validated synthetic examples](contracts/account-access-examples.json).
+The backend exported these files without changing `web/lib/generated-api.d.ts`.
+Sync that browser declaration as part of frontend work. The actual existing
+acknowledgement contains only `request_id` and `completed`. Features default off;
+new code requires migration `0023_account_access`. Legacy manual invitation
+creation remains supported with email mode off; email-mode create returns no URL.
+See [release runbook](deployment/account-access.md) before enabling UI controls.
 
 ## Assignment and boundaries
 
@@ -132,6 +141,13 @@ role or platform status fields are submitted. Success directs normal sign-in
 and reopening original email link, followed by explicit acceptance. Registration
 does not create membership or session and does not mark account email verified.
 `ACCOUNT_EXISTS` after valid token offers sign-in instead of duplicate signup.
+
+Important integration case: invitation registration creates a legitimate account
+with `memberships: []`. Update the normal sign-in redirect/business-selector path
+to handle that state and honor the safe `/auth/invitations/accept` return path;
+do not route this user into an overview that assumes a first business. Keep the
+instruction to reopen the original invitation email after sign-in, since its
+fragment token is deliberately not persisted or carried through a query string.
 
 Settings verification is a separate step after acceptance. Invitation acceptance
 must not display a verified-email badge automatically, including legacy links.

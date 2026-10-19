@@ -1,5 +1,58 @@
 # Backend implementation progress
 
+## 19 October 2026: account recovery and emailed invitations backend
+
+Implemented locally from `42e9bc2` against
+[account-access.v1](contracts/account-access-v1.md). Required schema is now
+`0023_account_access`, after `0022_baseline_duplicates`. All account-mail features
+and worker sending default off. No shared/Neon migration, provider configuration,
+live send, frontend source edit or deployment ran.
+
+- Added strict account-access/mail contracts, public capability discovery,
+  authenticated email verification, generic password-reset request/confirmation,
+  invitation-only account registration and signed Resend callbacks. Session email
+  verification/eligibility and invitation delivery projections are required fields.
+- Added manual SQL/Alembic migration for private FORCE-RLS token, encrypted outbox,
+  event and suppression storage. Dedicated non-login helper owner is excluded from
+  runtime authority; API/worker retain narrow function grants, not table secrets.
+- Credential generation and bounded NOWAIT revocation atomically invalidate old
+  credentials/sessions/challenges/step-ups. Passkeys and immutable approval history
+  survive reset; queued execution loses old session authority before any effect.
+  No alternate identity provider or financial calculator was introduced.
+- Added AES-GCM keyring, frozen allowlisted templates, bounded HTTP/Svix adapter,
+  stable provider retry keys, 60-second fences, early/replayed callback handling,
+  monotone delivery state and bounce/complaint suppression. One mail per existing
+  worker tick; no fake tenant/session or second queue. Maintenance is separate and
+  migrator-only, with an operational scheduling gate before hosted enablement.
+- Extended existing membership code with owner-only paged invitation history,
+  atomic email enqueue/reissue/cancellation and current issuer checks. New invitee
+  registration creates no business/membership/session and does not verify email.
+  Legacy manual copied invitations still work while email mode is off.
+- Updated role-specific runtime configuration, examples, Compose/hosted switches,
+  backend-only generated OpenAPI/TypeScript (134 operations), validated synthetic
+  wire examples, and frontend/database/deployment handoffs. No `web/` file changed.
+
+Verification: final frozen focused suite **187 passed**, one existing Starlette
+deprecation warning; Ruff and backend contract export/check pass. Disposable PG17
+fixture ran original SQL **296/296** before/after upgrade, concurrency and fresh/
+legacy migration preservation checks under restricted API/worker logins. The
+broad default regression run was **806 passed, 1 deselected, 1 failure**: only an
+outdated exact-head assertion naming 0022. It was corrected to assert 0023 and
+its predecessor, then passed in the final focused run. The full suite was not
+repeated after that correction and the final targeted contract/security deltas;
+do not claim a clean all-pass full run. Compose example configuration and final
+documentation consistency checks pass.
+
+Current limits: existing locked-out unverified users cannot bootstrap recovery;
+lost-passkey recovery is not supplied; online recipient-fingerprint key rotation
+and generic suppression clearing are deferred. Shared DB deployment/roles,
+privileged cleanup scheduling/keyring restore, sender DNS/tracking/real mailbox
+callbacks, frontend declarations/pages and browser acceptance remain unrun.
+Details, commands and logs: [implementation evidence](account_access_implementation_2026-10-19.md).
+Next owner actions: [database handoff](account_access_database_handoff.md),
+[frontend handoff](account_access_frontend_handoff.md), and
+[release runbook](deployment/account-access.md).
+
 ## 18 October 2026: read-only platform admin remediation
 
 Implemented atop `4578538` following

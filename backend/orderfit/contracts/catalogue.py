@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace
 
+from . import account_access as aa
 from . import admin as ad
 from . import advisory as a
 from . import preparation as p
@@ -1384,3 +1385,16 @@ for suffix, response, collection in [
         collection=collection)
 add("GET", "/api/v1/admin/logs", "admin_logs", None, w.ErrorEnvelope, "platform_admin",
     "admin.logs_unavailable", "none", "P8", "admin unavailable gate", status=503)
+
+for method, path, name, req, response, permission, status in [
+    ("GET", "/auth/account-access", "account_access_capabilities", None, aa.AccountAccessCapabilities, "public", 200),
+    ("POST", "/auth/email-verification/request", "email_verification_request", aa.VerificationRequest, Acknowledgement, "self", 202),
+    ("POST", "/auth/email-verification/confirm", "email_verification_confirm", aa.TokenConfirm, Acknowledgement, "self", 200),
+    ("POST", "/auth/password-reset/request", "password_reset_request", aa.PasswordResetRequest, Acknowledgement, "public", 202),
+    ("POST", "/auth/password-reset/confirm", "password_reset_confirm", aa.PasswordResetConfirm, Acknowledgement, "public", 200),
+    ("POST", "/auth/invitations/register", "invitation_register", aa.InvitationRegister, Acknowledgement, "public", 201),
+    ("POST", "/webhooks/resend", "resend_webhook", None, Acknowledgement, "provider_signature", 200),
+]:
+    add(method, "/api/v1" + path, name, req, response, permission, "account_access", "account_access_token,account_mail_outbox", "P7", "V04,V12", status=status)
+add("GET", "invitations", "invitations", None, Page[r.InvitationView], "manage_members", "membership", "membership_invitation", "P7", "V04", collection=True)
+add("POST", "invitations/{invitation_id}/reissue", "invitation_reissue", RevisionReason, r.InvitationView, "manage_members", "membership", "membership_invitation,account_mail_outbox", "P7", "V04,V12", status=201)

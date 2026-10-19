@@ -129,3 +129,12 @@ All business operations are planned, not deployed. Test column is the required p
 | admin_orders | `GET /api/v1/admin/orders` | platform_admin | `admin.orders` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
 | admin_system | `GET /api/v1/admin/system` | platform_admin | `admin.system` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
 | admin_logs | `GET /api/v1/admin/logs` | platform_admin | `admin.logs_unavailable` | none | P8 | admin unavailable gate |
+| account_access_capabilities | `GET /api/v1/auth/account-access` | public | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| email_verification_request | `POST /api/v1/auth/email-verification/request` | self | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| email_verification_confirm | `POST /api/v1/auth/email-verification/confirm` | self | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| password_reset_request | `POST /api/v1/auth/password-reset/request` | public | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| password_reset_confirm | `POST /api/v1/auth/password-reset/confirm` | public | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| invitation_register | `POST /api/v1/auth/invitations/register` | public | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| resend_webhook | `POST /api/v1/webhooks/resend` | provider_signature | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
+| invitations | `GET /api/v1/businesses/{business_id}/invitations` | manage_members | `membership` | membership_invitation | P7 | V04 |
+| invitation_reissue | `POST /api/v1/businesses/{business_id}/invitations/{invitation_id}/reissue` | manage_members | `membership` | membership_invitation,account_mail_outbox | P7 | V04,V12 |
