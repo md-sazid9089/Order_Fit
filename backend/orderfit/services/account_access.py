@@ -10,6 +10,7 @@ from orderfit.contracts.primitives import Acknowledgement
 from orderfit.contracts.protocol import request_body_digest
 from orderfit.services.account_mail import token_digest
 from orderfit.services.identity import hash_password
+from orderfit.services.password_policy import check_new_password
 from orderfit.store import account_access_repository as repo
 from orderfit.store.db import apply_timeouts, digest_token
 from orderfit.store.repositories import IdentityRepository
@@ -130,6 +131,10 @@ class AccountAccess:
         digest = token_digest(data.token.get_secret_value())
         if not self.rate(purpose + ":confirm", digest.hex(), 15):
             raise ApplicationError(429, "AUTH_RATE_LIMIT", "Try again later.")
+        if purpose == "reset_password":
+            # The account email is not known until the token is redeemed, so only the
+            # email-independent rules apply here.
+            check_new_password(data.new_password.get_secret_value(), email="")
         hashed = (
             hash_password(data.new_password.get_secret_value())
             if purpose == "reset_password"
@@ -167,6 +172,7 @@ class AccountAccess:
         digest = token_digest(data.token.get_secret_value())
         if not self.rate("invitation_register", digest.hex(), 15):
             raise ApplicationError(429, "AUTH_RATE_LIMIT", "Try again later.")
+        check_new_password(data.password.get_secret_value(), email="")
         hashed = hash_password(data.password.get_secret_value())
         with self.database.transaction() as c:
             apply_timeouts(c)

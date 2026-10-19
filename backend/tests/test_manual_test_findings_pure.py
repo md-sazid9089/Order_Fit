@@ -9,6 +9,8 @@ import pytest
 from sqlalchemy.exc import OperationalError
 
 from orderfit.api.errors import ApplicationError
+from orderfit.contracts.account_access import InvitationRegister, PasswordResetConfirm
+from orderfit.services.account_access import AccountAccess
 from orderfit.services.password_policy import check_new_password
 from orderfit.store.repositories import _row_to_offer
 from orderfit.workflow.worker import RetryableJobError, classify_unexpected_failure
@@ -113,3 +115,35 @@ def test_transient_database_connectivity_error_is_retried():
 def test_explicit_retryable_error_is_retried():
     result, retry = classify_unexpected_failure(CLAIM, JOB, RetryableJobError())
     assert (result.error.code, retry) == ("TRANSIENT_JOB_FAILURE", True)
+
+
+# --- account-access paths share the same policy ----------------------------------------
+
+class _NoDatabase:
+    """Any database use fails the test: a weak password must be refused before storage."""
+
+    def __getattr__(self, name):
+        raise AssertionError("database touched before the password policy ran")
+
+
+def _access():
+    access = AccountAccess.__new__(AccountAccess)
+    access.mail = SimpleNamespace(require=lambda *_: None)
+    access.source_limit = lambda *_: None
+    access.rate = lambda *_: True
+    access.database = _NoDatabase()
+    return access
+
+
+def test_password_reset_refuses_a_weak_new_password_before_touching_storage():
+    body = PasswordResetConfirm(token="t" * 43, new_password="password1234")
+    with pytest.raises(ApplicationError) as caught:
+        _access().confirm("reset_password", body, "key-1", "203.0.113.9")
+    assert (caught.value.status, caught.value.code) == (422, "WEAK_PASSWORD")
+
+
+def test_invitation_registration_refuses_a_weak_password_before_touching_storage():
+    body = InvitationRegister(token="t" * 43, full_name="Invitee", password="aaaaaaaaaaaa")
+    with pytest.raises(ApplicationError) as caught:
+        _access().register(body, "key-2", "203.0.113.9")
+    assert (caught.value.status, caught.value.code) == (422, "WEAK_PASSWORD")
