@@ -155,7 +155,7 @@ export default function DealDocumentsPage({ params }: { params: Promise<{ id: st
           </Link>
         </div>
 
-        <h1 className="text-xl font-semibold">Source documents &amp; OCR Verification</h1>
+        <h1 className="text-xl font-semibold">Source documents</h1>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}{message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-900">{message}</p>}
     <form onSubmit={upload} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Upload</h2>
       <div className="flex flex-wrap gap-3 text-sm"><label>Type<select className="ml-2 rounded border p-1" value={kind} onChange={e => { setKind(e.target.value); setRole(ROLES[e.target.value][0]); }}>{Object.keys(ROLES).map(k => <option key={k}>{k}</option>)}</select></label>

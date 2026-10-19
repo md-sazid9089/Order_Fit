@@ -14,8 +14,6 @@ import {
   Edit3,
   ArrowRight,
   ArrowLeft,
-  FileText,
-  CheckCircle2,
   MessageSquare,
   History,
 } from "lucide-react";
@@ -23,7 +21,6 @@ import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/componen
 import { DecisionGuide } from "@/components/decision-guide";
 import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
-import { createMockEvaluationBundle } from "@/lib/fixture-evaluation";
 
 function DealDetailSkeleton() {
   return (
@@ -95,31 +92,16 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     if (!businessId || !dealId) return;
     const generation = ++loadGeneration.current;
 
-    // Helper to load fallback mock bundle from localStorage or fixtures
-    const loadFallbackBundle = () => {
-      try {
-        let draft: any = null;
-        if (typeof window !== "undefined") {
-          const storedValidated = localStorage.getItem("orderfit_deal_validated");
-          const storedDraft = localStorage.getItem("orderfit_deal_draft");
-          draft = storedValidated ? JSON.parse(storedValidated) : storedDraft ? JSON.parse(storedDraft) : null;
-        }
-        const bundle = createMockEvaluationBundle(dealId, businessId, draft);
-        if (generation !== loadGeneration.current) return;
-        setDeal(bundle.deal);
-        setRole("owner");
-        setEvaluation(bundle.evaluation);
-        setReview(bundle.review);
-        setAcknowledgements([]);
-        setError("");
-      } catch (err) {
-        if (generation === loadGeneration.current) {
-          setError(explain(err, "Could not load this order."));
-        }
-      }
+    // Only the saved order from the API is ever shown. A failed or unknown lookup is a visible state, never a simulated order.
+    const showUnavailable = (message: string) => {
+      if (generation !== loadGeneration.current) return;
+      setDeal(null);
+      setEvaluation(null);
+      setReview(null);
+      setError(message);
     };
 
-    // If dealId is not a UUID (e.g. PO-8750, PO-7899, OF-02), attempt to find deal by public_ref or load fallback
+    // If dealId is not a UUID (e.g. PO-8750, PO-7899), attempt to find the saved order by public_ref
     const isUuid = UUID_REGEX.test(dealId);
     let resolvedUuid = isUuid ? dealId : null;
 
@@ -139,8 +121,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     }
 
     if (!resolvedUuid) {
-      // It's a human-readable PO number without backend record yet, render simulated evaluation bundle
-      loadFallbackBundle();
+      showUnavailable(`No saved order matches “${dealId}” in this business. Check the reference, or return to the pipeline.`);
       return;
     }
 
@@ -160,10 +141,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       setReview(checks);
       setAcknowledgements([]);
     } catch (e) {
-      // If backend fails with 422/404 or network issue, fallback to synthetic evaluation so user can test the compute view
-      if (generation === loadGeneration.current) {
-        loadFallbackBundle();
-      }
+      showUnavailable(explain(e, "This order could not be loaded. Retry, or return to the pipeline."));
     }
   }, [businessId, dealId]);
   useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh, route?.operationId]);
@@ -224,29 +202,24 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         {!deal && !error && <DealDetailSkeleton />}
         {deal && (
           <>
-            {/* Next Step Action Banner linking to Step 5: Approve */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-[#FAF9F7] dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl shadow-xs">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
-                    Step 4 Feasibility Evaluation Complete
-                  </span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                    Counter-Offer Strategy Recommended
-                  </span>
+            {/* Next step appears only once a current evaluation is saved; the verdict itself is shown by the evaluation below. */}
+            {evaluation && !deal.is_stale && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-[#FAF9F7] dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl shadow-xs">
+                <div>
+                  <p className="text-sm font-semibold text-[#1E2021] dark:text-white">Evaluation saved</p>
+                  <p className="text-xs text-[#737373] dark:text-neutral-400 mt-1">
+                    Next, explore what-if alternatives, review drafted messages and approve sandbox actions.
+                  </p>
                 </div>
-                <p className="text-xs text-[#737373] dark:text-neutral-400 mt-1">
-                  Explore what-if alternatives, review drafted messages, and execute the approval gate in Step 5.
-                </p>
+                <Link
+                  href={`/deals/${dealId}/negotiate?businessId=${businessId}`}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
+                >
+                  <span>Open what-if and approval</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
               </div>
-              <Link
-                href={`/deals/${dealId}/negotiate?businessId=${businessId}`}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs transition-all active:scale-[0.98] shrink-0"
-              >
-                <span>Proceed to Step 5: What-If &amp; Approval</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </div>
+            )}
             <header className="rounded-2xl border bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -309,20 +282,6 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
       >
         <Landmark className="h-4 w-4 text-neutral-600" />
         Business cash and financing sources
-      </Link>
-      <Link
-        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
-        href={`/deals/${dealId}/documents?businessId=${businessId}`}
-      >
-        <FileText className="h-4 w-4 text-neutral-600" />
-        Source documents &amp; OCR
-      </Link>
-      <Link
-        className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"
-        href={`/deals/${dealId}/confirm?businessId=${businessId}`}
-      >
-        <CheckCircle2 className="h-4 w-4 text-neutral-600" />
-        Confirm terms gate
       </Link>
       <Link
         className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-medium text-neutral-800 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 transition-colors"

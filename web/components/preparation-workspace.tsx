@@ -3,7 +3,7 @@
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRight, ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
 import { ApiError, get, mutate, type Deal, type Evaluation, type Operation, type Session } from "@/lib/orderfit-api";
 import { ApprovalWorkflow } from "@/components/approval/approval-workflow";
 import { BankChangeHold } from "@/components/p7/bank-hold";
@@ -204,7 +204,7 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
           >
             <FileText className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Source Documents &amp; OCR</span>
+            <span>Source documents</span>
           </Link>
           <Link
             href={`/deals/${dealId}/confirm?businessId=${businessId}`}
