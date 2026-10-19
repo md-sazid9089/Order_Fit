@@ -82,7 +82,15 @@ $override += @("  web:", "    image: $webImage")
 $composeFiles = @("-f", (Join-Path $root "docker-compose.yml"), "-f", $tempCompose)
 
 function Invoke-Compose([string[]]$Arguments) {
-    & docker compose @composeFiles --project-name $project --env-file $tempEnv @Arguments
+    # Windows PowerShell 5.1 turns Docker's progress lines on stderr into
+    # terminating errors under "Stop". Exit code is the authoritative result here.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & docker compose @composeFiles --project-name $project --env-file $tempEnv @Arguments 2>&1 | ForEach-Object { "$_" }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
     if ($LASTEXITCODE -ne 0) { throw "Docker Compose failed with exit code $LASTEXITCODE" }
 }
 
