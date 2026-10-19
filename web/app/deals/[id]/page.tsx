@@ -845,7 +845,7 @@ export default function DealDetailPage({
             <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="size-5 text-[#006A4E] dark:text-[#34D399]" />
+                  <ShieldCheck className="size-5 text-[#1E2021] dark:text-neutral-200" />
                   <h3 className="text-xs font-bold tracking-wider text-[#1E2021] dark:text-white uppercase">
                     Integrity &amp; Review Checks
                   </h3>
@@ -895,8 +895,8 @@ export default function DealDetailPage({
                   ))}
                 </div>
               ) : review?.snapshot_hash ? (
-                <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#E8F8F2] dark:bg-[#004D3B]/20 border border-[#A7E8D0] dark:border-[#004D3B]/40 text-[#006A4E] dark:text-[#34D399] text-xs font-medium">
-                  <CheckCircle2 className="size-4 shrink-0 text-[#006A4E] dark:text-[#34D399]" />
+                <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 text-xs font-medium">
+                  <CheckCircle2 className="size-4 shrink-0 text-[#1E2021] dark:text-white" />
                   <span>All order inputs and source versions are verified and ready for confirmation.</span>
                 </div>
               ) : (
