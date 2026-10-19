@@ -126,7 +126,8 @@ def install_errors(app):
             )
         )
         return JSONResponse(status_code=status, content=error.model_dump(mode="json"),
-                            headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"})
+                            headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+                                     **({"Retry-After": "60"} if status == 429 else {})})
 
     for error_type in (
         ApplicationError,

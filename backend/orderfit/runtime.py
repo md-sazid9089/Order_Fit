@@ -44,6 +44,9 @@ def process_environment(values, inherited, *, worker=False):
         if not values.get("WORKER_DATABASE_URL"):
             raise ValueError("WORKER_DATABASE_URL is required for the worker")
         environment["DATABASE_URL"] = values["WORKER_DATABASE_URL"]
+    else:
+        environment.pop("RESEND_API_KEY", None)
+        environment.pop("ACCOUNT_EMAIL_WORKER_ENABLED", None)
     if environment.get("LLM_PROVIDER") == "freellmpool":
         environment.pop("OPENAI_API_KEY", None)
     return environment
@@ -69,7 +72,7 @@ def main():
             for key, value in environment.items()
             if key.lower() in RuntimeConfiguration.model_fields
         }
-        for name in ("allowed_origins", "trusted_proxy_ips"):
+        for name in ("allowed_origins", "trusted_proxy_ips", "account_email_encryption_keys"):
             if name in config:
                 config[name] = json.loads(config[name])
         # The child validates again with its isolated environment. This prefix

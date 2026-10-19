@@ -166,6 +166,8 @@ SQL_ERRORS = {
 
 
 def sql_error_contract(sqlstate: str) -> tuple[int, str]:
+    if sqlstate == "AC403":
+        return 403, "REAUTHENTICATION_REQUIRED"
     if sqlstate.startswith("22"):
         return 422, "INVALID_INPUT"
     return SQL_ERRORS.get(sqlstate, (503, "DEPENDENCY_UNAVAILABLE"))

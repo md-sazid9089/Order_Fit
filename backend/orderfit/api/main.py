@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from orderfit.api.errors import ApplicationError, install_errors
+from orderfit.api.routes.account_access import router as account_access_router
 from orderfit.api.routes.accounts import router as accounts_router
 from orderfit.api.routes.admin import router as admin_router
 from orderfit.api.routes.bundles import router as bundles_router
@@ -330,6 +331,7 @@ def create_app(config=None, database=None):
     app.include_router(bundles_router)
     app.include_router(members_router)
     app.include_router(accounts_router)
+    app.include_router(account_access_router)
     app.include_router(notifications_router)
     app.include_router(admin_router)
     app.include_router(passkeys_router)

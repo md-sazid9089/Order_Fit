@@ -25,6 +25,9 @@ dependencies = [
   "pypdf>=6.20.1",
   "boto3>=1.37.32,<2",
   "webauthn==3.0.1",
+  "cryptography>=49,<51",
+  "svix>=1.80,<2",
+  "httpx>=0.28,<1",
 ]
 
 [project.optional-dependencies]
