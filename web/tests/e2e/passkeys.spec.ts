@@ -13,10 +13,10 @@ test("password plus verified passkey enrollment and login through the real proxy
   const password = `Synthetic-${randomUUID()}!`;
   try {
     await page.goto("/auth/signup");
-    await page.getByPlaceholder("Full Name*").fill("Synthetic MFA owner");
-    await page.getByPlaceholder("Business / Company Name*").fill("Synthetic MFA business");
-    await page.getByPlaceholder("Email*").fill(email);
-    await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
+    await page.getByLabel("Full name", { exact: true }).fill("Synthetic MFA owner");
+    await page.getByLabel("Business / Company name", { exact: true }).fill("Synthetic MFA business");
+    await page.getByLabel("Email", { exact: true }).fill(email);
+    await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Create account" }).click();
     await expect(page).toHaveURL(/\/deals(?:\?|$)/);
     const oldCookie = (await context.cookies()).find(cookie => cookie.name === "orderfit_session")?.value;

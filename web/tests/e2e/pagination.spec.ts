@@ -4,10 +4,10 @@ import { expect, test } from "@playwright/test";
 test("older saved customer is selectable after a recoverable continuation failure", async ({ page, baseURL }) => {
   test.setTimeout(60_000);
   await page.goto("/auth/signup");
-  await page.getByPlaceholder("Full Name*").fill("Synthetic pagination owner");
-  await page.getByPlaceholder("Business / Company Name*").fill("Disposable pagination business");
-  await page.getByPlaceholder("Email*").fill(`pages-${randomUUID()}@example.invalid`);
-  await page.getByPlaceholder("Password (min. 12 characters)*").fill(`Synthetic-${randomUUID()}`);
+  await page.getByLabel("Full name", { exact: true }).fill("Synthetic pagination owner");
+  await page.getByLabel("Business / Company name", { exact: true }).fill("Disposable pagination business");
+  await page.getByLabel("Email", { exact: true }).fill(`pages-${randomUUID()}@example.invalid`);
+  await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(`Synthetic-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await page.getByRole("link", { name: "New order" }).first().click();
