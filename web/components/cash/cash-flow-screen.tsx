@@ -20,15 +20,11 @@ import {
 } from "@/components/p7/common";
 import {
   Download,
-  Calendar,
   Layers,
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
   AlertTriangle,
-  CheckCircle2,
-  SlidersHorizontal,
-  FileSpreadsheet,
 } from "lucide-react";
 import type { CashEventView } from "@/lib/generated-api";
 
@@ -85,22 +81,26 @@ export function CashFlowScreen() {
         </>
       }
       action={
-        <div className="flex items-center gap-2">
-          {error && <Alert>{error}</Alert>}
-          {notice && <Alert tone="ok">{notice}</Alert>}
-          <button
-            type="button"
-            className={primary}
-            disabled={busy}
-            onClick={handleDownloadCsv}
-            title="Download a CSV of baseline events with signed-in session"
-          >
-            <Download className="size-3.5" />
-            <span>{busy ? "Preparing…" : "Download Baseline Cash CSV"}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className={primary}
+          disabled={busy}
+          onClick={handleDownloadCsv}
+          title="Download a CSV of baseline events with signed-in session"
+        >
+          <Download className="size-3.5" />
+          <span>{busy ? "Preparing…" : "Download Baseline Cash CSV"}</span>
+        </button>
       }
     >
+      {/* Status feedback */}
+      {(error || notice) && (
+        <div className="flex flex-col gap-1.5">
+          {error && <Alert>{error}</Alert>}
+          {notice && <Alert tone="ok">{notice}</Alert>}
+        </div>
+      )}
+
       {/* 1. RUNNING BALANCE LEDGER */}
       <section className={panel} aria-labelledby="running-heading">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
