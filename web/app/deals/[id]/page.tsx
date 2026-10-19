@@ -3,7 +3,7 @@
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ApiError, get, mutate, type DraftInputs, type Session, type ConstraintsView, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
+import { ApiError, get, mutate, type DraftInputs, type ConstraintsView, type Deal, type Evaluation, type Operation, type Review } from "@/lib/orderfit-api";
 import { describeP7Error } from "@/lib/p7-model";
 import { useScope } from "@/components/layout/auth-shell";
 import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs";
@@ -21,6 +21,7 @@ import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/componen
 import { DecisionGuide } from "@/components/decision-guide";
 import { DealEvaluationInspector, DealCashSeriesViewer } from "@/components/deals/deal-evaluation-inspector";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
+import { InlineAlert } from "@/components/system/inline-alert";
 
 function DealDetailSkeleton() {
   return (
@@ -65,7 +66,8 @@ function explain(e: unknown, fallback: string): string {
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function DealDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ businessId?: string; operationId?: string }> }) {
-  const { businessId: selectedBusiness } = useScope();
+  const { businessId: selectedBusiness, session } = useScope();
+  const [readFailures, setReadFailures] = useState<string[]>([]);
   const [route, setRoute] = useState<{ dealId: string; businessId: string; operationId?: string } | null>(null);
   const resolvedRoute = useRef<{ dealId: string; businessId: string; operationId?: string } | null>(null);
   const loadGeneration = useRef(0);
@@ -126,24 +128,27 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
     }
 
     try {
-      const [d, session] = await Promise.all([
-        get<Deal>(`/businesses/${businessId}/deals/${resolvedUuid}`),
-        get<Session>("/auth/me").catch(() => ({ memberships: [{ business_id: businessId, role: "owner" }] } as unknown as Session)),
-      ]);
+      const d = await get<Deal>(`/businesses/${businessId}/deals/${resolvedUuid}`);
+      // Secondary reads may fail independently; each failure is shown, never silently treated as "nothing saved".
+      const failures: string[] = [];
       const [result, checks] = await Promise.all([
-        d.live_evaluation_id ? get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`).catch(() => null) : Promise.resolve(null),
-        get<Review>(`/businesses/${businessId}/deals/${resolvedUuid}/review`).catch(() => null),
+        d.live_evaluation_id
+          ? get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`).catch(() => { failures.push("the saved evaluation"); return null; })
+          : Promise.resolve(null),
+        get<Review>(`/businesses/${businessId}/deals/${resolvedUuid}/review`).catch(() => { failures.push("the input review checks"); return null; }),
       ]);
       if (generation !== loadGeneration.current) return;
       setDeal(d);
-      setRole(session.memberships.find(m => m.business_id === businessId)?.role ?? "owner");
+      // Role comes from the verified session held by the authenticated shell; no membership means no actions.
+      setRole(session.memberships.find(m => m.business_id === businessId)?.role ?? "");
       setEvaluation(result);
       setReview(checks);
+      setReadFailures(failures);
       setAcknowledgements([]);
     } catch (e) {
       showUnavailable(explain(e, "This order could not be loaded. Retry, or return to the pipeline."));
     }
-  }, [businessId, dealId]);
+  }, [businessId, dealId, session.memberships]);
   useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh, route?.operationId]);
   useEffect(() => {
     if (!route?.operationId || !businessId) return;
@@ -198,6 +203,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         </div>
 
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</p>}
+        {deal && readFailures.length > 0 && <InlineAlert tone="warning" title="Part of this order couldn&apos;t load" action={<button type="button" className="text-sm font-semibold text-primary underline" disabled={busy} onClick={() => { void refresh(); }}>Try again</button>}>We couldn&apos;t load {readFailures.join(" or ")}. The saved order itself is unchanged.</InlineAlert>}
         <button className="text-sm underline" disabled={busy} onClick={() => { setEditing(null); setError(""); void refresh(); }}>Reload saved inputs and status</button>
         {!deal && !error && <DealDetailSkeleton />}
         {deal && (
@@ -337,7 +343,7 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
         </div>
       </section>
     )}
-    <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : review?.snapshot_hash ? <p className="mt-2 text-sm text-neutral-600">Inputs and source versions are ready for confirmation.</p> : <div role="status" aria-busy="true" className="mt-3 space-y-2"><span className="sr-only">Loading review…</span><Skeleton className="h-4 w-64" /><Skeleton className="h-4 w-48" /></div>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
+    <section className="rounded-2xl border bg-white p-5"><h2 className="font-semibold">Review checks</h2>{review?.findings.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{review.findings.map((f, i) => <li key={`${f.code}-${i}`} className={f.blocking ? "text-red-800" : "text-neutral-700"}>{f.message}{!f.blocking && <label className="ml-2"><input type="checkbox" checked={acknowledgements.includes(f.code)} onChange={e => setAcknowledgements(e.target.checked ? [...acknowledgements, f.code] : acknowledgements.filter(code => code !== f.code))} /> Acknowledge this warning</label>}</li>)}</ul> : review?.snapshot_hash ? <p className="mt-2 text-sm text-neutral-600">Inputs and source versions are ready for confirmation.</p> : readFailures.includes("the input review checks") ? <p className="mt-2 text-sm text-danger">The review checks couldn&apos;t be loaded, so confirmation is unavailable for now. Reload to try again.</p> : <div role="status" aria-busy="true" className="mt-3 space-y-2"><span className="sr-only">Loading review…</span><Skeleton className="h-4 w-64" /><Skeleton className="h-4 w-48" /></div>}<details className="mt-3"><summary className="cursor-pointer text-sm underline">Inspect saved values and source evidence before confirming</summary><pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(review?.candidate_snapshot ?? deal.inputs, null, 2)}</pre></details></section>
     <Link className="inline-block rounded-lg border bg-white px-4 py-2 underline" href={`/deals/${dealId}/negotiate?businessId=${businessId}`}>What-if and negotiation preparation</Link>
     {evaluation && (
       <section className="space-y-6">
