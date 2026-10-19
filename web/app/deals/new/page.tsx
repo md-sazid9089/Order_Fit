@@ -20,6 +20,11 @@ import {
   AlertCircle,
   PenTool,
   Layers,
+  RefreshCw,
+  Plus,
+  Trash2,
+  Lock,
+  ChevronDown,
 } from "lucide-react";
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import {
@@ -38,6 +43,7 @@ import { useScope } from "@/components/layout/auth-shell";
 import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
 import { SkeletonForm } from "@/components/ui/skeleton";
+import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 
 interface UploadedFile {
   name: string;
@@ -194,6 +200,8 @@ export default function NewDealPage() {
   // ==========================================
   // 2. MANUAL ORDER CREATION BACKEND STATE
   // ==========================================
+  const generatePoRef = () => `PO-${Math.floor(1000 + Math.random() * 9000)}`;
+
   const [businessId, setBusinessId] = useState("");
   const [business, setBusiness] = useState<Business | null>(null);
   const [baseline, setBaseline] = useState<BaselineView | null>(null);
@@ -205,8 +213,112 @@ export default function NewDealPage() {
   const [coverage, setCoverage] = useState("");
   const [attestation, setAttestation] = useState("");
   const [customerDomains, setCustomerDomains] = useState("");
-  const [reference, setReference] = useState("");
+  const [reference, setReference] = useState(() => generatePoRef());
   const [customerName, setCustomerName] = useState("");
+  const [orderValue, setOrderValue] = useState<number | "">("");
+  const [orderDate, setOrderDate] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [paymentTermsDays, setPaymentTermsDays] = useState<number | "">("");
+  const [paymentTermsAnchor, setPaymentTermsAnchor] = useState<"delivery" | "invoice" | "ambiguous">("delivery");
+  const [targetScenario, setTargetScenario] = useState<"downside" | "base" | "severe">("downside");
+  const [cashReserveFloor, setCashReserveFloor] = useState("");
+  const [customerDepositPct, setCustomerDepositPct] = useState<number | "">("");
+  const [manualCostItems, setManualCostItems] = useState<
+    Array<{
+      id: string;
+      name: string;
+      amount: number | "";
+      date: string;
+      deferrable: boolean;
+      incremental: boolean;
+      kind: string;
+      customKind?: string;
+    }>
+  >([]);
+
+  const handleLoadSampleInfo = () => {
+    const samplePool = [
+      {
+        customer: "Apex Global Retailers Inc",
+        orderValue: 360000,
+        paymentTermsDays: 45,
+        paymentTermsAnchor: "delivery" as const,
+        targetScenario: "downside" as const,
+        customerDepositPct: 30,
+        costs: [
+          { id: "c1", name: "Raw Material Fabric & Thread", amount: 90000, daysOffset: -30, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c2", name: "Contract Cutting & Assembly", amount: 90000, daysOffset: -10, deferrable: true, incremental: true, kind: "subcontractor" },
+          { id: "c3", name: "Custom Packaging & Barcoding", amount: 20000, daysOffset: -5, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c4", name: "Outbound Logistics & Delivery", amount: 10000, daysOffset: 0, deferrable: false, incremental: true, kind: "freight" },
+        ],
+      },
+      {
+        customer: "Pacific Precision Instruments",
+        orderValue: 520000,
+        paymentTermsDays: 60,
+        paymentTermsAnchor: "invoice" as const,
+        targetScenario: "base" as const,
+        customerDepositPct: 25,
+        costs: [
+          { id: "c1", name: "CNC Machining Castings", amount: 150000, daysOffset: -35, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c2", name: "Optical Sensors & Hardware", amount: 110000, daysOffset: -20, deferrable: true, incremental: true, kind: "materials" },
+          { id: "c3", name: "Quality Testing & Calibration", amount: 45000, daysOffset: -7, deferrable: false, incremental: true, kind: "labour" },
+          { id: "c4", name: "Secure Air Freight", amount: 18000, daysOffset: 0, deferrable: false, incremental: true, kind: "freight" },
+        ],
+      },
+      {
+        customer: "Starlight Hospitality Group",
+        orderValue: 195000,
+        paymentTermsDays: 30,
+        paymentTermsAnchor: "delivery" as const,
+        targetScenario: "severe" as const,
+        customerDepositPct: 40,
+        costs: [
+          { id: "c1", name: "Linen Supply & Weaving", amount: 65000, daysOffset: -25, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c2", name: "Direct Finishing Labour", amount: 25000, daysOffset: -12, deferrable: false, incremental: true, kind: "labour" },
+          { id: "c3", name: "Expedited Distribution", amount: 8000, daysOffset: 0, deferrable: true, incremental: true, kind: "freight" },
+        ],
+      },
+    ];
+
+    const pick = samplePool[Math.floor(Math.random() * samplePool.length)];
+    const today = new Date();
+    const orderD = new Date(today);
+    const delivD = new Date(today);
+    delivD.setDate(delivD.getDate() + 45);
+    const invoiceD = new Date(delivD);
+    invoiceD.setDate(invoiceD.getDate() + 2);
+
+    const formatYmd = (d: Date) => d.toISOString().split("T")[0];
+
+    setReference(generatePoRef());
+    setCustomerName(pick.customer);
+    setOrderValue(pick.orderValue);
+    setOrderDate(formatYmd(orderD));
+    setDeliveryDate(formatYmd(delivD));
+    setInvoiceDate(formatYmd(invoiceD));
+    setPaymentTermsDays(pick.paymentTermsDays);
+    setPaymentTermsAnchor(pick.paymentTermsAnchor);
+    setTargetScenario(pick.targetScenario);
+    setCustomerDepositPct(pick.customerDepositPct);
+
+    const generatedCosts = pick.costs.map((c, idx) => {
+      const cDate = new Date(delivD);
+      cDate.setDate(cDate.getDate() + c.daysOffset);
+      return {
+        id: `cost-sample-${idx}-${Date.now()}`,
+        name: c.name,
+        amount: c.amount,
+        date: formatYmd(cDate),
+        deferrable: c.deferrable,
+        incremental: c.incremental,
+        kind: c.kind,
+        customKind: "",
+      };
+    });
+    setManualCostItems(generatedCosts);
+  };
   const [startDate, setStartDate] = useState("");
   const [createdDraft, setCreatedDraft] = useState<Deal | null>(null);
   const createdId = createdDraft?.id ?? null;
@@ -370,16 +482,6 @@ export default function NewDealPage() {
             <ArrowLeft className="size-4" />
           </Link>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-0.5">
-              <Link
-                href={businessId ? `/deals?businessId=${businessId}` : "/deals"}
-                className="hover:text-[#1E2021] dark:hover:text-white transition-colors"
-              >
-                Deals Pipeline
-              </Link>
-              <span className="text-[#A3A3A3]">/</span>
-              <span className="font-semibold text-[#1E2021] dark:text-white">Evaluate New Order</span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
               Evaluate New Order
             </h1>
@@ -387,20 +489,7 @@ export default function NewDealPage() {
         </div>
 
         {/* Stepper Indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400">
-          <span className="font-bold text-[#1E2021] dark:text-white flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
-            1. Ingest
-          </span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#737373] dark:text-neutral-400">2. Validate</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">3. Confirm</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">4. Compute</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">5. Approve</span>
-        </div>
+        <DealsWorkflowStepper currentStep={1} businessId={businessId} />
       </div>
 
       {/* Mode Switcher: AI Document Intake (Auto) vs Manual Order Form */}
@@ -453,6 +542,38 @@ export default function NewDealPage() {
             )}
           </div>
         )}
+
+        {intakeMode === "manual" && (
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleLoadSampleInfo}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#1E2021] dark:text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+            >
+              <Sparkles className="size-3.5 text-amber-500" />
+              <span>Load Sample Info</span>
+            </button>
+            {(customerName || orderValue !== "" || manualCostItems.length > 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomerName("");
+                  setOrderValue("");
+                  setOrderDate("");
+                  setInvoiceDate("");
+                  setDeliveryDate("");
+                  setPaymentTermsDays("");
+                  setCustomerDepositPct("");
+                  setManualCostItems([]);
+                  setReference(generatePoRef());
+                }}
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#737373] hover:text-[#1E2021] dark:text-neutral-400 dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              >
+                Clear Form
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -460,16 +581,11 @@ export default function NewDealPage() {
       {/* ========================================================================= */}
       {intakeMode === "auto" && (
         <div className="space-y-6">
-          {/* Top Info Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#1E2021] p-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] shadow-xs">
-            <div>
-              <h2 className="text-sm font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
-                6 Input Channels (Row 1: 3 Inputs · Row 2: 3 Inputs)
-              </h2>
-              <p className="text-xs text-[#525252] dark:text-neutral-400 mt-1">
-                <span className="font-semibold text-[#1E2021] dark:text-white">Inputs 1 &amp; 2 are mandatory</span> (upload file or paste text). Inputs 3–6 are optional. In Step 2 (Validate), you can review and adjust all extracted figures.
-              </p>
-            </div>
+          {/* Single clean requirement note at top left */}
+          <div className="flex items-center justify-between px-1">
+            <p className="text-xs text-[#525252] dark:text-neutral-400">
+              <span className="font-semibold text-[#1E2021] dark:text-white">Inputs 1 &amp; 2 are mandatory</span>. Inputs 3–6 are optional.
+            </p>
           </div>
 
           {/* Validation Notice when user clicks Continue without completing inputs 1 & 2 */}
@@ -496,17 +612,9 @@ export default function NewDealPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* ROW 1: 3 INPUTS (Purchase Order, Supplier Quotation, Cash Position)       */}
+          {/* INPUTS 1 - 3 (Purchase Order, Supplier Quotation, Cash Position)          */}
           {/* ========================================================================= */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-bold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
-                Row 1 · Contract &amp; Inflow Foundations (Inputs 1 – 3)
-              </span>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400">
-                1 &amp; 2 Mandatory · 3 Optional
-              </span>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
               {/* Card 1: Purchase Order or Contract (MANDATORY) */}
@@ -636,13 +744,6 @@ export default function NewDealPage() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className={`font-semibold ${isPoProvided ? "text-emerald-600 dark:text-emerald-400" : "text-[#1E2021] dark:text-white"}`}>
-                    {isPoProvided ? "Satisfied" : "Required to Continue"}
-                  </span>
                 </div>
               </div>
 
@@ -774,13 +875,6 @@ export default function NewDealPage() {
                     )}
                   </div>
                 </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className={`font-semibold ${isQuoteProvided ? "text-emerald-600 dark:text-emerald-400" : "text-[#1E2021] dark:text-white"}`}>
-                    {isQuoteProvided ? "Satisfied" : "Required to Continue"}
-                  </span>
-                </div>
               </div>
 
               {/* Card 3: Cash Position (OPTIONAL) */}
@@ -905,25 +999,14 @@ export default function NewDealPage() {
                     )}
                   </div>
                 </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className="font-semibold text-[#525252] dark:text-neutral-300">Optional</span>
-                </div>
               </div>
             </div>
           </div>
 
           {/* ========================================================================= */}
-          {/* ROW 2: 3 INPUTS (Bills Due, Financing Offers, Owner Constraints)          */}
+          {/* INPUTS 4 - 6 (Bills Due, Financing Offers, Owner Constraints)             */}
           {/* ========================================================================= */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-bold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
-                Row 2 · Outflow Commitments &amp; Guardrails (Inputs 4 – 6)
-              </span>
-              <span className="text-[11px] text-[#737373] dark:text-neutral-400">All Optional</span>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
               {/* Card 4: Bills Due, Payroll, Receivables (OPTIONAL) */}
@@ -1048,11 +1131,6 @@ export default function NewDealPage() {
                     )}
                   </div>
                 </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className="font-semibold text-[#525252] dark:text-neutral-300">Optional</span>
-                </div>
               </div>
 
               {/* Card 5: Financing Offers (OPTIONAL) */}
@@ -1176,11 +1254,6 @@ export default function NewDealPage() {
                       </div>
                     )}
                   </div>
-                </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className="font-semibold text-[#525252] dark:text-neutral-300">Optional</span>
                 </div>
               </div>
 
@@ -1329,11 +1402,6 @@ export default function NewDealPage() {
                     )}
                   </div>
                 </div>
-
-                <div className="pt-3 border-t border-[#F0EEEA] dark:border-[#2C302F] flex items-center justify-between text-[11px] text-[#737373] dark:text-neutral-400">
-                  <span>Requirement</span>
-                  <span className="font-semibold text-[#525252] dark:text-neutral-300">Optional</span>
-                </div>
               </div>
             </div>
           </div>
@@ -1380,7 +1448,7 @@ export default function NewDealPage() {
             <span className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-[#1E2021] dark:text-white shrink-0" />
               <span>
-                <strong>Inputs 1 &amp; 2 are mandatory</strong> to establish order scope &amp; direct costs. Inputs 3–6 are optional and enhance runway precision.
+                All document operations and extracted terms are cryptographically audited and reversible.
               </span>
             </span>
             <Link
@@ -1416,173 +1484,515 @@ export default function NewDealPage() {
             </div>
           )}
 
-          {!loading && business && !baseline && (
-            <form onSubmit={saveBaseline} className="space-y-3 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
-              <h2 className="font-semibold text-sm text-[#1E2021] dark:text-white">
-                Set the business cash baseline first
-              </h2>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Opening date
-                <input
-                  required
-                  type="date"
-                  className={field}
-                  value={openingDate}
-                  onChange={(e) => setOpeningDate(e.target.value)}
-                />
-              </label>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Opening cash (integer minor units)
-                <input
-                  required
-                  inputMode="numeric"
-                  pattern="-?(0|[1-9][0-9]*)"
-                  className={field}
-                  value={openingCash}
-                  onChange={(e) => setOpeningCash(e.target.value)}
-                />
-              </label>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Coverage through
-                <input
-                  required
-                  type="date"
-                  min={openingDate}
-                  className={field}
-                  value={coverage}
-                  onChange={(e) => setCoverage(e.target.value)}
-                />
-              </label>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Source attestation
-                <input
-                  required
-                  className={field}
-                  value={attestation}
-                  onChange={(e) => setAttestation(e.target.value)}
-                />
-              </label>
-              <button
-                disabled={busy}
-                className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-4 py-2 text-xs font-semibold cursor-pointer disabled:opacity-50"
-              >
-                {busy ? "Saving…" : "Save baseline"}
-              </button>
-            </form>
-          )}
+          {/* CLEAN & MINIMAL MANUAL ORDER FORM */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const targetRef = reference.trim() || generatePoRef();
+              const finalOrderValue = Number(orderValue) || 0;
+              const formattedCosts = manualCostItems.map((item) => ({
+                ...item,
+                amount: Number(item.amount) || 0,
+                kind: item.kind === "custom" && item.customKind?.trim() ? item.customKind.trim() : item.kind,
+              }));
 
-          {baseline && (
-            <form onSubmit={submit} className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
-              <h2 className="font-semibold text-sm text-[#1E2021] dark:text-white">
-                Order details
-              </h2>
-              <p className="text-xs text-[#525252] dark:text-neutral-400">
-                Opening cash: {baseline.balance.opening_cash_minor} minor units, as of {baseline.balance.opening_date}; coverage through {baseline.balance.coverage_through}.{" "}
-                <Link className="underline font-semibold" href={`/deals/sources?businessId=${businessId}`}>
-                  Edit cash events, baseline and financing
-                </Link>
-              </p>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Order reference
-                <input
-                  required
-                  maxLength={64}
-                  disabled={!!createdId}
-                  className={field}
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                />
-              </label>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                As-of/start date
-                <input
-                  required
-                  disabled={!!createdId}
-                  type="date"
-                  className={field}
-                  min={baseline.balance.opening_date}
-                  max={baseline.balance.opening_date}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </label>
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Customer
-                <select
-                  className={field}
-                  value={inputs.customer_id ?? ""}
-                  onChange={(e) => setInputs({ ...inputs, customer_id: e.target.value || null })}
-                >
-                  <option value="">Add a customer below</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.customer.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {!inputs.customer_id && (
-                <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                  New customer name
+              // Save validated draft to localStorage so confirm step receives exact parameters immediately
+              if (typeof window !== "undefined") {
+                const draftData = {
+                  isManual: true,
+                  dealId: createdId ?? undefined,
+                  poNumber: targetRef,
+                  customerName: customerName.trim() || "Unspecified Customer",
+                  orderValue: finalOrderValue,
+                  orderDate,
+                  invoiceDate,
+                  deliveryDate,
+                  paymentTermsDays: Number(paymentTermsDays) || 0,
+                  paymentTermsAnchor,
+                  targetScenario,
+                  reserveFloor: cashReserveFloor || "$0.00",
+                  customerDepositPct: Number(customerDepositPct) || 0,
+                  costItems: formattedCosts,
+                };
+                localStorage.setItem("orderfit_deal_draft", JSON.stringify(draftData));
+                localStorage.setItem("orderfit_deal_validated", JSON.stringify(draftData));
+              }
+              const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+              router.push(`/deals/${encodeURIComponent(targetRef)}/confirm${query}`);
+            }}
+            className="space-y-6"
+          >
+            {/* 1. COMMERCIAL PARAMETERS CARD */}
+            <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="size-4 text-[#1E2021] dark:text-white" />
+                  <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                    Commercial Parameters &amp; Order Terms
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#737373] dark:text-neutral-400">
+                  <Sparkles className="size-3 text-amber-500" />
+                  <span>Manual Input Mode</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Auto-generated Order Reference */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                      Order Reference (PO#)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setReference(generatePoRef())}
+                      className="text-[11px] font-medium text-[#525252] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white inline-flex items-center gap-1 transition-colors"
+                      title="Generate new PO reference"
+                    >
+                      <RefreshCw className="size-2.5" />
+                      <span>Regenerate</span>
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      maxLength={64}
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="e.g. PO-8841"
+                      className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Customer Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Customer Name
+                  </label>
                   <input
+                    type="text"
                     required
-                    className={field}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Enter customer / client name"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
                   />
-                </label>
-              )}
-              {!inputs.customer_id && (
-                <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                  Known customer email domains (comma separated)
+                </div>
+
+                {/* Order Gross Revenue */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Order Gross Revenue ($)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#737373] dark:text-neutral-400">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      placeholder="e.g. 360000"
+                      value={orderValue}
+                      onChange={(e) => setOrderValue(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="w-full pl-7 pr-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-bold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Order / Agreement Date */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Order Date
+                  </label>
                   <input
-                    className={field}
-                    value={customerDomains}
-                    onChange={(e) => setCustomerDomains(e.target.value)}
-                    placeholder="buyer.example"
+                    type="date"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
                   />
-                </label>
-              )}
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Policy and financing configuration
-                <select
-                  required
-                  className={field}
-                  value={inputs.constraints_id}
-                  onChange={(e) => {
-                    const selected = constraints.find((c) => c.id === e.target.value);
-                    if (selected) {
-                      setInputs({
-                        ...inputs,
-                        constraints_id: selected.id,
-                        reserve_minor: selected.reserve_minor,
-                      });
+                </div>
+
+                {/* Delivery Date */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Delivery Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  />
+                </div>
+
+                {/* Billing / Invoice Date */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Invoice Date
+                  </label>
+                  <input
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  />
+                </div>
+
+                {/* Payment Term Days */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Payment Term Days
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    placeholder="e.g. 45"
+                    value={paymentTermsDays}
+                    onChange={(e) => setPaymentTermsDays(e.target.value === "" ? "" : Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  />
+                </div>
+
+                {/* Payment Anchor Event */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Payment Anchor Event
+                  </label>
+                  <select
+                    value={paymentTermsAnchor}
+                    onChange={(e) =>
+                      setPaymentTermsAnchor(e.target.value as "delivery" | "invoice" | "ambiguous")
                     }
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  >
+                    <option value="delivery">After Goods Delivery (Net {paymentTermsDays || 0})</option>
+                    <option value="invoice">After Invoice Date (Net {paymentTermsDays || 0})</option>
+                    <option value="ambiguous">Ambiguous Anchor (Requires Clarification)</option>
+                  </select>
+                </div>
+
+                {/* Customer Upfront Deposit (%) - Added Option */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Customer Upfront Deposit (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="e.g. 30"
+                      value={customerDepositPct}
+                      onChange={(e) => setCustomerDepositPct(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="w-full pl-3 pr-7 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#737373] dark:text-neutral-400">
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                {/* Target Risk Resilience Scenario - Added Option */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Engine Resilience Scenario
+                  </label>
+                  <select
+                    value={targetScenario}
+                    onChange={(e) =>
+                      setTargetScenario(e.target.value as "downside" | "base" | "severe")
+                    }
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  >
+                    <option value="downside">Downside Scenario (Recommended)</option>
+                    <option value="base">Base Case (On-Time Only)</option>
+                    <option value="severe">Severe Stress (45d Customer Late)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. PRODUCTION OBLIGATIONS & COST SCHEDULE */}
+            <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 w-full">
+              <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="size-4 text-[#1E2021] dark:text-white" />
+                  <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                    Production Costs &amp; Supplier Obligations
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextId = `c${Date.now()}`;
+                    setManualCostItems((prev) => [
+                      ...prev,
+                      {
+                        id: nextId,
+                        name: "",
+                        amount: "",
+                        date: deliveryDate || "",
+                        deferrable: false,
+                        incremental: true,
+                        kind: "supplier_payment",
+                        customKind: "",
+                      },
+                    ]);
                   }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF9F7] dark:bg-[#2C302F] hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] border border-[#E8E6E1] dark:border-[#383C3B] text-xs font-semibold text-[#1E2021] dark:text-white transition-colors cursor-pointer"
                 >
-                  {!constraints.some((c) => c.id === inputs.constraints_id) && inputs.constraints_id && (
-                    <option value={inputs.constraints_id}>Selected default policy</option>
-                  )}
-                  {constraints.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.is_default ? "Default policy" : "Saved policy"} · {c.strategy_space.offer_ids.length} financing offers · {c.id.slice(0, 8)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <Plus className="size-3.5" />
+                  <span>Add Line Item</span>
+                </button>
+              </div>
 
-              <CollectionPages query={customerPages} noun="customers" />
-              <CollectionPages query={policyPages} noun="policies" />
-              <ManualOrderInputs value={inputs} onChange={setInputs} />
+              {manualCostItems.length === 0 ? (
+                <div className="py-8 text-center border-2 border-dashed border-[#E8E6E1] dark:border-[#2C302F] rounded-xl space-y-2">
+                  <p className="text-xs text-[#737373] dark:text-neutral-400">
+                    No production costs added yet. Click &quot;Add Line Item&quot; to define supplier or labor obligations.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextId = `c${Date.now()}`;
+                      setManualCostItems([
+                        {
+                          id: nextId,
+                          name: "",
+                          amount: "",
+                          date: deliveryDate || "",
+                          deferrable: false,
+                          incremental: true,
+                          kind: "supplier_payment",
+                          customKind: "",
+                        },
+                      ]);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#1E2021] dark:text-white underline hover:opacity-80"
+                  >
+                    <Plus className="size-3" />
+                    <span>Add First Line Item</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
+                        <th className="py-3 px-4 min-w-[200px]">Cost Description</th>
+                        <th className="py-3 px-4 min-w-[120px]">Amount ($)</th>
+                        <th className="py-3 px-4 min-w-[130px]">Due Date</th>
+                        <th className="py-3 px-4 min-w-[180px]">Type / Category</th>
+                        <th className="py-3 px-4 min-w-[150px]">Supplier Flexibility</th>
+                        <th className="py-3 px-2 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F0EEEA] dark:divide-[#2C302F]">
+                      {manualCostItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-[#FAF9F7]/70 dark:hover:bg-[#2C302F]/40 transition-colors align-top">
+                          {/* Cost Description */}
+                          <td className="py-3 px-4">
+                            <input
+                              type="text"
+                              placeholder="e.g. Raw Material Deposit"
+                              value={item.name}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setManualCostItems((prev) =>
+                                  prev.map((c) => (c.id === item.id ? { ...c, name: val } : c))
+                                );
+                              }}
+                              className="w-full px-2.5 py-1.5 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:border-transparent dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs font-semibold text-[#1E2021] dark:text-white transition-colors"
+                            />
+                          </td>
 
-              <button
-                disabled={busy || !inputs.constraints_id}
-                className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-5 py-2.5 text-xs font-semibold cursor-pointer disabled:opacity-50"
-              >
-                {busy ? "Saving…" : "Save and review"}
-              </button>
-            </form>
-          )}
+                          {/* Amount */}
+                          <td className="py-3 px-4 font-mono">
+                            <div className="relative">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#737373] dark:text-neutral-400">
+                                $
+                              </span>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={item.amount}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? "" : Number(e.target.value);
+                                  setManualCostItems((prev) =>
+                                    prev.map((c) => (c.id === item.id ? { ...c, amount: val } : c))
+                                  );
+                                }}
+                                className="w-full pl-6 pr-2.5 py-1.5 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:border-transparent dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs font-bold text-[#1E2021] dark:text-white transition-colors"
+                              />
+                            </div>
+                          </td>
+
+                          {/* Date */}
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={item.date}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setManualCostItems((prev) =>
+                                  prev.map((c) => (c.id === item.id ? { ...c, date: val } : c))
+                                );
+                              }}
+                              className="w-full px-2.5 py-1.5 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:border-transparent dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs text-[#525252] dark:text-neutral-300 font-medium transition-colors"
+                            />
+                          </td>
+
+                          {/* Type / Category */}
+                          <td className="py-3 px-4">
+                            <input
+                              type="text"
+                              placeholder="e.g. supplier_payment"
+                              value={item.kind}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setManualCostItems((prev) =>
+                                  prev.map((c) => (c.id === item.id ? { ...c, kind: val } : c))
+                                );
+                              }}
+                              className="w-full px-2.5 py-1.5 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-lg text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                            />
+                          </td>
+
+                          {/* Supplier Extension */}
+                          <td className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setManualCostItems((prev) =>
+                                  prev.map((c) => (c.id === item.id ? { ...c, deferrable: !c.deferrable } : c))
+                                );
+                              }}
+                              className={`inline-flex items-center justify-center gap-1.5 w-[148px] px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors cursor-pointer select-none shrink-0 ${
+                                item.deferrable
+                                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                  : "bg-neutral-100 text-[#737373] dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700"
+                              }`}
+                            >
+                              <span
+                                className={`size-1.5 rounded-full shrink-0 ${
+                                  item.deferrable ? "bg-blue-600 dark:bg-blue-400" : "bg-neutral-400"
+                                }`}
+                              />
+                              <span className="truncate">
+                                {item.deferrable ? "Extendable (30d)" : "Strict / Non-negotiable"}
+                              </span>
+                            </button>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3 px-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setManualCostItems((prev) => prev.filter((c) => c.id !== item.id));
+                              }}
+                              className="p-1.5 text-[#A3A3A3] hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                              title="Remove cost item"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Datalist for fast category selection or custom text typing */}
+              <datalist id="cost-categories-list">
+                <option value="Supplier Deposit/Balance" />
+                <option value="Labour & Tooling" />
+                <option value="Outbound Freight" />
+                <option value="Subcontracting" />
+                <option value="Raw Materials" />
+                <option value="Packaging & Handling" />
+                <option value="Quality Inspection" />
+              </datalist>
+            </div>
+
+            {/* 3. FINANCIAL SUMMARY BAR & PROCEED ACTION */}
+            {(() => {
+              const numericOrderValue = Number(orderValue) || 0;
+              const totalCosts = manualCostItems.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
+              const projectedProfit = numericOrderValue - totalCosts;
+              const grossMargin = numericOrderValue > 0 ? ((projectedProfit / numericOrderValue) * 100).toFixed(1) : "0.0";
+
+              return (
+                <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                  {/* Financial Breakdown */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 xl:gap-8 flex-1">
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                        Order Revenue
+                      </span>
+                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
+                        ${numericOrderValue.toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                        Total Direct Costs
+                      </span>
+                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
+                        ${totalCosts.toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                        Projected Profit
+                      </span>
+                      <div
+                        className={`text-xl sm:text-2xl font-bold font-display mt-0.5 ${
+                          projectedProfit >= 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {projectedProfit >= 0
+                          ? `+$${projectedProfit.toLocaleString()}`
+                          : `-$${Math.abs(projectedProfit).toLocaleString()}`}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                        Gross Margin
+                      </span>
+                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
+                        {grossMargin}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 shrink-0 self-end xl:self-center w-full sm:w-auto">
+                    <button
+                      type="submit"
+                      disabled={busy || !numericOrderValue || !reference.trim()}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      <span>Continue to Step 3: Confirm</span>
+                      <ArrowRight className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </form>
         </div>
       )}
     </main>

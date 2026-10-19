@@ -13,6 +13,7 @@ import type { AdvisoryExplainRequest, ClauseAssessment, ClauseRequest, DraftPrep
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, stanceDisagreement, textDirection } from "@/lib/provenance-model";
+import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 type WhatIfChange = NonNullable<ForkRequest["changes"]>[number];
 
 const input = "block w-full rounded border border-neutral-300 bg-white p-2 text-sm";
@@ -167,40 +168,26 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        {/* 5-Step Deal Progress Stepper */}
-        <div className="bg-white border border-[#ECEAE4] rounded-xl p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-            <Link href={`/deals/new?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">1</span>
-              <span>Ingest</span>
+        {/* Top Header & Stepper */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href={`/deals/${dealId}?businessId=${businessId}`}
+              className="p-2 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#525252] dark:text-neutral-300 hover:text-[#1E2021] transition-colors shrink-0"
+              title="Back to Step 4: Order Review & Engine Evaluation"
+            >
+              <ArrowLeft className="size-4" />
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/new/validate?businessId=${businessId}&poNumber=${deal.public_ref}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">2</span>
-              <span>Validate</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/${dealId}/confirm?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">3</span>
-              <span>Confirm</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/${dealId}?businessId=${businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">4</span>
-              <span>Compute</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <div className="flex items-center gap-1.5 text-[#004D3B] dark:text-[#34D399] bg-[#F4F2ED] dark:bg-[#222425] px-2.5 py-1 rounded-full border border-[#E8E6E1] dark:border-[#2A2C2D]">
-              <span className="w-5 h-5 rounded-full bg-[#004D3B] text-white flex items-center justify-center text-[11px] font-bold">5</span>
-              <span>Approve (Step 5 of 5)</span>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
+                Negotiation &amp; Sandbox Approval · {deal.public_ref}
+              </h1>
             </div>
           </div>
-        </div>
 
-        <Link className="inline-flex items-center gap-1 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline" href={`/deals/${dealId}?businessId=${businessId}`}>
-          <ArrowLeft className="w-4 h-4" /> Back to Step 4: Order Review & Engine Evaluation
-        </Link>
-        <h1 className="text-2xl font-bold font-display text-[#1E2021]">Negotiation preparation &amp; Sandbox Approval · {deal.public_ref}</h1>
+          {/* Stepper Indicator */}
+          <DealsWorkflowStepper currentStep={5} businessId={businessId} dealId={dealId} />
+        </div>
         <p className="text-sm text-neutral-600">All work is saved to your business. Messages are prepared here; only an approved bundle can be executed, and execution is sandbox only: nothing leaves the system.</p>
 
         {/* Quick Workflow Navigation Bar */}

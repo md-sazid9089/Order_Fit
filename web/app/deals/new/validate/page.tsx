@@ -15,9 +15,11 @@ import {
   RefreshCw,
   Sparkles,
   Layers,
+  ChevronDown,
 } from "lucide-react";
 import { mutate, type Deal, type Customer, ApiError } from "@/lib/orderfit-api";
 import { useScope } from "@/components/layout/auth-shell";
+import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 
 interface CostLineItem {
   id: string;
@@ -26,7 +28,8 @@ interface CostLineItem {
   date: string;
   deferrable: boolean;
   incremental: boolean;
-  kind: "supplier_payment" | "labour" | "freight" | "subcontract";
+  kind: string;
+  customKind?: string;
 }
 
 const INITIAL_COST_ITEMS: CostLineItem[] = [
@@ -76,32 +79,61 @@ export default function ValidatePage() {
   const [poNumber, setPoNumber] = useState("PO-8841");
   const [customerName, setCustomerName] = useState("Apex Retailers Inc");
   const [orderValue, setOrderValue] = useState<number>(360000);
+  const [orderDate, setOrderDate] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("2026-12-14");
   const [paymentTermsDays, setPaymentTermsDays] = useState<number>(45);
   const [paymentTermsAnchor, setPaymentTermsAnchor] = useState<"delivery" | "invoice" | "ambiguous">("delivery");
   const [targetScenario, setTargetScenario] = useState<"downside" | "base" | "severe">("downside");
   const [cashReserveFloor, setCashReserveFloor] = useState("$100,000.00");
+  const [customerDepositPct, setCustomerDepositPct] = useState<number>(0);
 
   // Production Obligations & Cost Schedule
+  const [dealId, setDealId] = useState("");
   const [costItems, setCostItems] = useState<CostLineItem[]>(INITIAL_COST_ITEMS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  // Read draft from localStorage if present
+  // Read draft from localStorage or query params if present (works identically for auto and manual intake)
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("orderfit_deal_draft");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.poText && parsed.poText.length > 5) {
-          const matchPo = parsed.poText.match(/PO-?\d+/i);
-          if (matchPo) setPoNumber(matchPo[0].toUpperCase());
-        } else if (parsed.poFileName) {
-          const matchPo = parsed.poFileName.match(/PO-?\d+/i);
-          if (matchPo) setPoNumber(matchPo[0].toUpperCase());
-        }
-        if (parsed.reserveFloor) {
-          setCashReserveFloor(`$${parsed.reserveFloor}`);
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlDealId = searchParams.get("dealId");
+        const urlPo = searchParams.get("poNumber");
+        if (urlDealId) setDealId(urlDealId);
+        if (urlPo) setPoNumber(urlPo);
+
+        const stored = localStorage.getItem("orderfit_deal_draft");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.dealId) setDealId(parsed.dealId);
+          if (parsed.poNumber) {
+            setPoNumber(parsed.poNumber);
+          } else if (parsed.poText && parsed.poText.length > 5) {
+            const matchPo = parsed.poText.match(/PO-?\d+/i);
+            if (matchPo) setPoNumber(matchPo[0].toUpperCase());
+          } else if (parsed.poFileName) {
+            const matchPo = parsed.poFileName.match(/PO-?\d+/i);
+            if (matchPo) setPoNumber(matchPo[0].toUpperCase());
+          }
+          if (parsed.customerName) setCustomerName(parsed.customerName);
+          if (parsed.orderValue && Number(parsed.orderValue) > 0) setOrderValue(Number(parsed.orderValue));
+          if (parsed.orderDate) setOrderDate(parsed.orderDate);
+          if (parsed.invoiceDate) setInvoiceDate(parsed.invoiceDate);
+          if (parsed.deliveryDate) setDeliveryDate(parsed.deliveryDate);
+          if (parsed.paymentTermsDays && Number(parsed.paymentTermsDays) > 0) setPaymentTermsDays(Number(parsed.paymentTermsDays));
+          if (parsed.paymentTermsAnchor) setPaymentTermsAnchor(parsed.paymentTermsAnchor);
+          if (parsed.targetScenario) setTargetScenario(parsed.targetScenario);
+          if (parsed.customerDepositPct && Number(parsed.customerDepositPct) >= 0) {
+            setCustomerDepositPct(Number(parsed.customerDepositPct));
+          }
+          if (parsed.reserveFloor) {
+            setCashReserveFloor(parsed.reserveFloor.startsWith("$") ? parsed.reserveFloor : `$${parsed.reserveFloor}`);
+          }
+          if (parsed.costItems && Array.isArray(parsed.costItems) && parsed.costItems.length > 0) {
+            setCostItems(parsed.costItems);
+          }
         }
       }
     } catch {
@@ -137,10 +169,16 @@ export default function ValidatePage() {
 
   const handleUpdateCostKind = (
     id: string,
-    kind: "supplier_payment" | "labour" | "freight" | "subcontract"
+    kind: string
   ) => {
     setCostItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, kind } : item))
+    );
+  };
+
+  const handleUpdateCostCustomKind = (id: string, customKind: string) => {
+    setCostItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, customKind } : item))
     );
   };
 
@@ -157,6 +195,7 @@ export default function ValidatePage() {
       deferrable: false,
       incremental: true,
       kind: "supplier_payment",
+      customKind: "",
     };
     setCostItems((prev) => [...prev, newItem]);
   };
@@ -172,31 +211,48 @@ export default function ValidatePage() {
     setSubmitError("");
 
     try {
-      // If connected to a real business with backend, we can persist the validated order
-      if (businessId) {
-        try {
-          // Attempt deal creation or redirect to existing deal
-          const query = `?businessId=${encodeURIComponent(businessId)}`;
-          router.push(`/deals${query}`);
-          return;
-        } catch (e) {
-          console.error("Backend persistence note:", e);
-        }
+      if (typeof window !== "undefined") {
+        const formattedCosts = costItems.map((item) => ({
+          ...item,
+          kind: item.kind === "custom" && item.customKind?.trim() ? item.customKind.trim() : item.kind,
+        }));
+
+        const validatedData = {
+          dealId: dealId || null,
+          poNumber: poNumber.trim() || "PO-8841",
+          customerName,
+          orderValue,
+          orderDate,
+          invoiceDate,
+          deliveryDate,
+          paymentTermsDays,
+          paymentTermsAnchor,
+          targetScenario,
+          cashReserveFloor,
+          customerDepositPct,
+          costItems: formattedCosts,
+          totalIncrementalCosts,
+          projectedProfit,
+        };
+        localStorage.setItem("orderfit_deal_validated", JSON.stringify(validatedData));
       }
 
-      // Default smooth workflow routing
+      const targetId = encodeURIComponent(dealId || poNumber.trim() || "PO-8841");
+      const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+      const targetUrl = `/deals/${targetId}/confirm${query}`;
+
       setTimeout(() => {
         setIsSubmitting(false);
-        const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
-        router.push(`/deals${query}`);
-      }, 600);
+        router.push(targetUrl);
+      }, 500);
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "Failed to evaluate order.");
+      setSubmitError(e instanceof Error ? e.message : "Failed to proceed to confirmation.");
       setIsSubmitting(false);
     }
   };
 
   const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+  const currentPo = encodeURIComponent(dealId || poNumber.trim() || "PO-8841");
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
@@ -229,22 +285,7 @@ export default function ValidatePage() {
         </div>
 
         {/* Stepper Indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400">
-          <Link href={`/deals/new${query}`} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-            1. Ingest
-          </Link>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="font-bold text-[#1E2021] dark:text-white flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
-            2. Validate
-          </span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">3. Confirm</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">4. Compute</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">5. Approve</span>
-        </div>
+        <DealsWorkflowStepper currentStep={2} businessId={businessId} dealId={currentPo} />
       </div>
 
       {submitError && (
@@ -265,7 +306,7 @@ export default function ValidatePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* PO Reference */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
@@ -310,6 +351,19 @@ export default function ValidatePage() {
             </div>
           </div>
 
+          {/* Order / Agreement Date */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+              Order Date
+            </label>
+            <input
+              type="date"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
+            />
+          </div>
+
           {/* Delivery Date */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
@@ -319,6 +373,19 @@ export default function ValidatePage() {
               type="date"
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
+            />
+          </div>
+
+          {/* Billing / Invoice Date */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+              Invoice Date
+            </label>
+            <input
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
             />
           </div>
@@ -372,17 +439,25 @@ export default function ValidatePage() {
             </select>
           </div>
 
-          {/* Hard Cash Reserve Floor */}
+          {/* Customer Upfront Deposit (%) */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
-              Hard Cash Reserve Floor
+              Customer Upfront Deposit (%)
             </label>
-            <input
-              type="text"
-              value={cashReserveFloor}
-              onChange={(e) => setCashReserveFloor(e.target.value)}
-              className="w-full px-3 py-2 bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs font-bold text-[#1E2021] dark:text-white focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                placeholder="e.g. 30"
+                value={customerDepositPct}
+                onChange={(e) => setCustomerDepositPct(Number(e.target.value))}
+                className="w-full pl-3 pr-7 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#737373] dark:text-neutral-400">
+                %
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -407,16 +482,16 @@ export default function ValidatePage() {
         </div>
 
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full table-fixed text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
-                <th className="py-3 px-4 min-w-[220px]">Cost Description</th>
-                <th className="py-3 px-4 min-w-[120px]">Amount ($)</th>
-                <th className="py-3 px-4 min-w-[130px]">Date</th>
-                <th className="py-3 px-4 min-w-[140px]">Type</th>
-                <th className="py-3 px-4 min-w-[150px]">Supplier Extension</th>
-                <th className="py-3 px-4 min-w-[100px]">Status</th>
-                <th className="py-3 px-2 text-right"></th>
+                <th className="py-3 px-4 w-[28%]">Cost Description</th>
+                <th className="py-3 px-4 w-[16%]">Amount ($)</th>
+                <th className="py-3 px-4 w-[16%]">Date</th>
+                <th className="py-3 px-4 w-[18%]">Type</th>
+                <th className="py-3 px-4 w-[170px]">Supplier Extension</th>
+                <th className="py-3 px-4 w-[90px]">Status</th>
+                <th className="py-3 px-2 w-[44px] text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0EEEA] dark:divide-[#2C302F]">
@@ -455,23 +530,15 @@ export default function ValidatePage() {
                     />
                   </td>
 
-                  {/* Type */}
+                  {/* Type / Category */}
                   <td className="py-3 px-4">
-                    <select
+                    <input
+                      type="text"
+                      placeholder="e.g. supplier_payment"
                       value={item.kind}
-                      onChange={(e) =>
-                        handleUpdateCostKind(
-                          item.id,
-                          e.target.value as "supplier_payment" | "labour" | "freight" | "subcontract"
-                        )
-                      }
-                      className="px-2 py-1 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs text-[#525252] dark:text-neutral-300 capitalize"
-                    >
-                      <option value="supplier_payment">Supplier Payment</option>
-                      <option value="labour">Labour</option>
-                      <option value="freight">Freight</option>
-                      <option value="subcontract">Subcontract</option>
-                    </select>
+                      onChange={(e) => handleUpdateCostKind(item.id, e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-lg text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                    />
                   </td>
 
                   {/* Supplier Extension (Deferrable Toggle) */}
@@ -479,13 +546,20 @@ export default function ValidatePage() {
                     <button
                       type="button"
                       onClick={() => handleToggleDeferral(item.id)}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      className={`inline-flex items-center justify-center gap-1.5 w-[148px] px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors cursor-pointer select-none shrink-0 ${
                         item.deferrable
-                          ? "bg-[#1E2021] text-white dark:bg-white dark:text-[#1E2021] shadow-2xs"
-                          : "bg-[#F4F2ED] dark:bg-[#2C302F] text-[#737373] dark:text-neutral-300 hover:text-[#1E2021] dark:hover:text-white border border-[#E8E6E1] dark:border-[#383C3B]"
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                          : "bg-neutral-100 text-[#737373] dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700"
                       }`}
                     >
-                      {item.deferrable ? "✓ +30d Deferrable" : "Non-deferrable"}
+                      <span
+                        className={`size-1.5 rounded-full shrink-0 ${
+                          item.deferrable ? "bg-blue-600 dark:bg-blue-400" : "bg-neutral-400"
+                        }`}
+                      />
+                      <span className="truncate">
+                        {item.deferrable ? "Extendable (30d)" : "Strict / Non-negotiable"}
+                      </span>
                     </button>
                   </td>
 
@@ -512,6 +586,17 @@ export default function ValidatePage() {
             </tbody>
           </table>
         </div>
+
+        {/* Datalist for fast category selection or custom text typing */}
+        <datalist id="validate-cost-categories-list">
+          <option value="Supplier Payment" />
+          <option value="Labour & Tooling" />
+          <option value="Outbound Freight" />
+          <option value="Subcontract" />
+          <option value="Raw Materials" />
+          <option value="Packaging & Handling" />
+          <option value="Quality Inspection" />
+        </datalist>
       </div>
 
       {/* 3. BOTTOM SUMMARY & SUBMIT BAR */}
