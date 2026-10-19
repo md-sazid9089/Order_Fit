@@ -23,8 +23,21 @@ export interface AdminOverview {
   readonly total_tenants: number;
   readonly active_tenants: number;
   readonly total_orders: number;
+  readonly privileged_users?: number;
+  readonly active_memberships?: number;
+  readonly revoked_memberships?: number;
+  readonly total_memberships?: number;
   readonly order_value_by_currency: AdminCurrencyTotal[];
   readonly orders_without_value: number;
+}
+
+export interface AdminUserMembership {
+  readonly business_id: string;
+  readonly business_name: string;
+  readonly role: string;
+  readonly created_at: string;
+  readonly revoked_at: string | null;
+  readonly version: number;
 }
 
 export interface AdminUser {
@@ -32,6 +45,9 @@ export interface AdminUser {
   readonly email: string;
   readonly full_name: string;
   readonly is_platform_admin: boolean;
+  readonly status?: string;
+  readonly created_at?: string;
+  readonly memberships?: AdminUserMembership[];
   readonly version: number;
 }
 
@@ -255,6 +271,101 @@ export async function loadAggregatedUsers(session: SessionView): Promise<{
   activeCount: number;
   revokedCount: number;
 }> {
+  const isPlatformAdmin = Boolean(session?.is_platform_admin === true);
+
+  // If user is platform admin, query authoritative cross-tenant listing via admin API
+  if (isPlatformAdmin) {
+    try {
+      const collectedUsers: AdminDatabaseUser[] = [];
+      const distinctUsers = new Set<string>();
+      const privilegedUsers = new Set<string>();
+      let activeMemberships = 0;
+      let revokedMemberships = 0;
+
+      let cursor: string | null | undefined = undefined;
+      const allAdminUsers: AdminUser[] = [];
+      let pageCount = 0;
+      do {
+        const page = await fetchAdminUsers(100, cursor);
+        if (!page || !page.items) break;
+        allAdminUsers.push(...page.items);
+        cursor = page.continuation;
+        pageCount++;
+      } while (cursor && pageCount < 50);
+
+      if (allAdminUsers.length > 0) {
+        for (const u of allAdminUsers) {
+          distinctUsers.add(u.id);
+          const userIsAdmin = Boolean(u.is_platform_admin);
+          if (userIsAdmin) {
+            privilegedUsers.add(u.id);
+          }
+
+          const mems = u.memberships && u.memberships.length > 0 ? u.memberships : null;
+          if (mems) {
+            for (const m of mems) {
+              const isPrivileged =
+                userIsAdmin ||
+                m.role === "admin" ||
+                m.role === "owner" ||
+                m.role === "risk_officer";
+
+              if (isPrivileged) {
+                privilegedUsers.add(u.id);
+              }
+
+              if (m.revoked_at) {
+                revokedMemberships++;
+              } else {
+                activeMemberships++;
+              }
+
+              collectedUsers.push({
+                userId: u.id,
+                fullName: u.full_name || "Unrecorded Name",
+                email: u.email,
+                tenantName: m.business_name || "Organization",
+                businessId: m.business_id,
+                role: m.role,
+                isPlatformAdmin: userIsAdmin,
+                revokedAt: m.revoked_at,
+                version: m.version,
+                createdAt: m.created_at || u.created_at,
+              });
+            }
+          } else {
+            // User without tenant memberships
+            activeMemberships++;
+            collectedUsers.push({
+              userId: u.id,
+              fullName: u.full_name || "Unrecorded Name",
+              email: u.email,
+              tenantName: "No Organization",
+              businessId: "",
+              role: userIsAdmin ? "admin" : "member",
+              isPlatformAdmin: userIsAdmin,
+              revokedAt: null,
+              version: u.version,
+              createdAt: u.created_at,
+            });
+          }
+        }
+
+        return {
+          users: collectedUsers,
+          distinctUserCount: distinctUsers.size,
+          totalMemberships: collectedUsers.length,
+          privilegedCount: privilegedUsers.size,
+          activeCount: activeMemberships,
+          revokedCount: revokedMemberships,
+        };
+      }
+    } catch {
+      // Fall through to tenant-scoped listing if admin API fails
+    }
+  }
+
+  // Tenant-scoped listing fallback
   const memberships = session.memberships ?? [];
   const collectedUsers: AdminDatabaseUser[] = [];
   const distinctUsers = new Set<string>();

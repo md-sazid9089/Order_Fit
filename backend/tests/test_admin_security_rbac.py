@@ -179,3 +179,114 @@ def test_session_token_extraction_and_failure():
     req_cookie.headers = {}
     req_cookie.cookies = {"orderfit_session": "my-cookie-token"}
     assert session_token(req_cookie) == "my-cookie-token"
+
+
+def test_admin_user_dto_multi_tenant_memberships():
+    """Verify AdminUser DTO correctly handles multi-tenant membership aggregation."""
+    from orderfit.contracts.admin import AdminUser, AdminUserMembership
+
+    user_id = uuid4()
+    biz1 = uuid4()
+    biz2 = uuid4()
+
+    data = {
+        "id": user_id,
+        "email": "multitenant@example.com",
+        "full_name": "Multi Tenant User",
+        "is_platform_admin": False,
+        "status": "active",
+        "version": 3,
+        "created_at": "2026-10-18T10:00:00Z",
+        "memberships": [
+            {
+                "business_id": biz1,
+                "business_name": "Acme North",
+                "role": "owner",
+                "created_at": "2026-10-18T10:00:00Z",
+                "revoked_at": None,
+                "version": 1,
+            },
+            {
+                "business_id": biz2,
+                "business_name": "Acme South",
+                "role": "commercial_lead",
+                "created_at": "2026-10-18T11:00:00Z",
+                "revoked_at": None,
+                "version": 2,
+            },
+        ],
+    }
+
+    user = AdminUser.model_validate(data)
+    assert user.id == user_id
+    assert len(user.memberships) == 2
+    assert user.memberships[0].business_id == biz1
+    assert user.memberships[0].role == "owner"
+    assert user.memberships[1].business_id == biz2
+    assert user.memberships[1].role == "commercial_lead"
+
+
+def test_admin_user_dto_zero_memberships():
+    """Verify AdminUser DTO accommodates users with no memberships (isolated or newly registered)."""
+    from orderfit.contracts.admin import AdminUser
+
+    user_id = uuid4()
+    data = {
+        "id": user_id,
+        "email": "nomembership@example.com",
+        "full_name": "Solo User",
+        "is_platform_admin": True,
+        "status": "active",
+        "version": 1,
+        "created_at": "2026-10-18T10:00:00Z",
+        "memberships": [],
+    }
+
+    user = AdminUser.model_validate(data)
+    assert user.id == user_id
+    assert user.is_platform_admin is True
+    assert len(user.memberships) == 0
+
+
+def test_admin_overview_dto_metrics():
+    """Verify AdminOverview DTO accepts all enhanced global telemetry counters."""
+    from orderfit.contracts.admin import AdminOverview
+
+    data = {
+        "schema_version": "admin-overview.v1",
+        "as_of": "2026-10-20T00:00:00Z",
+        "total_users": 17,
+        "privileged_users": 17,
+        "active_memberships": 17,
+        "revoked_memberships": 0,
+        "total_memberships": 17,
+        "total_tenants": 17,
+        "active_tenants": 17,
+        "total_orders": 7,
+        "order_value_by_currency": [
+            {"currency": "BDT", "amount_minor": "1500000", "orders_with_value": 3},
+            {"currency": "USD", "amount_minor": "250000", "orders_with_value": 1},
+        ],
+        "orders_without_value": 3,
+    }
+
+    overview = AdminOverview.model_validate(data)
+    assert overview.total_users == 17
+    assert overview.privileged_users == 17
+    assert overview.active_memberships == 17
+    assert overview.total_memberships == 17
+    assert overview.total_tenants == 17
+    assert overview.total_orders == 7
+    assert len(overview.order_value_by_currency) == 2
+
+
+def test_admin_validated_resilience():
+    """Verify _validated raises ApplicationError(503) on malformed administrative data."""
+    from orderfit.contracts.admin import AdminUser
+    from orderfit.store.admin_repository import _validated
+
+    with pytest.raises(ApplicationError) as exc_info:
+        _validated(AdminUser, {"invalid": "payload"})
+    assert exc_info.value.status == 503
+    assert exc_info.value.code == "ADMIN_DATA_UNSUPPORTED"
+

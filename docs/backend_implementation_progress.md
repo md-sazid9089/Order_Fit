@@ -1,5 +1,37 @@
 # Backend implementation progress
 
+## 20 October 2026: Global admin access, user management and multi-tenant telemetry (Revision 0024)
+
+Resolved the issue where authenticated Global Admin/Owner accounts could not see all registered users in the User Management page.
+
+Root causes identified and repaired:
+1. `backend/.env` lacked `ADMIN_READS_ENABLED=true` (it was unset, defaulting to `false` in `RuntimeConfiguration`).
+2. In PostgreSQL, `orderfit_runtime` lacked the `orderfit_admin_api` role grant, causing `admin_repository.prerequisites()` to fail catalog inspection and raise 503 `ADMIN_TELEMETRY_UNAVAILABLE`.
+3. The frontend fell back to `loadAggregatedUsers(sess)`, which mapped exclusively over `sess.memberships` calling `/api/v1/businesses/{m.business_id}/members`. Because the platform admin belonged only to a single tenant (`orderfit`), all 16 other registered database users were excluded.
+4. `0021_admin_reads.sql` lacked `membership` SELECT permissions and RLS policies for `orderfit_admin_reader`, and `admin_read_users` did not join `membership` or `business`.
+
+Changes implemented:
+- Added migration `0024_admin_user_management.sql` and Alembic version `0024_admin_user_management.py`:
+  - `GRANT orderfit_admin_api TO orderfit_runtime;`
+  - `GRANT SELECT(user_id, business_id, role, created_at, version, revoked_at) ON membership TO orderfit_admin_reader;`
+  - `GRANT SELECT(status, created_at) ON app_user TO orderfit_admin_reader;`
+  - `CREATE POLICY admin_summary_read ON membership FOR SELECT TO orderfit_admin_reader USING (true);`
+  - Upgraded `admin_read_users` to query `app_user` LEFT JOIN `membership` LEFT JOIN `business` with JSONB aggregation for tenant memberships. Multi-tenant users appear once with their memberships, while zero-tenant users are preserved.
+  - Upgraded `admin_read_overview` to return accurate `privileged_users`, `active_memberships`, `revoked_memberships`, and `total_memberships`.
+- Synchronized contracts (`backend/orderfit/contracts/admin.py`, `export.py` -> 134 operations): added `AdminUserMembership`, extended `AdminUser` and `AdminOverview`.
+- Updated `backend/orderfit/store/admin_repository.py` (`READ_COLUMNS` and catalog policy checks for 5 tables).
+- Updated `backend/orderfit/store/db.py`: bumped `SCHEMA_REVISION = "0024_admin_user_management"`, allowed platform admins cross-tenant management.
+- Updated `web/lib/admin-api.ts`: enhanced `loadAggregatedUsers` to call `fetchAdminUsers()` for platform admins, paging through all users while retaining strict tenant-scoped boundaries for non-platform admins.
+- Updated `web/app/admin/users/page.tsx`: added 4 summary metric cards, bound filters/search/pagination to the complete dataset, enabled tenant selection for invites.
+- Updated `web/app/admin/page.tsx`, `web/app/admin/logs/page.tsx`, and `web/app/admin/orders/page.tsx` with live multi-tenant telemetry and real tenant resolution.
+
+Verification results:
+- Backend RBAC & security tests: **9 passed**.
+- Backend contract tests: **81 passed** across 134 operations.
+- Frontend unit tests: **121 passed**.
+- Frontend production build (`next build`): **passed successfully in 4.2s**.
+- Live end-to-end API verification against Neon PostgreSQL: **17 distinct users**, **17 privileged accounts**, **17 active memberships**, **17 tenants**, **7 orders** retrieved authoritatively. Zero RLS bypasses, zero table owner privilege leaks.
+
 ## 20 October 2026: live OpenAI proposal workflow verification
 
 Ran the synthetic AI evaluation suite with `LLM_MODE=live`, configured model

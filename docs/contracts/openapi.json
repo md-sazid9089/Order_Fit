@@ -859,6 +859,19 @@
       "AdminOverview": {
         "additionalProperties": false,
         "properties": {
+          "active_memberships": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Memberships"
+          },
           "active_tenants": {
             "minimum": 0,
             "title": "Active Tenants",
@@ -881,11 +894,50 @@
             "title": "Orders Without Value",
             "type": "integer"
           },
+          "privileged_users": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Privileged Users"
+          },
+          "revoked_memberships": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revoked Memberships"
+          },
           "schema_version": {
             "const": "admin-overview.v1",
             "default": "admin-overview.v1",
             "title": "Schema Version",
             "type": "string"
+          },
+          "total_memberships": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Total Memberships"
           },
           "total_orders": {
             "minimum": 0,
@@ -1011,6 +1063,19 @@
       "AdminUser": {
         "additionalProperties": false,
         "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
           "email": {
             "maxLength": 2000,
             "minLength": 1,
@@ -1034,6 +1099,28 @@
             "title": "Is Platform Admin",
             "type": "boolean"
           },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUserMembership"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          },
           "version": {
             "maximum": 2147483647,
             "minimum": 1,
@@ -1049,6 +1136,70 @@
           "version"
         ],
         "title": "AdminUser",
+        "type": "object"
+      },
+      "AdminUserMembership": {
+        "additionalProperties": false,
+        "properties": {
+          "business_id": {
+            "format": "uuid",
+            "title": "Business Id",
+            "type": "string"
+          },
+          "business_name": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Business Name",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revoked At"
+          },
+          "role": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Role",
+            "type": "string"
+          },
+          "version": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "business_id",
+          "business_name",
+          "role",
+          "version"
+        ],
+        "title": "AdminUserMembership",
         "type": "object"
       },
       "AdvisoryExplainRequest": {

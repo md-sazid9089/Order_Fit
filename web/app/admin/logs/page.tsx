@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSession, listAudit, getAuditExport } from "@/lib/p7-api";
 import { parseAuditRow, humanAction, type AuditEntry } from "@/lib/p7-model";
-import { exportToCsv } from "@/lib/admin-api";
+import { exportToCsv, fetchAdminTenants } from "@/lib/admin-api";
 import type { SessionView } from "@/lib/generated-api";
 import {
   Terminal,
@@ -53,6 +53,8 @@ export default function AdminLogsPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const [availableTenants, setAvailableTenants] = useState<Array<{ id: string; name: string }>>([]);
+
   const loadAuditLogs = useCallback(async () => {
     setLoading(true);
     try {
@@ -65,20 +67,36 @@ export default function AdminLogsPage() {
         return;
       }
 
-      const memberships = sess.memberships ?? [];
+      let tenantsToScan: Array<{ id: string; name: string }> = (sess.memberships ?? []).map((m) => ({
+        id: m.business_id,
+        name: m.business_name,
+      }));
+
+      if (admin) {
+        try {
+          const tenantsRes = await fetchAdminTenants(100);
+          if (tenantsRes?.items && tenantsRes.items.length > 0) {
+            tenantsToScan = tenantsRes.items.map((t) => ({ id: t.id, name: t.name }));
+          }
+        } catch {
+          // Fall back to session memberships
+        }
+      }
+      setAvailableTenants(tenantsToScan);
+
       const collected: EnrichedAuditEntry[] = [];
 
       await Promise.all(
-        memberships.map(async (m) => {
+        tenantsToScan.map(async (t) => {
           try {
-            const res = await listAudit(m.business_id);
+            const res = await listAudit(t.id);
             if (res?.items) {
               for (const row of res.items) {
                 const parsed = parseAuditRow(row);
                 collected.push({
                   ...parsed,
-                  tenantName: m.business_name,
-                  businessId: m.business_id,
+                  tenantName: t.name,
+                  businessId: t.id,
                 });
               }
             }
@@ -114,12 +132,11 @@ export default function AdminLogsPage() {
 
   // Tenant choices for dropdown
   const tenantOptions = useMemo(() => {
-    const mems = session?.memberships ?? [];
     return [
       { id: "all", name: "All Organizations" },
-      ...mems.map((m) => ({ id: m.business_id, name: m.business_name })),
+      ...availableTenants,
     ];
-  }, [session]);
+  }, [availableTenants]);
 
   // Combined Search and Filters
   const filteredLogs = useMemo(() => {
