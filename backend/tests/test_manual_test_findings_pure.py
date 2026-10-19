@@ -97,7 +97,10 @@ JOB = SimpleNamespace(kind="evaluation")
 CLAIM = {"id": uuid4()}
 
 
-def test_unexpected_exception_is_logged_without_its_message(caplog):
+def test_unexpected_exception_is_logged_without_its_message(caplog, monkeypatch):
+    worker_logger = logging.getLogger("orderfit.worker")
+    monkeypatch.setattr(worker_logger, "disabled", False)
+    monkeypatch.setattr(worker_logger, "propagate", True)
     with caplog.at_level(logging.ERROR, logger="orderfit.worker"):
         result, retry = classify_unexpected_failure(CLAIM, JOB, ValueError("secret-account-9988"))
     assert (result.error.code, retry) == ("JOB_FAILED", False)

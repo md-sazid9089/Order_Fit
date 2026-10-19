@@ -88,6 +88,15 @@ def test_invalid_output_does_not_trip_the_circuit(monkeypatch):
     assert llm._breaker.allow()
 
 
+def test_non_retryable_client_error_does_not_trip_the_circuit(monkeypatch):
+    effect = openai.BadRequestError(
+        "synthetic", response=httpx.Response(400, request=_REQUEST), body=None)
+    for _ in range(10):
+        result, _client = _call(monkeypatch, [effect])
+        assert result.code == "PROVIDER_UNAVAILABLE" and not result.retryable
+    assert llm._breaker.allow()
+
+
 def test_oversized_prompt_never_reaches_the_provider(monkeypatch):
     def forbidden(**kwargs):
         raise AssertionError("oversized prompt must not create a client")

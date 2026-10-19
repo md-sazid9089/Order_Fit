@@ -1,4 +1,7 @@
-"""Synthetic live extraction + paraphrased what-if smoke test; never loads .env."""
+"""Retired FreeLLMPool smoke-test entry point; use the OpenAI AI evaluator instead."""
+
+if __name__ == "__main__":
+    raise SystemExit("FreeLLMPool was removed. Use scripts/ai_eval.py --mode live with OpenAI settings.")
 
 import argparse
 import asyncio
