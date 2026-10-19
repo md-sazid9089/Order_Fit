@@ -12,7 +12,7 @@ test("older saved customer is selectable after a recoverable continuation failur
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await page.getByRole("link", { name: "New order" }).first().click();
   await page.getByLabel("Opening date").fill("2026-10-16");
-  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
+  await page.getByLabel("Opening cash").fill("100000.00");
   await page.getByLabel("Coverage through").fill("2027-10-16");
   await page.getByLabel("Source attestation").fill("Synthetic pagination baseline");
   await page.getByRole("button", { name: "Save baseline" }).click();

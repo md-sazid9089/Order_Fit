@@ -43,7 +43,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("link", { name: "New order" }).first().click();
   await expect(page.getByRole("heading", { name: "Set the business cash baseline first" })).toBeVisible();
   await page.getByLabel("Opening date").fill(today);
-  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
+  await page.getByLabel("Opening cash").fill("100000.00");
   await page.getByLabel("Coverage through").fill(isoDateFrom(addDays(new Date(), 365)));
   await page.getByLabel("Source attestation").fill("Synthetic E2E baseline");
   await page.getByRole("button", { name: "Save baseline" }).click();
@@ -56,7 +56,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("textbox", { name: "Order date" }).fill(today);
   await page.getByLabel("Delivery date").fill(delivery);
   await page.getByLabel("Invoice date").fill(delivery);
-  await page.getByLabel("Order amount (integer minor units)").fill("5000000");
+  await page.getByLabel("Order amount").fill("50000.00");
   await page.getByLabel("Payment days").fill("30");
   // A gateway can lose the response after the draft has already been persisted.
   // Retrying the form must recover that exact draft with the original command key.

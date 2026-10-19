@@ -3,13 +3,19 @@
 import React, { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import { ApiError, get, mutate, manualEvidence, type Business, type BaselineView, type ConstraintsView, type Customer, type Deal, type DraftInputs } from "@/lib/orderfit-api";
 import { useScope } from "@/components/layout/auth-shell";
 import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
 import { SkeletonForm } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/system/page-header";
+import { Panel } from "@/components/system/panel";
+import { InlineAlert } from "@/components/system/inline-alert";
+import { MoneyField } from "@/components/system/money-field";
+import { OrderJourney } from "@/components/system/order-journey";
+import { formatMinor } from "@/lib/approval-model";
 
 export default function NewDealPage() {
   const router = useRouter();
@@ -177,186 +183,144 @@ export default function NewDealPage() {
     }
   }
 
+  const pipelineHref = businessId ? `/deals?businessId=${businessId}` : "/deals";
+  const labelClass = "block text-sm font-medium text-foreground";
+
   return (
-    <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
-      {/* Top Header & Navigation Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link
-            href={businessId ? `/deals?businessId=${businessId}` : "/deals"}
-            className="p-2 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#525252] dark:text-neutral-300 hover:text-[#1E2021] transition-colors shrink-0"
-            title="Return to Deals Pipeline"
+    <main className="mx-auto w-full max-w-3xl min-w-0 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
+        back={{ href: pipelineHref, label: "Pipeline" }}
+        title="New order"
+        description="Enter the order as it appears on the purchase order. After you save it, you review the inputs and run the evaluation. Nothing is sent to a customer, supplier or bank."
+      />
+      <OrderJourney businessId={businessId} />
+
+      <InlineAlert tone="info">
+        Documents are attached after the order is saved, on its Documents page. Extracted values wait for your review before they are used.
+      </InlineAlert>
+
+      {error && (
+        <InlineAlert
+          tone="danger"
+          title="The order wasn&apos;t saved"
+          action={createdId ? <Link className="font-semibold text-primary underline" href={`/deals/${createdId}?businessId=${businessId}`}>Open the saved draft</Link> : undefined}
+        >
+          {error}
+        </InlineAlert>
+      )}
+
+      {loading && (
+        <div role="status" aria-busy="true" className="space-y-4">
+          <span className="sr-only">Loading your business…</span>
+          <SkeletonForm fields={4} />
+        </div>
+      )}
+
+      {!loading && business && !baseline && (
+        <form onSubmit={saveBaseline}>
+          <Panel
+            title="Set the business cash baseline first"
+            description="Every evaluation starts from the cash you hold on a known date. Record it once; you can edit it later under Cash & Financing."
+            bodyClassName="space-y-4"
           >
-            <ArrowLeft className="size-4" />
-          </Link>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs text-[#737373] dark:text-neutral-400 mb-0.5">
-              <Link href={businessId ? `/deals?businessId=${businessId}` : "/deals"} className="hover:text-[#1E2021] dark:hover:text-white transition-colors">
-                Deals Pipeline
-              </Link>
-              <span className="text-[#A3A3A3]">/</span>
-              <span className="font-semibold text-[#1E2021] dark:text-white">Evaluate New Order</span>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className={labelClass}>
+                Opening date
+                <input required type="date" className={field} value={openingDate} onChange={(e) => setOpeningDate(e.target.value)} />
+              </label>
+              <MoneyField label="Opening cash" currency={business.currency} required allowNegative valueMinor={openingCash} onChangeMinor={setOpeningCash} hint="The balance on the opening date. Enter a negative amount for an overdraft." />
+              <label className={labelClass}>
+                Coverage through
+                <input required type="date" min={openingDate} className={field} value={coverage} onChange={(e) => setCoverage(e.target.value)} />
+              </label>
+              <label className={labelClass}>
+                Source attestation
+                <input required className={field} placeholder="e.g. Bank statement, 19 October" value={attestation} onChange={(e) => setAttestation(e.target.value)} />
+              </label>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight">
-              Evaluate New Order
-            </h1>
-          </div>
-        </div>
+            <Button type="submit" disabled={busy || !openingCash}>{busy ? "Saving…" : "Save baseline"}</Button>
+          </Panel>
+        </form>
+      )}
 
-        {/* Stepper Indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400">
-          <span className="font-bold text-[#1E2021] dark:text-white flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-[#1E2021] dark:bg-white" />
-            1. Ingest
-          </span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#737373] dark:text-neutral-400">2. Validate</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">3. Confirm</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">4. Compute</span>
-          <ChevronRight className="size-3 text-[#A3A3A3]" />
-          <span className="text-[#A3A3A3]">5. Approve</span>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-4 text-xs text-[#525252] dark:text-neutral-300 shadow-xs">
-        Enter the order values below. Supporting documents are attached after the order is saved, on the order&apos;s Documents page, where you can request value extraction when it is available and
-        review every value before it is used.
-      </div>
-
-      <div className="space-y-5">
-        {error && (
-          <p role="alert" className="rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-4 text-xs text-red-800 dark:text-red-200">
-            {error}{" "}
-            {createdId && (
-              <Link className="underline font-semibold" href={`/deals/${createdId}?businessId=${businessId}`}>
-                Open the saved draft
-              </Link>
-            )}
-          </p>
-        )}
-
-        {loading && (
-          <div role="status" aria-busy="true" className="space-y-4">
-            <span className="sr-only">Loading your business…</span>
-            <SkeletonForm fields={4} />
-          </div>
-        )}
-
-        {!loading && business && !baseline && (
-          <form onSubmit={saveBaseline} className="space-y-3 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
-            <h2 className="font-semibold text-sm text-[#1E2021] dark:text-white">Set the business cash baseline first</h2>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Opening date
-              <input required type="date" className={field} value={openingDate} onChange={(e) => setOpeningDate(e.target.value)} />
-            </label>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Opening cash (integer minor units)
-              <input required inputMode="numeric" pattern="-?(0|[1-9][0-9]*)" className={field} value={openingCash} onChange={(e) => setOpeningCash(e.target.value)} />
-            </label>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Coverage through
-              <input required type="date" min={openingDate} className={field} value={coverage} onChange={(e) => setCoverage(e.target.value)} />
-            </label>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Source attestation
-              <input required className={field} value={attestation} onChange={(e) => setAttestation(e.target.value)} />
-            </label>
-            <button disabled={busy} className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-4 py-2 text-xs font-semibold cursor-pointer disabled:opacity-50">
-              {busy ? "Saving…" : "Save baseline"}
-            </button>
-          </form>
-        )}
-
-        {baseline && (
-          <form onSubmit={submit} className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
-            <h2 className="font-semibold text-sm text-[#1E2021] dark:text-white">Order details</h2>
-            <p className="text-xs text-[#525252] dark:text-neutral-400">
-              Opening cash: {baseline.balance.opening_cash_minor} minor units, as of {baseline.balance.opening_date}; coverage through {baseline.balance.coverage_through}.{" "}
-              <Link className="underline font-semibold" href={`/deals/sources?businessId=${businessId}`}>
-                Edit cash events, baseline and financing
-              </Link>
-            </p>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Order reference
-              <input required maxLength={64} disabled={!!createdId} className={field} value={reference} onChange={(e) => setReference(e.target.value)} />
-            </label>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              As-of/start date
-              <input
-                required
-                disabled={!!createdId}
-                type="date"
-                className={field}
-                min={baseline.balance.opening_date}
-                max={baseline.balance.opening_date}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </label>
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Customer
-              <select className={field} value={inputs.customer_id ?? ""} onChange={(e) => setInputs({ ...inputs, customer_id: e.target.value || null })}>
-                <option value="">Add a customer below</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.customer.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {!inputs.customer_id && (
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                New customer name
-                <input required className={field} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+      {baseline && business && (
+        <form onSubmit={submit} className="space-y-6">
+          <Panel
+            title="Order details"
+            description={
+              <>
+                Opening cash <span className="tabular font-medium text-foreground">{formatMinor(baseline.balance.opening_cash_minor, business.currency)}</span> on {baseline.balance.opening_date}, covered through {baseline.balance.coverage_through}.{" "}
+                <Link className="font-medium text-primary underline" href={`/deals/sources?businessId=${businessId}`}>Edit cash and financing</Link>
+              </>
+            }
+            bodyClassName="space-y-4"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className={labelClass}>
+                Order reference
+                <input required maxLength={64} disabled={!!createdId} className={field} placeholder="As on the purchase order" value={reference} onChange={(e) => setReference(e.target.value)} />
               </label>
-            )}
-            {!inputs.customer_id && (
-              <label className="block text-xs text-[#737373] dark:text-neutral-400">
-                Known customer email domains (comma separated)
-                <input className={field} value={customerDomains} onChange={(e) => setCustomerDomains(e.target.value)} placeholder="buyer.example" />
+              <label className={labelClass}>
+                As-of/start date
+                <input required disabled={!!createdId} type="date" className={field} min={baseline.balance.opening_date} max={baseline.balance.opening_date} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </label>
-            )}
-            <label className="block text-xs text-[#737373] dark:text-neutral-400">
-              Policy and financing configuration
-              <select
-                required
-                className={field}
-                value={inputs.constraints_id}
-                onChange={(e) => {
-                  const selected = constraints.find((c) => c.id === e.target.value);
-                  if (selected) {
-                    setInputs({
-                      ...inputs,
-                      constraints_id: selected.id,
-                      reserve_minor: selected.reserve_minor,
-                    });
-                  }
-                }}
-              >
-                {!constraints.some((c) => c.id === inputs.constraints_id) && inputs.constraints_id && <option value={inputs.constraints_id}>Selected default policy</option>}
-                {constraints.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.is_default ? "Default policy" : "Saved policy"} · {c.strategy_space.offer_ids.length} financing offers · {c.id.slice(0, 8)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
+              <label className={labelClass}>
+                Customer
+                <select className={field} value={inputs.customer_id ?? ""} onChange={(e) => setInputs({ ...inputs, customer_id: e.target.value || null })}>
+                  <option value="">New customer</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.customer.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                Policy and financing configuration
+                <select
+                  required
+                  className={field}
+                  value={inputs.constraints_id}
+                  onChange={(e) => {
+                    const selected = constraints.find((c) => c.id === e.target.value);
+                    if (selected) setInputs({ ...inputs, constraints_id: selected.id, reserve_minor: selected.reserve_minor });
+                  }}
+                >
+                  {!constraints.some((c) => c.id === inputs.constraints_id) && inputs.constraints_id && <option value={inputs.constraints_id}>Default policy</option>}
+                  {constraints.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.is_default ? "Default policy" : `Saved policy, version ${c.version}`} · {c.strategy_space.offer_ids.length === 1 ? "1 financing offer" : `${c.strategy_space.offer_ids.length} financing offers`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {!inputs.customer_id && (
+                <label className={labelClass}>
+                  New customer name
+                  <input required className={field} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                </label>
+              )}
+              {!inputs.customer_id && (
+                <label className={labelClass}>
+                  Known customer email domains (comma separated)
+                  <input className={field} value={customerDomains} onChange={(e) => setCustomerDomains(e.target.value)} placeholder="buyer.example" />
+                </label>
+              )}
+            </div>
             <CollectionPages query={customerPages} noun="customers" />
             <CollectionPages query={policyPages} noun="policies" />
-            <ManualOrderInputs value={inputs} onChange={setInputs} />
+          </Panel>
 
-            <button
-              disabled={busy || !inputs.constraints_id}
-              className="rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] px-5 py-2.5 text-xs font-semibold cursor-pointer disabled:opacity-50"
-            >
-              {busy ? "Saving…" : "Save and review"}
-            </button>
-          </form>
-        )}
-      </div>
+          <Panel title="Terms and costs" description="Amounts are in the business currency and are stored exactly. The evaluation, not this form, works out what they mean for your cash.">
+            <ManualOrderInputs value={inputs} onChange={setInputs} currency={business.currency} />
+          </Panel>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" size="lg" disabled={busy || !inputs.constraints_id}>{busy ? "Saving…" : "Save and review"}</Button>
+            <Link href={pipelineHref} className="text-sm font-medium text-muted-foreground hover:text-foreground">Cancel</Link>
+          </div>
+        </form>
+      )}
     </main>
   );
 }
