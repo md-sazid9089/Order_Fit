@@ -300,6 +300,14 @@ def serve(operations, worker, handlers, runtime, stop: threading.Event, *, once=
     step = step or run_once
     while not stop.is_set():
         worked = step(operations, worker, handlers, runtime)
+        mail_config = getattr(runtime, "account_mail_config", None)
+        if mail_config is not None and not stop.is_set():
+            from orderfit.workflow.account_mail import run_mail_once
+
+            try:
+                worked = run_mail_once(operations.database, mail_config) or worked
+            except Exception:
+                LOG.warning("account_mail_tick_unavailable")
         if once:
             break
         if not worked:
@@ -342,6 +350,7 @@ def main():
         llm=LLMSettings.from_runtime(config),
         documents=documents,
         job_attempts=config.job_attempts,
+        account_mail_config=config,
     )
     raise SystemExit(run_worker(Database(config.database_url.get_secret_value()), runtime, once=args.once))
 

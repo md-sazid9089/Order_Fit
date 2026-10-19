@@ -146,7 +146,7 @@ def build_openapi():
             responses["200"]["content"] = {
                 "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
             }
-        if endpoint.status == 202:
+        if endpoint.status == 202 and endpoint.service != "account_access":
             responses["202"]["headers"] = {
                 "Location": {
                     "description": "Same durable operation poll URL",
@@ -164,7 +164,7 @@ def build_openapi():
             "description": "TARGET CONTRACT ONLY. Not mounted on deployed API. See x-implementation-phase.",
             "parameters": parameters,
             "responses": responses,
-            "security": [] if endpoint.permission == "public" else [{"sessionCookie": []}],
+            "security": [] if endpoint.permission in {"public", "provider_signature"} else [{"sessionCookie": []}],
             "x-permission": endpoint.permission,
             "x-service-owner": endpoint.service,
             "x-storage-owner": endpoint.storage.split(","),
@@ -178,6 +178,16 @@ def build_openapi():
                 "Global logs always return 503. No tenant mutation authority is granted."
             )
             operation["x-capability"] = "admin_reads_enabled"
+        if endpoint.operation_id == "resend_webhook":
+            operation["parameters"] = [
+                {"name": name, "in": "header", "required": True, "schema": {"type": "string"}}
+                for name in ("svix-id", "svix-timestamp", "svix-signature")
+            ]
+            operation["description"] = "Raw signed provider callback; no session, CSRF or browser idempotency header."
+            operation["requestBody"] = {"required": True,
+                "description": "Signature verified against original raw bytes; limit 256 KiB.",
+                "content": {"application/json": {"schema": {"type": "object", "additionalProperties": {}}}}}
+            operation["x-capability"] = "account_email_mode=resend"
         if endpoint.request:
             media = "application/json"
             shape = model_ref(endpoint.request)

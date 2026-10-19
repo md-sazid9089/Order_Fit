@@ -24,6 +24,7 @@ from .financial import (
     TermLoan,
     TermLoanTerms,
 )
+from .mail import MailDelivery
 from .primitives import (
     DTO,
     BigId,
@@ -227,7 +228,8 @@ class SessionView(DTO):
     expires_at: UTCInstant
     mfa_supported: bool
     mfa_enabled: bool = False
-    email_verified: Literal[False]
+    email_verified: bool
+    password_recovery_eligible: bool
     is_platform_admin: bool = False
 
 
@@ -272,6 +274,7 @@ class InvitationView(DTO):
     # One-time in-app link carrying the token in the URL fragment; returned only by the
     # original create response (never stored, never replayed).
     invitation_url: str | None
+    delivery: MailDelivery
 
 
 class InvitationAccept(DTO):

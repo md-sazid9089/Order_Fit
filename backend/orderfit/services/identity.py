@@ -52,7 +52,10 @@ def hash_password(password):
 
 class IdentityService:
     def __init__(self, database, config):
+        from orderfit.services.account_mail import AccountMail
+
         self.database, self.config = database, config
+        self.account_mail = AccountMail(config)
         self.secret = config.session_secret.get_secret_value().encode()
         self.request_key = hmac.digest(self.secret, b"orderfit:idempotency-body:v1", "sha256")
         self.cursors = CursorCodec(cursor_key(self.secret))
@@ -179,7 +182,9 @@ class IdentityService:
             expires_at=session["expires_at"],
             mfa_supported=bool(self.config.webauthn_rp_id),
             mfa_enabled=bool(user.get("passkey_required", False)),
-            email_verified=False,
+            email_verified=bool(user.get("email_verified_at") and user.get("verified_email") == user["email"]),
+            password_recovery_eligible=bool(user.get("email_verified_at") and user.get("verified_email") == user["email"]
+                                            and user.get("status") == "active" and not user.get("mfa_enforced")),
             is_platform_admin=is_admin,
         )
 
@@ -338,12 +343,20 @@ class IdentityService:
             current=data.current_password.get_secret_value(),
         )
         hashed = hash_password(data.new_password.get_secret_value())
+        notice = self.account_mail.prepare("password_changed", email) if self.account_mail.enabled("email_verification_enabled") else None
         with self.database.engine.begin() as c:
             if not c.execute(
                 text("SELECT session_password(:digest,:expected,:new)"),
                 {"digest": digest_token(token), "expected": user["password_hash"], "new": hashed},
             ).scalar_one():
                 raise ApplicationError(409, "SESSION_CHANGED")
+            if notice:
+                from orderfit.store import account_access_repository as access_repo
+
+                account = access_repo.call(c, "lookup", email=email)
+                access_repo.call(c, "issue", user=account["id"], purpose="password_changed", email=email,
+                                 generation=account["generation"], id=secrets.token_hex(16),
+                                 digest=digest_token(token), session=digest_token(token), expected=hashed, mail=notice)
             c.execute(
                 text("SELECT security_record(:digest,'PASSWORD_CHANGED')"),
                 {"digest": digest_token(token)},
