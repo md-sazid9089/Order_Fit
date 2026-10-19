@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useSmoothScroll } from "@/components/layout/smooth-scroll-provider";
+import { HalftoneWordmark } from "@/components/ui/halftone-wordmark";
 
 export function Footer() {
   const { scrollToTop } = useSmoothScroll();
@@ -208,7 +209,7 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Big Centered Orderfit Text */}
+        {/* Big Centered Orderfit Text with Halftone Particle Effect */}
         <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-white/5 flex justify-center items-center text-center overflow-hidden">
           <Link
             href="/"
@@ -218,11 +219,18 @@ export function Footer() {
                 scrollToTop(1.4);
               }
             }}
-            className="inline-block group cursor-pointer max-w-full"
+            className="block w-full cursor-pointer max-w-full"
+            aria-label="Orderfit - Back to top"
           >
-            <span className="font-radio-grotesk text-[clamp(2.75rem,14vw,11rem)] font-bold tracking-tight text-[#FFFAEC] group-hover:text-[#B5F2C6] transition-colors duration-300 select-none leading-none inline-block max-w-full break-words">
-              Orderfit
-            </span>
+            <HalftoneWordmark
+              wordmark="Orderfit"
+              className="h-28 sm:h-36 md:h-48 lg:h-56 xl:h-64"
+              background="#093A2F"
+              ink="#FFFAEC"
+              warm="#B5F2C6"
+              dotGap={5}
+              radius={90}
+            />
           </Link>
         </div>
 
