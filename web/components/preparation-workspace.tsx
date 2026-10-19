@@ -4,7 +4,8 @@ import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
-import { ApiError, get, mutate, type Deal, type Evaluation, type Operation, type Session } from "@/lib/orderfit-api";
+import { ApiError, get, mutate, type Deal, type Evaluation, type Operation } from "@/lib/orderfit-api";
+import { useScope } from "@/components/layout/auth-shell";
 import { ApprovalWorkflow } from "@/components/approval/approval-workflow";
 import { BankChangeHold } from "@/components/p7/bank-hold";
 import { messageForCode } from "@/lib/approval-model";
@@ -41,30 +42,21 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   const prefix = `/businesses/${businessId}`;
   const versions = () => ({ expected_version: deal!.version, expected_input_version: deal!.input_version, expected_financial_revision: deal!.financial_revision });
 
+  // Role comes only from the verified session held by the authenticated shell. Without a membership in the
+  // requested business nothing is shown as permitted; the API would refuse those actions anyway.
+  const { session } = useScope();
   useEffect(() => {
-    let active = true;
-    get<Session>("/auth/me").then(s => {
-      const membership = s.memberships.find(m => m.business_id === requestedBusiness) ?? (!requestedBusiness ? s.memberships[0] : undefined);
+    const membership = session.memberships.find(m => m.business_id === requestedBusiness) ?? (!requestedBusiness ? session.memberships[0] : undefined);
+    queueMicrotask(() => {
       if (!membership) {
-        if (requestedBusiness) {
-          if (active) { setBusinessId(requestedBusiness); setRole("owner"); }
-          return;
-        }
-        throw new Error("Select a business from your saved orders.");
+        setRole("");
+        setError(requestedBusiness ? "You are not a member of the business this order belongs to. Switch business or return to your orders." : "Select a business from your saved orders.");
+        return;
       }
-      if (active) { setBusinessId(membership.business_id); setRole(membership.role); }
-    }).catch(e => {
-      if (active) {
-        if (requestedBusiness) {
-          setBusinessId(requestedBusiness);
-          setRole("owner");
-        } else {
-          setError(e.message);
-        }
-      }
+      setBusinessId(membership.business_id);
+      setRole(membership.role);
     });
-    return () => { active = false; };
-  }, [requestedBusiness, dealId]);
+  }, [requestedBusiness, dealId, session.memberships]);
   const refresh = useCallback(async () => {
     if (!businessId) return;
     const stamp = ++generation.current;
