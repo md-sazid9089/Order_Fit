@@ -1,11 +1,17 @@
 # Account recovery and emailed invitations: shared contract
 
-Date: 19 October 2026. Status: proposed implementation contract, not implemented.
+Date: 19 October 2026. Status: backend implemented locally; deployment and frontend
+integration pending. [Evidence](../account_access_implementation_2026-10-19.md).
 Contract name: `account-access.v1`. This file is the shared source of truth for
 [backend](../account_access_backend_plan.md),
 [frontend](../account_access_frontend_handoff.md), and
 [database](../account_access_database_handoff.md) work. Changes to routes, fields,
 errors, policy or expiry must update all affected handoffs before implementation.
+
+Validated synthetic payloads are in [account-access-examples.json](account-access-examples.json).
+Generated backend declarations are [frontend-api.d.ts](frontend-api.d.ts).
+The frontend owner must synchronize the browser declaration and implement the
+pages before deployment enables account-email features.
 
 ## 1. Scope and policy decisions
 
@@ -57,7 +63,7 @@ the forgotten password to request or complete a reset. Headers and query strings
 must never contain a recovery/invitation token. Cookies remain HttpOnly/Secure.
 
 Successful empty responses use existing `Acknowledgement`:
-`{"request_id":"<opaque request reference>","completed":true,"matching_event_ids":[],"source_row":null,"matching_source_rows":[]}`.
+`{"request_id":"<opaque request reference>","completed":true}`.
 For 202, `completed` acknowledges durable request handling, not email delivery.
 No account, eligibility, token, mail-job ID or recipient information is returned
 from public reset request. Frontend displays the generic text locally.

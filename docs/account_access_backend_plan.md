@@ -1,7 +1,9 @@
 # Backend implementation plan: account recovery and invitations
 
-Date: 19 October 2026. Status: planning only; no feature, migration or live send
-implemented by this document. Scope authorized here is account email, recovery
+Date: 19 October 2026. Status: backend implemented locally; see the
+[implementation report](account_access_implementation_2026-10-19.md) and
+[release runbook](deployment/account-access.md). No shared migration or live send
+was performed. Scope authorized here is account email, recovery
 and invitations; commercial execution remains sandbox-only.
 
 Read the [shared account-access.v1 contract](contracts/account-access-v1.md) first.
@@ -228,5 +230,6 @@ and provider key to stop sends. Do not downgrade security history to roll back.
 Final report must list changed files, deployed schema/roles, executed checks,
 provider-free versus live evidence, frontend contract sync, known limitations
 (unverified locked-out accounts and lost passkeys), blocked gates and next action.
-Planning status today: source review and document consistency only; all runtime,
-migration, browser and provider acceptance remains NOT RUN.
+The phase descriptions above are the implementation checklist, not a deployment
+claim. Current executed checks, deliberate resolutions and remaining external
+gates are recorded in the implementation report linked at the top.

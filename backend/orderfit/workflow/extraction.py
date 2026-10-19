@@ -35,6 +35,7 @@ class Runtime:
     llm: llm.LLMSettings
     documents: object  # PrivateDocuments
     job_attempts: int = 3
+    account_mail_config: object | None = None
 
 
 def _stale():

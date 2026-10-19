@@ -36,7 +36,8 @@ def _upgrade(url, target):
 
 def test_application_requires_the_sole_merge_head():
     heads = ScriptDirectory.from_config(_config()).get_heads()
-    assert heads == [SCHEMA_REVISION] == ["0022_baseline_duplicates"]
+    assert heads == [SCHEMA_REVISION] == ["0023_account_access"]
+    assert ScriptDirectory.from_config(_config()).get_revision(SCHEMA_REVISION).down_revision == "0022_baseline_duplicates"
 
 
 def test_merge_heads_database_upgrades_through_platform_authority_and_passkeys(postgres):

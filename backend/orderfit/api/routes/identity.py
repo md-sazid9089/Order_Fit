@@ -24,6 +24,9 @@ from orderfit.contracts.workflow import CancelOperation, Operation
 
 router = APIRouter(prefix="/api/v1")
 IMPLEMENTED = {
+    "account_access_capabilities", "email_verification_request", "email_verification_confirm",
+    "password_reset_request", "password_reset_confirm", "invitation_register", "resend_webhook",
+    "invitations", "invitation_reissue",
     "passkey_enroll_options", "passkey_enroll_verify", "passkey_login_options", "passkey_login_verify",
     "csrf_challenge",
     "signup",
@@ -209,6 +212,15 @@ def step_up(data: StepUp, request: Request):
 )
 def capabilities(business_id: UUID, request: Request):
     service = identity_service(request)
+    flags = {
+        "email_verification_request": "email_verification_enabled",
+        "email_verification_confirm": "email_verification_enabled",
+        "password_reset_request": "password_recovery_enabled",
+        "password_reset_confirm": "password_recovery_enabled",
+        "invitation_register": "invitation_email_enabled",
+        "invitation_reissue": "invitation_email_enabled",
+    }
+    disabled = {name for name, flag in flags.items() if not service.account_mail.enabled(flag)}
     with service.database.tenant(session_token(request), business_id):
         return Capabilities(
             contract_version="api.v1",
@@ -217,8 +229,8 @@ def capabilities(business_id: UUID, request: Request):
             capabilities=[
                 {
                     "name": e.operation_id,
-                    "status": "implemented" if e.operation_id in IMPLEMENTED else "planned",
-                    "reason": None
+                    "status": "disabled" if e.operation_id in disabled else "implemented" if e.operation_id in IMPLEMENTED else "planned",
+                    "reason": "Account email is disabled." if e.operation_id in disabled else None
                     if e.operation_id in IMPLEMENTED
                     else "Not implemented in this phase.",
                     "phase": e.phase,
