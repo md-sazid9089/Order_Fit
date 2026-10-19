@@ -72,7 +72,8 @@ const MESSAGES: Record<string, string> = {
   PAYEE_ACCOUNT_UNVERIFIED: "A payee account in this bundle is not verified.",
 };
 
-export const messageForCode = (code: string, fallback = "") => MESSAGES[code] ?? (fallback ? `${code}: ${fallback}` : code);
+// The fallback is already user-facing copy (ApiError.message); internal codes are never shown.
+export const messageForCode = (code: string, fallback = "") => MESSAGES[code] ?? (fallback || "Something went wrong. Reload the page to check what was saved, then try again.");
 
 /**
  * True only when a request could not complete: the transport's NetworkError, an abort or timeout, or the browser's own
@@ -95,10 +96,12 @@ export function describeError(error: unknown): Described {
   if (status === 401 && code !== "INVALID_CREDENTIALS") return { message: "Your session expired. Sign in again; nothing was changed.", sessionExpired: true, refresh: false, lostResponse: false };
   if (known) return { message: known, sessionExpired: false, refresh: status === 409, lostResponse: false };
   if (status === 403) return { message: "Your role is not permitted to do this.", sessionExpired: false, refresh: false, lostResponse: false };
-  if (status === 409) return { message: `The saved state changed (${code}). Reloaded the latest; review it before trying again.`, sessionExpired: false, refresh: true, lostResponse: false };
-  if (status === 429) return { message: MESSAGES.AUTH_RATE_LIMIT, sessionExpired: false, refresh: false, lostResponse: false };
-  if (status === 503) return { message: "The service is temporarily unavailable. Retry shortly.", sessionExpired: false, refresh: false, lostResponse: true };
-  return { message: `${code}: ${e.message ?? "Request failed."}`, sessionExpired: false, refresh: false, lostResponse: false };
+  // ApiError.message is already user-facing (lib/error-copy.ts), so fallbacks reuse it and never print the code.
+  if (status === 409) return { message: e.message || "Something changed while you were working. Reload to see the latest version, then try again.", sessionExpired: false, refresh: true, lostResponse: false };
+  if (status === 429) return { message: e.message || MESSAGES.AUTH_RATE_LIMIT, sessionExpired: false, refresh: false, lostResponse: false };
+  // A server or proxy failure can hide a committed write: the same action is retried with the same key.
+  if (status >= 500) return { message: e.message || "The service is temporarily unavailable. Retry shortly.", sessionExpired: false, refresh: false, lostResponse: true };
+  return { message: e.message || "Something went wrong. Reload the page to check what was saved, then try again.", sessionExpired: false, refresh: false, lostResponse: false };
 }
 
 export const COMPLETED_ACTION = new Set(["sent", "posted", "accepted"]);

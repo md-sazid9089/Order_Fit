@@ -7,12 +7,17 @@ import ts from "typescript";
 
 let keysIssued = 0;
 
+// The transport imports its copy table; load the real module so messages are the shipped ones.
+const errorCopyModule = { exports: {} };
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../lib/error-copy.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { module: errorCopyModule, exports: errorCopyModule.exports });
+const errorCopy = errorCopyModule.exports;
+
 // Execute the actual browser transport without a live service or private cookies.
 function transport(responses, storage = {}) {
   const calls = [];
   const transportModule = { exports: {} };
   const compiled = ts.transpileModule(readFileSync(new URL("../lib/orderfit-api.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(compiled, { module: transportModule, exports: transportModule.exports, require: () => ({ API_URL: "http://orderfit.invalid" }), TextEncoder, sessionStorage: { get length() { return Object.keys(storage).length; }, key: index => Object.keys(storage)[index] ?? null, getItem: key => storage[key] ?? null, setItem: (key, value) => { storage[key] = value; }, removeItem: key => { delete storage[key]; } }, File, FormData, crypto: { randomUUID: () => `test-idempotency-key-${++keysIssued}`, subtle: webcrypto.subtle }, fetch: async (url, options) => { calls.push({ url, options }); const next = responses.shift(); assert.ok(next, "Unexpected network request"); if (next instanceof Error) throw next; return { ok: next.status < 400, status: next.status, json: async () => next.body }; } });
+  vm.runInNewContext(compiled, { module: transportModule, exports: transportModule.exports, require: (name) => name === "./error-copy" ? errorCopy : ({ API_URL: "http://orderfit.invalid" }), TextEncoder, sessionStorage: { get length() { return Object.keys(storage).length; }, key: index => Object.keys(storage)[index] ?? null, getItem: key => storage[key] ?? null, setItem: (key, value) => { storage[key] = value; }, removeItem: key => { delete storage[key]; } }, File, FormData, crypto: { randomUUID: () => `test-idempotency-key-${++keysIssued}`, subtle: webcrypto.subtle }, fetch: async (url, options) => { calls.push({ url, options }); const next = responses.shift(); assert.ok(next, "Unexpected network request"); if (next instanceof Error) throw next; return { ok: next.status < 400, status: next.status, json: async () => next.body }; } });
   return { client: transportModule.exports, calls, storage };
 }
 
