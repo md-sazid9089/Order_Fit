@@ -7,11 +7,11 @@ import { useScope } from "@/components/layout/auth-shell";
 import { describeP7Error, roleLabel } from "@/lib/p7-model";
 import { getBusiness } from "@/lib/p7-api";
 
-export const panel = "space-y-3 rounded-xl border bg-white p-5";
-export const button = "rounded border border-neutral-400 px-3 py-2 text-sm disabled:opacity-40";
-export const primary = "rounded bg-neutral-900 px-3 py-2 text-sm text-white disabled:opacity-40";
-export const danger = "rounded border border-red-600 px-3 py-2 text-sm text-red-700 disabled:opacity-40";
-export const field = "mt-1 block w-full rounded border border-neutral-300 bg-white p-2 text-sm";
+export const panel = "space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs";
+export const button = "rounded-xl border border-[#E8E6E1] dark:border-[#383C3B] bg-[#FAF9F7] dark:bg-[#2C302F] px-3.5 py-2 text-xs font-semibold text-[#525252] dark:text-neutral-200 hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] transition-colors disabled:opacity-40 cursor-pointer";
+export const primary = "rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 px-4 py-2 text-xs font-semibold shadow-xs disabled:opacity-40 transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5";
+export const danger = "rounded-xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 px-3.5 py-2 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 cursor-pointer";
+export const field = "mt-1.5 block w-full rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#151718] p-2.5 text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors";
 export const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString() : "not yet");
 
 /** Session, role and the query-key prefix for this user and business. Keys include both so no cache entry can cross a scope. */
@@ -21,12 +21,16 @@ export function useScoped() {
   return { session, businessId, membership, role: membership?.role, businessName: membership?.business_name ?? "", key, roleText: roleLabel(membership?.role) };
 }
 
-export function PageFrame({ title, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function PageFrame({ title, intro, action, children }: { title: string; intro?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
     <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
       <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        <header className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">{title}</h1>
+            {intro && <p className="text-xs text-[#737373] dark:text-neutral-400 mt-1 max-w-3xl leading-relaxed">{intro}</p>}
+          </div>
+          {action && <div className="shrink-0">{action}</div>}
         </header>
         {children}
       </div>
