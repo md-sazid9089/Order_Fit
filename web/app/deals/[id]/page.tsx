@@ -788,23 +788,35 @@ export default function DealDetailPage({
 
             {/* Inline Editing Drawer */}
             {editing && (
-              <form onSubmit={save} className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] p-6 shadow-xs">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
-                  <h3 className="text-sm font-bold text-[#1E2021] dark:text-white">
-                    Edit Saved Order Inputs
-                  </h3>
+              <form onSubmit={save} className="space-y-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center justify-between pb-3.5 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+                  <div className="flex items-center gap-2.5">
+                    <Edit3 className="size-4 text-[#1E2021] dark:text-white" />
+                    <h3 className="text-sm font-bold text-[#1E2021] dark:text-white font-display">
+                      Edit Saved Order Inputs
+                    </h3>
+                  </div>
                   <button
                     type="button"
-                    className="text-xs text-[#737373] hover:text-[#1E2021] dark:hover:text-white underline"
+                    className="text-xs font-medium text-[#737373] hover:text-[#1E2021] dark:hover:text-white transition-colors"
                     onClick={() => setEditing(null)}
                   >
                     Cancel
                   </button>
                 </div>
-                <label className="block text-xs font-medium text-[#1E2021] dark:text-white">
-                  Policy &amp; Financing Constraints
+
+                {/* Policy & Financing Constraints */}
+                <div className="bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#E8E6E1] dark:border-[#2C302F] pb-2.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#1E2021] dark:text-white">
+                      Policy &amp; Financing Constraints
+                    </label>
+                    <span className="text-[11px] text-[#737373] dark:text-neutral-400">
+                      Reserve floor &amp; strategy bounds
+                    </span>
+                  </div>
                   <select
-                    className="mt-1.5 w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-[#FAF9F7] dark:bg-[#222425] text-[#1E2021] dark:text-white"
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
                     value={editing.constraints_id}
                     onChange={(e) => {
                       const p = policies.find((p) => p.id === e.target.value);
@@ -820,22 +832,24 @@ export default function DealDetailPage({
                       </option>
                     ))}
                   </select>
-                </label>
-                <CollectionPages query={policyPages} noun="policies" />
+                  <CollectionPages query={policyPages} noun="policies" />
+                </div>
+
                 <ManualOrderInputs value={editing} onChange={setEditing} />
-                <div className="flex items-center gap-3 pt-3">
-                  <button
-                    className="px-5 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs disabled:opacity-40"
-                    disabled={busy}
-                  >
-                    Save Revised Inputs
-                  </button>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E8E6E1] dark:border-[#2C302F]">
                   <button
                     type="button"
-                    className="text-xs text-[#737373] hover:underline"
+                    className="px-4 py-2.5 rounded-xl bg-[#FAF9F7] dark:bg-[#2C302F] hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] border border-[#E8E6E1] dark:border-[#383C3B] text-xs font-semibold text-[#525252] dark:text-neutral-200 hover:text-[#1E2021] transition-colors"
                     onClick={() => setEditing(null)}
                   >
                     Cancel
+                  </button>
+                  <button
+                    className="px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs disabled:opacity-40 transition-colors"
+                    disabled={busy}
+                  >
+                    Save Revised Inputs
                   </button>
                 </div>
               </form>
