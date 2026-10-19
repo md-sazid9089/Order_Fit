@@ -17,13 +17,13 @@ export default function NotFound() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/deals"
-            className="inline-flex h-10 items-center rounded-lg bg-brand-pine-green px-4 text-sm font-semibold text-brand-eggshell transition-colors hover:bg-brand-forest-green focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-pine-green"
+            className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             Go to your orders
           </Link>
           <Link
             href="/"
-            className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-pine-green"
+            className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             OrderFit home
           </Link>
