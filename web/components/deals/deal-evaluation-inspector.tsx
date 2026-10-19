@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import type { EvaluationResultV1 as Evaluation } from "@/lib/generated-api";
 import { formatMinor } from "@/lib/approval-model";
-import { fieldClass } from "@/components/manual-order-inputs";
 import { get } from "@/lib/orderfit-api";
 
 interface DealEvaluationInspectorProps {
@@ -471,8 +470,16 @@ export function DealEvaluationInspector({
   );
 }
 
+type SeriesPoint = { date: string; candidate_trough_minor: string; effective_floor_minor: string };
+type BreachRange = { start_date: string; end_date: string; worst_headroom_minor: string };
+export type SeriesOption = { key: string; label: string; scenarios: ReadonlyArray<{ scenario: string; breaches: ReadonlyArray<BreachRange>; inherited_baseline_breaches: ReadonlyArray<BreachRange> }> };
+
+const within = (date: string, range: BreachRange) => date >= range.start_date && date <= range.end_date;
+
 /**
- * Beautiful Cash Series Chart and Table Viewer
+ * The saved daily cash series for one option and scenario. Every figure and every "below floor" status comes from the
+ * engine: points carry the engine's effective floor, and breach periods come from the evaluation's scenario summary.
+ * The browser only matches each date to those periods; it never subtracts, compares or classifies money.
  */
 export function DealCashSeriesViewer({
   businessId,
@@ -483,7 +490,7 @@ export function DealCashSeriesViewer({
 }: {
   businessId: string;
   evaluationId: string;
-  options: string[];
+  options: SeriesOption[];
   initialOption: string;
   currency: string;
 }) {
@@ -492,25 +499,19 @@ export function DealCashSeriesViewer({
   const [loading, setLoading] = useState(false);
   const [seriesError, setSeriesError] = useState("");
   const [reloadSeries, setReloadSeries] = useState(0);
-  const [seriesPoints, setSeriesPoints] = useState<
-    { date: string; candidate_trough_minor: string; reserve_minor: string }[]
-  >([]);
-  const [viewMode, setViewMode] = useState<"table" | "raw">("table");
+  const [seriesPoints, setSeriesPoints] = useState<SeriesPoint[]>([]);
 
   React.useEffect(() => {
     let active = true;
     const load = async () => {
-      // Schedule state changes from the asynchronous work, rather than while
-      // React is processing the effect itself.
+      // Schedule state changes from the asynchronous work, rather than while React is processing the effect itself.
       await Promise.resolve();
       if (!active) return;
       setLoading(true);
       setSeriesError("");
       setSeriesPoints([]);
       const query = new URLSearchParams({ scenario, option_key: option });
-      return get<{ points: { date: string; candidate_trough_minor: string; reserve_minor: string }[] }>(
-        `/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`
-      );
+      return get<{ points: SeriesPoint[] }>(`/businesses/${businessId}/evaluations/${evaluationId}/series?${query}`);
     };
     void load()
       .then((series) => {
@@ -521,174 +522,121 @@ export function DealCashSeriesViewer({
       })
       .catch((e) => {
         if (active) {
-          setSeriesError(e instanceof Error ? e.message : "The daily series could not be loaded.");
+          setSeriesError(e instanceof Error ? e.message : "The daily cash series couldn't be loaded.");
           setLoading(false);
         }
       });
-
     return () => {
       active = false;
     };
   }, [businessId, evaluationId, option, scenario, reloadSeries]);
 
-  return (
-    <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] overflow-hidden shadow-xs">
-      <div className="p-5 border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B] flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2C302F] text-[#004D3B] dark:text-[#B5F2C6]">
-            <TrendingDown className="size-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-[#1E2021] dark:text-white font-display">
-              Saved Cash Series & Daily Runway Ledger
-            </h3>
-            <p className="text-xs text-[#737373] dark:text-neutral-400 mt-0.5">
-              Day-by-day cash trough vs mandatory reserve floor
-            </p>
-          </div>
-        </div>
+  const summary = options.find((o) => o.key === option)?.scenarios.find((s) => s.scenario === scenario);
+  const orderBreaches = summary?.breaches ?? [];
+  const inheritedBreaches = summary?.inherited_baseline_breaches ?? [];
+  const selectClass = "mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground";
 
-        {/* View mode toggle */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center p-1 rounded-xl bg-neutral-200/60 dark:bg-neutral-800 text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "table"
-                  ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                  : "text-[#525252] dark:text-neutral-400"
-              }`}
-            >
-              Structured Ledger
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("raw")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "raw"
-                  ? "bg-white dark:bg-[#222425] text-[#1E2021] dark:text-white shadow-xs font-semibold"
-                  : "text-[#525252] dark:text-neutral-400"
-              }`}
-            >
-              Raw Text
-            </button>
-          </div>
-        </div>
+  return (
+    <section className="rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-1 border-b border-border px-5 py-4">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <TrendingDown className="size-4 text-primary" aria-hidden /> Daily cash low points
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          The lowest balance on each day, against the floor the engine used for that day. Saved with this evaluation.
+        </p>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-4 bg-white dark:bg-[#1E2021] border-b border-[#E8E6E1] dark:border-[#2C302F] grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold uppercase text-[#737373] dark:text-neutral-400 mb-1.5">
-            Strategy Option
-          </label>
-          <select
-            className={fieldClass}
-            value={option}
-            onChange={(e) => setOption(e.target.value)}
-          >
-            {options.map((key) => (
-              <option key={key} value={key}>
-                {key}
+      <div className="grid gap-4 border-b border-border px-5 py-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium text-foreground">
+          Option
+          <select className={selectClass} value={option} onChange={(e) => setOption(e.target.value)}>
+            {options.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
               </option>
             ))}
           </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold uppercase text-[#737373] dark:text-neutral-400 mb-1.5">
-            Scenario Stress Level
-          </label>
-          <select
-            className={fieldClass}
-            value={scenario}
-            onChange={(e) => setScenario(e.target.value as "base" | "downside" | "severe")}
-          >
-            <option value="base">Base Case (On-Time)</option>
-            <option value="downside">Downside (Payment Delay)</option>
-            <option value="severe">Severe Stress (Delay + Overruns)</option>
+        </label>
+        <label className="block text-sm font-medium text-foreground">
+          Scenario
+          <select className={selectClass} value={scenario} onChange={(e) => setScenario(e.target.value as "base" | "downside" | "severe")}>
+            <option value="base">Base case (customer pays on time)</option>
+            <option value="downside">Downside (customer pays late)</option>
+            <option value="severe">Severe (late payment and cost overruns)</option>
           </select>
-        </div>
+        </label>
       </div>
 
-      {/* Content Area */}
+      {summary && (orderBreaches.length > 0 || inheritedBreaches.length > 0) && (
+        <div className="space-y-1 border-b border-border px-5 py-3 text-sm">
+          {orderBreaches.map((b) => (
+            <p key={`o-${b.start_date}`} className="text-danger">
+              Below the floor because of this order from {b.start_date} to {b.end_date}; the deepest shortfall is{" "}
+              <span className="tabular font-semibold">{formatMinor(b.worst_headroom_minor, currency)}</span>.
+            </p>
+          ))}
+          {inheritedBreaches.map((b) => (
+            <p key={`i-${b.start_date}`} className="text-warning">
+              Already below the floor before this order from {b.start_date} to {b.end_date} (deepest{" "}
+              <span className="tabular font-semibold">{formatMinor(b.worst_headroom_minor, currency)}</span>).
+            </p>
+          ))}
+        </div>
+      )}
+
       <div className="p-4">
         {loading ? (
-          <div className="py-12 text-center text-xs text-[#737373] dark:text-neutral-400 font-mono">
-            Loading daily series ledger...
-          </div>
+          <p role="status" className="py-10 text-center text-sm text-muted-foreground">
+            Loading the daily series…
+          </p>
         ) : seriesError ? (
-          <div role="alert" className="py-12 text-center text-xs text-red-700 dark:text-red-300">
-            {seriesError}{" "}
-            <button type="button" className="underline font-semibold cursor-pointer" onClick={() => setReloadSeries((n) => n + 1)}>
-              Retry
+          <div role="alert" className="flex flex-wrap items-center justify-center gap-2 py-10 text-center text-sm text-danger">
+            {seriesError}
+            <button type="button" className="font-semibold text-primary underline" onClick={() => setReloadSeries((n) => n + 1)}>
+              Try again
             </button>
           </div>
         ) : seriesPoints.length === 0 ? (
-          <div className="py-12 text-center text-xs text-[#737373] dark:text-neutral-400">
-            No series points recorded for this selection.
-          </div>
-        ) : viewMode === "table" ? (
-          <div className="border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] dark:divide-[#2C302F] text-xs">
-            <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] font-semibold text-[#737373] dark:text-neutral-400 grid grid-cols-12 gap-2">
-              <span className="col-span-3">Date</span>
-              <span className="col-span-3 text-right">Daily Trough</span>
-              <span className="col-span-3 text-right">Reserve Floor</span>
-              <span className="col-span-3 text-right">Headroom / Status</span>
-            </div>
-            <div className="max-h-[360px] overflow-auto divide-y divide-[#E8E6E1] dark:divide-[#2C302F]">
-              {seriesPoints.map((pt, i) => {
-                const trough = BigInt(pt.candidate_trough_minor || "0");
-                const reserve = BigInt(pt.reserve_minor || "0");
-                const headroom = trough - reserve;
-                const isBreach = headroom < BigInt(0);
-
-                return (
-                  <div
-                    key={i}
-                    className="p-2.5 grid grid-cols-12 gap-2 items-center hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F]/30 transition-colors font-mono"
-                  >
-                    <span className="col-span-3 text-[#1E2021] dark:text-white font-medium">
-                      {pt.date}
-                    </span>
-                    <span
-                      className={`col-span-3 text-right font-bold ${
-                        isBreach ? "text-rose-600 dark:text-rose-400" : "text-[#1E2021] dark:text-white"
-                      }`}
-                    >
-                      {formatMinor(pt.candidate_trough_minor, currency)}
-                    </span>
-                    <span className="col-span-3 text-right text-[#525252] dark:text-neutral-400">
-                      {formatMinor(pt.reserve_minor, currency)}
-                    </span>
-                    <span className="col-span-3 text-right">
-                      {isBreach ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#991B1B] dark:text-red-400 font-sans font-semibold text-[10px]">
-                          Breached ({formatMinor(headroom.toString(), currency)})
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#004D3B] dark:text-[#34D399] font-sans font-medium text-[10px]">
-                          +{formatMinor(headroom.toString(), currency)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <p className="py-10 text-center text-sm text-muted-foreground">No daily points were saved for this option and scenario.</p>
         ) : (
-          <pre className="max-h-72 overflow-auto font-mono whitespace-pre-wrap rounded-xl bg-[#FAF9F7] dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2C302F] p-4 text-xs text-[#1E2021] dark:text-white leading-relaxed">
-            {seriesPoints
-              .map(
-                (p) =>
-                  `${p.date}: trough ${p.candidate_trough_minor}, reserve ${p.reserve_minor} (minor units)`
-              )
-              .join("\n")}
-          </pre>
+          <div className="max-h-[420px] overflow-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <caption className="sr-only">Daily cash low point and floor for the selected option and scenario</caption>
+              <thead className="sticky top-0 bg-muted text-left text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-3 py-2 font-medium">Date</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Cash low point</th>
+                  <th scope="col" className="hidden px-3 py-2 text-right font-medium sm:table-cell">Floor</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {seriesPoints.map((pt) => {
+                  const caused = orderBreaches.some((b) => within(pt.date, b));
+                  const inherited = !caused && inheritedBreaches.some((b) => within(pt.date, b));
+                  return (
+                    <tr key={pt.date} className="tabular">
+                      <td className="px-3 py-2 text-foreground">{pt.date}</td>
+                      <td className={`px-3 py-2 text-right font-medium ${caused ? "text-danger" : "text-foreground"}`}>{formatMinor(pt.candidate_trough_minor, currency)}</td>
+                      <td className="hidden px-3 py-2 text-right text-muted-foreground sm:table-cell">{formatMinor(pt.effective_floor_minor, currency)}</td>
+                      <td className="px-3 py-2 text-right">
+                        {caused ? (
+                          <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">Below floor</span>
+                        ) : inherited ? (
+                          <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning">Below before order</span>
+                        ) : (
+                          <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success">At or above floor</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

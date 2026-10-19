@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ErrorState } from "@/components/system/states";
 import {
   ArrowRight,
   TrendingUp,
@@ -31,6 +32,7 @@ export default function OverviewPage() {
   const [selectedPointIndex, setSelectedPointIndex] = useState<number>(0);
   const [secondaryGraphTab, setSecondaryGraphTab] = useState<"sensitivity" | "verdicts">("sensitivity");
   const [selectedDelayIndex, setSelectedDelayIndex] = useState<number>(0);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -69,7 +71,7 @@ export default function OverviewPage() {
       active = false;
       controller.abort();
     };
-  }, [businessId, activeTimeframe]);
+  }, [businessId, activeTimeframe, reloadKey]);
 
   const query = `?businessId=${businessId}`;
   const currency = data?.primary_currency ?? "BDT";
@@ -183,18 +185,8 @@ export default function OverviewPage() {
 
   if (error) {
     return (
-      <main className="p-6">
-        <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950 p-4 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800">
-          <p className="font-semibold text-sm">Failed to load overview data</p>
-          <p className="text-xs mt-1">{error}</p>
-          <button
-            type="button"
-            onClick={() => setActiveTimeframe(tf => tf)}
-            className="mt-3 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
-          >
-            Retry
-          </button>
-        </div>
+      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+        <ErrorState title="The overview didn&apos;t load" message={error} onRetry={() => setReloadKey(n => n + 1)} />
       </main>
     );
   }
@@ -668,14 +660,12 @@ export default function OverviewPage() {
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
                 {delayScenarios.map((sc, i) => {
                   const isSelected = i === safeDelayIndex;
-                  const troughVal = BigInt(sc.projected_trough_minor);
-                  const reserveVal = BigInt(sc.reserve_floor_minor);
-                  const headroom = troughVal - reserveVal;
-                  const isSafe = headroom >= BigInt(0);
-
+                  // Figures and status are the engine's; the browser derives no headroom of its own.
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={sc.label}
+                      aria-pressed={isSelected}
                       onClick={() => setSelectedDelayIndex(i)}
                       className={`cursor-pointer p-3.5 rounded-xl border transition-all text-left flex flex-col justify-between ${
                         isSelected
@@ -693,14 +683,14 @@ export default function OverviewPage() {
                       </div>
 
                       <div className="mt-3 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D] flex items-center justify-between text-[11px]">
-                        <span className="font-mono text-[#1E2021] dark:text-neutral-200">
-                          {isSafe ? `+${formatMoney(headroom)}` : `-${formatMoney(-headroom)}`}
+                        <span className="tabular text-[#525252] dark:text-neutral-300">
+                          Floor {formatMoney(sc.reserve_floor_minor)}
                         </span>
-                        <span className="text-[10px] text-[#737373] dark:text-neutral-400">
+                        <span className="text-xs text-[#737373] dark:text-neutral-400">
                           {statusBadge(sc.status)}
                         </span>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -716,24 +706,6 @@ export default function OverviewPage() {
                     <span className="text-xs text-[#737373] dark:text-neutral-400">
                       Policy Reserve Floor: <span className="font-mono font-medium text-[#1E2021] dark:text-white">{formatMoney(reserveFloorMinor)}</span>
                     </span>
-                  </div>
-
-                  {/* Minimal progress bar */}
-                  <div className="h-1.5 w-full bg-[#E8E6E1] dark:bg-[#2A2C2D] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#1E2021] dark:bg-white rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(
-                            5,
-                            reserveFloorMinor > BigInt(0)
-                              ? (Number(BigInt(activeDelayScenario.projected_trough_minor)) / Number(reserveFloorMinor * BigInt(2))) * 100
-                              : 50
-                          )
-                        )}%`,
-                      }}
-                    />
                   </div>
 
                   <p className="text-xs text-[#525252] dark:text-neutral-300 pt-1">

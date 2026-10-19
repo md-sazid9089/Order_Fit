@@ -368,7 +368,15 @@ export default function DealDetailPage({ params, searchParams }: { params: Promi
           key={evaluation.id}
           businessId={businessId}
           evaluationId={evaluation.id}
-          options={[evaluation.as_is.option_key, ...evaluation.ranked_candidates.map(x => x.option_key)].filter((x, i, all) => all.indexOf(x) === i)}
+          options={[evaluation.as_is, ...evaluation.ranked_candidates]
+            .filter((x, i, all) => all.findIndex(y => y.option_key === x.option_key) === i)
+            .map(x => ({
+              key: x.option_key,
+              label: x.option_key === evaluation.as_is.option_key
+                ? "Accept as offered"
+                : `${x.option_key === evaluation.recommended_option_key ? "Recommended" : "Alternative"}${x.rank ? `, rank ${x.rank}` : ""}`,
+              scenarios: x.scenarios,
+            }))}
           initialOption={evaluation.recommended_option_key ?? evaluation.as_is.option_key}
           currency={deal.currency}
         />
