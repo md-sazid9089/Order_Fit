@@ -11,7 +11,6 @@ import { OrderSimulator } from "@/components/landing/order-simulator";
 import { FaqSection } from "@/components/landing/faq-section";
 import { CtaSection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
-import { SculptureHero } from "@/components/ui/liquid-sculpture-hero";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
@@ -72,9 +71,6 @@ export default function Home() {
         <ScrollReveal direction="up" distance={32} duration={0.7} amount={0.1}>
           <CtaSection />
         </ScrollReveal>
-
-        {/* Liquid Particle Sculpture */}
-        <SculptureHero showNav={false} height="85vh" />
       </main>
 
       {/* Footer */}
