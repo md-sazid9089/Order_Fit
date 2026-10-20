@@ -10,6 +10,7 @@ import { formatMinor } from "@/lib/approval-model";
 import { mutate } from "@/lib/orderfit-api";
 import { registerSessionResetListener, resetSessionState } from "@/lib/session-reset";
 import { toast } from "@/lib/toast";
+import { SkeletonAdminPlatform } from "@/components/ui/skeleton";
 import type { AdminUser, AdminTenant, AdminOrder } from "@/lib/generated-api";
 
 const titles: Record<AdminSection, string> = { overview: "Platform overview", users: "Platform users", tenants: "Platform businesses", orders: "Platform orders", system: "System checks", logs: "Global audit logs", engine: "Engine information", security: "Security information" };
@@ -51,7 +52,9 @@ export function PlatformScreen({ section }: { section: AdminSection }) {
       <header className="flex flex-wrap items-center justify-between gap-3 pl-12 lg:pl-0"><h1 className="text-2xl font-semibold">{titles[section]}</h1><div className="flex gap-3"><ThemeToggle variant="icon" /><button className={button} onClick={() => void data.load(section)} disabled={state.loading}>Restart / refresh</button></div></header>
       <p>Read-only platform oversight. Business detail access requires separate business authorization.</p>
       {signoutError && <p role="alert">{signoutError} <button className={button} onClick={() => void signout()}>Retry signout</button></p>}
-      {state.loading && <p role="status">Loading administrative data…</p>}
+      {state.loading && !state.enabled && !state.message ? (
+        <SkeletonAdminPlatform section={section} />
+      ) : null}
       {state.message && <div className={card} role="alert"><p>{state.message}</p><button className={button} onClick={() => void data.load(section)}>Retry from first page</button></div>}
       {state.enabled && <>
         {state.overviewError && <p role="alert">Overview: {state.overviewError}</p>}

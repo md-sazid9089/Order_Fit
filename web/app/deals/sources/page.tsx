@@ -13,7 +13,7 @@ import { archiveOffer, archivePayee } from "@/lib/p7-api";
 import { can, describeP7Error } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import type { CashEventView } from "@/lib/generated-api";
-import { SkeletonCard } from "@/components/ui/skeleton";
+import { SkeletonSources } from "@/components/ui/skeleton";
 import { toast } from "@/lib/toast";
 
 type Page<T> = { items: T[] };
@@ -101,11 +101,7 @@ export default function SourcesPage() {
         {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}{error.startsWith("Saved, but") && <> <button type="button" className="underline" onClick={() => { setError(""); reload(); }}>Reload</button></>}</p>}
         {message && <p role="status" className="rounded-lg bg-green-50 p-3">{message}</p>}
     {!business && !error && (
-      <div role="status" aria-busy="true" className="space-y-4">
-        <span className="sr-only">Loading business cash and financing sources…</span>
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
+      <SkeletonSources />
     )}
     {business && <>{!canManage && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Your role can view these sources but not change them. Only a risk officer or owner can edit the baseline, cash events, lenders, offers and policy.</p>}<fieldset disabled={!canManage} className="min-w-0 space-y-6 border-0 p-0 m-0"><form key={baseline?.version ?? "new"} onSubmit={saveBaseline} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Opening cash and coverage</h2><Input name="opening_date" label="Opening date" type="date" value={baseline?.balance.opening_date} /><Input name="opening_cash" label="Opening cash (integer minor units)" value={baseline?.balance.opening_cash_minor} /><Input name="coverage" label="Coverage through" type="date" value={baseline?.balance.coverage_through} /><Input name="attestation" label="Source attestation" /><button className={button} disabled={busy}>Save baseline</button></form>
     <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Baseline cash events</h2><p className="text-sm">Record existing business receipts and payments. Order-specific costs belong on the order, to prevent double counting.</p>{events.map(event => <div className="flex flex-wrap items-center gap-x-3 border-b py-1 text-sm" key={event.id}><span>{event.event.event_date} · {event.event.direction === "in" ? "receipt in" : "payment out"} · {business ? formatMinor(event.event.amount_minor, business.currency) : event.event.amount_minor} · {event.event.description}</span>{business && <CashEventActions event={event} financialRevision={business.financial_revision} onChanged={reload} />}</div>)}<CollectionPages query={eventPages} noun="cash events" /><form onSubmit={addEvent} className="space-y-3"><Input name="date" label="Event date" type="date" /><Input name="amount" label="Amount (positive integer minor units)" /><Input name="description" label="Description" /><label className="block text-sm">Cash event kind<select required name="kind" className={field}>{["payroll", "rent", "tax", "ap_payment", "ar_collection", "loan_installment", "supplier_payment", "labour", "freight", "subcontract", "other"].map(kind => <option key={kind} value={kind}>{kind.replaceAll("_", " ")}</option>)}</select></label><label className="block text-sm">Direction<select name="direction" className={field}><option value="out">Payment out</option><option value="in">Receipt in</option></select></label><label className="block text-sm">Certainty<select name="certainty" className={field}><option value="confirmed">Confirmed</option><option value="expected">Expected</option><option value="assumed">Assumed</option></select></label><Input name="attestation" label="Source attestation" /><button className={button} disabled={busy}>Add baseline event</button></form></section>

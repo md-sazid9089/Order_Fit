@@ -53,7 +53,7 @@ import type {
   PayeeView,
   Series,
 } from "@/lib/generated-api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonPreparationWorkspace } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, stanceDisagreement, textDirection } from "@/lib/provenance-model";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
@@ -412,19 +412,7 @@ export function PreparationWorkspace({
         </main>
       );
     }
-    return (
-      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full" role="status" aria-busy="true">
-        <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-          <Skeleton className="h-4 w-52" />
-          <Skeleton className="h-8 w-80" />
-          <div className="rounded-2xl border border-[#E8E6E1] bg-white p-6 space-y-4">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-      </main>
-    );
+    return <SkeletonPreparationWorkspace />;
   }
 
   const selectedOpt = catalogue?.options.find(o => o.option_key === option);

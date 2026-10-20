@@ -29,6 +29,7 @@ export function PageFrame({ title, intro, action, children }: { title: string; i
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-3xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight break-words">{title}</h1>
+            {intro && <p className="text-xs sm:text-sm text-[#737373] dark:text-neutral-400 mt-1 max-w-2xl">{intro}</p>}
           </div>
           {action && <div className="flex flex-wrap items-center gap-2 max-w-full">{action}</div>}
         </header>

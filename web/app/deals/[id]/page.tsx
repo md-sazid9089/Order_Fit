@@ -45,7 +45,7 @@ import {
   Table as TableIcon,
   Code2,
 } from "lucide-react";
-import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonCard, SkeletonList, SkeletonButton, DealDetailSkeleton } from "@/components/ui/skeleton";
 import { DecisionGuide } from "@/components/decision-guide";
 import {
   DealEvaluationInspector,
@@ -53,31 +53,6 @@ import {
 } from "@/components/deals/deal-evaluation-inspector";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 import { formatMinor } from "@/lib/approval-model";
-
-function DealDetailSkeleton() {
-  return (
-    <div className="space-y-6" role="status" aria-busy="true">
-      <span className="sr-only">Loading saved order…</span>
-      <header className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <SkeletonButton size="md" />
-      </header>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-      <section className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-6 space-y-4">
-        <Skeleton className="h-6 w-44" />
-        <SkeletonList items={3} hasAvatar={false} />
-      </section>
-    </div>
-  );
-}
 
 type Snapshot = {
   snapshot_id: string;

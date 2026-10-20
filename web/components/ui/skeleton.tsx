@@ -16,7 +16,7 @@ function Skeleton({
       data-slot="skeleton"
       aria-hidden={ariaHidden}
       className={cn(
-        "animate-pulse motion-reduce:animate-none rounded-md bg-[#ECEAE4]/90 dark:bg-[#2A2C2D]/90",
+        "skeleton-shimmer motion-reduce:animate-none rounded-md bg-[#ECEAE4]/90 dark:bg-[#2A2C2D]/90",
         className
       )}
       {...props}
@@ -855,6 +855,692 @@ function AppShellSkeleton({
   );
 }
 
+/**
+ * Admin oversight platform loading skeleton matching PlatformScreen.
+ */
+interface SkeletonAdminPlatformProps extends React.ComponentProps<"div"> {
+  section?: "overview" | "users" | "tenants" | "orders" | "system" | "logs" | "engine" | "security";
+}
+
+function SkeletonAdminPlatform({
+  section = "overview",
+  className,
+  ...props
+}: SkeletonAdminPlatformProps) {
+  const titles: Record<string, string> = {
+    overview: "Platform overview",
+    users: "Platform users",
+    tenants: "Platform businesses",
+    orders: "Platform orders",
+    system: "System checks",
+    logs: "Global audit logs",
+    engine: "Engine information",
+    security: "Security information",
+  };
+  const columns =
+    section === "users"
+      ? ["ID", "Name", "Email", "Platform administrator", "Version"]
+      : section === "tenants"
+      ? ["ID", "Business", "Currency", "Timezone", "Status", "Created"]
+      : ["ID", "Business ID", "Status", "Recorded order value", "Created"];
+
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className={cn("space-y-6 w-full max-w-[1560px]", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading {titles[section] || "administrative data"}…</span>
+      <header className="flex flex-wrap items-center justify-between gap-3 pl-12 lg:pl-0">
+        <Skeleton className="h-8 w-56" />
+        <div className="flex gap-3">
+          <Skeleton className="size-9 rounded-lg" />
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </div>
+      </header>
+
+      <Skeleton className="h-4 w-96 max-w-full" />
+
+      {/* Global totals cards when overview */}
+      {section === "overview" && (
+        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-4">
+          <div className="space-y-1">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-3.5 w-48" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-1.5 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-7 w-24" />
+              </div>
+            ))}
+          </div>
+          <div className="pt-2 space-y-2 border-t border-neutral-200 dark:border-neutral-800">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-4 w-52" />
+          </div>
+        </section>
+      )}
+
+      {/* System checks card when system */}
+      {section === "system" && (
+        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-3">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-3.5 w-48" />
+          <div className="space-y-2 pt-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-1.5 border-b border-neutral-100 dark:border-neutral-800">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Table section when users, tenants, orders */}
+      {["users", "tenants", "orders"].includes(section) && (
+        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-4">
+          <Skeleton className="h-4 w-72" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr>
+                  {columns.map((_, idx) => (
+                    <th key={idx} className="p-3">
+                      <Skeleton className="h-4 w-20" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, rowIdx) => (
+                  <tr key={rowIdx} className="border-t border-neutral-200 dark:border-neutral-800">
+                    {columns.map((_, colIdx) => (
+                      <td key={colIdx} className="p-3">
+                        <Skeleton
+                          className={cn(
+                            "h-4",
+                            colIdx === 0
+                              ? "w-24 font-mono"
+                              : colIdx === 1
+                              ? "w-32"
+                              : colIdx === 2
+                              ? "w-40"
+                              : "w-20"
+                          )}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Documents & Verification page skeleton matching deals/[id]/documents layout.
+ */
+function SkeletonDocuments({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1560px] mx-auto w-full space-y-6 min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading documents and verification…</span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+        <div className="flex items-center gap-3 min-w-0">
+          <Skeleton className="size-9 rounded-xl shrink-0" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-7 w-64" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Skeleton className="size-6 rounded-full" />
+              <Skeleton className="h-3 w-16 hidden sm:block" />
+              {i < 3 && <Skeleton className="h-0.5 w-6 hidden sm:block" />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Skeleton className="h-8 w-44 rounded-xl" />
+        <Skeleton className="h-8 w-36 rounded-xl" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+          <div className="space-y-1">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-3.5 w-56" />
+          </div>
+          <div className="h-44 rounded-xl border border-dashed border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] flex flex-col items-center justify-center p-6 space-y-2">
+            <Skeleton className="size-10 rounded-full" />
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-24" />
+            <Skeleton className="h-9 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+
+        <div className="lg:col-span-7 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#181A1B] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Skeleton className="size-8 rounded-lg shrink-0" />
+                  <div className="space-y-1 min-w-0">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Skeleton className="h-7 w-20 rounded-lg" />
+                  <Skeleton className="h-7 w-16 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Preparation Workspace skeleton matching What-If negotiate/reply screens.
+ */
+function SkeletonPreparationWorkspace({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0 bg-[#FAF9F7] dark:bg-[#121314] min-h-screen text-[#1E2021] dark:text-neutral-100", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading preparation workspace…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-9 rounded-xl shrink-0" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-7 w-48" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-28 rounded-full" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="size-6 rounded-full" />
+                <Skeleton className="h-3 w-16 hidden sm:block" />
+                {i < 3 && <Skeleton className="h-0.5 w-6 hidden sm:block" />}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-44" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-5 w-28" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-3/4" />
+                <div className="pt-2 border-t border-[#E8E6E1] dark:border-[#2C302F] flex items-center justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-7 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+            <Skeleton className="h-6 w-44" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Skeleton className="h-10 w-full rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <div className="flex items-center justify-between pt-2">
+              <Skeleton className="h-9 w-28 rounded-xl" />
+              <Skeleton className="h-9 w-36 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-9 w-full rounded-xl" />
+            <div className="space-y-2 pt-2 border-t border-[#E8E6E1] dark:border-[#2C302F]">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Customers master-detail skeleton matching CustomersScreen.
+ */
+function SkeletonCustomers({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading customers and receivables…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+          <div className="space-y-1">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-96 max-w-full" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-24 rounded-xl" />
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-4 space-y-4">
+            <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-9 w-full rounded-xl" />
+              <div className="space-y-2 pt-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="p-3 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-4 w-12 rounded-full" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-8 space-y-6">
+            <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+                <div className="space-y-1">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-3.5 w-32" />
+                </div>
+                <Skeleton className="h-8 w-28 rounded-xl" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] space-y-1">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3 pt-3">
+                <Skeleton className="h-5 w-36" />
+                <SkeletonTable rows={4} columns={4} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Sources & financing page skeleton matching deals/sources layout.
+ */
+function SkeletonSources({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading cash &amp; financing sources…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-8 w-52" />
+          <Skeleton className="h-8 w-20 rounded-xl" />
+        </div>
+
+        <section className="space-y-3 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
+          <Skeleton className="h-5 w-48" />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Skeleton className="h-9 w-full rounded-xl" />
+            <Skeleton className="h-9 w-full rounded-xl" />
+            <Skeleton className="h-9 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-3.5 w-96 max-w-full" />
+          <div className="space-y-2 pt-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+                <Skeleton className="h-4 w-72" />
+                <Skeleton className="h-7 w-20 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-5 shadow-xs">
+          <Skeleton className="h-5 w-56" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-9 w-full rounded-xl" />
+            <Skeleton className="h-9 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </section>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Settings page skeleton matching SettingsScreen.
+ */
+function SkeletonSettings({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading settings…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </header>
+
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-28 rounded-lg" />
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </div>
+
+        <div className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <Skeleton className="h-6 w-36" />
+          <Skeleton className="h-4 w-72" />
+          <div className="space-y-3 max-w-lg pt-2">
+            <div className="space-y-1.5">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-9 w-28 rounded-xl" />
+          </div>
+        </div>
+
+        <div className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-10 w-48 rounded-xl" />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Audit log page skeleton matching AuditScreen.
+ */
+function SkeletonAuditLog({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading audit log…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </header>
+
+        <section className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="divide-y divide-[#F0EEEA] dark:divide-[#2C302F]">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="py-3 space-y-1.5">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <Skeleton className="h-4 w-12 font-mono" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3.5 w-24 sm:ml-auto" />
+                </div>
+                <Skeleton className="h-3 w-32" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-3.5 w-full" />
+          <div className="flex flex-wrap items-end gap-3 pt-2">
+            <Skeleton className="h-9 w-40 rounded-xl" />
+            <Skeleton className="h-9 w-40 rounded-xl" />
+            <Skeleton className="h-9 w-44 rounded-xl" />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Payees & suppliers page skeleton matching PayeesScreen.
+ */
+function SkeletonPayees({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading payees and suppliers…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
+          <Skeleton className="h-8 w-52" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </header>
+
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <section key={i} className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <Skeleton className="h-6 w-44" />
+                  <Skeleton className="h-3.5 w-28" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-24 rounded-xl" />
+                  <Skeleton className="h-8 w-20 rounded-xl" />
+                </div>
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * User access & membership skeleton matching UsersScreen.
+ */
+function SkeletonUserAccess({
+  className,
+  ...props
+}: React.ComponentProps<"main">) {
+  return (
+    <main
+      role="status"
+      aria-busy="true"
+      className={cn("px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading user management…</span>
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
+        <header className="pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F] space-y-1">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </header>
+
+        <section className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <Skeleton className="h-6 w-44" />
+          <div className="flex flex-wrap items-end gap-3">
+            <Skeleton className="h-9 w-64 rounded-xl" />
+            <Skeleton className="h-9 w-32 rounded-xl" />
+            <Skeleton className="h-9 w-28 rounded-xl" />
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs">
+          <Skeleton className="h-6 w-32" />
+          <div className="divide-y divide-[#F0EEEA] dark:divide-[#2C302F]">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="py-3.5 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <Skeleton className="h-4 w-24 rounded-full" />
+                </div>
+                <div className="flex items-center gap-3 pt-1">
+                  <Skeleton className="h-8 w-28 rounded-xl" />
+                  <Skeleton className="h-8 w-24 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Deal Detail / Evaluation Engine skeleton matching deals/[id] page.
+ */
+function DealDetailSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className={cn("space-y-6 w-full max-w-[1560px] mx-auto", className)}
+      {...props}
+    >
+      <span className="sr-only">Loading saved order…</span>
+      <header className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <SkeletonButton size="md" />
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+      <section className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-6 space-y-4">
+        <Skeleton className="h-6 w-44" />
+        <SkeletonList items={3} hasAvatar={false} />
+      </section>
+    </div>
+  );
+}
+
 export {
   Skeleton,
   SkeletonText,
@@ -869,6 +1555,16 @@ export {
   SkeletonChart,
   SkeletonDashboard,
   SkeletonOverview,
+  SkeletonAdminPlatform,
+  SkeletonDocuments,
+  SkeletonPreparationWorkspace,
+  SkeletonCustomers,
+  SkeletonSources,
+  SkeletonSettings,
+  SkeletonAuditLog,
+  SkeletonPayees,
+  SkeletonUserAccess,
+  DealDetailSkeleton,
   PageLoadingSkeleton,
   AppShellSkeleton,
 };

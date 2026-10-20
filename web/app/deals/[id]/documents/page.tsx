@@ -20,7 +20,7 @@ import {
   type DocumentView,
   type ExtractedField,
 } from "@/lib/documents-api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonDocuments } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { toast } from "@/lib/toast";
 import { htmlLang, languageNote, textDirection } from "@/lib/provenance-model";
@@ -300,14 +300,8 @@ export default function DealDocumentsPage({
       toast.success(msg);
     });
 
-  if (!scope) {
-    return (
-      <main className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[1560px] mx-auto space-y-6">
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-      </main>
-    );
+  if (!scope || (loading && !deal)) {
+    return <SkeletonDocuments />;
   }
 
   const query = scope.businessId ? `?businessId=${encodeURIComponent(scope.businessId)}` : "";

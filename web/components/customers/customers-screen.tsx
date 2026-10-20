@@ -8,6 +8,7 @@ import { archiveCustomer, getCustomerHistory, importInvoices, listInvoices } fro
 import { INVOICE_COLUMNS, can, historyDateValid, parseInvoiceCsv } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import type { CustomerView } from "@/lib/generated-api";
+import { Skeleton, SkeletonTable } from "@/components/ui/skeleton";
 import { ArchiveAction } from "@/components/p7/archive-action";
 import {
   Alert,
@@ -105,10 +106,57 @@ export function CustomersScreen() {
           </div>
         </div>
 
-        {/* Global Loading / Error State */}
+        {/* Master-Detail Loading State */}
         {customers.isPending && (
-          <div className="p-8 text-center bg-white dark:bg-[#1E2021] rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] shadow-2xs">
-            <Loading what="customers" />
+          <div role="status" aria-busy="true" className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <span className="sr-only">Loading customers and ledger…</span>
+            <div className="lg:col-span-4 space-y-4">
+              <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-4 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-9 w-full rounded-xl" />
+                <div className="space-y-2 pt-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="p-3 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-4 w-12 rounded-full" />
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-8 space-y-6">
+              <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] p-6 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+                  <div className="space-y-1">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-3.5 w-32" />
+                  </div>
+                  <Skeleton className="h-8 w-28 rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="p-3 rounded-xl bg-[#FAF9F7] dark:bg-[#151718] space-y-1">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3 pt-3">
+                  <Skeleton className="h-5 w-36" />
+                  <SkeletonTable rows={4} columns={4} />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
