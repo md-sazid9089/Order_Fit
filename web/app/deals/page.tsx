@@ -48,61 +48,10 @@ export default function DealsPage() {
     return () => { active = false; controller.abort(); };
   }, [businessId, offset, refreshToken]);
 
-  const [localDeals, setLocalDeals] = useState<Array<{ deal: Deal; evaluation: Evaluation | null }>>([]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const stored = localStorage.getItem("orderfit_deal_validated") || localStorage.getItem("orderfit_deal_draft");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const poRef = parsed.poNumber || parsed.reference;
-        if (poRef) {
-          const valMinor = parsed.orderValue ? String(Math.round(Number(parsed.orderValue) * 100)) : "0";
-          const mockDeal: Deal = {
-            id: parsed.dealId || poRef,
-            public_ref: poRef,
-            status: "awaiting_confirm",
-            version: 1,
-            input_version: 1,
-            financial_revision: 1,
-            currency: (data?.currency as any) || "BDT",
-            exponent: 2,
-            start_date: parsed.orderDate || new Date().toISOString().split("T")[0],
-            opening_cash_minor: null,
-            order_value_minor: valMinor,
-            inputs: {
-              opening_cash_minor: null,
-              reserve_minor: null,
-              order_value_minor: valMinor,
-              order_date: parsed.orderDate || null,
-              invoice_date: parsed.invoiceDate || null,
-              delivery_date: parsed.deliveryDate || null,
-              payment_basis: parsed.paymentTermsAnchor || "delivery",
-              payment_days: parsed.paymentTermsDays ? Number(parsed.paymentTermsDays) : null,
-              customer_id: "local-cust",
-              constraints_id: "",
-              costs: [],
-            },
-            live_evaluation_id: null,
-            is_stale: false,
-            findings: [],
-            allowed_actions: ["edit", "close"],
-          };
-          setLocalDeals([{ deal: mockDeal, evaluation: null }]);
-        }
-      }
-    } catch {
-      // Ignore fallback
-    }
-  }, [data?.currency, refreshToken]);
-
-  const rows = useMemo(() => {
-    const backendRows = (data?.deals ?? []).map(d => ({ deal: d, evaluation: data?.evaluations[d.id] ?? null }));
-    const existingRefs = new Set(backendRows.map(r => r.deal.public_ref.toLowerCase()));
-    const unmergedLocal = localDeals.filter(l => !existingRefs.has(l.deal.public_ref.toLowerCase()));
-    return [...unmergedLocal, ...backendRows];
-  }, [data, localDeals]);
+  const rows = useMemo(
+    () => (data?.deals ?? []).map(d => ({ deal: d, evaluation: data?.evaluations[d.id] ?? null })),
+    [data],
+  );
   const counts = useMemo(() => {
     const c = { all: rows.length, action: 0, recommended: 0, closed: 0 };
     for (const r of rows) c[tabOf(r.deal, r.evaluation)]++;
@@ -219,15 +168,7 @@ export default function DealsPage() {
               {visible.map(({ deal, evaluation }) => {
                 const v = verdictOf(deal, evaluation);
                 const i = deal.inputs;
-                const localCustName = typeof window !== "undefined" ? (() => {
-                  try {
-                    const st = localStorage.getItem("orderfit_deal_validated") || localStorage.getItem("orderfit_deal_draft");
-                    return st ? JSON.parse(st).customerName : null;
-                  } catch { return null; }
-                })() : null;
-                const customer = i.customer_id === "local-cust" && localCustName
-                  ? localCustName
-                  : data.customers[i.customer_id ?? ""] ?? (i.customer_id ? "Customer details not loaded" : "No customer");
+                const customer = data.customers[i.customer_id ?? ""] ?? (i.customer_id ? "Customer details not loaded" : "No customer");
                 const profit = evaluation?.as_is.base_incremental_profit_minor;
                 return (
                   <tr key={deal.id} className="border-b border-[#F4F2ED] dark:border-[#2A2C2D] hover:bg-[#FAF9F7] dark:hover:bg-[#222425] align-top transition-colors">

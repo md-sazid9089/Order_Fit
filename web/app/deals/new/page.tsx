@@ -38,18 +38,29 @@ import {
   type Customer,
   type Deal,
   type DraftInputs,
+  type CostInput,
 } from "@/lib/orderfit-api";
 import { useScope } from "@/components/layout/auth-shell";
 import { resolveBusinessId } from "@/lib/business-scope";
 import { ManualOrderInputs, fieldClass as field } from "@/components/manual-order-inputs";
 import { SkeletonForm, SkeletonManualOrderForm } from "@/components/ui/skeleton";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
+import { toMinorUnits } from "@/lib/money-input";
 
 interface UploadedFile {
   name: string;
   size: string;
   type: string;
 }
+
+// The cost kinds the engine accepts (CostInput["kind"]).
+const COST_KINDS: ReadonlyArray<{ value: CostInput["kind"]; label: string }> = [
+  { value: "supplier_payment", label: "Supplier payment" },
+  { value: "labour", label: "Labour" },
+  { value: "freight", label: "Freight" },
+  { value: "subcontract", label: "Subcontract" },
+  { value: "existing_inventory", label: "Existing inventory (already paid)" },
+];
 
 export default function NewDealPage() {
   const router = useRouter();
@@ -165,36 +176,12 @@ export default function NewDealPage() {
     setValidationAttempted(false);
   };
 
+  // Documents are read against a saved order (its Documents page), so intake starts by saving the order.
   const handleContinueToValidate = () => {
-    if (!canContinue) {
-      setValidationAttempted(true);
-      return;
-    }
-
-    if (typeof window !== "undefined") {
-      const draftData = {
-        poText,
-        quoteText,
-        cashText,
-        billsText,
-        financingText,
-        constraintsText,
-        reserveFloor,
-        maxCost,
-        targetResilience,
-        hasPoFile: !!poFile,
-        hasQuoteFile: !!quoteFile,
-        hasCashFile: !!cashFile,
-        hasBillsFile: !!billsFile,
-        hasFinancingFile: !!financingFile,
-        hasConstraintsFile: !!constraintsFile,
-        poFileName: poFile?.name ?? null,
-        quoteFileName: quoteFile?.name ?? null,
-      };
-      localStorage.setItem("orderfit_deal_draft", JSON.stringify(draftData));
-    }
-    const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
-    router.push(`/deals/new/validate${query}`);
+    setValidationAttempted(true);
+    if (!canContinue) return;
+    setIntakeMode("manual");
+    setError("Save the order with its key terms first. Then open the order's Documents page to upload the purchase order and quotation for extraction.");
   };
 
   // ==========================================
@@ -215,20 +202,19 @@ export default function NewDealPage() {
   const [customerDomains, setCustomerDomains] = useState("");
   const [reference, setReference] = useState(() => generatePoRef());
   const [customerName, setCustomerName] = useState("");
-  const [orderValue, setOrderValue] = useState<number | "">("");
+  const [orderValue, setOrderValue] = useState("");
   const [orderDate, setOrderDate] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [paymentTermsDays, setPaymentTermsDays] = useState<number | "">("");
   const [paymentTermsAnchor, setPaymentTermsAnchor] = useState<"delivery" | "invoice" | "ambiguous">("delivery");
-  const [targetScenario, setTargetScenario] = useState<"downside" | "base" | "severe">("downside");
   const [cashReserveFloor, setCashReserveFloor] = useState("");
-  const [customerDepositPct, setCustomerDepositPct] = useState<number | "">("");
+  const [costSource, setCostSource] = useState("");
   const [manualCostItems, setManualCostItems] = useState<
     Array<{
       id: string;
       name: string;
-      amount: number | "";
+      amount: string;
       date: string;
       deferrable: boolean;
       incremental: boolean;
@@ -247,9 +233,9 @@ export default function NewDealPage() {
         targetScenario: "downside" as const,
         customerDepositPct: 30,
         costs: [
-          { id: "c1", name: "Raw Material Fabric & Thread", amount: 90000, daysOffset: -30, deferrable: false, incremental: true, kind: "materials" },
-          { id: "c2", name: "Contract Cutting & Assembly", amount: 90000, daysOffset: -10, deferrable: true, incremental: true, kind: "subcontractor" },
-          { id: "c3", name: "Custom Packaging & Barcoding", amount: 20000, daysOffset: -5, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c1", name: "Raw Material Fabric & Thread", amount: 90000, daysOffset: -30, deferrable: false, incremental: true, kind: "supplier_payment" },
+          { id: "c2", name: "Contract Cutting & Assembly", amount: 90000, daysOffset: -10, deferrable: true, incremental: true, kind: "subcontract" },
+          { id: "c3", name: "Custom Packaging & Barcoding", amount: 20000, daysOffset: -5, deferrable: false, incremental: true, kind: "supplier_payment" },
           { id: "c4", name: "Outbound Logistics & Delivery", amount: 10000, daysOffset: 0, deferrable: false, incremental: true, kind: "freight" },
         ],
       },
@@ -261,8 +247,8 @@ export default function NewDealPage() {
         targetScenario: "base" as const,
         customerDepositPct: 25,
         costs: [
-          { id: "c1", name: "CNC Machining Castings", amount: 150000, daysOffset: -35, deferrable: false, incremental: true, kind: "materials" },
-          { id: "c2", name: "Optical Sensors & Hardware", amount: 110000, daysOffset: -20, deferrable: true, incremental: true, kind: "materials" },
+          { id: "c1", name: "CNC Machining Castings", amount: 150000, daysOffset: -35, deferrable: false, incremental: true, kind: "supplier_payment" },
+          { id: "c2", name: "Optical Sensors & Hardware", amount: 110000, daysOffset: -20, deferrable: true, incremental: true, kind: "supplier_payment" },
           { id: "c3", name: "Quality Testing & Calibration", amount: 45000, daysOffset: -7, deferrable: false, incremental: true, kind: "labour" },
           { id: "c4", name: "Secure Air Freight", amount: 18000, daysOffset: 0, deferrable: false, incremental: true, kind: "freight" },
         ],
@@ -275,7 +261,7 @@ export default function NewDealPage() {
         targetScenario: "severe" as const,
         customerDepositPct: 40,
         costs: [
-          { id: "c1", name: "Linen Supply & Weaving", amount: 65000, daysOffset: -25, deferrable: false, incremental: true, kind: "materials" },
+          { id: "c1", name: "Linen Supply & Weaving", amount: 65000, daysOffset: -25, deferrable: false, incremental: true, kind: "supplier_payment" },
           { id: "c2", name: "Direct Finishing Labour", amount: 25000, daysOffset: -12, deferrable: false, incremental: true, kind: "labour" },
           { id: "c3", name: "Expedited Distribution", amount: 8000, daysOffset: 0, deferrable: true, incremental: true, kind: "freight" },
         ],
@@ -294,14 +280,12 @@ export default function NewDealPage() {
 
     setReference(generatePoRef());
     setCustomerName(pick.customer);
-    setOrderValue(pick.orderValue);
+    setOrderValue(String(pick.orderValue));
     setOrderDate(formatYmd(orderD));
     setDeliveryDate(formatYmd(delivD));
     setInvoiceDate(formatYmd(invoiceD));
     setPaymentTermsDays(pick.paymentTermsDays);
     setPaymentTermsAnchor(pick.paymentTermsAnchor);
-    setTargetScenario(pick.targetScenario);
-    setCustomerDepositPct(pick.customerDepositPct);
 
     const generatedCosts = pick.costs.map((c, idx) => {
       const cDate = new Date(delivD);
@@ -309,7 +293,7 @@ export default function NewDealPage() {
       return {
         id: `cost-sample-${idx}-${Date.now()}`,
         name: c.name,
-        amount: c.amount,
+        amount: String(c.amount),
         date: formatYmd(cDate),
         deferrable: c.deferrable,
         incremental: c.incremental,
@@ -425,32 +409,78 @@ export default function NewDealPage() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!baseline || !business) return;
-    setBusy(true);
+    if (!business) return;
+    if (!baseline) {
+      setError("Save your opening cash baseline first, under Cash & Financing. The engine measures every order against it.");
+      return;
+    }
     setError("");
+    const exponent = business.exponent;
+    const orderMinor = toMinorUnits(orderValue, exponent);
+    if (!orderMinor || orderMinor === "0") {
+      setError(`Enter the order value in ${business.currency}, for example 3600000 or 3,600,000.50.`);
+      return;
+    }
+    if (!costSource.trim()) {
+      setError("Say where the cost figures come from (for example the supplier quotation number).");
+      return;
+    }
+    const costs: CostInput[] = [];
+    for (const [index, item] of manualCostItems.entries()) {
+      const amount = toMinorUnits(item.amount, exponent);
+      if (!item.name.trim() || !item.date || !amount || amount === "0") {
+        setError(`Cost line ${index + 1} needs a description, a due date and an amount above zero.`);
+        return;
+      }
+      if (!COST_KINDS.some((k) => k.value === item.kind)) {
+        setError(`Cost line ${index + 1} needs a cost type.`);
+        return;
+      }
+      costs.push({
+        event_id: null,
+        cost_key: item.id,
+        event_date: item.date,
+        amount_minor: amount,
+        kind: item.kind as CostInput["kind"],
+        is_deferrable: item.deferrable,
+        incremental: item.kind !== "existing_inventory",
+        nonincremental_reason: item.kind === "existing_inventory" ? "Uses inventory already paid for." : null,
+        invoice_ref: null,
+        payee_id: null,
+        original_obligation_id: item.name.trim(),
+        evidence: [manualEvidence("supplier_cost_quote", costSource.trim())],
+      });
+    }
+    setBusy(true);
     try {
       let customerId = inputs.customer_id;
       if (!customerId) {
-        if (!customerName.trim()) throw new Error("Select or enter a customer.");
-        const customer = await mutate<Customer>(`/businesses/${businessId}/customers`, "POST", {
-          expected_financial_revision: business.financial_revision,
-          customer: {
-            name: customerName.trim(),
-            known_domains: customerDomains
-              .split(",")
-              .map((d) => d.trim().toLowerCase())
-              .filter(Boolean),
-            red_flags: [],
-          },
-        });
-        customerId = customer.id;
+        const name = customerName.trim();
+        if (!name) throw new Error("Enter the customer's name.");
+        const existing = customers.find((c) => c.customer.name.trim().toLowerCase() === name.toLowerCase());
+        if (existing) {
+          customerId = existing.id;
+        } else {
+          const customer = await mutate<Customer>(`/businesses/${businessId}/customers`, "POST", {
+            expected_financial_revision: business.financial_revision,
+            customer: {
+              name,
+              known_domains: customerDomains
+                .split(",")
+                .map((d) => d.trim().toLowerCase())
+                .filter(Boolean),
+              red_flags: [],
+            },
+          });
+          customerId = customer.id;
+        }
         setInputs((value) => ({ ...value, customer_id: customerId }));
       }
       const created =
         createdDraft ??
         (await mutate<Deal>(`/businesses/${businessId}/deals`, "POST", {
           public_ref: reference.trim(),
-          start_date: startDate,
+          start_date: baseline.balance.opening_date,
           constraints_id: inputs.constraints_id,
           customer_id: customerId,
         }));
@@ -459,7 +489,17 @@ export default function NewDealPage() {
         expected_version: created.version,
         expected_input_version: created.input_version,
         expected_financial_revision: created.financial_revision,
-        inputs: { ...inputs, customer_id: customerId },
+        inputs: {
+          ...inputs,
+          customer_id: customerId,
+          order_value_minor: orderMinor,
+          order_date: orderDate || null,
+          invoice_date: invoiceDate || null,
+          delivery_date: deliveryDate || null,
+          payment_basis: paymentTermsAnchor === "ambiguous" ? null : paymentTermsAnchor,
+          payment_days: paymentTermsDays === "" ? null : Number(paymentTermsDays),
+          costs,
+        },
       });
       router.push(`/deals/${created.id}?businessId=${businessId}`);
     } catch (e) {
@@ -563,7 +603,7 @@ export default function NewDealPage() {
                   setInvoiceDate("");
                   setDeliveryDate("");
                   setPaymentTermsDays("");
-                  setCustomerDepositPct("");
+                  setCostSource("");
                   setManualCostItems([]);
                   setReference(generatePoRef());
                 }}
@@ -1485,40 +1525,7 @@ export default function NewDealPage() {
           ) : (
             /* CLEAN & MINIMAL MANUAL ORDER FORM */
             <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const targetRef = reference.trim() || generatePoRef();
-              const finalOrderValue = Number(orderValue) || 0;
-              const formattedCosts = manualCostItems.map((item) => ({
-                ...item,
-                amount: Number(item.amount) || 0,
-                kind: item.kind === "custom" && item.customKind?.trim() ? item.customKind.trim() : item.kind,
-              }));
-
-              // Save validated draft to localStorage so confirm step receives exact parameters immediately
-              if (typeof window !== "undefined") {
-                const draftData = {
-                  isManual: true,
-                  dealId: createdId ?? undefined,
-                  poNumber: targetRef,
-                  customerName: customerName.trim() || "Unspecified Customer",
-                  orderValue: finalOrderValue,
-                  orderDate,
-                  invoiceDate,
-                  deliveryDate,
-                  paymentTermsDays: Number(paymentTermsDays) || 0,
-                  paymentTermsAnchor,
-                  targetScenario,
-                  reserveFloor: cashReserveFloor || "$0.00",
-                  customerDepositPct: Number(customerDepositPct) || 0,
-                  costItems: formattedCosts,
-                };
-                localStorage.setItem("orderfit_deal_draft", JSON.stringify(draftData));
-                localStorage.setItem("orderfit_deal_validated", JSON.stringify(draftData));
-              }
-              const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
-              router.push(`/deals/${encodeURIComponent(targetRef)}/confirm${query}`);
-            }}
+            onSubmit={(e) => void submit(e)}
             className="space-y-6"
           >
             {/* 1. COMMERCIAL PARAMETERS CARD */}
@@ -1584,20 +1591,17 @@ export default function NewDealPage() {
                 {/* Order Gross Revenue */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
-                    Order Gross Revenue ($)
+                    Order Value ({business?.currency ?? ""})
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#737373] dark:text-neutral-400">
-                      $
-                    </span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       required
-                      min={1}
-                      placeholder="e.g. 360000"
+                      placeholder="e.g. 3,600,000"
                       value={orderValue}
-                      onChange={(e) => setOrderValue(e.target.value === "" ? "" : Number(e.target.value))}
-                      className="w-full pl-7 pr-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-bold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                      onChange={(e) => setOrderValue(e.target.value)}
+                      className="w-full pl-3 pr-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-bold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
                     />
                   </div>
                 </div>
@@ -1676,43 +1680,33 @@ export default function NewDealPage() {
                   </select>
                 </div>
 
-                {/* Customer Upfront Deposit (%) - Added Option */}
+                {/* Customer email domains: used to check replies and message recipients */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
-                    Customer Upfront Deposit (%)
+                    Customer Email Domains (optional)
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      placeholder="e.g. 30"
-                      value={customerDepositPct}
-                      onChange={(e) => setCustomerDepositPct(e.target.value === "" ? "" : Number(e.target.value))}
-                      className="w-full pl-3 pr-7 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#737373] dark:text-neutral-400">
-                      %
-                    </span>
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. buyer.example"
+                    value={customerDomains}
+                    onChange={(e) => setCustomerDomains(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  />
                 </div>
 
-                {/* Target Risk Resilience Scenario - Added Option */}
+                {/* Where the cost figures come from: recorded as your attestation, not as verification */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
-                    Engine Resilience Scenario
+                    Source of These Figures
                   </label>
-                  <select
-                    value={targetScenario}
-                    onChange={(e) =>
-                      setTargetScenario(e.target.value as "downside" | "base" | "severe")
-                    }
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Supplier quotation KM-778"
+                    value={costSource}
+                    onChange={(e) => setCostSource(e.target.value)}
                     className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
-                  >
-                    <option value="downside">Downside Scenario (Recommended)</option>
-                    <option value="base">Base Case (On-Time Only)</option>
-                    <option value="severe">Severe Stress (45d Customer Late)</option>
-                  </select>
+                  />
                 </div>
               </div>
             </div>
@@ -1785,7 +1779,7 @@ export default function NewDealPage() {
                     <thead>
                       <tr className="border-b border-[#E8E6E1] dark:border-[#2C302F] bg-[#FAF9F7] dark:bg-[#151718] text-[11px] font-semibold uppercase tracking-wider text-[#737373] dark:text-neutral-400">
                         <th className="py-3 px-4 min-w-[200px]">Cost Description</th>
-                        <th className="py-3 px-4 min-w-[120px]">Amount ($)</th>
+                        <th className="py-3 px-4 min-w-[120px]">Amount ({business?.currency ?? ""})</th>
                         <th className="py-3 px-4 min-w-[130px]">Due Date</th>
                         <th className="py-3 px-4 min-w-[180px]">Type / Category</th>
                         <th className="py-3 px-4 min-w-[150px]">Supplier Flexibility</th>
@@ -1814,20 +1808,18 @@ export default function NewDealPage() {
                           {/* Amount */}
                           <td className="py-3 px-4 font-mono">
                             <div className="relative">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#737373] dark:text-neutral-400">
-                                $
-                              </span>
                               <input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 placeholder="0"
                                 value={item.amount}
                                 onChange={(e) => {
-                                  const val = e.target.value === "" ? "" : Number(e.target.value);
+                                  const val = e.target.value;
                                   setManualCostItems((prev) =>
                                     prev.map((c) => (c.id === item.id ? { ...c, amount: val } : c))
                                   );
                                 }}
-                                className="w-full pl-6 pr-2.5 py-1.5 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:border-transparent dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs font-bold text-[#1E2021] dark:text-white transition-colors"
+                                className="w-full pl-2.5 pr-2.5 py-1.5 bg-transparent hover:bg-white dark:hover:bg-[#151718] focus:bg-white dark:focus:bg-[#151718] border border-transparent hover:border-[#E8E6E1] dark:border-transparent dark:hover:border-[#2C302F] focus:border-[#1E2021] dark:focus:border-white rounded-lg text-xs font-bold text-[#1E2021] dark:text-white transition-colors"
                               />
                             </div>
                           </td>
@@ -1849,9 +1841,7 @@ export default function NewDealPage() {
 
                           {/* Type / Category */}
                           <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              placeholder="e.g. supplier_payment"
+                            <select
                               value={item.kind}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1860,7 +1850,11 @@ export default function NewDealPage() {
                                 );
                               }}
                               className="w-full px-2.5 py-1.5 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-lg text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
-                            />
+                            >
+                              {COST_KINDS.map((k) => (
+                                <option key={k.value} value={k.value}>{k.label}</option>
+                              ))}
+                            </select>
                           </td>
 
                           {/* Supplier Extension */}
@@ -1921,76 +1915,29 @@ export default function NewDealPage() {
               </datalist>
             </div>
 
-            {/* 3. FINANCIAL SUMMARY BAR & PROCEED ACTION */}
-            {(() => {
-              const numericOrderValue = Number(orderValue) || 0;
-              const totalCosts = manualCostItems.reduce((acc, i) => acc + (Number(i.amount) || 0), 0);
-              const projectedProfit = numericOrderValue - totalCosts;
-              const grossMargin = numericOrderValue > 0 ? ((projectedProfit / numericOrderValue) * 100).toFixed(1) : "0.0";
-
-              return (
-                <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                  {/* Financial Breakdown */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 xl:gap-8 flex-1">
-                    <div>
-                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
-                        Order Revenue
-                      </span>
-                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
-                        ${numericOrderValue.toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
-                        Total Direct Costs
-                      </span>
-                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
-                        ${totalCosts.toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
-                        Projected Profit
-                      </span>
-                      <div
-                        className={`text-xl sm:text-2xl font-bold font-display mt-0.5 ${
-                          projectedProfit >= 0
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {projectedProfit >= 0
-                          ? `+$${projectedProfit.toLocaleString()}`
-                          : `-$${Math.abs(projectedProfit).toLocaleString()}`}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
-                        Gross Margin
-                      </span>
-                      <div className="text-xl sm:text-2xl font-bold font-display text-[#1E2021] dark:text-white mt-0.5">
-                        {grossMargin}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 shrink-0 self-end xl:self-center w-full sm:w-auto">
-                    <button
-                      type="submit"
-                      disabled={busy || !numericOrderValue || !reference.trim()}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
-                    >
-                      <span>Continue to Step 3: Confirm</span>
-                      <ArrowRight className="size-3.5" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
+            {/* 3. SAVE: figures are calculated only by the engine after you confirm */}
+            <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <p className="text-xs text-[#525252] dark:text-neutral-400">
+                {baseline
+                  ? `Amounts are in ${business?.currency ?? ""}. Saving creates the order; you then review and confirm it, and the engine calculates the result.`
+                  : "Save your opening cash baseline under Cash & Financing before creating an order."}{" "}
+                {!baseline && (
+                  <Link className="underline font-semibold" href={`/deals/sources?businessId=${businessId}`}>
+                    Open Cash &amp; Financing
+                  </Link>
+                )}
+              </p>
+              <div className="flex items-center gap-3 shrink-0 self-end xl:self-center w-full sm:w-auto">
+                <button
+                  type="submit"
+                  disabled={busy || !baseline || !orderValue.trim() || !reference.trim()}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  <span>{busy ? "Saving…" : "Save and review"}</span>
+                  <ArrowRight className="size-3.5" />
+                </button>
+              </div>
+            </div>
           </form>
           )}
         </div>

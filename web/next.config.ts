@@ -43,6 +43,14 @@ const nextConfig: NextConfig = {
       ],
     }];
   },
+  // The old validate/confirm screens kept order drafts only in this browser and never reached the
+  // engine. Orders are saved on the new-order page and confirmed on the order page itself.
+  async redirects() {
+    return [
+      { source: "/deals/new/validate", destination: "/deals/new", permanent: false },
+      { source: "/deals/:id/confirm", destination: "/deals/:id", permanent: false },
+    ];
+  },
   // Same-origin API proxy. The session cookie is HttpOnly + SameSite=Lax with no Domain, so the
   // browser only sends it to the origin that set it: the API must be reached through this app's
   // own origin. The backend still checks Origin and the CSRF token, so its ALLOWED_ORIGINS must
