@@ -157,6 +157,7 @@ environment-specific acceptance. This repository does not claim production readi
 
 ## Documentation
 
+[Technical documentation](technical_document.md) ·
 [Development](docs/development.md) · [Workflows](docs/workflows.md) ·
 [Architecture](docs/architecture/orderfit/README.md) · [API contracts](docs/contracts/README.md) ·
 [Security](docs/security/README.md) · [Deployment](docs/deployment/README.md) ·
