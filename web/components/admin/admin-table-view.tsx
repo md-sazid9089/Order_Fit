@@ -15,6 +15,10 @@ import {
   ShieldMinus,
   ShieldPlus,
   Building2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { formatMinor } from "@/lib/approval-model";
 import { toast } from "@/lib/toast";
@@ -56,6 +60,8 @@ export function AdminTableView({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [roleModalUser, setRoleModalUser] = useState<AdminUser | null>(null);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [pageSize, setPageSize] = useState<number | "all">(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const copyToClipboard = async (text: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -236,6 +242,56 @@ export function AdminTableView({
     );
   };
 
+  // Reset to page 1 whenever filters or sorting change (React recommended render-time adjustment)
+  const filterKey = `${searchQuery}|${statusFilter}|${roleFilter}|${currencyFilter}|${sortColumn}|${sortDirection}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setCurrentPage(1);
+  }
+
+  // Pagination metrics
+  const totalItems = sortedRows.length;
+  const effectivePageSize = pageSize === "all" ? Math.max(1, totalItems) : pageSize;
+  const totalPages = pageSize === "all" ? 1 : Math.max(1, Math.ceil(totalItems / effectivePageSize));
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const startIndex = pageSize === "all" ? 0 : (validCurrentPage - 1) * effectivePageSize;
+  const endIndex = pageSize === "all" ? totalItems : Math.min(startIndex + effectivePageSize, totalItems);
+
+  const paginatedRows = useMemo(() => {
+    if (pageSize === "all") return sortedRows;
+    return sortedRows.slice(startIndex, endIndex);
+  }, [sortedRows, pageSize, startIndex, endIndex]);
+
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [1];
+    if (validCurrentPage > 3) {
+      pages.push("...");
+    }
+    const start = Math.max(2, validCurrentPage - 1);
+    const end = Math.min(totalPages - 1, validCurrentPage + 1);
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    if (validCurrentPage < totalPages - 2) {
+      pages.push("...");
+    }
+    pages.push(totalPages);
+    return pages;
+  }, [totalPages, validCurrentPage]);
+
+  const handleLoadMore = () => {
+    // When expanding the server dataset, expand page size if paginated so new items are rendered
+    if (typeof pageSize === "number") {
+      setPageSize((prev) => (typeof prev === "number" ? prev + 50 : prev));
+    }
+    onLoadMore();
+  };
+
   return (
     <div className="space-y-4">
       {/* Search & Filter Toolbar */}
@@ -328,16 +384,48 @@ export function AdminTableView({
           </div>
         </div>
 
-        {/* Status meta summary */}
-        <div className="flex flex-wrap items-center justify-between text-xs text-[#737373] dark:text-neutral-400 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
+        {/* Status meta summary & Page Size Selector */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#737373] dark:text-neutral-400 pt-2 border-t border-[#F4F2ED] dark:border-[#2A2C2D]">
           <span>
-            Showing <strong className="text-[#1E2021] dark:text-white">{sortedRows.length}</strong> of{" "}
-            <strong className="text-[#1E2021] dark:text-white">{rows.length}</strong> loaded results
-            {hasActiveFilters && " (filtered)"}.
+            {totalItems > 0 ? (
+              <>
+                Showing <strong className="text-[#1E2021] dark:text-white">{startIndex + 1}</strong> to{" "}
+                <strong className="text-[#1E2021] dark:text-white">{endIndex}</strong> of{" "}
+                <strong className="text-[#1E2021] dark:text-white">{totalItems}</strong> matching records
+                {hasActiveFilters && ` (filtered from ${rows.length} loaded)`}
+                {pageSize !== "all" && totalPages > 1 && ` • Page ${validCurrentPage} of ${totalPages}`}
+              </>
+            ) : (
+              <span>0 matching records</span>
+            )}
           </span>
-          <span className="text-[11px] text-[#737373] dark:text-neutral-500 font-mono">
-            Bounded continuation: 50 records / page
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium hidden sm:inline">Rows per page:</span>
+            <div className="inline-flex items-center rounded-xl p-0.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D]">
+              {([10, 25, 50, "all"] as const).map((size) => {
+                const active = pageSize === size;
+                const label = size === "all" ? "All" : size;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setPageSize(size);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-lg transition-all cursor-pointer ${
+                      active
+                        ? "bg-[#004D3B] text-white dark:bg-[#B5F2C6] dark:text-[#004D3B] shadow-xs"
+                        : "text-[#737373] dark:text-neutral-400 hover:text-[#1E2021] dark:hover:text-white"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -560,7 +648,7 @@ export function AdminTableView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F4F2ED] dark:divide-[#2A2C2D]">
-                {sortedRows.map((row) => {
+                {paginatedRows.map((row) => {
                   if (section === "users") {
                     const u = row as AdminUser;
                     const isCopied = copiedId === u.id;
@@ -799,23 +887,107 @@ export function AdminTableView({
           </div>
         )}
 
-        {/* Continuation Pagination Footer */}
-        <div className="p-4 bg-[#FAF9F7] dark:bg-[#222425] border-t border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-[#737373] dark:text-neutral-400">
-            {next ? (
-              <span>Continuation cursor active. Additional records available on server.</span>
+        {/* Pagination & Continuation Bar */}
+        <div className="p-4 bg-[#FAF9F7] dark:bg-[#222425] border-t border-[#E8E6E1] dark:border-[#2A2C2D] flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Left: Summary text */}
+          <div className="text-xs text-[#737373] dark:text-neutral-400 font-medium">
+            {totalItems > 0 ? (
+              <>
+                Showing <strong className="text-[#1E2021] dark:text-white">{startIndex + 1}</strong> to{" "}
+                <strong className="text-[#1E2021] dark:text-white">{endIndex}</strong> of{" "}
+                <strong className="text-[#1E2021] dark:text-white">{totalItems}</strong> records
+                {next && <span className="ml-1 text-[#004D3B] dark:text-[#34D399] font-medium">• More records on server</span>}
+              </>
             ) : (
-              <span>End of dataset reached. All available records loaded.</span>
+              "No records found"
             )}
           </div>
 
+          {/* Center: Page Controls (when totalPages > 1 and not 'all') */}
+          {pageSize !== "all" && totalPages > 1 && (
+            <nav aria-label="Table pagination" className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={validCurrentPage === 1}
+                onClick={() => setCurrentPage(1)}
+                className="size-8 rounded-xl flex items-center justify-center text-xs font-semibold border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+                title="Go to first page"
+              >
+                <ChevronsLeft className="size-3.5" />
+              </button>
+
+              <button
+                type="button"
+                disabled={validCurrentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-xs font-semibold text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+              >
+                <ChevronLeft className="size-3.5" />
+                <span className="hidden sm:inline">Previous</span>
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {pageNumbers.map((p, i) => {
+                  if (typeof p === "string") {
+                    return (
+                      <span key={`ellipsis-${i}`} className="px-1 text-xs text-[#737373] dark:text-neutral-500">
+                        ...
+                      </span>
+                    );
+                  }
+                  const isCurrent = p === validCurrentPage;
+                  return isCurrent ? (
+                    <span
+                      key={p}
+                      className="min-w-8 h-8 px-2.5 rounded-xl flex items-center justify-center text-xs font-bold bg-[#004D3B] dark:bg-[#B5F2C6] text-[#FFFAEC] dark:text-[#004D3B] shadow-xs"
+                    >
+                      {p}
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setCurrentPage(p)}
+                      className="size-8 rounded-xl flex items-center justify-center text-xs font-medium border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#525252] dark:text-neutral-300 hover:bg-[#FAF9F7] dark:hover:bg-[#222425] transition-colors"
+                      title={`Go to page ${p}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                disabled={validCurrentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-xs font-semibold text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="size-3.5" />
+              </button>
+
+              <button
+                type="button"
+                disabled={validCurrentPage === totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                className="size-8 rounded-xl flex items-center justify-center text-xs font-semibold border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-xs"
+                title="Go to last page"
+              >
+                <ChevronsRight className="size-3.5" />
+              </button>
+            </nav>
+          )}
+
+          {/* Right: Server continuation & restart actions */}
           <div className="flex items-center gap-2">
             {next && (
               <button
                 type="button"
-                onClick={onLoadMore}
+                onClick={handleLoadMore}
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-50 transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-50 transition-all cursor-pointer shadow-xs"
               >
                 <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
                 <span>{loading ? "Loading more..." : "Load more records (50)"}</span>
@@ -826,7 +998,8 @@ export function AdminTableView({
               type="button"
               onClick={onRefresh}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] transition-colors shadow-xs"
+              title="Restart from first page"
             >
               <span>Restart from first page</span>
             </button>
