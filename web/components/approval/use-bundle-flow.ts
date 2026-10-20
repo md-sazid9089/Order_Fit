@@ -5,6 +5,7 @@ import { get, type Operation } from "@/lib/orderfit-api";
 import { decide, executeBundle, getApproval, getBundle, getRun, revokeApproval, stepUp } from "@/lib/approval-api";
 import type { ApprovalView, BundleView, ExecutionRun } from "@/lib/generated-api";
 import { ACTIVE_RUN, TERMINAL_OPERATION, bundleStage, buildApproval, buildExecute, buildRevoke, buildStepUp, describeError, type BundleKind, type Versions } from "@/lib/approval-model";
+import { toast } from "@/lib/toast";
 
 const PARAM: Record<BundleKind, string> = { send_message: "sendBundle", commit_plan: "commitBundle", compensate: "compensationBundle" };
 export type Grant = { id: string; expiresAt: string };
@@ -42,11 +43,20 @@ export function useBundleFlow({ businessId, kind, deal, onChanged }: { businessI
     const op = opId ? await get<Operation>(`/businesses/${businessId}/operations/${opId}`).catch(() => null) : null;
     if (stamp !== generation.current) return;
     setView(bundle); setApproval(decision); setRun(execution); setOperation(op);
-    if (execution && !ACTIVE_RUN.has(execution.status) && notified.current !== `${execution.id}:${execution.status}`) { notified.current = `${execution.id}:${execution.status}`; void onChangedRef.current(); }
+    if (execution && !ACTIVE_RUN.has(execution.status) && notified.current !== `${execution.id}:${execution.status}`) {
+      notified.current = `${execution.id}:${execution.status}`;
+      void onChangedRef.current();
+      if (execution.status === "succeeded") {
+        toast.success("Execution completed successfully.");
+      } else if (execution.status === "failed") {
+        toast.error("Execution failed.");
+      }
+    }
   }, [businessId, bundleId, operationId]);
 
   const fail = useCallback(async (e: unknown) => {
     const described = describeError(e); setError(described.message);
+    if (!described.sessionExpired) toast.error(described.message);
     if (described.sessionExpired) return; // The shared handler (components/providers.tsx) resets state and redirects.
     if (described.refresh) await Promise.allSettled([load(), onChangedRef.current()]);
   }, [load]);
@@ -77,7 +87,12 @@ export function useBundleFlow({ businessId, kind, deal, onChanged }: { businessI
   return {
     bundleId, view, approval, run, operation, grant, busy, loading, error, setError,
     stage: bundleStage(view, approval, run), polling, attach, reload: () => command(async () => { await load(); }),
-    prepare: (create: () => Promise<BundleView>) => command(async () => { const created = await create(); attach(created.manifest.id); setOperationId(""); }),
+    prepare: (create: () => Promise<BundleView>) => command(async () => {
+      const created = await create();
+      attach(created.manifest.id);
+      setOperationId("");
+      toast.success("Approval bundle prepared.");
+    }),
     approve: (password: string) => command(async () => {
       if (!view) return;
       let granted = grant;
@@ -86,16 +101,33 @@ export function useBundleFlow({ businessId, kind, deal, onChanged }: { businessI
         const result = await stepUp(buildStepUp(businessId, view, password));
         granted = { id: result.grant_id, expiresAt: result.expires_at }; setGrant(granted);
       }
-      try { await decide(businessId, view.manifest.id, buildApproval(dealRef.current, view, "approved", granted.id)); setGrant(null); }
+      try {
+        await decide(businessId, view.manifest.id, buildApproval(dealRef.current, view, "approved", granted.id));
+        setGrant(null);
+        toast.success("Bundle approved successfully.");
+      }
       catch (e) { if ((e as { code?: string }).code === "STEP_UP_INVALID") setGrant(null); throw e; }
       await load(); await onChangedRef.current();
     }),
-    reject: () => command(async () => { if (!view) return; await decide(businessId, view.manifest.id, buildApproval(dealRef.current, view, "rejected", null)); await load(); }),
-    revoke: (reason: string) => command(async () => { if (!approval) return; await revokeApproval(businessId, approval.id, buildRevoke(dealRef.current, reason)); await load(); await onChangedRef.current(); }),
+    reject: () => command(async () => {
+      if (!view) return;
+      await decide(businessId, view.manifest.id, buildApproval(dealRef.current, view, "rejected", null));
+      await load();
+      toast.info("Bundle rejected.");
+    }),
+    revoke: (reason: string) => command(async () => {
+      if (!approval) return;
+      await revokeApproval(businessId, approval.id, buildRevoke(dealRef.current, reason));
+      await load();
+      await onChangedRef.current();
+      toast.success("Approval revoked.");
+    }),
     execute: () => command(async () => {
       const approvalId = approval?.id ?? run?.approval_id; if (!view || !approvalId) return;
       const accepted = await executeBundle(businessId, view.manifest.id, buildExecute(dealRef.current, approvalId, view.bundle_hash));
-      setOperationId(accepted.operation_id); await load();
+      setOperationId(accepted.operation_id);
+      await load();
+      toast.info("Bundle execution queued.");
     }),
   };
 }

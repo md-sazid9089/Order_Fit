@@ -7,6 +7,7 @@ import { useScope } from "@/components/layout/scope";
 import { enrollPasskey } from "@/lib/passkeys";
 import { resetSessionState } from "@/lib/session-reset";
 import { field, panel, primary } from "@/components/p7/common";
+import { toast } from "@/lib/toast";
 
 export function PasskeyPanel() {
   const { session } = useScope();
@@ -22,9 +23,12 @@ export function PasskeyPanel() {
       await enrollPasskey(password);
       setPassword("");
       resetSessionState(queryClient);
+      toast.success("Passkey registered successfully. Please sign in again with your passkey.");
       router.replace("/auth/signin");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Passkey setup failed.");
+      const msg = cause instanceof Error ? cause.message : "Passkey setup failed.";
+      setError(msg);
+      toast.error(msg);
     } finally { setBusy(false); }
   }
   return <section className={panel} aria-labelledby="passkey-title">

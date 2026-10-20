@@ -12,6 +12,7 @@ import type { BusinessView, SessionView } from "@/lib/generated-api";
 import { useScope } from "@/components/layout/scope";
 import { PasskeyPanel } from "@/components/settings/passkey-panel";
 import { Alert, Loading, PageFrame, QueryError, field, panel, primary, useCommand, useScoped, when } from "@/components/p7/common";
+import { toast } from "@/lib/toast";
 
 type Tab = "user" | "company";
 
@@ -83,13 +84,19 @@ function PasswordPanel() {
     try {
       await changePassword(buildPasswordChange(current, next));
       resetSessionState(queryClient);
+      toast.success("Password changed successfully. Please sign in again.");
       router.replace("/auth/signin?reason=password-changed");
     } catch (cause) {
-      if (isNetworkFailure(cause)) setError("The connection was lost, so it is unknown whether the password changed. This request is not retried automatically. Try signing in with your new password; if it is not accepted, your old password still works and you can change it again.");
-      else {
+      if (isNetworkFailure(cause)) {
+        const msg = "The connection was lost, so it is unknown whether the password changed. This request is not retried automatically. Try signing in with your new password; if it is not accepted, your old password still works and you can change it again.";
+        setError(msg);
+        toast.error("Connection lost while changing password.", { description: "Try signing in with your new password to verify." });
+      } else {
         const described = describeP7Error(cause);
         if (described.sessionExpired) return; // The shared handler resets state and redirects.
-        setError(cause instanceof ApiError || cause instanceof Error ? described.message : "Could not change the password.");
+        const msg = cause instanceof ApiError || cause instanceof Error ? described.message : "Could not change the password.";
+        setError(msg);
+        toast.error(msg);
       }
     } finally { setCurrent(""); setNext(""); setConfirm(""); setBusy(false); }
   }

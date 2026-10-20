@@ -9,6 +9,7 @@ import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
 import { Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { toast } from "@/lib/toast";
 
 const COMMON_TIMEZONES = [
   "Asia/Dhaka",
@@ -77,9 +78,12 @@ export default function SignUpPage() {
         timezone,
       });
       setCachedSession(session);
+      toast.success("Account created successfully.");
       router.replace("/deals");
     } catch (cause) {
-      setError(cause instanceof ApiError || cause instanceof Error ? cause.message : "Sign up failed.");
+      const msg = cause instanceof ApiError || cause instanceof Error ? cause.message : "Sign up failed.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

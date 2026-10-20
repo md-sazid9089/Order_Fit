@@ -8,6 +8,7 @@ import { resetSessionState } from "@/lib/session-reset";
 import { acceptInvitation, getSession } from "@/lib/p7-api";
 import { acceptedByEarlierAttempt, describeP7Error, newMemberships, readInvitationToken, roleLabel } from "@/lib/p7-model";
 import type { MembershipView, SessionView } from "@/lib/generated-api";
+import { toast } from "@/lib/toast";
 
 function subscribe(onChange: () => void) { window.addEventListener("hashchange", onChange); return () => window.removeEventListener("hashchange", onChange); }
 const readHash = () => window.location.hash;
@@ -31,6 +32,7 @@ export function AcceptInvitation() {
     // The token is spent: take it out of the address bar and drop caches built for the old membership set.
     window.history.replaceState(null, "", window.location.pathname);
     resetSessionState(queryClient);
+    toast.success("Invitation accepted successfully.");
     setResult({ session: next, added: newMemberships(session.data?.memberships ?? [], next.memberships) });
   }
 
@@ -47,11 +49,19 @@ export function AcceptInvitation() {
           const fresh = await getSession();
           if (acceptedByEarlierAttempt(session.data?.memberships ?? [], fresh.memberships)) { finish(fresh); return; }
           window.history.replaceState(null, "", window.location.pathname); setSpent(true);
-          setError("This invitation is invalid, expired or already used, and your account gained no new business. If you accepted it a moment ago, check the business switcher. Otherwise ask the business owner for a new invitation.");
+          const msg = "This invitation is invalid, expired or already used, and your account gained no new business. If you accepted it a moment ago, check the business switcher. Otherwise ask the business owner for a new invitation.";
+          setError(msg);
+          toast.error("Invitation link invalid or expired.");
         } catch (check) {
-          setError(`The invitation was not found, but your memberships could not be re-checked, so it may already have been accepted. ${describeP7Error(check).message} Reload this page to check before asking for a new invitation.`);
+          const msg = `The invitation was not found, but your memberships could not be re-checked, so it may already have been accepted. ${describeP7Error(check).message} Reload this page to check before asking for a new invitation.`;
+          setError(msg);
+          toast.error("Unable to check invitation status. Please reload.");
         }
-      } else setError(describeP7Error(e).message);
+      } else {
+        const msg = describeP7Error(e).message;
+        setError(msg);
+        toast.error(msg);
+      }
     } finally { setBusy(false); }
   }
 

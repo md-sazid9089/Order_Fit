@@ -6,6 +6,7 @@ import { changeRole, createInvitation, listMembers, revokeInvitation, revokeMemb
 import { ROLES, buildInvitation, buildRevocation, buildRoleChange, can, emailValid, invitationLink, invitationState, memberStatus, reasonValid, roleLabel, upsertInvitation, type Role } from "@/lib/p7-model";
 import type { InvitationView, Member } from "@/lib/generated-api";
 import { Alert, Loading, NotPermitted, PageFrame, QueryError, button, danger, field, panel, primary, RevisionNotice, useBusinessRevision, useCommand, useScoped, when } from "@/components/p7/common";
+import { toast } from "@/lib/toast";
 
 /** Member roles, revocation and one-time invitations. Only owners hold the permission; the API decides on every call. */
 export function UsersScreen() {
@@ -78,7 +79,10 @@ function Invitations({ onChanged }: { onChanged: () => void }) {
   async function invite(e: FormEvent) {
     e.preventDefault(); setCopied("");
     if (revision === undefined) return;
-    const result = await run(async () => createInvitation(businessId, buildInvitation(email, role, revision)));
+    const result = await run(
+      async () => createInvitation(businessId, buildInvitation(email, role, revision)),
+      "Invitation created successfully."
+    );
     if (!result.ok) return;
     const created = result.value;
     setIssued(list => upsertInvitation(list, created));
@@ -87,7 +91,14 @@ function Invitations({ onChanged }: { onChanged: () => void }) {
     setEmail("");
   }
   async function copy(url: string) {
-    try { await navigator.clipboard.writeText(url); setCopied("Copied."); } catch { setCopied("Could not copy automatically. Select the link and copy it manually."); }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied("Copied.");
+      toast.success("Invitation link copied to clipboard.");
+    } catch {
+      setCopied("Could not copy automatically. Select the link and copy it manually.");
+      toast.error("Could not copy link automatically. Please select and copy manually.");
+    }
   }
   return <section className={panel} aria-labelledby="invitations-heading">
     <h2 id="invitations-heading" className="text-lg font-semibold">Invite someone</h2>

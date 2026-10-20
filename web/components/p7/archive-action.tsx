@@ -22,7 +22,10 @@ export function ArchiveAction({ noun, permission, record, financialRevision, arc
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!reasonValid(reason) || financialRevision === undefined) return;
-    const result = await run(() => archive(buildRevocation(record, reason, financialRevision)));
+    const result = await run(
+      () => archive(buildRevocation(record, reason, financialRevision)),
+      `${noun.charAt(0).toUpperCase() + noun.slice(1)} archived successfully.`
+    );
     if (result.ok) { setOpen(false); setReason(""); onChanged(); }
   }
   return <div className="w-full space-y-2">

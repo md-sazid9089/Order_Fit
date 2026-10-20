@@ -9,6 +9,7 @@ import { AdminData, emptyAdminState, type AdminSection } from "@/lib/admin-data"
 import { formatMinor } from "@/lib/approval-model";
 import { mutate } from "@/lib/orderfit-api";
 import { registerSessionResetListener, resetSessionState } from "@/lib/session-reset";
+import { toast } from "@/lib/toast";
 import type { AdminUser, AdminTenant, AdminOrder } from "@/lib/generated-api";
 
 const titles: Record<AdminSection, string> = { overview: "Platform overview", users: "Platform users", tenants: "Platform businesses", orders: "Platform orders", system: "System checks", logs: "Global audit logs", engine: "Engine information", security: "Security information" };
@@ -31,8 +32,15 @@ export function PlatformScreen({ section }: { section: AdminSection }) {
   async function signout() {
     data.clear();
     resetSessionState(queryClient);
-    try { await mutate("/auth/signout", "POST", {}); router.replace("/auth/signin"); router.refresh(); }
-    catch { setSignoutError("Signout could not be confirmed. Retry signout."); }
+    try {
+      await mutate("/auth/signout", "POST", {});
+      toast.success("Successfully signed out.");
+      router.replace("/auth/signin");
+      router.refresh();
+    } catch {
+      toast.error("Signout could not be confirmed. Retry signout.");
+      setSignoutError("Signout could not be confirmed. Retry signout.");
+    }
   }
   const system = state.system;
   const overview = state.overview;

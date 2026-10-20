@@ -37,7 +37,10 @@ function CorrectForm({ businessId, event, financialRevision, onDone, onConflict 
   async function submit(e: FormEvent) {
     e.preventDefault(); setTouched(true);
     if (Object.keys(errors).length) return;
-    const result = await run(() => correctCashEvent(businessId, event.id, buildCashEventCorrection(event, draft, financialRevision)));
+    const result = await run(
+      () => correctCashEvent(businessId, event.id, buildCashEventCorrection(event, draft, financialRevision)),
+      "Cash event corrected successfully."
+    );
     if (result.ok) onDone();
   }
   return <form onSubmit={submit} className="grid gap-2 rounded-lg border bg-neutral-50 p-3 text-sm sm:grid-cols-2" noValidate>
@@ -60,7 +63,10 @@ function VoidForm({ businessId, event, financialRevision, onDone, onConflict }: 
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!reasonValid(reason)) return;
-    const result = await run(() => voidCashEvent(businessId, event.id, buildRevocation(event, reason, financialRevision)));
+    const result = await run(
+      () => voidCashEvent(businessId, event.id, buildRevocation(event, reason, financialRevision)),
+      "Cash event voided successfully."
+    );
     if (result.ok) onDone();
   }
   return <form onSubmit={submit} className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm">

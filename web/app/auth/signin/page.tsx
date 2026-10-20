@@ -11,6 +11,7 @@ import { resetSessionState } from "@/lib/session-reset";
 import { setCachedSession } from "@/lib/session-store";
 import { signInWithPasskey } from "@/lib/passkeys";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { toast } from "@/lib/toast";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -42,13 +43,17 @@ export default function SignInPage() {
         session = await signInWithPasskey(normalizedEmail, password);
       }
       setCachedSession(session);
+      toast.success("Successfully signed in.");
       router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? "/overview");
     } catch (cause) {
+      let msg = "Sign in failed.";
       if (cause instanceof ApiError && (cause.code === "INVALID_CREDENTIALS" || cause.status === 401)) {
-        setError("Invalid email or password.");
-      } else {
-        setError(cause instanceof Error ? cause.message : "Sign in failed.");
+        msg = "Invalid email or password.";
+      } else if (cause instanceof Error) {
+        msg = cause.message;
       }
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }

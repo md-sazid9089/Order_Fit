@@ -19,6 +19,7 @@ import { describeP7Error } from "@/lib/p7-model";
 import { useScope } from "@/components/layout/auth-shell";
 import { ManualOrderInputs, fieldClass } from "@/components/manual-order-inputs";
 import { createDecisionExport, downloadExport } from "@/lib/p7-api";
+import { toast } from "@/lib/toast";
 import {
   Download,
   Landmark,
@@ -223,13 +224,17 @@ export default function DealDetailPage({
         } else {
           await refresh();
           if (current.result?.kind === "blocked") {
-            setError(
-              `Evaluation produced no financial result: ${current.result.outcome}. ${current.result.findings.map((f) => f.message).join(" ")}`
-            );
+            const msg = `Evaluation produced no financial result: ${current.result.outcome}. ${current.result.findings.map((f) => f.message).join(" ")}`;
+            setError(msg);
+            toast.warning(msg);
           } else if (current.result?.kind === "failed") {
             setError(current.result.error.message);
+            toast.error(current.result.error.message);
           } else if (current.status !== "succeeded") {
             setError(`Evaluation ${current.status}.`);
+            toast.error(`Evaluation ${current.status}.`);
+          } else {
+            toast.success("Evaluation completed successfully.");
           }
         }
       } catch (e) {
@@ -257,14 +262,16 @@ export default function DealDetailPage({
       });
       setEditing(null);
       await refresh();
+      toast.success("Order inputs updated successfully.");
     } catch (e) {
-      setError(
+      const msg =
         e instanceof ApiError && e.status === 409
           ? `${e.message} Another edit was saved. Reload before editing again.`
           : e instanceof Error
           ? e.message
-          : "Could not save inputs."
-      );
+          : "Could not save inputs.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -283,8 +290,11 @@ export default function DealDetailPage({
       });
       setReason("");
       await refresh();
+      toast.success("Order workflow updated.");
     } catch (e) {
-      setError(explain(e, "Could not update workflow."));
+      const msg = explain(e, "Could not update workflow.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -296,8 +306,11 @@ export default function DealDetailPage({
     try {
       const exported = await createDecisionExport(businessId, dealId);
       await downloadExport(businessId, exported, `orderfit-decision-${dealId}.json`);
+      toast.success("Decision exported successfully.");
     } catch (e) {
-      setError(explain(e, "Export failed."));
+      const msg = explain(e, "Export failed.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -323,11 +336,14 @@ export default function DealDetailPage({
         expected_financial_revision: confirmed.financial_revision,
         snapshot_id: confirmed.snapshot_id,
       });
+      toast.info("Evaluation queued. Processing financial simulation...");
       window.history.replaceState(null, "", `/deals/${dealId}?businessId=${businessId}&operationId=${op.operation_id}`);
       setRoute({ dealId, businessId, operationId: op.operation_id });
       await refresh();
     } catch (e) {
-      setError(explain(e, "Could not evaluate this order."));
+      const msg = explain(e, "Could not evaluate this order.");
+      setError(msg);
+      toast.error(msg);
       await refresh();
     } finally {
       setBusy(false);

@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useScope } from "@/components/layout/auth-shell";
 import { describeP7Error, roleLabel } from "@/lib/p7-model";
 import { getBusiness } from "@/lib/p7-api";
+import { toast } from "@/lib/toast";
 
 export const panel = "space-y-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#181A1B] p-5 sm:p-6 shadow-xs";
 export const button = "rounded-xl border border-[#E8E6E1] dark:border-[#383C3B] bg-[#FAF9F7] dark:bg-[#2C302F] px-3.5 py-2 text-xs font-semibold text-[#525252] dark:text-neutral-200 hover:text-[#1E2021] dark:hover:text-white hover:bg-[#F4F2ED] dark:hover:bg-[#383C3B] transition-colors disabled:opacity-40 cursor-pointer";
@@ -113,11 +114,17 @@ export function useCommand({ onConflict }: { onConflict?: () => void } = {}) {
     setBusy(true); setError(""); setNotice("");
     try {
       const value = await work();
-      if (success) setNotice(success);
+      if (success) {
+        setNotice(success);
+        toast.success(success);
+      }
       return { ok: true, value };
     } catch (e) {
       const described = describeP7Error(e);
       setError(described.message);
+      if (!described.sessionExpired) {
+        toast.error(described.message);
+      }
       // A 401 is handled once by the shared handler (components/providers.tsx); a conflict reloads what the user reviewed,
       // including the business revision, so the next attempt is made against the state they can see.
       if (!described.sessionExpired && described.refresh) { void queryClient.invalidateQueries({ queryKey: key("business-profile") }); onConflict?.(); }

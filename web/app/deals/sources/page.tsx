@@ -14,6 +14,7 @@ import { can, describeP7Error } from "@/lib/p7-model";
 import { formatMinor } from "@/lib/approval-model";
 import type { CashEventView } from "@/lib/generated-api";
 import { SkeletonCard } from "@/components/ui/skeleton";
+import { toast } from "@/lib/toast";
 
 type Page<T> = { items: T[] };
 const button = "rounded-lg bg-neutral-900 px-4 py-2 text-white disabled:opacity-40";
@@ -37,13 +38,39 @@ export default function SourcesPage() {
   }
   useEffect(() => { const id = resolveBusinessId(session.memberships, new URLSearchParams(window.location.search).get("businessId"), scoped); void Promise.resolve(id).then(found => { if (found) { setBusinessId(found); void load(found).catch(e => setError(e instanceof Error ? e.message : "Could not load business data.")); } else setError("No authorized business membership is available for this link. Return to saved orders."); }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  async function run(action: () => Promise<unknown>, success: string): Promise<boolean> { setBusy(true); setError(""); setMessage(""); try { await action(); } catch (e) { const described = describeP7Error(e); setError(e instanceof ApiError && e.status === 409 ? `${described.message} Reload this page to get the current versions before saving again.` : e instanceof ApiError ? described.message : e instanceof Error ? e.message : "Could not save."); setBusy(false); return false; }
+  async function run(action: () => Promise<unknown>, success: string): Promise<boolean> {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await action();
+    } catch (e) {
+      const described = describeP7Error(e);
+      const errorMsg = e instanceof ApiError && e.status === 409
+        ? `${described.message} Reload this page to get the current versions before saving again.`
+        : e instanceof ApiError
+        ? described.message
+        : e instanceof Error
+        ? e.message
+        : "Could not save.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setBusy(false);
+      return false;
+    }
     // The write is committed. A failed refresh must not be reported as a failed save.
     setMessage(success);
-    try { await Promise.all([load(businessId), offerPages.refetch(), payeePages.refetch(), eventPages.refetch()]); } catch { setError("Saved, but the page could not be refreshed, so the values shown may be out of date. Press Reload before saving again."); }
-    setBusy(false); return true; }
+    toast.success(success);
+    try {
+      await Promise.all([load(businessId), offerPages.refetch(), payeePages.refetch(), eventPages.refetch()]);
+    } catch {
+      const warnMsg = "Saved, but the page could not be refreshed, so the values shown may be out of date. Press Reload before saving again.";
+      setError(warnMsg);
+      toast.warning(warnMsg);
+    }
+    setBusy(false);
+    return true;
+  }
   function saveBaseline(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business) return; const data = new FormData(e.currentTarget); void run(() => mutate(`/businesses/${businessId}/baseline`, "PATCH", { expected_version: business.version, expected_financial_revision: business.financial_revision, balance: { opening_date: text(data, "opening_date"), opening_cash_minor: text(data, "opening_cash"), coverage_through: text(data, "coverage"), evidence: manualEvidence("baseline", text(data, "attestation")) } }), "Business baseline saved. Existing evaluations now require freshness review."); }
-  function addEvent(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business) return; const form = e.currentTarget; const data = new FormData(form); const kind = text(data, "kind"); const direction = text(data, "direction"); if ((kind === "ar_collection" && direction !== "in") || (kind !== "ar_collection" && kind !== "other" && direction !== "out")) { setError("AR collections must be receipts in; bills, costs and installments must be payments out. Use other for a different event."); return; } void run(() => mutate(`/businesses/${businessId}/cash-events`, "POST", { expected_financial_revision: business.financial_revision, event: { deal_id: null, event_date: text(data, "date"), amount_minor: text(data, "amount"), direction: text(data, "direction"), kind: text(data, "kind"), certainty: text(data, "certainty"), description: text(data, "description"), invoice_ref: null, is_deferrable: false, incremental: false, customer_id: null, payee_id: null, evidence: manualEvidence("baseline", text(data, "attestation")) } }), "Baseline cash event saved.").then(ok => { if (ok) form.reset(); }); }
+  function addEvent(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business) return; const form = e.currentTarget; const data = new FormData(form); const kind = text(data, "kind"); const direction = text(data, "direction"); if ((kind === "ar_collection" && direction !== "in") || (kind !== "ar_collection" && kind !== "other" && direction !== "out")) { const warn = "AR collections must be receipts in; bills, costs and installments must be payments out. Use other for a different event."; setError(warn); toast.error(warn); return; } void run(() => mutate(`/businesses/${businessId}/cash-events`, "POST", { expected_financial_revision: business.financial_revision, event: { deal_id: null, event_date: text(data, "date"), amount_minor: text(data, "amount"), direction: text(data, "direction"), kind: text(data, "kind"), certainty: text(data, "certainty"), description: text(data, "description"), invoice_ref: null, is_deferrable: false, incremental: false, customer_id: null, payee_id: null, evidence: manualEvidence("baseline", text(data, "attestation")) } }), "Baseline cash event saved.").then(ok => { if (ok) form.reset(); }); }
   function addPayee(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!business) return; const form = e.currentTarget; const data = new FormData(form); void run(() => mutate(`/businesses/${businessId}/payees`, "POST", { expected_financial_revision: business.financial_revision, payee: { name: text(data, "name"), kind: "lender", category: "finance", terms_days: null, terms_note: null, delay_tolerance_note: null, risk_rating: null, known_domains: [] } }), "Lender saved. Select it when entering the offer.").then(ok => { if (ok) form.reset(); }); }
   function addOffer(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); if (!business) return; const form = e.currentTarget; const data = new FormData(form); const lender = payees.find(p => p.id === text(data, "lender")); if (!lender) return;

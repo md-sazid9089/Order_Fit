@@ -46,6 +46,7 @@ import { ManualOrderInputs, fieldClass as field } from "@/components/manual-orde
 import { SkeletonForm, SkeletonManualOrderForm } from "@/components/ui/skeleton";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 import { toMinorUnits } from "@/lib/money-input";
+import { toast } from "@/lib/toast";
 
 interface UploadedFile {
   name: string;
@@ -400,8 +401,11 @@ export default function NewDealPage() {
         },
       });
       await load(businessId);
+      toast.success("Opening cash baseline saved.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save baseline.");
+      const msg = e instanceof Error ? e.message : "Could not save baseline.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -501,9 +505,12 @@ export default function NewDealPage() {
           costs,
         },
       });
+      toast.success("Order created successfully.");
       router.push(`/deals/${created.id}?businessId=${businessId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save the order.");
+      const msg = e instanceof Error ? e.message : "Could not save the order.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }

@@ -22,6 +22,7 @@ import {
 } from "@/lib/documents-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
+import { toast } from "@/lib/toast";
 import { htmlLang, languageNote, textDirection } from "@/lib/provenance-model";
 import {
   ArrowLeft,
@@ -185,15 +186,16 @@ export default function DealDocumentsPage({
       await action();
     } catch (e) {
       const described = describeP7Error(e);
-      setError(
+      const errorMsg =
         e instanceof ApiError && e.status === 409
           ? `${described.message} The order and extracted values were reloaded from the saved state. Review the current values before confirming again.`
           : e instanceof ApiError
           ? described.message
           : e instanceof Error && !(e.name === "NetworkError") && e.message
           ? e.message
-          : described.message
-      );
+          : described.message;
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       await Promise.all([refresh(), documentPages.refetch().catch(() => {})]);
       setBusy(false);
@@ -208,6 +210,7 @@ export default function DealDocumentsPage({
       setFile(null);
       setFileKey((k) => k + 1);
       setMessage("Document uploaded and securely encrypted.");
+      toast.success("Document uploaded and securely encrypted.");
     });
   };
 
@@ -215,14 +218,20 @@ export default function DealDocumentsPage({
     scope &&
     void run(async () => {
       const accepted = await extractDocument(scope.businessId, scope.dealId, doc.id, versions());
+      toast.info("Extracting document content...");
       const op = await settle(scope.businessId, accepted.operation_id);
-      setMessage(
-        op.result?.kind === "completed"
-          ? "Extraction complete. Review the extracted fields below."
-          : op.result?.kind === "blocked"
-          ? op.result.findings[0]?.message ?? "Extraction unavailable. You can enter values manually."
-          : "Extraction did not yield text fields."
-      );
+      if (op.result?.kind === "completed") {
+        setMessage("Extraction complete. Review the extracted fields below.");
+        toast.success("Extraction complete. Review the extracted fields below.");
+      } else if (op.result?.kind === "blocked") {
+        const msg = op.result.findings[0]?.message ?? "Extraction unavailable. You can enter values manually.";
+        setMessage(msg);
+        toast.warning(msg);
+      } else {
+        const msg = "Extraction did not yield text fields.";
+        setMessage(msg);
+        toast.info(msg);
+      }
     });
 
   const confirm = (f: ExtractedField, doc: DocumentView | undefined) =>
@@ -246,7 +255,9 @@ export default function DealDocumentsPage({
           override_reason: null,
         },
       });
-      setMessage(`Confirmed field "${f.field}" against source document.`);
+      const msg = `Confirmed field "${f.field}" against source document.`;
+      setMessage(msg);
+      toast.success(msg);
     });
 
   const csvPreview = (doc: DocumentView) =>
@@ -277,13 +288,16 @@ export default function DealDocumentsPage({
       });
       setPreview(null);
       setMessage("Baseline cash events successfully imported.");
+      toast.success("Baseline cash events successfully imported.");
     });
 
   const download = (doc: DocumentView) =>
     scope &&
     void run(async () => {
       await downloadDocument(scope.businessId, doc);
-      setMessage(`Downloaded "${doc.original_filename}".`);
+      const msg = `Downloaded "${doc.original_filename}".`;
+      setMessage(msg);
+      toast.success(msg);
     });
 
   if (!scope) {

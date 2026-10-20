@@ -57,6 +57,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, stanceDisagreement, textDirection } from "@/lib/provenance-model";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
+import { toast } from "@/lib/toast";
 
 type WhatIfChange = NonNullable<ForkRequest["changes"]>[number];
 
@@ -267,13 +268,18 @@ export function PreparationWorkspace({
         } else {
           await refresh();
           saveOperation("");
-          setNotice(
+          const noticeMsg =
             op.status === "failed"
               ? `Saved operation failed. ${
                   op.result && op.result.kind !== "completed" ? describeResult(op.result) : ""
                 }`.trim()
-              : `Saved operation ${op.status}.`
-          );
+              : `Saved operation ${op.status}.`;
+          setNotice(noticeMsg);
+          if (op.status === "succeeded") {
+            toast.success("Operation completed successfully.");
+          } else if (op.status === "failed") {
+            toast.error(noticeMsg);
+          }
         }
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : "Polling failed. Reload to recover the same operation.");
@@ -295,7 +301,9 @@ export function PreparationWorkspace({
       await refresh();
       return true;
     } catch (e) {
-      setError(e instanceof ApiError ? messageForCode(e.code, e.message) : e instanceof Error ? e.message : "Request failed.");
+      const msg = e instanceof ApiError ? messageForCode(e.code, e.message) : e instanceof Error ? e.message : "Request failed.";
+      setError(msg);
+      toast.error(msg);
       if (e instanceof ApiError && e.status === 409) await refresh().catch(() => undefined);
       return false;
     } finally {
@@ -334,6 +342,7 @@ export function PreparationWorkspace({
     };
     const op = await mutate<Operation>(`${prefix}/deals/${effectiveDealUuid}/whatifs`, "POST", body);
     saveOperation(op.operation_id);
+    toast.info("What-if simulation queued.");
   }
 
   async function askExplanation() {
@@ -346,6 +355,7 @@ export function PreparationWorkspace({
     };
     const op = await mutate<Operation>(`${prefix}/deals/${effectiveDealUuid}/explanations`, "POST", body);
     saveOperation(op.operation_id);
+    toast.info("Generating explanation...");
   }
 
   async function askClause(clauseText: string) {
@@ -358,6 +368,7 @@ export function PreparationWorkspace({
     };
     const op = await mutate<Operation>(`${prefix}/deals/${effectiveDealUuid}/clause-assessments`, "POST", body);
     saveOperation(op.operation_id);
+    toast.info("Assessing clause against order terms...");
   }
 
   async function createDraft() {
@@ -380,6 +391,7 @@ export function PreparationWorkspace({
 
     const op = await mutate<Operation>(`${prefix}/deals/${effectiveDealUuid}/drafts`, "POST", body);
     saveOperation(op.operation_id);
+    toast.info("Generating message draft...");
   }
 
   if (!deal) {
@@ -544,6 +556,7 @@ export function PreparationWorkspace({
           onResolved={async () => {
             await refresh();
             setNotice("Bank-change hold cleared with verified account.");
+            toast.success("Bank-change hold cleared with verified account.");
           }}
         />
 
@@ -569,6 +582,7 @@ export function PreparationWorkspace({
                     void command(async () => {
                       await mutate(`${prefix}/deals/${effectiveDealUuid}/preparation-settings/reset`, "POST", versions());
                       setNotice("Applied what-if assumptions cleared.");
+                      toast.success("Applied what-if assumptions cleared.");
                     })
                   }
                   title="Reset any temporary what-if parameters"
@@ -778,6 +792,7 @@ export function PreparationWorkspace({
                           command(async () => {
                             await mutate(`${prefix}/whatifs/${f.id}/apply`, "POST", versions());
                             setNotice("Fork applied for review. Confirm and evaluate from the order page.");
+                            toast.success("Simulation applied for review.");
                           })
                         }
                       />
@@ -898,6 +913,7 @@ export function PreparationWorkspace({
                           ...versions(),
                           ...data,
                         });
+                        toast.success("Draft message updated.");
                       })
                     }
                     onReview={attestation =>
@@ -907,6 +923,7 @@ export function PreparationWorkspace({
                           preparation_hash: m.preparation_hash,
                           attestation,
                         });
+                        toast.success("Draft message approved.");
                       })
                     }
                     onReply={body =>
@@ -918,6 +935,7 @@ export function PreparationWorkspace({
                           body,
                         });
                         saveOperation(op.operation_id);
+                        toast.info("Reply submitted for parsing...");
                       })
                     }
                     onAcceptance={(attestation, valid_until, reply_id) =>
@@ -931,6 +949,7 @@ export function PreparationWorkspace({
                           valid_until,
                           supersedes_id: null,
                         });
+                        toast.success("Formal acceptance recorded.");
                       })
                     }
                   />
@@ -957,11 +976,12 @@ export function PreparationWorkspace({
                           decision,
                           reason,
                         });
-                        setNotice(
+                        const msg =
                           decision === "apply"
                             ? "Reply applied for confirmation."
-                            : "Reply rejected; evidence retained."
-                        );
+                            : "Reply rejected; evidence retained.";
+                        setNotice(msg);
+                        toast.success(msg);
                       })
                     }
                   />

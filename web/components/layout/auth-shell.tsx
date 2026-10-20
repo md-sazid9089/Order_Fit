@@ -15,6 +15,7 @@ import { ScopeContext, useScope, type Scope } from "@/components/layout/scope";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 import { fetchSession, getCachedSession, setCachedSession } from "@/lib/session-store";
+import { toast } from "@/lib/toast";
 
 export { useScope };
 const STORAGE_KEY = "orderfit.business";
@@ -102,8 +103,14 @@ export function AuthShell({ children }: { children: ReactNode }) {
       resetSessionState(queryClient);
       try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       setSession(null); setBusinessId("");
+      toast.success("Successfully signed out.");
       router.replace("/auth/signin");
-    } catch (e) { setError(e instanceof Error ? e.message : "Sign out failed."); setBusy(false); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Sign out failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
+      setBusy(false);
+    }
   }
 
   const replaceSession = useCallback((next: Session) => {
