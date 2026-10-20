@@ -31,12 +31,13 @@ export function DealsWorkflowStepper({
     {
       step: 2 as WorkflowStep,
       label: "2. Validate",
-      href: `/deals/new/validate${query}${dealId ? `&poNumber=${encodeURIComponent(dealId)}` : ""}`,
+      // Saved inputs are reviewed and confirmed on the order page itself.
+      href: dealId && dealId !== "new" ? `/deals/${po}${query}` : `/deals/new${query}`,
     },
     {
       step: 3 as WorkflowStep,
       label: "3. Confirm",
-      href: `/deals/${po}/confirm${query}`,
+      href: dealId && dealId !== "new" ? `/deals/${po}${query}` : `/deals/new${query}`,
     },
     {
       step: 4 as WorkflowStep,
