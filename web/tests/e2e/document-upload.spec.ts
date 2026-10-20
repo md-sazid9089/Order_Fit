@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { fillManualOrder, openManualOrderForm } from "./helpers/manual-order";
+import { finishSignup } from "./helpers/signup";
 
 function isoDateFrom(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -48,6 +49,7 @@ test("an owner uploads a text-layer PDF and safely falls back to manual review w
   await page.getByLabel("Email", { exact: true }).fill(`pdf-${suffix}@example.invalid`);
   await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await finishSignup(page);
   await page.getByRole("link", { name: "New order" }).first().click();
   await openManualOrderForm(page, today, isoDateFrom(addDays(new Date(), 365)));
   await fillManualOrder(page, {

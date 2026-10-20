@@ -1580,6 +1580,31 @@ export default function NewDealPage() {
                   </div>
                 </div>
 
+                {/* Saved customer: reuse an existing record instead of creating a duplicate */}
+                <div className="space-y-1.5">
+                  <label htmlFor="saved-customer" className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                    Customer
+                  </label>
+                  <select
+                    id="saved-customer"
+                    value={inputs.customer_id ?? ""}
+                    onChange={(e) => {
+                      const id = e.target.value || null;
+                      setInputs((value) => ({ ...value, customer_id: id }));
+                      setCustomerName(id ? customers.find((c) => c.id === id)?.customer.name ?? "" : "");
+                    }}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-semibold focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                  >
+                    <option value="">New customer (enter the name)</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.customer.name}</option>
+                    ))}
+                  </select>
+                  <div className="text-[11px] text-[#737373] dark:text-neutral-400 [&_button]:mt-1 [&_button]:text-xs">
+                    <CollectionPages query={customerPages} noun="customers" />
+                  </div>
+                </div>
+
                 {/* Customer Name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
@@ -1588,6 +1613,7 @@ export default function NewDealPage() {
                   <input
                     type="text"
                     required
+                    readOnly={!!inputs.customer_id}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Enter customer / client name"

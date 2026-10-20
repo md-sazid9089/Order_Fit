@@ -457,9 +457,9 @@ export default function DealDetailPage({
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 text-2xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
+                  <h2 className="mt-3 text-2xl font-bold font-display text-[#1E2021] dark:text-white tracking-tight">
                     {deal.public_ref}
-                  </div>
+                  </h2>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-[#F4F2ED] dark:border-[#2A2C2D] text-xs text-[#737373] dark:text-neutral-400 flex items-center justify-between">
                   <span className="truncate max-w-[140px]">{customerName}</span>

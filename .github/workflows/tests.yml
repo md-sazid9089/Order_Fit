@@ -65,6 +65,9 @@ jobs:
           node-version: "22"
       - run: npm ci
         working-directory: web
+      # admin-fixtures.spec.ts serves this production build with `next start` against a fixture backend.
+      - run: npm run build
+        working-directory: web
       - run: npx playwright install --with-deps chromium
         working-directory: web
       - name: Browser end-to-end journey
