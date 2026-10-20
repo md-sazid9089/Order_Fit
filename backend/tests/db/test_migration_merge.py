@@ -36,8 +36,49 @@ def _upgrade(url, target):
 
 def test_application_requires_the_sole_merge_head():
     heads = ScriptDirectory.from_config(_config()).get_heads()
-    assert heads == [SCHEMA_REVISION] == ["0023_account_access"]
-    assert ScriptDirectory.from_config(_config()).get_revision(SCHEMA_REVISION).down_revision == "0022_baseline_duplicates"
+    assert heads == [SCHEMA_REVISION] == ["0025_admin_read_isolation"]
+    assert ScriptDirectory.from_config(_config()).get_revision(SCHEMA_REVISION).down_revision == "0024_admin_user_management"
+
+
+def test_admin_forward_repair_preserves_rows_and_removes_shared_role_access(postgres):
+    url, conninfo = _fresh_database(postgres, "orderfit_admin_forward_repair")
+    _upgrade(url, "0023_account_access")
+    with psycopg.connect(conninfo) as connection:
+        user_id = connection.execute(
+            "INSERT INTO app_user(email,full_name) VALUES('repair@example.test','Synthetic repair') RETURNING id"
+        ).fetchone()[0]
+        before = connection.execute("SELECT id,email,full_name,version FROM app_user ORDER BY id").fetchall()
+    _upgrade(url, "0024_admin_user_management")
+    with psycopg.connect(conninfo) as connection:
+        assert connection.execute(
+            "SELECT pg_has_role('orderfit_app','orderfit_admin_api','USAGE')"
+        ).fetchone()[0]
+        assert connection.execute(
+            "SELECT has_any_column_privilege('orderfit_admin_reader','membership','SELECT')"
+        ).fetchone()[0]
+        connection.execute("GRANT orderfit_admin_api TO p1_worker")
+    try:
+        _upgrade(url, "head")
+        with psycopg.connect(conninfo) as connection:
+            assert connection.execute("SELECT id,email,full_name,version FROM app_user ORDER BY id").fetchall() == before
+            assert connection.execute("SELECT id FROM app_user WHERE id=%s", (user_id,)).fetchone()
+            assert connection.execute("SELECT version_num FROM alembic_version").fetchone()[0] == SCHEMA_REVISION
+            assert not connection.execute(
+                "SELECT has_any_column_privilege('orderfit_admin_reader','membership','SELECT')"
+            ).fetchone()[0]
+            assert connection.execute(
+                "SELECT count(*) FROM pg_policies WHERE tablename='membership' AND policyname='admin_summary_read'"
+            ).fetchone()[0] == 0
+            for role in ("orderfit_app", "orderfit_worker", "orderfit_readonly", "p1_worker"):
+                assert not connection.execute(
+                    "SELECT pg_has_role(%s,'orderfit_admin_api','USAGE')", (role,)
+                ).fetchone()[0]
+                assert not connection.execute(
+                    "SELECT has_function_privilege(%s,'admin_read_users(bytea,integer,uuid)','EXECUTE')", (role,)
+                ).fetchone()[0]
+    finally:
+        with psycopg.connect(conninfo) as connection:
+            connection.execute("REVOKE orderfit_admin_api FROM p1_worker,orderfit_app")
 
 
 def test_merge_heads_database_upgrades_through_platform_authority_and_passkeys(postgres):

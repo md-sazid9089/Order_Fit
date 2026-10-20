@@ -185,6 +185,7 @@ def test_function_owner_acl_and_schema_are_narrow(postgres):
             assert not c.execute("SELECT has_schema_privilege(%s,'public','CREATE')", (role,)).fetchone()[0]
         for table in ("document", "security_event", "auth_passkey"):
             assert not c.execute("SELECT has_table_privilege('orderfit_admin_reader',%s,'SELECT')", (table,)).fetchone()[0]
+        assert not c.execute("SELECT has_any_column_privilege('orderfit_admin_reader','membership','SELECT')").fetchone()[0]
 
 
 def test_runtime_rejects_inheritance_of_private_function_owner(postgres):

@@ -36,19 +36,6 @@ class AdminOverview(DTO):
     total_orders: Count
     order_value_by_currency: list[AdminCurrencyTotal]
     orders_without_value: Count
-    privileged_users: Count | None = None
-    active_memberships: Count | None = None
-    revoked_memberships: Count | None = None
-    total_memberships: Count | None = None
-
-
-class AdminUserMembership(DTO):
-    business_id: UUID
-    business_name: Text
-    role: Text
-    created_at: UTCInstant | None = None
-    revoked_at: UTCInstant | None = None
-    version: Version
 
 
 class AdminUser(DTO):
@@ -56,10 +43,7 @@ class AdminUser(DTO):
     email: Text
     full_name: Text
     is_platform_admin: StrictBool
-    status: Text | None = None
     version: Version
-    created_at: UTCInstant | None = None
-    memberships: list[AdminUserMembership] = Field(default_factory=list)
 
 
 class AdminTenant(DTO):
