@@ -51,7 +51,6 @@ import {
   DealCashSeriesViewer,
 } from "@/components/deals/deal-evaluation-inspector";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
-import { createMockEvaluationBundle } from "@/lib/fixture-evaluation";
 import { formatMinor } from "@/lib/approval-model";
 
 function DealDetailSkeleton() {
@@ -125,7 +124,7 @@ export default function DealDetailPage({
   const [showWorkflowActions, setShowWorkflowActions] = useState(false);
 
   // Read saved draft metadata for human context (e.g. customer name)
-  const [customerName, setCustomerName] = useState("Apex Retailers Inc");
+  const [customerName, setCustomerName] = useState("");
 
   const policyPages = useCollection<ConstraintsView>(`/businesses/${businessId}/constraints`, !!businessId);
   const policies = policyPages.items;
@@ -163,142 +162,42 @@ export default function DealDetailPage({
     if (!businessId || !dealId) return;
     const generation = ++loadGeneration.current;
 
-    // Helper to load fallback mock bundle from localStorage or fixtures
-    const loadFallbackBundle = () => {
-      try {
-        let draft: any = null;
-        if (typeof window !== "undefined") {
-          const storedValidated = localStorage.getItem("orderfit_deal_validated");
-          const storedDraft = localStorage.getItem("orderfit_deal_draft");
-          draft = storedValidated ? JSON.parse(storedValidated) : storedDraft ? JSON.parse(storedDraft) : null;
-          if (draft?.customerName) setCustomerName(draft.customerName);
-        }
-        const bundle = createMockEvaluationBundle(dealId, businessId, draft);
-        if (generation !== loadGeneration.current) return;
-        setDeal(bundle.deal);
-        setRole("owner");
-        setEvaluation(bundle.evaluation);
-        setReview(bundle.review);
-        setAcknowledgements([]);
-        setError("");
-      } catch (err) {
-        if (generation === loadGeneration.current) {
-          setError(explain(err, "Could not load this order."));
-        }
-      }
-    };
-
-    // If dealId is not a UUID (e.g. PO-8750, PO-3950, OF-02), attempt to find deal by public_ref or load fallback
-    const isUuid = UUID_REGEX.test(dealId);
-    let resolvedUuid = isUuid ? dealId : null;
-
-    if (!isUuid) {
-      try {
-        const page = await get<{ items: Deal[] }>(`/businesses/${businessId}/deals?limit=50`);
-        const found = page.items?.find(
-          (d) => d.public_ref?.toLowerCase() === dealId.toLowerCase() || d.id === dealId
-        );
-        if (found) {
-          resolvedUuid = found.id;
-        }
-      } catch {
-        // Fallback
-      }
-    }
-
-    if (!resolvedUuid) {
-      loadFallbackBundle();
-      return;
-    }
-
+    // A link may carry the human order reference instead of the order ID; resolve it from saved orders.
+    let resolvedUuid: string | null = UUID_REGEX.test(dealId) ? dealId : null;
     try {
+      if (!resolvedUuid) {
+        const page = await get<{ items: Deal[] }>(`/businesses/${businessId}/deals?limit=50`);
+        resolvedUuid = page.items?.find((d) => d.public_ref?.toLowerCase() === dealId.toLowerCase())?.id ?? null;
+        if (!resolvedUuid) {
+          if (generation === loadGeneration.current) setError(`No saved order "${dealId}" exists for this business.`);
+          return;
+        }
+      }
       const [d, session] = await Promise.all([
         get<Deal>(`/businesses/${businessId}/deals/${resolvedUuid}`),
-        get<Session>("/auth/me").catch(() => ({ memberships: [{ business_id: businessId, role: "owner" }] } as unknown as Session)),
+        get<Session>("/auth/me"),
       ]);
       const [result, checks] = await Promise.all([
-        d.live_evaluation_id ? get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`).catch(() => null) : Promise.resolve(null),
+        d.live_evaluation_id ? get<Evaluation>(`/businesses/${businessId}/evaluations/${d.live_evaluation_id}`) : Promise.resolve(null),
         get<Review>(`/businesses/${businessId}/deals/${resolvedUuid}/review`).catch(() => null),
       ]);
       if (generation !== loadGeneration.current) return;
-      // If review has no snapshot yet or API returned empty candidate_snapshot, synthesize it from d.inputs
-      const enrichedReview: Review | null = checks
-        ? {
-            ...checks,
-            snapshot_hash: checks.snapshot_hash || "4fb9fbebc390b0fa79362e5741891d4a71da5ecd9629b6524635026ecdf8bb3c",
-            candidate_snapshot:
-              checks.candidate_snapshot ||
-              ({
-                schema_version: "confirmed-input.v1",
-                business_id: businessId,
-                deal_id: resolvedUuid,
-                input_version: d.input_version || 3,
-                financial_revision: d.financial_revision || 20,
-                source_revisions: [
-                  {
-                    resource_kind: "payee",
-                    resource_id: "c0c41819-2638-408f-b568-da9f95f402a5",
-                    revision: 1,
-                    content_hash: "bfb75d02b3297c6778b8f4b1a3e1e4addbd6683de1c63c3ba370b119b208f2a8",
-                  },
-                  {
-                    resource_kind: "customer",
-                    resource_id: d.inputs?.customer_id || "99a92c34-757c-4bcd-b252-e385afba5df4",
-                    revision: 1,
-                    content_hash: "7a8b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
-                  },
-                  {
-                    resource_kind: "constraints",
-                    resource_id: d.inputs?.constraints_id || "00000000-0000-0000-0000-000000000005",
-                    revision: 1,
-                    content_hash: "4fb9fbebc390b0fa79362e5741891d4a71da5ecd9629b6524635026ecdf8bb3c",
-                  },
-                ],
-                start_date: d.start_date || "2026-11-02",
-                currency: d.currency || "USD",
-                exponent: d.exponent || 2,
-                opening_cash_minor: d.opening_cash_minor || "21500000",
-                reserve_minor: d.inputs?.reserve_minor || "6000000",
-                baseline_revision: 1,
-                coverage_through: "2027-02-15",
-                order: {
-                  customer_id: d.inputs?.customer_id,
-                  order_date: d.inputs?.order_date,
-                  order_value_minor: d.order_value_minor,
-                  invoice_date: d.inputs?.invoice_date,
-                  delivery_date: d.inputs?.delivery_date,
-                  payment_basis: d.inputs?.payment_basis,
-                  payment_days: d.inputs?.payment_days,
-                  costs: d.inputs?.costs,
-                },
-                owner: {
-                  cash_reserve_floor_minor: d.inputs?.reserve_minor || "6000000",
-                  min_gross_margin_pct: "15.0",
-                },
-              } as any),
-          }
-        : null;
-
       setDeal(d);
-      setRole(session.memberships.find((m) => m.business_id === businessId)?.role ?? "owner");
+      setRole(session.memberships.find((m) => m.business_id === businessId)?.role ?? "");
       setEvaluation(result);
-      setReview(enrichedReview);
+      setReview(checks);
       setAcknowledgements([]);
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("orderfit_deal_validated") || localStorage.getItem("orderfit_deal_draft");
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed.customerName) setCustomerName(parsed.customerName);
-          } catch {
-            // ignore
-          }
-        }
+      if (d.inputs.customer_id) {
+        const customerId = d.inputs.customer_id;
+        get<{ items: Array<{ id: string; customer: { name: string } }> }>(`/businesses/${businessId}/customers?limit=100`)
+          .then((page) => {
+            const name = page.items.find((c) => c.id === customerId)?.customer.name;
+            if (name && generation === loadGeneration.current) setCustomerName(name);
+          })
+          .catch(() => undefined);
       }
     } catch (e) {
-      if (generation === loadGeneration.current) {
-        loadFallbackBundle();
-      }
+      if (generation === loadGeneration.current) setError(explain(e, "Could not load this order."));
     }
   }, [businessId, dealId]);
 
@@ -461,12 +360,12 @@ export default function DealDetailPage({
   }
 
   // Derived financial summary stats from deal inputs & evaluation
-  const orderValueDisplay = deal ? formatMinor(deal.order_value_minor, deal.currency) : "$0.00";
+  const orderValueDisplay = deal ? formatMinor(deal.order_value_minor, deal.currency) : "";
   const costSumMinor =
     deal?.inputs?.costs?.reduce((acc, c) => acc + BigInt(c.amount_minor || "0"), BigInt(0)) ?? BigInt(0);
-  const costSumDisplay = deal ? formatMinor(costSumMinor.toString(), deal.currency) : "$0.00";
-  const deliveryDateDisplay = deal?.inputs?.delivery_date ?? "14 Dec 2026";
-  const paymentTermsDisplay = deal?.inputs ? `${deal.inputs.payment_days}d from ${deal.inputs.payment_basis}` : "45d";
+  const costSumDisplay = deal ? formatMinor(costSumMinor.toString(), deal.currency) : "";
+  const deliveryDateDisplay = deal?.inputs?.delivery_date ?? "Not set";
+  const paymentTermsDisplay = deal?.inputs?.payment_days != null && deal.inputs.payment_basis ? `${deal.inputs.payment_days}d from ${deal.inputs.payment_basis}` : "Not set";
 
   // Decision label with warm stone palette matching overview
   const decisionBadge = evaluation?.decision
@@ -529,22 +428,28 @@ export default function DealDetailPage({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-bold text-[#1E2021] dark:text-white">
-                    Feasibility Evaluation Complete
+                    {!evaluation
+                      ? "Not evaluated yet: review and confirm the saved inputs below"
+                      : deal.is_stale
+                      ? "Inputs changed: re-evaluate before relying on this result"
+                      : "Engine evaluation complete"}
                   </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#8A5A00] dark:text-amber-400">
-                    Counter-Offer Strategy Recommended
-                  </span>
+                  {evaluation && !deal.is_stale && (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4F2ED] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] ${decisionBadge.textColor}`}>
+                      {decisionBadge.label}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              {evaluation && !deal.is_stale && <div className="flex items-center gap-2 shrink-0">
                 <Link
-                  href={`/deals/${dealId}/negotiate?businessId=${businessId}`}
+                  href={`/deals/${deal.id}/negotiate?businessId=${businessId}`}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
                 >
                   <span>Proceed to Step 5: What-If &amp; Approval</span>
                   <ArrowRight className="size-3.5" />
                 </Link>
-              </div>
+              </div>}
             </div>
 
             {/* Deal Identity & Key-Metric Cards matching Overview style */}
@@ -578,7 +483,7 @@ export default function DealDetailPage({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-7 rounded-lg bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 flex items-center justify-center">
-                        <span className="font-bold text-xs">$</span>
+                        <span className="font-bold text-[10px]">{deal.currency}</span>
                       </div>
                       <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400 uppercase tracking-wider">
                         Contract Value
@@ -911,7 +816,7 @@ export default function DealDetailPage({
               ) : review?.snapshot_hash ? (
                 <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-neutral-200 text-xs font-medium">
                   <CheckCircle2 className="size-4 shrink-0 text-[#1E2021] dark:text-white" />
-                  <span>All order inputs and source versions are verified and ready for confirmation.</span>
+                  <span>The saved inputs pass the review checks and are ready for confirmation.</span>
                 </div>
               ) : (
                 <div role="status" aria-busy="true" className="space-y-2">

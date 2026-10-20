@@ -15,7 +15,6 @@ import type { EvaluationResultV1 as Evaluation } from "@/lib/generated-api";
 import { formatMinor } from "@/lib/approval-model";
 import { fieldClass } from "@/components/manual-order-inputs";
 import { get } from "@/lib/orderfit-api";
-import { createMockSeriesPoints } from "@/lib/fixture-evaluation";
 
 interface DealEvaluationInspectorProps {
   evaluation: Evaluation;
@@ -524,16 +523,10 @@ export function DealCashSeriesViewer({
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (active) {
-          // Gracefully fallback to deterministic fixture series points
-          try {
-            const fallbackPoints = createMockSeriesPoints(scenario, option);
-            setSeriesPoints(fallbackPoints);
-            setSeriesError("");
-          } catch (err) {
-            setSeriesError(err instanceof Error ? err.message : "The daily series could not be loaded.");
-          }
+          setSeriesPoints([]);
+          setSeriesError(err instanceof Error ? err.message : "The daily series could not be loaded.");
           setLoading(false);
         }
       });

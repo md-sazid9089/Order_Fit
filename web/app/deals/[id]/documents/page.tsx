@@ -40,7 +40,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
-import { createMockEvaluationBundle } from "@/lib/fixture-evaluation";
 
 const ROLES: Record<string, string[]> = {
   po: ["customer_order"],
@@ -151,38 +150,12 @@ export default function DealDocumentsPage({
         setFields(extracted.items);
         setError("");
       } else {
-        // Fallback for simulation / mock order ref (e.g. PO-3950)
-        let draft: any = null;
-        if (typeof window !== "undefined") {
-          const stored = localStorage.getItem("orderfit_deal_validated") || localStorage.getItem("orderfit_deal_draft");
-          if (stored) {
-            try {
-              draft = JSON.parse(stored);
-            } catch {
-              // ignore
-            }
-          }
-        }
-        const bundle = createMockEvaluationBundle(scope.rawRef, scope.businessId, draft);
-        setDeal(bundle.deal);
+        setDeal(null);
         setFields([]);
-        setError("");
+        setError(`No saved order "${scope.rawRef}" exists for this business.`);
       }
     } catch (e) {
-      // If backend route 404s/400s or check request fields fails, provide smooth fallback mock
-      try {
-        let draft: any = null;
-        if (typeof window !== "undefined") {
-          const stored = localStorage.getItem("orderfit_deal_validated") || localStorage.getItem("orderfit_deal_draft");
-          if (stored) draft = JSON.parse(stored);
-        }
-        const bundle = createMockEvaluationBundle(scope.rawRef, scope.businessId, draft);
-        setDeal(bundle.deal);
-        setFields([]);
-        setError("");
-      } catch {
-        setError(e instanceof Error ? e.message : "Could not load documents.");
-      }
+      setError(e instanceof Error ? e.message : "Could not load documents.");
     } finally {
       setLoading(false);
     }
