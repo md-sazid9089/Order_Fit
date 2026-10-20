@@ -596,3 +596,47 @@
   line-height: 1.6;
 }
 .script-text:lang(zh-Hans) { font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif; }
+
+/* Premium Skeleton UI Shimmer Animation matching OrderFit / Settle color tokens */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ECEAE4 0%,
+    #F7F6F5 50%,
+    #ECEAE4 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer,
+html.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #242627 0%,
+    #333638 50%,
+    #242627 100%
+  );
+  background-size: 200% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none !important;
+    background: #ECEAE4;
+  }
+  .dark .skeleton-shimmer,
+  html.dark .skeleton-shimmer {
+    background: #2A2C2D;
+  }
+}
+

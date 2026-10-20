@@ -12,7 +12,6 @@ export function OnboardingTour() {
     totalSteps,
     isNavigating,
     targetRect,
-    startTour,
     nextStep,
     prevStep,
     skipTour,
@@ -174,7 +173,7 @@ export function OnboardingTour() {
 
   return (
     <div
-      className="fixed inset-0 z-[9990] overflow-hidden select-none pointer-events-auto"
+      className="fixed inset-0 z-[9990] overflow-hidden select-none pointer-events-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-tour-title"
@@ -182,7 +181,7 @@ export function OnboardingTour() {
     >
       {/* SVG Backdrop with Cutout Spotlight */}
       <svg
-        className="fixed inset-0 w-full h-full pointer-events-none transition-all duration-300"
+        className="fixed inset-0 w-full h-full pointer-events-auto transition-all duration-300"
         aria-hidden="true"
       >
         <defs>
@@ -232,7 +231,7 @@ export function OnboardingTour() {
       <div
         ref={popoverRef}
         style={popoverStyle}
-        className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-2xl transition-all duration-200"
+        className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-2xl transition-all duration-200 pointer-events-auto"
       >
         {/* Header row: Badge, progress indicator, and Close button */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
@@ -326,7 +325,7 @@ export function OnboardingTour() {
 
             <button
               type="button"
-              onClick={isFirstStep ? startTour : nextStep}
+              onClick={nextStep}
               disabled={isNavigating}
               className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:hover:bg-neutral-200 dark:text-[#1E2021] text-xs font-semibold transition-all cursor-pointer shadow-xs disabled:opacity-50"
             >
