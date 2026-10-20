@@ -129,6 +129,7 @@ Target contract catalogue, including implemented and proposed operations. Regist
 | admin_orders | `GET /api/v1/admin/orders` | platform_admin | `admin.orders` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
 | admin_system | `GET /api/v1/admin/system` | platform_admin | `admin.system` | app_user,auth_session,business,deal | P8 | admin restricted-role gate |
 | admin_logs | `GET /api/v1/admin/logs` | platform_admin | `admin.logs_unavailable` | none | P8 | admin unavailable gate |
+| admin_user_role | `PATCH /api/v1/admin/users/{user_id}/role` | platform_admin | `admin.user_role` | app_user,auth_session,security_event | P8 | admin role mutation gate |
 | account_access_capabilities | `GET /api/v1/auth/account-access` | public | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
 | email_verification_request | `POST /api/v1/auth/email-verification/request` | self | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |
 | email_verification_confirm | `POST /api/v1/auth/email-verification/confirm` | self | `account_access` | account_access_token,account_mail_outbox | P7 | V04,V12 |

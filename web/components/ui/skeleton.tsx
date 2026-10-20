@@ -879,10 +879,10 @@ function SkeletonAdminPlatform({
   };
   const columns =
     section === "users"
-      ? ["ID", "Name", "Email", "Platform administrator", "Version"]
+      ? ["ID", "Name", "Email", "Platform administrator", "Version", "Actions"]
       : section === "tenants"
-      ? ["ID", "Business", "Currency", "Timezone", "Status", "Created"]
-      : ["ID", "Business ID", "Status", "Recorded order value", "Created"];
+      ? ["ID", "Business", "Currency", "Timezone", "Status", "Created", "Actions"]
+      : ["ID", "Business ID", "Status", "Recorded order value", "Created", "Actions"];
 
   return (
     <div
@@ -892,99 +892,205 @@ function SkeletonAdminPlatform({
       {...props}
     >
       <span className="sr-only">Loading {titles[section] || "administrative data"}…</span>
-      <header className="flex flex-wrap items-center justify-between gap-3 pl-12 lg:pl-0">
-        <Skeleton className="h-8 w-56" />
-        <div className="flex gap-3">
-          <Skeleton className="size-9 rounded-lg" />
-          <Skeleton className="h-9 w-32 rounded-lg" />
+
+      {/* Header with Breadcrumb and Action Toolbar */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-3" />
+          <Skeleton className="h-3 w-32" />
         </div>
-      </header>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-60" />
+              <Skeleton className="h-5 w-28 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-96 max-w-full" />
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-9 w-32 rounded-xl" />
+            <Skeleton className="size-9 rounded-xl" />
+          </div>
+        </div>
+      </div>
 
-      <Skeleton className="h-4 w-96 max-w-full" />
-
-      {/* Global totals cards when overview */}
+      {/* Overview Skeleton */}
       {section === "overview" && (
-        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-4">
-          <div className="space-y-1">
-            <Skeleton className="h-6 w-36" />
-            <Skeleton className="h-3.5 w-48" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-1.5 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-                <Skeleton className="h-3.5 w-20" />
-                <Skeleton className="h-7 w-24" />
+              <div
+                key={i}
+                className="p-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="size-8 rounded-lg" />
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-8 w-28" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
               </div>
             ))}
           </div>
-          <div className="pt-2 space-y-2 border-t border-neutral-200 dark:border-neutral-800">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-64" />
-            <Skeleton className="h-4 w-52" />
-          </div>
-        </section>
-      )}
 
-      {/* System checks card when system */}
-      {section === "system" && (
-        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-3">
-          <Skeleton className="h-6 w-44" />
-          <Skeleton className="h-3.5 w-48" />
-          <div className="space-y-2 pt-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between py-1.5 border-b border-neutral-100 dark:border-neutral-800">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-4 w-16 rounded-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 p-6 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-4">
+              <Skeleton className="h-6 w-56" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Skeleton className="h-24 rounded-xl" />
+                <Skeleton className="h-24 rounded-xl" />
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              <Skeleton className="h-4 w-72" />
+            </div>
 
-      {/* Table section when users, tenants, orders */}
-      {["users", "tenants", "orders"].includes(section) && (
-        <section className="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 space-y-4">
-          <Skeleton className="h-4 w-72" />
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr>
-                  {columns.map((_, idx) => (
-                    <th key={idx} className="p-3">
-                      <Skeleton className="h-4 w-20" />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 5 }).map((_, rowIdx) => (
-                  <tr key={rowIdx} className="border-t border-neutral-200 dark:border-neutral-800">
-                    {columns.map((_, colIdx) => (
-                      <td key={colIdx} className="p-3">
-                        <Skeleton
-                          className={cn(
-                            "h-4",
-                            colIdx === 0
-                              ? "w-24 font-mono"
-                              : colIdx === 1
-                              ? "w-32"
-                              : colIdx === 2
-                              ? "w-40"
-                              : "w-20"
-                          )}
-                        />
-                      </td>
-                    ))}
-                  </tr>
+            <div className="p-6 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-40" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 rounded-lg" />
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </section>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="p-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="size-9 rounded-xl" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* System Skeleton */}
+      {section === "system" && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-[#E8E6E1] dark:border-[#2A2C2D]">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-6 w-52" />
+                  <Skeleton className="h-3.5 w-72" />
+                </div>
+              </div>
+              <Skeleton className="h-9 w-32 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 rounded-xl" />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="p-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Table Skeleton (users, tenants, orders) */}
+      {["users", "tenants", "orders"].includes(section) && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <Skeleton className="h-9 w-full sm:w-80 rounded-xl" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-28 rounded-xl" />
+                <Skeleton className="h-8 w-28 rounded-xl" />
+              </div>
+            </div>
+            <Skeleton className="h-3 w-64" />
+          </div>
+
+          <div className="rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] overflow-hidden">
+            <div className="p-4 border-b border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between">
+              {columns.map((_, idx) => (
+                <Skeleton key={idx} className="h-4 w-20" />
+              ))}
+            </div>
+            <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {Array.from({ length: 5 }).map((_, rowIdx) => (
+                <div key={rowIdx} className="p-4 flex items-center justify-between gap-4">
+                  <Skeleton className="h-4 w-24 rounded-md font-mono" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-44 font-mono" />
+                  <Skeleton className="h-4 w-24 rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-7 w-20 rounded-lg" />
+                </div>
+              ))}
+            </div>
+            <div className="p-4 bg-neutral-50/50 dark:bg-neutral-900/30 border-t border-[#E8E6E1] dark:border-[#2A2C2D] flex items-center justify-between">
+              <Skeleton className="h-4 w-60" />
+              <Skeleton className="h-9 w-40 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Informational Skeleton (engine, security, logs) */}
+      {["engine", "security", "logs"].includes(section) && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-10 rounded-xl" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-6 w-64" />
+                <Skeleton className="h-3 w-80" />
+              </div>
+            </div>
+            <Skeleton className="h-12 w-full" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="p-5 rounded-2xl border border-[#E8E6E1] dark:border-[#2A2C2D] bg-white dark:bg-[#181A1B] space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                  <Skeleton className="size-4 rounded-full" />
+                </div>
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
 }
+
 
 /**
  * Documents & Verification page skeleton matching deals/[id]/documents layout.

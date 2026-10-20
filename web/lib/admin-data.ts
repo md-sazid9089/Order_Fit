@@ -48,11 +48,21 @@ export class AdminData {
     this.state = emptyAdminState();
     this.publish(this.state);
   }
+  updateRow(updatedRow: AdminRow) {
+    this.update({
+      rows: this.state.rows.map((r) => (r.id === updatedRow.id ? updatedRow : r)),
+    });
+  }
   async load(section: AdminSection, more = false) {
     if (more && (this.state.loading || !this.state.next)) return;
     const cursor = more ? this.state.next : null;
     const previous = more ? this.state.rows : [];
-    this.clear();
+    if (!more) {
+      this.clear();
+    } else {
+      this.generation++;
+      this.controller?.abort();
+    }
     const generation = this.generation;
     const controller = this.controller = new AbortController();
     const current = () => generation === this.generation && !controller.signal.aborted;

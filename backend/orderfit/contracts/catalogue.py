@@ -1385,6 +1385,9 @@ for suffix, response, collection in [
         collection=collection)
 add("GET", "/api/v1/admin/logs", "admin_logs", None, w.ErrorEnvelope, "platform_admin",
     "admin.logs_unavailable", "none", "P8", "admin unavailable gate", status=503)
+add("PATCH", "/api/v1/admin/users/{user_id}/role", "admin_user_role", ad.AdminUserRoleUpdate,
+    ad.AdminUser, "platform_admin", "admin.user_role", "app_user,auth_session,security_event",
+    "P8", "admin role mutation gate")
 
 for method, path, name, req, response, permission, status in [
     ("GET", "/auth/account-access", "account_access_capabilities", None, aa.AccountAccessCapabilities, "public", 200),

@@ -287,3 +287,98 @@ def test_admin_validated_resilience():
         _validated(AdminUser, {"invalid": "payload"})
     assert exc_info.value.status == 503
     assert exc_info.value.code == "ADMIN_DATA_UNSUPPORTED"
+
+
+def test_admin_update_user_role_self_demotion_rejected():
+    """Admin cannot demote their own platform administrator privileges."""
+    from orderfit.services import admin
+    mock_identity = MagicMock()
+    mock_db = MagicMock()
+    mock_identity.database = mock_db
+    mock_identity.config.admin_reads_enabled = True
+
+    mock_c = MagicMock()
+    admin_id = uuid4()
+    mock_scope = MagicMock()
+    mock_scope.user_id = admin_id
+    mock_scope.session_id = uuid4()
+
+    mock_db.transaction.return_value.__enter__.return_value = mock_c
+    from unittest.mock import patch
+    with patch("orderfit.store.admin_repository.prerequisites", return_value=True), \
+         patch("orderfit.store.admin_repository.identity", return_value=mock_scope):
+        with pytest.raises(ApplicationError) as exc_info:
+            admin.update_user_role(mock_identity, "token-123", admin_id, False)
+
+    assert exc_info.value.status == 409
+    assert exc_info.value.code == "CANNOT_DEMOTE_SELF"
+
+
+def test_admin_update_user_role_success():
+    """Admin can promote another user to platform admin."""
+    from orderfit.contracts.admin import AdminUser
+    from orderfit.services import admin
+    mock_identity = MagicMock()
+    mock_db = MagicMock()
+    mock_identity.database = mock_db
+    mock_identity.config.admin_reads_enabled = True
+
+    mock_c = MagicMock()
+    admin_id = uuid4()
+    target_id = uuid4()
+    mock_scope = MagicMock()
+    mock_scope.user_id = admin_id
+    mock_scope.session_id = uuid4()
+
+    mock_db.transaction.return_value.__enter__.return_value = mock_c
+    expected_user = AdminUser(
+        id=target_id,
+        email="promoted@example.com",
+        full_name="Promoted User",
+        is_platform_admin=True,
+        version=2,
+    )
+    from unittest.mock import patch
+    with patch("orderfit.store.admin_repository.prerequisites", return_value=True), \
+         patch("orderfit.store.admin_repository.identity", return_value=mock_scope), \
+         patch("orderfit.store.admin_repository.update_user_role", return_value=expected_user) as mock_repo:
+        result = admin.update_user_role(mock_identity, "token-123", target_id, True)
+        assert result.id == target_id
+        assert result.is_platform_admin is True
+        mock_repo.assert_called_once_with(mock_c, "token-123", target_id, True)
+
+
+def test_admin_update_user_role_error_mappings():
+    """DB errors OA404 and OA492 are correctly mapped to NOT_FOUND and LAST_ADMIN."""
+    from sqlalchemy.exc import DBAPIError
+    from orderfit.services import admin
+
+    mock_identity = MagicMock()
+    mock_db = MagicMock()
+    mock_identity.database = mock_db
+    mock_identity.config.admin_reads_enabled = True
+
+    admin_id = uuid4()
+    target_id = uuid4()
+    mock_scope = MagicMock()
+    mock_scope.user_id = admin_id
+
+    # Test OA404 (user not found)
+    exc_404 = DBAPIError("SELECT ...", {}, Exception("User not found"))
+    exc_404.orig = MagicMock(sqlstate="OA404")
+    mock_db.transaction.side_effect = exc_404
+
+    with pytest.raises(ApplicationError) as err_404:
+        admin.update_user_role(mock_identity, "token-123", target_id, True)
+    assert err_404.value.status == 404
+    assert err_404.value.code == "NOT_FOUND"
+
+    # Test OA492 (last admin)
+    exc_492 = DBAPIError("SELECT ...", {}, Exception("Last admin"))
+    exc_492.orig = MagicMock(sqlstate="OA492")
+    mock_db.transaction.side_effect = exc_492
+
+    with pytest.raises(ApplicationError) as err_492:
+        admin.update_user_role(mock_identity, "token-123", target_id, False)
+    assert err_492.value.status == 409
+    assert err_492.value.code == "LAST_ADMIN"

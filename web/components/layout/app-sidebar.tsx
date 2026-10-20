@@ -8,7 +8,7 @@ import {
   PanelLeftClose, PanelLeft, FilePlus2, UserRound, Wallet, Menu, LogOut,
   Activity, Cpu, Terminal, Server, ArrowLeft, Package, LayoutDashboard,
 } from "lucide-react";
-import type { NavItem } from "@/lib/p7-model";
+import { activeHref, type NavItem } from "@/lib/p7-model";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getCachedSession, fetchSession } from "@/lib/session-store";
 
@@ -196,11 +196,7 @@ export function AppSidebar({
 
   const activeCurrent =
     current ??
-    (pathname === "/admin"
-      ? "/admin"
-      : activeLinks.find(
-          (item) => item.href === pathname || (item.href !== "/" && pathname?.startsWith(item.href))
-        )?.href ?? null);
+    (pathname ? activeHref(pathname, activeLinks) : null);
 
   const effectiveCompanyName =
     companyName ||

@@ -46,6 +46,10 @@ class AdminUser(DTO):
     version: Version
 
 
+class AdminUserRoleUpdate(DTO):
+    is_platform_admin: StrictBool
+
+
 class AdminTenant(DTO):
     id: UUID
     name: Text

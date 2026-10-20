@@ -34,6 +34,25 @@ test("every contract role is selectable and labelled, and the most specific nav 
   assert.equal(m.activeHref("/deals/abc/negotiate"), "/deals");
   assert.equal(m.activeHref("/settings"), "/settings");
   assert.equal(m.activeHref("/unknown"), null);
+
+  const adminItems = [
+    { href: "/admin", label: "Platform Overview" },
+    { href: "/admin/users", label: "User Management" },
+    { href: "/admin/orders", label: "Orders Management" },
+    { href: "/admin/tenants", label: "Tenant Namespaces" },
+    { href: "/admin/engine", label: "Engine Invariants" },
+    { href: "/admin/security", label: "Security & Gates" },
+    { href: "/admin/logs", label: "Cluster Audit Log" },
+    { href: "/admin/system", label: "System & Nodes" },
+  ];
+  assert.equal(m.activeHref("/admin", adminItems), "/admin");
+  assert.equal(m.activeHref("/admin/users", adminItems), "/admin/users");
+  assert.equal(m.activeHref("/admin/orders", adminItems), "/admin/orders");
+  assert.equal(m.activeHref("/admin/tenants", adminItems), "/admin/tenants");
+  assert.equal(m.activeHref("/admin/engine", adminItems), "/admin/engine");
+  assert.equal(m.activeHref("/admin/security", adminItems), "/admin/security");
+  assert.equal(m.activeHref("/admin/logs", adminItems), "/admin/logs");
+  assert.equal(m.activeHref("/admin/system", adminItems), "/admin/system");
 });
 
 test("last-owner and invitation errors are explained, and invalid or expired invitations stay uniform", () => {

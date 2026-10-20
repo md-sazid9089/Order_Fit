@@ -86,3 +86,15 @@ def listing(c, token, name, limit, position):
                  "CAST(:at AS timestamptz),CAST(:id AS uuid))")
     data = c.execute(text(query), params).scalar_one()
     return [_validated(MODELS[name], row) for row in data]
+
+
+def update_user_role(c, token, target_user_id, is_admin):
+    data = c.execute(
+        text("SELECT public.admin_mutate_user_role(:digest, CAST(:target_id AS uuid), :is_admin)"),
+        {
+            "digest": digest_token(token),
+            "target_id": str(target_user_id),
+            "is_admin": is_admin,
+        },
+    ).scalar_one()
+    return _validated(AdminUser, data)

@@ -50,6 +50,12 @@ def read_connection(identity, token):
             raise ApplicationError(401, "INVALID_SESSION", "Sign in to continue.") from exc
         if state == "OA403":
             raise ApplicationError(403, "FORBIDDEN", "Administrative privileges required.") from exc
+        if state == "OA404":
+            raise ApplicationError(404, "NOT_FOUND", "User not found.") from exc
+        if state == "OA491":
+            raise ApplicationError(409, "CANNOT_DEMOTE_SELF", "You cannot remove your own platform administrator role.") from exc
+        if state == "OA492":
+            raise ApplicationError(409, "LAST_ADMIN", "Cannot remove the last platform administrator.") from exc
         if state == "OA422":
             raise ApplicationError(503, "ADMIN_DATA_UNSUPPORTED",
                                    "Recorded administrative data cannot be displayed safely.") from exc
@@ -121,3 +127,10 @@ def system(identity, token, storage):
     with read_connection(identity, token):
         pass
     return AdminSystem(checked_at=datetime.now(UTC), status=status, checks=checks)
+
+
+def update_user_role(identity, token: str, target_user_id: UUID, is_admin: bool):
+    with read_connection(identity, token) as (c, scope):
+        if scope.user_id == target_user_id and not is_admin:
+            raise ApplicationError(409, "CANNOT_DEMOTE_SELF", "You cannot remove your own platform administrator role.")
+        return repository.update_user_role(c, token, target_user_id, is_admin)

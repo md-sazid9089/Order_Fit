@@ -1,5 +1,7 @@
 """Typed, capability-gated, read-only platform administration."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, Request
 
 from orderfit.api.deps import identity_service, require_admin, session_token
@@ -10,6 +12,7 @@ from orderfit.contracts.admin import (
     AdminSystem,
     AdminTenant,
     AdminUser,
+    AdminUserRoleUpdate,
 )
 from orderfit.contracts.primitives import Page
 from orderfit.contracts.workflow import ErrorEnvelope
@@ -54,3 +57,16 @@ def logs(request: Request):
 @router.get("/system", response_model=AdminSystem, operation_id="admin_system")
 def system(request: Request):
     return admin.system(identity_service(request), session_token(request), getattr(request.app.state, "documents", None))
+
+
+@router.patch("/users/{user_id}/role", response_model=AdminUser, operation_id="admin_user_role")
+def user_role(request: Request, user_id: UUID, body: AdminUserRoleUpdate):
+    csrf = request.cookies.get("orderfit_csrf")
+    if csrf:
+        identity_service(request).validate_csrf(csrf, request.headers.get("X-CSRF-Token"), request.headers.get("Origin"))
+    return admin.update_user_role(
+        identity_service(request),
+        session_token(request),
+        user_id,
+        body.is_platform_admin,
+    )
