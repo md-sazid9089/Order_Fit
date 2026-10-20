@@ -519,7 +519,7 @@ export default function NewDealPage() {
   return (
     <main className="p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-[1560px] mx-auto w-full min-w-0">
       {/* Top Header & Navigation Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+      <div data-tour="deals-new-header" className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={businessId ? `/deals?businessId=${businessId}` : "/deals"}
@@ -661,7 +661,7 @@ export default function NewDealPage() {
           {/* ========================================================================= */}
           {/* INPUTS 1 - 3 (Purchase Order, Supplier Quotation, Cash Position)          */}
           {/* ========================================================================= */}
-          <div className="space-y-3">
+          <div data-tour="deals-new-terms" className="space-y-3">
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 w-full">
               {/* Card 1: Purchase Order or Contract (MANDATORY) */}

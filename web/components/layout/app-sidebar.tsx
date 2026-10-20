@@ -292,7 +292,11 @@ export function AppSidebar({
           </div>
 
           {/* Primary Navigation */}
-          <nav aria-label={isMobileView ? "Mobile Primary Navigation" : "Primary Navigation"} className="px-3 space-y-1.5">
+          <nav
+            data-tour={!isMobileView ? "sidebar-nav" : undefined}
+            aria-label={isMobileView ? "Mobile Primary Navigation" : "Primary Navigation"}
+            className="px-3 space-y-1.5"
+          >
             {activeLinks.map((item) => {
               const Icon = item.href === "/admin" ? (isAdminMode ? Activity : Server) : (ICONS[item.href] ?? Layers);
               const label = (item.href === "/admin" && !isAdminMode) ? "Admin Panel" : (LABELS[item.href] ?? item.label);

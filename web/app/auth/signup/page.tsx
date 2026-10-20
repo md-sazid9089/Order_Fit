@@ -79,7 +79,11 @@ export default function SignUpPage() {
       });
       setCachedSession(session);
       toast.success("Account created successfully.");
-      router.replace("/deals");
+      const businessId = session.memberships?.[0]?.business_id;
+      const target = businessId
+        ? `/overview?businessId=${businessId}&onboarding=start`
+        : "/overview?onboarding=start";
+      router.replace(target);
     } catch (cause) {
       const msg = cause instanceof ApiError || cause instanceof Error ? cause.message : "Sign up failed.";
       setError(msg);

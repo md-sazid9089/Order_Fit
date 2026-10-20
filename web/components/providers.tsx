@@ -10,6 +10,9 @@ import { Toaster } from "@/components/ui/sonner"
 import { SmoothScrollProvider } from "@/components/layout/smooth-scroll-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 
+import { OnboardingProvider } from "@/components/onboarding/onboarding-context"
+import { OnboardingTour } from "@/components/onboarding/onboarding-tour"
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
     () =>
@@ -32,7 +35,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <SessionExpiryHandler queryClient={queryClient} />
         <SmoothScrollProvider>
-          {children}
+          <OnboardingProvider>
+            {children}
+            <OnboardingTour />
+          </OnboardingProvider>
         </SmoothScrollProvider>
         <Toaster />
       </QueryClientProvider>

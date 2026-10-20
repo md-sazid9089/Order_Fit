@@ -288,6 +288,7 @@ export default function OverviewPage() {
           <div className="flex items-center flex-wrap gap-2.5">
             <Link
               href={`/deals${query}`}
+              data-tour="explore-deals-btn"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] text-[#1E2021] dark:text-white hover:bg-[#FAF9F7] dark:hover:bg-[#222425] text-xs font-semibold shadow-xs transition-colors"
             >
               <Layers className="size-3.5 text-[#004D3B] dark:text-[#B5F2C6]" />
@@ -329,7 +330,7 @@ export default function OverviewPage() {
         )}
 
         {/* 4 Top Metric KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="overview-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Opening cash balance */}
           <div className="p-5 bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
             <div>
@@ -440,7 +441,7 @@ export default function OverviewPage() {
         </div>
 
         {/* Main Graph: Cash Flow */}
-        <div className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs">
+        <div data-tour="overview-cashflow" className="bg-white dark:bg-[#181A1B] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-2xl p-5 sm:p-6 shadow-xs">
           {/* Header & Legend */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#F4F2ED] dark:border-[#2A2C2D]">
             <div className="space-y-1">
