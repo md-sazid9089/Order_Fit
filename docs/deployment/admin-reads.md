@@ -2,7 +2,15 @@
 
 This is a controlled deployment procedure, not a startup hook. The implementation is disabled by default. Do not apply it to an assumed database target or use migration credentials in API/worker processes.
 
-1. Identify the exact environment/database, current schema revision, restricted API login and distinct worker login. Review `0021_admin_reads` SQL and take the normal deployment backup. Upgrade through the ordinary manual migrator procedure to `0021_admin_reads`; the new API and worker require this head even when admin reads are disabled. Never roll back immutable history to disable the feature.
+20 October repair: the sole required head is `0025_admin_read_isolation`, after
+the recovered historical `0024_admin_user_management`. Revision 0025 restores
+bounded summaries and removes shared-role/membership-reader access from 0024.
+The configured Neon database has been upgraded through that forward repair;
+see [current evidence](../admin_readiness_2026-10-20.md). Preserve both revisions
+in migration history and do not import 0024's historical application-level tenant
+authorization bypass. API and worker still need separate restricted logins.
+
+1. Identify the exact environment/database, current schema revision, restricted API login and distinct worker login. Review `0021_admin_reads` SQL and take the normal deployment backup. That revision introduced this feature; use the current checkout's Alembic head and `store/db.py` required revision as the deployment target, preserving every subsequent migration. If the deployed schema is ahead of the checkout, reconcile the source and applied migration before deployment; do not downgrade, stamp or rerun old migrations. Never roll back immutable history to disable the feature.
 2. The migration creates two NOLOGIN, NOBYPASSRLS roles. `orderfit_admin_reader` owns only the five new security-definer functions, has narrow column grants and SELECT policies on four tables, and cannot CREATE in public. Its UPDATE(id) privilege plus UPDATE policy with `WITH CHECK(false)` permits row locks, not updates. Only the migrator can assume it. `orderfit_admin_api` has EXECUTE on those functions and no global table grants. Neither runtime login may inherit the function-owner role.
 3. New API logins created by `orderfit.store.provision.provision_login` receive `orderfit_admin_api`; worker logins do not. For an existing API login, explicitly grant `orderfit_admin_api` to that **verified API login** through the migrator. Do not grant it to `orderfit_app` (the worker inherits that role), `orderfit_worker`, PUBLIC, or a shared database credential. No application startup code grants roles.
 4. Keep `ADMIN_READS_ENABLED=false` while deploying the backend and capability-aware frontend. The local runtime launcher forwards this setting; Compose exposes it only to the API. Do not enable from the old frontend's constant flag.

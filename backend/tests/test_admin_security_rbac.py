@@ -181,9 +181,11 @@ def test_session_token_extraction_and_failure():
     assert session_token(req_cookie) == "my-cookie-token"
 
 
-def test_admin_user_dto_multi_tenant_memberships():
-    """Verify AdminUser DTO correctly handles multi-tenant membership aggregation."""
-    from orderfit.contracts.admin import AdminUser, AdminUserMembership
+def test_admin_user_dto_rejects_tenant_membership_expansion():
+    """Global account summaries cannot acquire unsupported tenant authority fields."""
+    from pydantic import ValidationError
+
+    from orderfit.contracts.admin import AdminUser
 
     user_id = uuid4()
     biz1 = uuid4()
@@ -217,13 +219,9 @@ def test_admin_user_dto_multi_tenant_memberships():
         ],
     }
 
-    user = AdminUser.model_validate(data)
-    assert user.id == user_id
-    assert len(user.memberships) == 2
-    assert user.memberships[0].business_id == biz1
-    assert user.memberships[0].role == "owner"
-    assert user.memberships[1].business_id == biz2
-    assert user.memberships[1].role == "commercial_lead"
+    with pytest.raises(ValidationError) as error:
+        AdminUser.model_validate(data)
+    assert {issue["loc"][0] for issue in error.value.errors()} == {"status", "created_at", "memberships"}
 
 
 def test_admin_user_dto_zero_memberships():
@@ -236,20 +234,19 @@ def test_admin_user_dto_zero_memberships():
         "email": "nomembership@example.com",
         "full_name": "Solo User",
         "is_platform_admin": True,
-        "status": "active",
         "version": 1,
-        "created_at": "2026-10-18T10:00:00Z",
-        "memberships": [],
     }
 
     user = AdminUser.model_validate(data)
     assert user.id == user_id
     assert user.is_platform_admin is True
-    assert len(user.memberships) == 0
+    assert "memberships" not in user.model_dump()
 
 
 def test_admin_overview_dto_metrics():
-    """Verify AdminOverview DTO accepts all enhanced global telemetry counters."""
+    """Verify only the supported global summary fields reach the wire contract."""
+    from pydantic import ValidationError
+
     from orderfit.contracts.admin import AdminOverview
 
     data = {
@@ -270,11 +267,12 @@ def test_admin_overview_dto_metrics():
         "orders_without_value": 3,
     }
 
-    overview = AdminOverview.model_validate(data)
+    with pytest.raises(ValidationError) as error:
+        AdminOverview.model_validate(data)
+    unsupported = {"privileged_users", "active_memberships", "revoked_memberships", "total_memberships"}
+    assert {issue["loc"][0] for issue in error.value.errors()} == unsupported
+    overview = AdminOverview.model_validate({key: value for key, value in data.items() if key not in unsupported})
     assert overview.total_users == 17
-    assert overview.privileged_users == 17
-    assert overview.active_memberships == 17
-    assert overview.total_memberships == 17
     assert overview.total_tenants == 17
     assert overview.total_orders == 7
     assert len(overview.order_value_by_currency) == 2

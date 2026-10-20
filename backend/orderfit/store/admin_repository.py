@@ -16,11 +16,10 @@ FUNCTIONS = {
 }
 MODELS = {"users": AdminUser, "tenants": AdminTenant, "orders": AdminOrder}
 READ_COLUMNS = {
-    "app_user": ("id", "email", "full_name", "is_platform_admin", "status", "created_at", "version"),
+    "app_user": ("id", "email", "full_name", "is_platform_admin", "version"),
     "auth_session": ("id", "user_id", "token_digest"),
     "business": ("id", "name", "currency", "timezone", "status", "created_at"),
     "deal": ("id", "business_id", "status", "currency", "order_value_minor", "created_at"),
-    "membership": ("user_id", "business_id", "role", "created_at", "version", "revoked_at"),
 }
 
 
@@ -30,12 +29,16 @@ def prerequisites(c):
         "SELECT coalesce((SELECT version_num=:revision FROM alembic_version),false) "
         "AND NOT pg_has_role(current_user,'orderfit_admin_reader','MEMBER') "
         "AND NOT pg_has_role(current_user,'orderfit_worker','USAGE') "
+        "AND NOT pg_has_role('orderfit_app','orderfit_admin_api','USAGE') "
+        "AND NOT pg_has_role('orderfit_worker','orderfit_admin_api','USAGE') "
+        "AND NOT pg_has_role('orderfit_readonly','orderfit_admin_api','USAGE') "
+        "AND NOT has_any_column_privilege('orderfit_admin_reader','public.membership','SELECT') "
         "AND NOT has_schema_privilege('orderfit_admin_reader','public','CREATE') "
         "AND NOT EXISTS(SELECT FROM pg_roles WHERE rolname IN ('orderfit_admin_reader','orderfit_admin_api') "
         "AND (rolcanlogin OR rolsuper OR rolbypassrls OR rolcreaterole OR rolcreatedb OR rolreplication)) "
         "AND (SELECT count(*) FROM pg_policies WHERE schemaname='public' "
-        "AND tablename IN ('app_user','auth_session','business','deal','membership') AND policyname='admin_summary_read' "
-        "AND cmd='SELECT' AND roles=ARRAY['orderfit_admin_reader']::name[] AND qual='true')=5 "
+        "AND tablename IN ('app_user','auth_session','business','deal') AND policyname='admin_summary_read' "
+        "AND cmd='SELECT' AND roles=ARRAY['orderfit_admin_reader']::name[] AND qual='true')=4 "
         "AND has_column_privilege('orderfit_admin_reader','public.app_user','id','UPDATE') "
         "AND has_column_privilege('orderfit_admin_reader','public.auth_session','id','UPDATE') "
         "AND has_function_privilege('orderfit_admin_reader','public.session_resolve(bytea)','EXECUTE') "

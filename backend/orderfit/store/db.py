@@ -12,7 +12,7 @@ from sqlalchemy.exc import TimeoutError as PoolTimeout
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0024_admin_user_management"
+SCHEMA_REVISION = "0025_admin_read_isolation"
 
 
 def digest_token(token: str | None) -> bytes:
@@ -215,36 +215,24 @@ class Database:
             query = text(
                 "SELECT m.role FROM membership m JOIN business b ON b.id=m.business_id WHERE m.user_id=:u AND m.business_id=:b AND m.revoked_at IS NULL AND b.status='active'"
             )
-            member = c.execute(query, {"u": identity.user_id, "b": business_id}).scalar_one_or_none()
-            is_platform_admin = False
-            if member is None:
-                is_admin = c.execute(
-                    text("SELECT is_platform_admin FROM app_user WHERE id=:u"),
-                    {"u": identity.user_id},
-                ).scalar_one_or_none()
-                if is_admin:
-                    member = "owner"
-                    is_platform_admin = True
-                else:
-                    raise ApplicationError(404, "NOT_FOUND")
+            if c.execute(query, {"u": identity.user_id, "b": business_id}).scalar_one_or_none() is None:
+                raise ApplicationError(404, "NOT_FOUND")
             # Documented lock order: business first, then the caller's membership row. Taking
             # the membership share lock first deadlocked two owners changing each other.
             c.execute(
                 text("SELECT id FROM business WHERE id=:b " + ("FOR SHARE" if readonly else "FOR UPDATE")),
                 {"b": business_id},
             ).first()
-            if not is_platform_admin:
-                member = c.execute(
-                    text(query.text + " FOR SHARE OF m"), {"u": identity.user_id, "b": business_id}
-                ).scalar_one_or_none()
-                if member is None:
-                    raise ApplicationError(404, "NOT_FOUND")
+            member = c.execute(
+                text(query.text + " FOR SHARE OF m"), {"u": identity.user_id, "b": business_id}
+            ).scalar_one_or_none()
+            if member is None:
+                raise ApplicationError(404, "NOT_FOUND")
             if member not in PERMISSIONS[permission]:
                 raise ApplicationError(403, "FORBIDDEN")
-            if not is_platform_admin:
-                if not c.execute(text("SELECT session_authority_current(:s,:b)"),
-                                 {"s": identity.session_id, "b": business_id}).scalar_one():
-                    raise ApplicationError(403, "SESSION_REAUTH_REQUIRED", "Your role changed. Sign in again to continue.")
+            if not c.execute(text("SELECT session_authority_current(:s,:b)"),
+                             {"s": identity.session_id, "b": business_id}).scalar_one():
+                raise ApplicationError(403, "SESSION_REAUTH_REQUIRED", "Your role changed. Sign in again to continue.")
             yield c, Scope(identity.user_id, identity.session_id, business_id, member)
 
     @contextmanager

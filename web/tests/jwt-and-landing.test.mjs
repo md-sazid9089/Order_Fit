@@ -84,8 +84,10 @@ test("hero section renders Go to Dashboard when session is present", () => {
 });
 
 
-test("platform admin views are enabled for authorized platform administrators", () => {
+test("platform admin reads require backend capability", () => {
   const admin = load("platform-admin.ts");
-  assert.equal(admin.platformAdminEnabled(), true);
+  assert.equal(admin.platformAdminEnabled(), false);
+  assert.equal(admin.platformAdminEnabled({ read_enabled: false }), false);
+  assert.equal(admin.platformAdminEnabled({ read_enabled: true }), true);
 });
 

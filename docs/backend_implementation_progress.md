@@ -2726,3 +2726,59 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   jobs (account payment/spending limit), not because of test results. Full DB suite, engine
   suite, web checks and the hosted deployment were not re-run. Frontend does not yet show
   the new `WEAK_PASSWORD` message specifically.
+### 20 October 2026 — Admin handoff reconciliation
+
+Compared both supplied administrator handoffs with HEAD `81b0b36` on
+`ui-release-2026-10-19`. Existing backend read-only routes/services are retained;
+frontend membership-derived admin views are replaced with capability-gated global
+contracts, bounded continuation, exact money, independent system checks, honest
+unavailable/error states and actual signout/cache clearing. Contract declarations
+were regenerated. Full implementation/evidence and acceptance gaps are recorded in
+[the reconciliation report](admin_readiness_2026-10-20.md).
+
+Fresh read-only shared Neon probes confirm separate restricted API/worker logins,
+API function grants and worker function denial. Database revision is now
+`0024_admin_user_management`, ahead of this checkout's sole required/head
+`0023_account_access`, so complete admin prerequisites fail. Historical commit
+`7986f51` was inspected but not recovered because it also changes tenant authority
+and shared-role grants contrary to the read-only isolation contract. No schema,
+role, account, business-data or live feature-setting change ran. Docker daemon is
+unavailable; disposable DB and signed-in deployed acceptance remain open.
+
+Executed: 125 frontend unit tests; two isolated synthetic Playwright tests;
+web build/typecheck; focused changed-file ESLint; 15 backend admin tests; contract
+export drift check (134 operations), Alembic head check and diff whitespace check.
+Full web lint has 28 pre-existing errors/68 warnings outside this task. Next step:
+reconcile deployed SQL/source on a disposable target before any runtime schema
+requirement change, then disabled deployment and approved joint synthetic gates.
+
+### 20 October 2026 — Admin forward isolation repair and joint acceptance
+
+User authorized completion of the remaining fixes. Recovered the historical 0024
+revision/SQL byte-for-byte, excluding its application tenant-authorization changes;
+added `0025_admin_read_isolation` to restore bounded read DTOs, remove private
+membership-reader grants/policy and shared/worker admin-role inheritance. Required
+schema/head is 0025. Prerequisites now reject shared inheritance/membership access.
+Updated migration graph/preservation tests and allowed disposable PG18 selection
+(default remains PG17); no configured URLs are accepted by those fixtures.
+
+Docker Desktop was started. Admin/security/migration suites: 29 passed on PG17 and
+29 on PG18, each with one existing deprecation warning. Focused backend
+admin/architecture/runtime/startup suite:28passed. Backend Ruff and contracts pass.
+Verified deployed Neon function bodies against known sources, created a full PG18
+verify-full dump encrypted under a Windows-DPAPI-protected key, checked decryption
+and archive catalog, then applied only 0024→0025 through Alembic on the configured
+shared database. Both runtime identities validate; API prerequisites pass; worker
+admin-function EXECUTE is denied. No shared business/account rows were modified.
+
+Real isolated joint browser acceptance passes; it caught a transient NOWAIT session
+lock conflict under parallel overview/system GETs. Added bounded abortable retries
+only for dependency/capacity GET failures, with recovery/bound regressions. Final
+web checks:127unit tests,2fixture browser tests,1real joint browser test,build,
+typecheck and focused ESLint pass. Full web lint retains unrelated existing failures.
+Local API8000/web3001 were launched, then admin reads enabled after acceptance;
+fresh readiness200 and configured service capabilitytrue. No hosted frontend or
+signed-in shared-Neon browser acceptance is claimed. Provider branch classification,
+full backup restore and exhaustive visual matrix remain unverified. Complete files,
+backup paths, image identities, commands and limits are in
+[the updated evidence](admin_readiness_2026-10-20.md).

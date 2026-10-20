@@ -209,23 +209,6 @@ export function AppSidebar({
 
   const effectiveRoleLabel = computeRoleLabel();
 
-  const handleAdminSignOut = async () => {
-    if (onSignOut) {
-      onSignOut();
-      return;
-    }
-    try {
-      const { mutate } = await import("@/lib/orderfit-api");
-      await mutate("/auth/signout", "POST", {}).catch(() => null);
-    } finally {
-      const { setCachedSession } = await import("@/lib/session-store");
-      setCachedSession(null);
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth/signin";
-      }
-    }
-  };
-
   const renderSidebarContent = (isMobileView = false) => {
     const showExpanded = isMobileView || isExpanded;
     return (
@@ -354,20 +337,6 @@ export function AppSidebar({
                     <span>Exit to Business App</span>
                   </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isMobileView) setMobileOpen(false);
-                      void handleAdminSignOut();
-                    }}
-                    title="Sign out"
-                    aria-label="Sign out"
-                    className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-[#737373] dark:text-[#A3A3A3] hover:text-[#991B1B] dark:hover:text-[#FCA5A5] hover:bg-[#FEF2F2] dark:hover:bg-[#DC2626]/20 transition-colors w-full cursor-pointer"
-                  >
-                    <LogOut className="size-3.5" />
-                    <span>Sign Out</span>
-                  </button>
-
                   <div className="text-center font-mono text-[10px] text-[#737373] dark:text-[#A3A3A3]">
                     Role: <span className="text-[#1E2021] dark:text-white font-bold">{effectiveRoleLabel}</span>
                   </div>
@@ -381,23 +350,14 @@ export function AppSidebar({
                   >
                     <ArrowLeft className="size-4" />
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => void handleAdminSignOut()}
-                    className="size-8 rounded-lg text-[#737373] dark:text-[#A3A3A3] hover:text-[#991B1B] dark:hover:text-[#FCA5A5] hover:bg-[#FEF2F2] dark:hover:bg-[#DC2626]/20 flex items-center justify-center transition-colors cursor-pointer"
-                    title="Sign out"
-                    aria-label="Sign out"
-                  >
-                    <LogOut className="size-3.5" />
-                  </button>
                   <span className="font-mono text-[9px] text-[#737373] dark:text-[#A3A3A3] uppercase" title={effectiveRoleLabel}>
                     {isPlatformAdmin ? "ADM" : "USR"}
                   </span>
                 </div>
               )}
             </div>
-          ) : (
-            onSignOut && (
+          ) : null}
+          {onSignOut && (
               <button
                 type="button"
                 onClick={() => {
@@ -416,8 +376,7 @@ export function AppSidebar({
                 </div>
                 {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
               </button>
-            )
-          )}
+            )}
         </div>
       </div>
     );

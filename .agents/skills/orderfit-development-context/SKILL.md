@@ -5,18 +5,35 @@ description: Resume OrderFit development with current phase status, decisions, c
 
 # OrderFit development context
 
-20 October global admin & user management update: required schema head is now
-`0024_admin_user_management` (after `0023_account_access`). Repaired missing
-user visibility for global administrator accounts: granted `orderfit_admin_api`
-to `orderfit_runtime`, added SELECT grants and RLS read policy on `membership`
-and `app_user` for `orderfit_admin_reader`, and upgraded `admin_read_users` to
-aggregate multi-tenant memberships via JSONB without user row duplication.
-`ADMIN_READS_ENABLED=true` configured in backend environment. Enhanced
-`loadAggregatedUsers` in frontend to ingest all registered database users when
-authorized as platform administrator. Next.js build passes cleanly in 4.2s;
-121 frontend tests pass; 90 backend tests pass (81 contract, 9 RBAC security).
-Zero RLS bypasses, zero table owner privilege leaks. Live Neon DB verified with
-all 17 registered users retrieved.
+20 October admin forward repair: recovered historical 0024 SQL/revision unchanged
+and added `0025_admin_read_isolation`, now sole required/head and applied to the
+configured shared Neon DB after an encrypted full backup. Restores bounded read DTOs
+and removes 0024 shared-role/membership-reader access; no tenant-authorization bypass
+was imported. Fresh restricted API prerequisites pass; worker admin EXECUTE is denied.
+Docker is running; 29 admin/migration tests pass on each disposable PG17 and PG18
+(Neon is PG18). See the follow-up in
+[admin reconciliation](../../../docs/admin_readiness_2026-10-20.md) for backup details
+and final browser/runtime evidence. Earlier blocked snapshots below are historical.
+
+Final admin follow-up: the real disposable joint browser acceptance now passes
+(no-membership admin summaries, unrelated detail denial, paging, mobile signout and
+revocation), plus two fixture browser tests, 127 web unit tests and 28 focused backend
+tests. Transient parallel admin reads have bounded abortable GET retries. Local
+Neon-backed API8000 and rebuilt web3001 are running; ignored backend configuration
+enables admin reads. Readiness is 200 and configured capability is true. Existing
+shared users were not changed; signed-in shared-Neon browser acceptance and provider
+branch classification remain unverified. Full web lint has unrelated existing errors.
+
+20 October admin handoff reconciliation on `ui-release-2026-10-19`: frontend
+admin pages now consume capability-gated global read contracts with bounded paging,
+exact currency totals, honest errors and actual signout. 125 web unit tests, two
+fixture-backed browser tests, build/typecheck and 15 backend admin tests pass.
+Fresh read-only Neon probes show API grants already present and worker EXECUTE
+denied, but deployed revision is `0024_admin_user_management` versus this checkout's
+required/head `0023_account_access`; prerequisites fail. Do not bypass that gate or
+blindly import historical `7986f51`, which also weakens tenant authorization.
+Docker is unavailable; no shared migration/enablement or joint live acceptance ran.
+See [reconciliation evidence](../../../docs/admin_readiness_2026-10-20.md).
 
 20 October provider update: OpenAI Responses API is the only supported live
 model provider. A live run using `gpt-6-luna` passed all 49 synthetic cases
