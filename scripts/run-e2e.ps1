@@ -82,7 +82,15 @@ $override += @("  web:", "    image: $webImage")
 $composeFiles = @("-f", (Join-Path $root "docker-compose.yml"), "-f", $tempCompose)
 
 function Invoke-Compose([string[]]$Arguments) {
-    & docker compose @composeFiles --project-name $project --env-file $tempEnv @Arguments
+    # Windows PowerShell 5.1 turns Docker's progress lines on stderr into
+    # terminating errors under "Stop". Exit code is the authoritative result here.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & docker compose @composeFiles --project-name $project --env-file $tempEnv @Arguments 2>&1 | ForEach-Object { "$_" }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
     if ($LASTEXITCODE -ne 0) { throw "Docker Compose failed with exit code $LASTEXITCODE" }
 }
 
@@ -161,8 +169,16 @@ try {
     Pop-Location -ErrorAction SilentlyContinue
     & docker compose @composeFiles --project-name $project --env-file $tempEnv down -v
     foreach ($testImage in @($apiImage, $webImage)) {
-        & docker image inspect $testImage *> $null
-        if ($LASTEXITCODE -eq 0) { & docker image rm $testImage }
+        # A partial build may leave only one image. In Windows PowerShell 5,
+        # Docker's expected "image not found" stderr is terminating under the
+        # script's Stop preference, which would skip clearing temporary secrets.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            & docker image inspect $testImage *> $null
+            if ($LASTEXITCODE -eq 0) { & docker image rm $testImage *> $null }
+        }
+        finally { $ErrorActionPreference = $previousPreference }
     }
     if (Test-Path -LiteralPath $tempEnv) { Clear-Content -LiteralPath $tempEnv; Remove-Item -LiteralPath $tempEnv -Force }
     if (Test-Path -LiteralPath $tempCompose) { Remove-Item -LiteralPath $tempCompose -Force }

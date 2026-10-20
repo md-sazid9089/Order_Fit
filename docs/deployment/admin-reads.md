@@ -1,5 +1,7 @@
 # Enable read-only platform administration
 
+> The current source head is `0023_account_access`, including `0021_admin_reads`. The older head references below describe that feature introduction. Deploy the reviewed full migration chain before this runtime; no shared migration or enablement is performed by repository cleanup.
+
 This is a controlled deployment procedure, not a startup hook. The implementation is disabled by default. Do not apply it to an assumed database target or use migration credentials in API/worker processes.
 
 1. Identify the exact environment/database, current schema revision, restricted API login and distinct worker login. Review `0021_admin_reads` SQL and take the normal deployment backup. Upgrade through the ordinary manual migrator procedure to `0021_admin_reads`; the new API and worker require this head even when admin reads are disabled. Never roll back immutable history to disable the feature.

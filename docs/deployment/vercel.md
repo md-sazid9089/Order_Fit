@@ -40,7 +40,7 @@ These are set on the API (and worker) host, not on Vercel:
 |---|---|---|
 | `ALLOWED_ORIGINS` | JSON list of the **exact** browser origins, e.g. `["https://orderfit.vercel.app"]` | The API checks `Origin` and the CSRF token on every write and on `/auth/csrf`. Any origin not listed gets `403 CSRF_REJECTED` |
 | `COOKIE_SECURE` | `true` | Cookies over HTTPS only |
-| `DATABASE_URL` | restricted runtime login (never the migration owner). On Render, the API and the worker each set their own `DATABASE_URL`; `WORKER_DATABASE_URL` is only read by the local `orderfit.runtime` launcher | See `docs/deployment/render.md` and `docs/neon_connection_review.md` |
+| `DATABASE_URL` | restricted runtime login (never the migration owner). On Render, the API and the worker each set their own `DATABASE_URL`; `WORKER_DATABASE_URL` is only read by the local `orderfit.runtime` launcher | See `docs/deployment/render.md` and `docs/evidence/reports/neon_connection_review.md` |
 
 **Preview deployments.** Every preview gets its own URL. A preview can only sign in if its origin is in `ALLOWED_ORIGINS`. Options:
 - assign a stable preview domain and list it; or
@@ -50,7 +50,7 @@ Never use a wildcard origin.
 
 ## 4. Deploy steps
 
-1. Deploy and migrate the backend first, following [render.md](render.md) and [neon.md](neon.md) (Render Blueprint `render.yaml`; manual `orderfit-migrate` job runs `alembic upgrade head` as the migrator). Then start the API and the worker with runtime credentials, and confirm `https://<api-host>/health` responds.
+1. Deploy and migrate the backend first, following [render.md](render.md) and [neon.md](neon.md). The Render Blueprint's pre-deploy command runs `alembic upgrade head`; a manual deployment needs an equivalent migration step using the migration-only credential, outside the API/worker process. Configure private shared object storage and restricted API/worker logins. Confirm `https://<api-host>/health` responds.
 2. Set `ALLOWED_ORIGINS` to include the production Vercel domain, and set `COOKIE_SECURE=true`.
 3. In Vercel, import the repository, set Root Directory `web`, add `API_INTERNAL_URL`, and deploy.
 4. Smoke test on the Vercel URL:
@@ -77,7 +77,7 @@ Never use a wildcard origin.
   Execution is sandbox-only: no email, bank, payment or lender is contacted.
 - **Session expiry.** Any API response of 401 (other than a wrong password at sign-in) clears cached data and pending commands and sends the user to `/auth/signin` with a "session expired" notice. Switching business clears cached data but keeps pending retry keys, which are bound to the business through the request path.
 - **Security headers.** Every response carries `Content-Security-Policy: frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` (`web/next.config.ts`). There is deliberately no script CSP: Next.js inline bootstrap scripts need per-request nonces, which has not been verified for this build.
-- **Credentials.** A Neon owner URL was committed in Git history (commit `eb5758b`; files removed later). Rotate the owner password before any hosted deployment uses that database. See `docs/neon_connection_review.md`.
+- **Credentials.** A Neon owner URL was committed in Git history (commit `eb5758b`; files removed later). Rotate the owner password before any hosted deployment uses that database. See `docs/evidence/reports/neon_connection_review.md`.
 
 ## 6. Local development is unchanged
 
@@ -94,6 +94,6 @@ unexpired global worker heartbeat as well as restricted DB/schema/storage checks
 monitoring so a worker outage does not restart a healthy API. Reserve one extra
 restricted DB connection per worker for liveness; do not inject migration access.
 See the [integration contract](../contracts/stress-remediation.md),
-[current evidence](../backend_stress_remediation_2026-10-16.md) and
+[current evidence](../evidence/reports/backend_stress_remediation_2026-10-16.md) and
 [executable external acceptance procedures](external-acceptance.md).
 Hosted acceptance and historical credential rotation remain unverified.

@@ -4,7 +4,7 @@
 > describe `a0608e6`, not today's tree. The current frontend is `web/`; root,
 > `backend/` and `web/AGENTS.md`, contracts, lockfile and progress now exist.
 > Use those current instructions. Implementation and acceptance evidence are in
-> [the audit matrix](orderfit_audit_2026-10-16.md) and
+> [the audit matrix](evidence/reports/orderfit_audit_2026-10-16.md) and
 > [progress](backend_implementation_progress.md). P4 and P8 acceptance remain partial.
 > Historical file-presence claims below are retained as history, not setup commands.
 
@@ -50,10 +50,10 @@ All links are relative to this document. Symbol names are more stable anchors th
 | [Integrity/audit SQL](../backend/migrations/sql/0002_integrity_and_audit.sql) | `deal_guard`, `approval_guard`, `execution_action_guard`, hash chain and five views. |
 | [Security SQL](../backend/migrations/sql/0003_security.sql) and [reference data](../backend/migrations/sql/0004_reference_data.sql) | Actual grants, role groups, GUC-based policies, auth helpers, role/state/kind vocabularies. |
 | [Alembic revision](../backend/migrations/versions/0001_core_schema.py) and [environment](../backend/migrations/env.py) | One revision executes all four SQL files; autogenerate is disabled. |
-| [Database design](database/database.md), [connection/audit guide](database/database-audit.md), [verification report](database-verification-report.md) | Rationale and historical reported tests. The verification report's old findings are superseded where its status note and current SQL show fixes. |
+| [Database design](database/database.md), [connection/audit guide](database/database-audit.md), [verification report](evidence/reports/database-verification-report.md) | Rationale and historical reported tests. The verification report's old findings are superseded where its status note and current SQL show fixes. |
 | [Schema suite](../backend/migrations/tests/test_schema.sql), [concurrency script](../backend/migrations/tests/test_concurrency.sh) | Executable database test coverage; run only on disposable databases. |
 | [Requirements](architecture/orderfit/01-requirements-scenario-edge-cases.md), [architecture](architecture/orderfit/03-system-architecture.md), [financial contracts](architecture/orderfit/04-decision-engine-and-data-contracts.md), [security/evaluation](architecture/orderfit/05-security-and-evaluation.md) | Required product behavior, financial semantics and named test registry. |
-| [Orchestration ADR](architecture/orderfit/adrs/0006-orchestration-and-learned-layer.md), other ADRs, [build handoff](architecture/orderfit/BUILD-HANDOFF.md) | Plain runner default, AI boundaries, original scope and historical delivery plan. Do not inherit obsolete vendor/model choices or dates. |
+| [Orchestration ADR](architecture/orderfit/adrs/0006-orchestration-and-learned-layer.md), other ADRs, [build handoff](../AGENTS.md) | Plain runner default, AI boundaries, original scope and historical delivery plan. Do not inherit obsolete vendor/model choices or dates. |
 | [Reference calculator](architecture/orderfit/fixtures/reference_engine.py), [fixture guide](architecture/orderfit/fixtures/README.md), `fixtures/cases/`, `fixtures/expected/`, `fixtures/selftest.py` | Executable baseline and 22 regression cases; not the application engine. |
 | [Backend dependencies](../backend/pyproject.toml), `backend/orderfit/`, `backend/tests/` | Actual application implementation and stubs. |
 | [Frontend package](../web/package.json), [frontend instructions](../web/AGENTS.md), `web/app/`, `web/components/`, [API base config](../web/lib/api.ts) | Current routes, user interactions and integration gaps. |

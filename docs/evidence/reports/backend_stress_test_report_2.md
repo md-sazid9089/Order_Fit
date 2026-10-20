@@ -1,6 +1,6 @@
 # Backend stress test report 2
 
-Date: 17 October 2026. Plan: [backend_stress_test_plan_2.md](backend_stress_test_plan_2.md).
+Date: 17 October 2026. Plan: [backend_stress_test_plan_2.md](../../backend_stress_test_plan_2.md).
 
 **Disposition: PARTIAL / BLOCKED by the plan's disk-space stop gate.** The final full backend suite passed **542 tests**, and the separately built production-image browser/proxy suite passed **7 tests**. Isolated concurrency checks, a 60-second proxy probe and two short arrival-rate stages completed. The repeated capacity ramps and two-hour soak did not complete. This report does not establish sustainable capacity, absence of memory leaks, or hosted readiness.
 
@@ -27,18 +27,18 @@ Test harness utilities and four disk-policy cases were added during the campaign
 
 ## 2. Executed verification
 
-Evidence is retained under [the run directory](backend-stress-2/2026-10-17-eef7bea/). [summary.json](backend-stress-2/2026-10-17-eef7bea/summary.json) independently reconciles raw request counts, nearest-rank p95 values, JUnit results and the resource abort.
+Evidence is retained under [the run directory](../../backend-stress-2/2026-10-17-eef7bea). [summary.json](../../backend-stress-2/2026-10-17-eef7bea/summary.json) independently reconciles raw request counts, nearest-rank p95 values, JUnit results and the resource abort.
 
 | Check | Fresh result | Evidence |
 |---|---|---|
-| Initial full backend baseline | 540 passed; 0 failures/errors/skips; 3 warnings; 685.83 s | [console](backend-stress-2/2026-10-17-eef7bea/backend-console.txt), [JUnit](backend-stress-2/2026-10-17-eef7bea/backend.xml) |
-| Final full backend baseline | **542 passed**; 0 failures/errors/skips; 3 warnings; **658.69 s** | [console](backend-stress-2/2026-10-17-eef7bea/backend-final-console.txt), [JUnit](backend-stress-2/2026-10-17-eef7bea/backend-final.xml) |
-| Isolated affected recovery/concurrency checks | **23 passed**; 1 warning; 83.59 s | [console and burst metrics](backend-stress-2/2026-10-17-eef7bea/recovery-final-console.txt), [JUnit](backend-stress-2/2026-10-17-eef7bea/recovery-final.xml) |
-| Reference calculator | 22 cases, 0 problems; `ref-0.1.0` | [reference.txt](backend-stress-2/2026-10-17-eef7bea/reference.txt) |
-| Independent calculator selftest | 0 failures | [selftest.txt](backend-stress-2/2026-10-17-eef7bea/selftest.txt) |
-| Fresh production-image browser/proxy suite | **7 passed**, approximately 1.8 minutes | [browser-console.txt](backend-stress-2/2026-10-17-eef7bea/browser-console.txt) |
-| Disk policy and actual process liveness | **5 passed**, 1 warning, 1.17 s; four new disk cases plus one already-covered liveness case | [console](backend-stress-2/2026-10-17-eef7bea/resource-guards-final-console.txt), [JUnit](backend-stress-2/2026-10-17-eef7bea/resource-guards-final.xml) |
-| Actual low-space CLI invocation | Expected fail-closed result before disposable DB provisioning | [console](backend-stress-2/2026-10-17-eef7bea/blocked-preflight-console.txt), [preflight](backend-stress-2/2026-10-17-eef7bea/blocked-preflight/preflight.json) |
+| Initial full backend baseline | 540 passed; 0 failures/errors/skips; 3 warnings; 685.83 s | [console](../../backend-stress-2/2026-10-17-eef7bea/backend-console.txt), [JUnit](../../backend-stress-2/2026-10-17-eef7bea/backend.xml) |
+| Final full backend baseline | **542 passed**; 0 failures/errors/skips; 3 warnings; **658.69 s** | [console](../../backend-stress-2/2026-10-17-eef7bea/backend-final-console.txt), [JUnit](../../backend-stress-2/2026-10-17-eef7bea/backend-final.xml) |
+| Isolated affected recovery/concurrency checks | **23 passed**; 1 warning; 83.59 s | [console and burst metrics](../../backend-stress-2/2026-10-17-eef7bea/recovery-final-console.txt), [JUnit](../../backend-stress-2/2026-10-17-eef7bea/recovery-final.xml) |
+| Reference calculator | 22 cases, 0 problems; `ref-0.1.0` | [reference.txt](../../backend-stress-2/2026-10-17-eef7bea/reference.txt) |
+| Independent calculator selftest | 0 failures | [selftest.txt](../../backend-stress-2/2026-10-17-eef7bea/selftest.txt) |
+| Fresh production-image browser/proxy suite | **7 passed**, approximately 1.8 minutes | [browser-console.txt](../../backend-stress-2/2026-10-17-eef7bea/browser-console.txt) |
+| Disk policy and actual process liveness | **5 passed**, 1 warning, 1.17 s; four new disk cases plus one already-covered liveness case | [console](../../backend-stress-2/2026-10-17-eef7bea/resource-guards-final-console.txt), [JUnit](../../backend-stress-2/2026-10-17-eef7bea/resource-guards-final.xml) |
+| Actual low-space CLI invocation | Expected fail-closed result before disposable DB provisioning | [console](../../backend-stress-2/2026-10-17-eef7bea/blocked-preflight-console.txt), [preflight](../../backend-stress-2/2026-10-17-eef7bea/blocked-preflight/preflight.json) |
 
 The full backend run includes migration/role/RLS regressions, the original SQL suite's 296 assertions on original and forward-upgraded schemas, the existing 400-row concurrent audit-chain check, authentication/passkeys, deterministic engine, jobs, approvals, sandbox execution/recovery and encrypted joint restic restore. These establish bounded local regression evidence, rather than completion of every stress variant in the plan.
 
@@ -46,7 +46,7 @@ The browser suite covers the persisted sandbox send/reply/accept/commit/reload/c
 
 Three full-suite warnings remain: FastAPI TestClient/httpx deprecation and two SQLAlchemy DOMAIN `operator_classes` warnings. These did not fail assertions and are maintenance items. A first sandboxed guard-test attempt encountered four temporary-directory ACL setup errors; the same checks passed using a fresh workspace-local `--basetemp`. The failed infrastructure output remains in the run directory.
 
-Final static verification: Ruff passed; generated contracts checked **112 operations**; Alembic confirmed the sole `0019_merge_passkey_roles` head; `git diff --check` passed. All 30 report links resolved and all 170 application manifest hashes still matched. See [final-verification.json](backend-stress-2/2026-10-17-eef7bea/final-verification.json) for the verification receipt (the additional receipt link brings the report total to 31).
+Final static verification: Ruff passed; generated contracts checked **112 operations**; Alembic confirmed the sole `0019_merge_passkey_roles` head; `git diff --check` passed. All 30 report links resolved and all 170 application manifest hashes still matched. See [final-verification.json](../../backend-stress-2/2026-10-17-eef7bea/final-verification.json) for the verification receipt (the additional receipt link brings the report total to 31).
 
 ## 3. Concurrency and proxy results
 
@@ -78,7 +78,7 @@ The last probe's p50 was 56.922 ms and maximum 502.546 ms. Its closed-loop traff
 
 ## 4. Arrival-rate experiment and reconciliation
 
-The new opt-in runner is [run_plan2.py](../backend/tests/stress/run_plan2.py), with usage and scope in [its README](../backend/tests/stress/README.md). The final campaign used ten businesses, independent sessions, and **100 seeded deals per business**. Ten equal route classes cover profile, pipeline, deal, constraints, customers, notifications, distinct create, original-key replay, foreign-tenant 404 and invalid-limit 422. It excludes job admission, uploads and provider calls from this particular HTTP mix.
+The new opt-in runner is [run_plan2.py](../../../backend/tests/stress/run_plan2.py), with usage and scope in [its README](../../../backend/tests/stress/README.md). The final campaign used ten businesses, independent sessions, and **100 seeded deals per business**. Ten equal route classes cover profile, pipeline, deal, constraints, customers, notifications, distinct create, original-key replay, foreign-tenant 404 and invalid-limit 422. It excludes job admission, uploads and provider calls from this particular HTTP mix.
 
 The generator used scheduled arrivals, up to 128 in-flight requests, monotonic due-time rechecks, raw request logging and two-second API-process-tree memory sampling. Timing includes the HTTP client. Client idle expiry was two seconds, below the server's five seconds. Planned stages were 2/5/10/20/40/80 requests per second, repeated three times, followed by a two-hour soak. Only the following were reached:
 
@@ -94,7 +94,7 @@ At **13:55:17 +06:00**, only verified API descendants of the exact final harness
 
 After stopping, all ten businesses independently contained **105 deals each: 1,050 total**, including **all 50 acknowledged new creates**. There were **zero recovered unknown writes**, ten valid audit chains, zero unscoped visible deals, zero checked-out observer connections and zero idle-in-transaction sessions. The aborted event records `persisted_state_reconciled=true`; its nonzero process exit correctly retains the aborted campaign result. No new-key write was used to recover an uncertain outcome.
 
-Raw evidence: [requests](backend-stress-2/2026-10-17-eef7bea/http-final/requests.jsonl), [stage/reconciliation log](backend-stress-2/2026-10-17-eef7bea/http-final/load.jsonl), [memory samples](backend-stress-2/2026-10-17-eef7bea/http-final/samples.jsonl), [console](backend-stress-2/2026-10-17-eef7bea/http-final-console.txt). Logs retain route labels, status/error classes, response sizes and timing; they omit request bodies, URLs, tokens and cookies.
+Raw evidence: [requests](../../backend-stress-2/2026-10-17-eef7bea/http-final/requests.jsonl), [stage/reconciliation log](../../backend-stress-2/2026-10-17-eef7bea/http-final/load.jsonl), [memory samples](../../backend-stress-2/2026-10-17-eef7bea/http-final/samples.jsonl), [console](../../backend-stress-2/2026-10-17-eef7bea/http-final-console.txt). Logs retain route labels, status/error classes, response sizes and timing; they omit request bodies, URLs, tokens and cookies.
 
 ## 5. Findings and harness corrections
 
@@ -104,7 +104,7 @@ The plan explicitly stops load below 15% free disk. C: had **11,431,366,656 byte
 
 The extended run should have checked Docker's physical storage volume before provisioning; it initially considered the workspace insufficiently. The runner now checks output, temporary and detected local Docker storage volumes **before starting its disposable fixture**, records `preflight.json`, and fails closed below 15%. Boundary tests cover 14.999%, 15% and 15.001%, plus a healthy workspace masking another required low-space volume. Remote-daemon storage still requires separate operator evidence.
 
-See [disk evidence](backend-stress-2/2026-10-17-eef7bea/disk-preflight.json), [resource abort](backend-stress-2/2026-10-17-eef7bea/resource-abort.json), and [successful low-space refusal](backend-stress-2/2026-10-17-eef7bea/blocked-preflight/preflight.json). The final disposable DB container was confirmed absent at **14:02:58 +06:00** in [cleanup.json](backend-stress-2/2026-10-17-eef7bea/cleanup.json). No unrelated files or shared Docker storage were deleted or moved.
+See [disk evidence](../../backend-stress-2/2026-10-17-eef7bea/disk-preflight.json), [resource abort](../../backend-stress-2/2026-10-17-eef7bea/resource-abort.json), and [successful low-space refusal](../../backend-stress-2/2026-10-17-eef7bea/blocked-preflight/preflight.json). The final disposable DB container was confirmed absent at **14:02:58 +06:00** in [cleanup.json](../../backend-stress-2/2026-10-17-eef7bea/cleanup.json). No unrelated files or shared Docker storage were deleted or moved.
 
 ### F02 — equal client/server keep-alive expiry can disconnect requests
 
@@ -117,7 +117,7 @@ A subsequent controlled comparison used the same ten businesses, two seed deals 
 | 5 seconds | 110 | 89 HTTP 200, 10 expected 404, 10 expected 422, one profile `RemoteProtocolError`; stopped at 55.082 s | All tenant intents and audit chains reconciled |
 | 2 seconds | 120 | 100 HTTP 200, 10 expected 404, 10 expected 422; zero transport errors/5xx; full 60 s | Reconciled; restart replay and cleanup passed |
 
-Evidence: [comparison](backend-stress-2/2026-10-17-eef7bea/keepalive-control.json), [five-second log](backend-stress-2/2026-10-17-eef7bea/keepalive-5/load.jsonl), [two-second log](backend-stress-2/2026-10-17-eef7bea/keepalive-2/load.jsonl). Inspection of the installed httpcore expiry and Uvicorn timeout code is consistent with an idle-timeout boundary interaction. This is an inference from a small local comparison, not proof of a backend data-integrity defect or exhaustive transport diagnosis.
+Evidence: [comparison](../../backend-stress-2/2026-10-17-eef7bea/keepalive-control.json), [five-second log](../../backend-stress-2/2026-10-17-eef7bea/keepalive-5/load.jsonl), [two-second log](../../backend-stress-2/2026-10-17-eef7bea/keepalive-2/load.jsonl). Inspection of the installed httpcore expiry and Uvicorn timeout code is consistent with an idle-timeout boundary interaction. This is an inference from a small local comparison, not proof of a backend data-integrity defect or exhaustive transport diagnosis.
 
 Two-second expiry changes connection churn; it is an explicit diagnostic profile, not a production-server repair or permission to discard failures. The five-second compatibility case remains failed/open. No automatic retries hide errors. Broader client/proxy/OS repetitions and same-ID inspection for uncertain writes remain necessary before claiming this transport boundary resolved.
 
@@ -127,7 +127,7 @@ Early pilots incorrectly treated nonzero working-set counters as proof of live p
 
 The test helper now checks Windows `GetExitCodeProcess` and explicitly terminates only the owned process tree, including the interpreter behind the Windows virtual-environment redirector. A regression retains the exited handle and checks actual death. Unix liveness uses the existing signal-based approach. The affected process recovery suite and the final full suite passed.
 
-The scheduler also now rechecks monotonic due times because Windows timers can wake early, maintains the complete low-rate observation window, and records each request for independent statistics. Earlier pilot timing is excluded. [execution-notes.md](backend-stress-2/2026-10-17-eef7bea/execution-notes.md) identifies invalid or infrastructure-failed pilots; their outputs remain available rather than being relabeled as clean passes.
+The scheduler also now rechecks monotonic due times because Windows timers can wake early, maintains the complete low-rate observation window, and records each request for independent statistics. Earlier pilot timing is excluded. [execution-notes.md](../../backend-stress-2/2026-10-17-eef7bea/execution-notes.md) identifies invalid or infrastructure-failed pilots; their outputs remain available rather than being relabeled as clean passes.
 
 ## 6. Plan scenario disposition
 

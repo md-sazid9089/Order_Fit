@@ -1,7 +1,7 @@
 # Backend implementation plan: account recovery and invitations
 
 Date: 19 October 2026. Status: backend implemented locally; see the
-[implementation report](account_access_implementation_2026-10-19.md) and
+[implementation report](evidence/reports/account_access_implementation_2026-10-19.md) and
 [release runbook](deployment/account-access.md). No shared migration or live send
 was performed. Scope authorized here is account email, recovery
 and invitations; commercial execution remains sandbox-only.

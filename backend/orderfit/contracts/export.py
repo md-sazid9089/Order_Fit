@@ -312,7 +312,7 @@ def artifacts():
     rows = [
         "# Target capability ownership (generated)",
         "",
-        "All business operations are planned, not deployed. Test column is the required phase gate, not a passed integration test.",
+        "Target contract catalogue, including implemented and proposed operations. Registration/capabilities determine availability; the gate column is a verification requirement, not a passing test result.",
         "",
         "| Operation | Method/path | Permission | Service | Storage (reuse/addition per plan) | Phase | Gate |",
         "|---|---|---|---|---|---|---|",

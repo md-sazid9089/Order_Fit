@@ -47,7 +47,7 @@ reruns. Any exhaustion discards the partial catalogue and returns `analysis_limi
 This is a technical outcome, never a financial decline. Full series cost memory;
 the additional 500,000-point admission ceiling intentionally rejects some inputs
 whose individual dimension limits would otherwise pass. Benchmarks and the P3
-execution requirements are recorded in the [P2 verification record](../../../p2_engine_verification.md).
+execution requirements are recorded in the [P2 verification record](../../../evidence/reports/p2_engine_verification.md).
 
 No migrations or new financial tables are needed for P2. P3 must adapt these typed
 results into the existing evaluation/option/series contracts and persist atomically

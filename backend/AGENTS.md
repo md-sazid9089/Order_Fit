@@ -1,11 +1,11 @@
 # OrderFit backend instructions
 
-Applies to `backend/` and its descendants, together with the repository-root `AGENTS.md`. Read [the implementation plan](../docs/initial_backend_implementation_plan.md) before starting a phase. Use its DB-01–DB-30 gap register and V01–V16 verification matrix as implementation checklists; verify the current source rather than assuming the plan's historical snapshot is current.
+Applies to `backend/` and its descendants, together with the repository-root `AGENTS.md`. Start with [Development](../docs/development.md) and current contracts. Read [the implementation plan](../docs/initial_backend_implementation_plan.md) for phase-contract changes or unresolved requirements. Use its DB-01–DB-30 gap register and V01–V16 verification matrix as implementation checklists; verify the current source rather than assuming the plan's historical snapshot is current.
 
 ## Stack and architecture
 
 - Python 3.12 is the initial tested target; FastAPI, Pydantic v2, SQLAlchemy 2/Core mappings, psycopg 3, PostgreSQL and manual Alembic migrations form the backend stack. Check `pyproject.toml` and the current lockfile for actual installed constraints.
-- Use `uv`; establish and commit `uv.lock` in the plan's dependency phase, then use locked installs in development, containers and CI. Do not assume the lockfile already exists. Keep settings, dependency changes and deployment examples consistent.
+- Use `uv` and the existing committed `uv.lock` for frozen installs in development, containers and CI. Keep settings, dependency changes and deployment examples consistent.
 - Follow the plan's plain durable workflow runner with PostgreSQL-backed jobs and separate API/worker processes. Existing LangGraph dependency declarations/stubs are not evidence that it was adopted. Do not initialize checkpoint storage or add a second queue/framework as an incidental change.
 - Routes validate HTTP contracts, obtain a verified principal and call services. Services own use cases and transactions; repositories own persistence; typed adapters map DB, API and engine contracts. Avoid generic table-CRUD routes and business logic hidden in serializers.
 - `orderfit/engine/` stays pure: standard library/Pydantic/engine imports only; no network, DB, files, environment reads, provider calls or implicit current time.
@@ -89,7 +89,7 @@ python docs/architecture/orderfit/fixtures/reference_engine.py --check
 python docs/architecture/orderfit/fixtures/selftest.py
 ```
 
-From `backend/`, after the dependency phase creates the lockfile:
+From `backend/`, using the committed lockfile:
 
 ```text
 uv sync --frozen --extra dev
@@ -97,7 +97,7 @@ uv run ruff check .
 uv run pytest tests/test_architecture.py tests/engine tests/agent -q
 ```
 
-Run relevant API/DB/workflow/contract suites as implemented. Existing pytest configuration excludes `e2e` by default: never claim that default pytest exercised it. Keep ordinary full-flow tests provider-free; opt-in live-provider tests must be identified separately.
+Run relevant API/DB/workflow/contract suites as implemented. Default pytest excludes opt-in `live` provider tests. Browser E2E runs separately; never claim that default pytest exercised it. Keep ordinary full-flow tests provider-free; opt-in live-provider tests must be identified separately.
 
 Before SQL tests or migrations, verify a disposable target and separate migrator/runtime logins. Run existing schema/concurrency suites plus applicable new non-owner isolation/recovery tests. Never run destructive downgrade/CASCADE against a configured/shared database. If Docker, PostgreSQL or a provider is unavailable, report the unrun gate and continue independent work without fabricating a pass.
 

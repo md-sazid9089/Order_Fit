@@ -11,11 +11,11 @@ The repaired source remains an uncommitted working tree atop that HEAD. Exact
 per-file SHA-256 values and source manifest digest
 `0b0348328ca22d8ddc14b0e5898eab8276b54eea65ba7cfbf7834f412465f8ba`
 are recorded in
-[code-version.json](stress-remediation-2026-10-16/code-version.json); do not
+[code-version.json](../../stress-remediation-2026-10-16/code-version.json); do not
 attribute these repairs to the unchanged base commit. Evidence from overlapping
 focused runs is not added together as unique full-suite coverage.
 Machine-readable final counts, HTTP metrics and source-hash verification are in
-[final-summary.json](stress-remediation-2026-10-16/final-summary.json).
+[final-summary.json](../../stress-remediation-2026-10-16/final-summary.json).
 
 ## Finding status
 
@@ -58,7 +58,7 @@ default with the newest non-default version. Offset compatibility is deliberate;
 the 20-order pipeline can shift on concurrent inserts, while forward keyset
 traversal is stable for immutable sort keys. Cash-date edits require refresh.
 There is no snapshot/fetch-all promise. See the complete endpoint/consumer inventory
-and examples in [the contract](contracts/stress-remediation.md).
+and examples in [the contract](../../contracts/stress-remediation.md).
 
 **Tests:** 0015 intentionally invalidated membership authority after a role change.
 The P7 scenario incorrectly read through an old session and therefore never
@@ -103,8 +103,8 @@ A real all-connections-held HTTP regression verifies typed rejection then recove
   `test_collection_continuation.py`, `test_stress_remediation.py`,
   `test_sustained_capacity.py`, process resource sampler, CSP/pagination/HTTP
   browser cases, explicit opt-in `tests/external_acceptance.py`.
-- Documentation: [contract](contracts/stress-remediation.md),
-  [external runbook](deployment/external-acceptance.md), progress/context and
+- Documentation: [contract](../../contracts/stress-remediation.md),
+  [external runbook](../../deployment/external-acceptance.md), progress/context and
   deployment reconciliation. File-level exact version inventory is the manifest.
 
 ## Verification commands and fresh evidence
@@ -142,19 +142,19 @@ consistency checks. No golden output was regenerated.
 
 | Gate | Fresh result / artifact |
 |---|---|
-| Baseline reproduction before repairs | 2 failed / 1 passed / 2 strict xfails; [baseline.xml](stress-remediation-2026-10-16/baseline.xml) |
-| Provisional non-fail-fast backend run | 504 passed; [log](stress-remediation-2026-10-16/backend-provisional-504.txt); superseded by final run below |
-| Final complete backend suite | **507 passed, 0 failed, 0 skipped**, 610.34 s, no fail-fast; [log](stress-remediation-2026-10-16/backend-full.txt), [JUnit](stress-remediation-2026-10-16/backend-full.xml) |
+| Baseline reproduction before repairs | 2 failed / 1 passed / 2 strict xfails; [baseline.xml](../../stress-remediation-2026-10-16/baseline.xml) |
+| Provisional non-fail-fast backend run | 504 passed; [log](../../stress-remediation-2026-10-16/backend-provisional-504.txt); superseded by final run below |
+| Final complete backend suite | **507 passed, 0 failed, 0 skipped**, 610.34 s, no fail-fast; [log](../../stress-remediation-2026-10-16/backend-full.txt), [JUnit](../../stress-remediation-2026-10-16/backend-full.xml) |
 | Original/forward SQL, clean/populated upgrade | Each original/forward suite 296/296; original/forward audit/optimistic-lock concurrency passed; populated original rows preserved; fresh empty DB migrated to sole head |
 | Restricted roles/RLS/new storage | Worker/API table access denied, API publication denied, current runtime login/schema checks and definer inventory; included in recovery/full evidence |
-| Repaired stress expected failures | Both xfail decorators removed; original intended assertions retained; **7 passed / 0 xfails**, 15.58 s, in [stress log](stress-remediation-2026-10-16/stress.txt) |
-| Process/pool/pagination + sustained acceptance | 5 passed, 170.00 s; [recovery-load.txt](stress-remediation-2026-10-16/recovery-load.txt), [JUnit](stress-remediation-2026-10-16/recovery-load.xml) |
-| Supporting collection HTTP acceptance | 1 passed, 11.28 s; [log](stress-remediation-2026-10-16/collections.txt) |
-| Session/stress/security order variation | 17 passed, 27.46 s; [log](stress-remediation-2026-10-16/order-variations.txt). Exact original ordered pair: 2 passed, 10.39 s; [pair](stress-remediation-2026-10-16/ordered-pair.txt) |
+| Repaired stress expected failures | Both xfail decorators removed; original intended assertions retained; **7 passed / 0 xfails**, 15.58 s, in [stress log](../../stress-remediation-2026-10-16/stress.txt) |
+| Process/pool/pagination + sustained acceptance | 5 passed, 170.00 s; [recovery-load.txt](../../stress-remediation-2026-10-16/recovery-load.txt), [JUnit](../../stress-remediation-2026-10-16/recovery-load.xml) |
+| Supporting collection HTTP acceptance | 1 passed, 11.28 s; [log](../../stress-remediation-2026-10-16/collections.txt) |
+| Session/stress/security order variation | 17 passed, 27.46 s; [log](../../stress-remediation-2026-10-16/order-variations.txt). Exact original ordered pair: 2 passed, 10.39 s; [pair](../../stress-remediation-2026-10-16/ordered-pair.txt) |
 | Ruff / generated / sole head | Clean / 108 current / `0016_worker_presence` |
-| Reference / independent selftest | 22 cases / 0 problems; 0 selftest failures; [reference](stress-remediation-2026-10-16/reference.txt), [selftest](stress-remediation-2026-10-16/selftest.txt); no golden regeneration |
+| Reference / independent selftest | 22 cases / 0 problems; 0 selftest failures; [reference](../../stress-remediation-2026-10-16/reference.txt), [selftest](../../stress-remediation-2026-10-16/selftest.txt); no golden regeneration |
 | Frontend | 86 unit tests; typecheck and strict examples pass; lint 0 errors / 10 existing warnings; production build passes |
-| Rebuilt browser/HTTP | 6 passed (1.5 minutes), including 60-second HTTP workload; [final log](stress-remediation-2026-10-16/browser-final.txt) |
+| Rebuilt browser/HTTP | 6 passed (1.5 minutes), including 60-second HTTP workload; [final log](../../stress-remediation-2026-10-16/browser-final.txt) |
 | External probe | CLI/help/dry path executed without network; no live gate run |
 
 Early failures include a duplicate test cookie scope, omitted CSRF cookie, an
@@ -162,7 +162,7 @@ overcomplete policy-write fixture and a browser locator; fixtures were corrected
 without weakening the contract. The sustained HTTP harness initially selected its
 own tenant for a supposed foreign request (200 was correct); the target was fixed.
 Failed harness logs are preserved separately. The initial sustained service failure
-is retained in [sustained-initial.txt](stress-remediation-2026-10-16/sustained-initial.txt).
+is retained in [sustained-initial.txt](../../stress-remediation-2026-10-16/sustained-initial.txt).
 No failed attempt is counted as a pass. Upstream Starlette/httpx and SQLAlchemy
 DOMAIN operator deprecation warnings remain visible, not suppressed.
 
@@ -225,7 +225,7 @@ records. Service timings are not substituted for proxy/browser timings.
 
 ## Remaining prerequisites and risks
 
-The [external acceptance runbook](deployment/external-acceptance.md) gives explicit
+The [external acceptance runbook](../../deployment/external-acceptance.md) gives explicit
 commands, credentials-by-name, disposable-target checks, budgets, scoring criteria
 and evidence requirements for model quality, pooled tenant context, non-superuser
 migrations/notifications, Render death/restart, cross-service private S3 policy,

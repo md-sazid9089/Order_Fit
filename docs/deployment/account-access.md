@@ -3,7 +3,7 @@
 19 October 2026. Backend implementation is local; this is an operator runbook,
 not evidence of a hosted migration, sender configuration or mailbox delivery.
 Use the [shared contract](../contracts/account-access-v1.md) and
-[implementation evidence](../account_access_implementation_2026-10-19.md).
+[implementation evidence](../evidence/reports/account_access_implementation_2026-10-19.md).
 
 ## Release order
 

@@ -1,3 +1,5 @@
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
@@ -13,6 +15,14 @@ function addDays(date: Date, days: number) {
 
 test("an owner evaluates, approves, commits and compensates a sandbox order", async ({ page }) => {
   test.setTimeout(120_000);
+  async function preview(name: string) {
+    const directory = process.env.E2E_SCREENSHOT_DIRECTORY;
+    if (!directory) return;
+    await mkdir(directory, { recursive: true });
+    await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await page.screenshot({ path: join(directory, `${name}.jpg`), type: "jpeg", quality: 80, fullPage: true });
+  }
   const suffix = randomUUID().slice(0, 8);
   const password = `E2E-${randomUUID()}-pass`;
   const today = isoDateFrom(new Date());
@@ -58,6 +68,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByLabel("Invoice date").fill(delivery);
   await page.getByLabel("Order amount (integer minor units)").fill("5000000");
   await page.getByLabel("Payment days").fill("30");
+  await preview("manual-order");
   // A gateway can lose the response after the draft has already been persisted.
   // Retrying the form must recover that exact draft with the original command key.
   const draftKeys: string[] = [];
@@ -97,7 +108,19 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByText(/Saved evaluation operation: succeeded/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 
+  await preview("financial-evaluation");
   const savedOrderUrl = page.url();
+  const savedApi = new RegExp(`/api/v1/businesses/[^/]+/deals/${admittedDraftId}$`);
+  for (const status of [404, 503]) {
+    await page.route(savedApi, route => route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error: { code: status === 404 ? "NOT_FOUND" : "DEPENDENCY_UNAVAILABLE", message: "Synthetic unavailable order." } }) }));
+    await page.reload();
+    await expect(page.getByRole("alert").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Confirm and evaluate" })).toHaveCount(0);
+    await page.unroute(savedApi);
+  }
+  await page.goto(savedOrderUrl);
+  await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
   // A bounded customer list can omit this saved order's known customer. That is
   // unavailable display metadata, not evidence that the order has no customer.
   await page.route("**/api/v1/businesses/*/customers", route => route.fulfill({
@@ -112,7 +135,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByRole("heading", { name: "Persisted evaluation" })).toBeVisible();
 
   await page.getByRole("link", { name: "What-if and negotiation preparation" }).click();
-  await expect(page.getByRole("heading", { name: /Negotiation preparation/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Negotiation & Sandbox Approval/ })).toBeVisible();
 
   // All identities, evidence and effects below are synthetic. Exercise the real
   // password-bound approval flow, never a client-side bypass or real adapter.
@@ -120,6 +143,8 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("button", { name: "Prepare draft", exact: true }).click();
   await page.getByLabel("Review attestation", { exact: true }).fill("Synthetic reviewer checked the exact recipient and terms.");
   await page.getByRole("button", { name: "Record exact preparation review" }).click();
+  await expect(page.getByRole("heading", { name: /customer · revision 1 · reviewed/ })).toBeVisible();
+  await preview("negotiation-preparation");
   const send = page.locator("section").filter({ has: page.getByRole("heading", { name: "1. Send bundle", exact: true }) });
   const commit = page.locator("section").filter({ has: page.getByRole("heading", { name: "2. Commit bundle", exact: true }) });
   const compensation = page.locator("section").filter({ has: page.getByRole("heading", { name: "3. Compensation", exact: true }) });
@@ -200,4 +225,10 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("link", { name: "New order" }).first().click();
   await expect(page.getByLabel("Order reference")).toBeEnabled();
   await expect(page.getByLabel("Order reference")).toHaveValue("");
+  await page.goto("/audit-log");
+  await expect(page.getByRole("main")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /audit/i }).first()).toBeVisible();
+  await expect(page.locator("section[aria-labelledby=log-heading] li").first()).toBeVisible();
+  await preview("audit-trail");
+
 });

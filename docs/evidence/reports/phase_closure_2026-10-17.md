@@ -113,4 +113,4 @@ checks do not substitute for the plan's OpenAI acceptance gate.
 No claim that every phase, every screen, live AI or production deployment is
 complete. Main-application migration needs a coordinated release decision, not a
 test-account workaround. Destructive restore/concurrency/failure tests remain
-limited to verified disposable targets. See [external acceptance](deployment/external-acceptance.md).
+limited to verified disposable targets. See [external acceptance](../../deployment/external-acceptance.md).

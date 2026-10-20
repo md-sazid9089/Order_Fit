@@ -1,5 +1,7 @@
 # Frontend handout: account recovery and emailed invitations
 
+> The browser declaration copy is now synchronized with the existing backend export. Recovery/verification/email-invitation UI implementation and provider rollout remain pending; synchronization alone does not enable these features.
+
 Date: 19 October 2026. Status: backend routes are implemented locally; shared DB
 migration, frontend integration and live delivery remain pending. Read the
 [shared account-access.v1 contract](contracts/account-access-v1.md) first.

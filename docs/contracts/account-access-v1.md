@@ -1,7 +1,7 @@
 # Account recovery and emailed invitations: shared contract
 
 Date: 19 October 2026. Status: backend implemented locally; deployment and frontend
-integration pending. [Evidence](../account_access_implementation_2026-10-19.md).
+integration pending. [Evidence](../evidence/reports/account_access_implementation_2026-10-19.md).
 Contract name: `account-access.v1`. This file is the shared source of truth for
 [backend](../account_access_backend_plan.md),
 [frontend](../account_access_frontend_handoff.md), and

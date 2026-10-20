@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, mutate, type Session } from "@/lib/orderfit-api";
-import { resetBusinessState, resetSessionState } from "@/lib/session-reset";
+import { clearLegacyDrafts, resetBusinessState, resetSessionState } from "@/lib/session-reset";
 import { pathForBusiness, resolveBusinessId } from "@/lib/business-scope";
 import { activeHref, can, navFor, roleLabel } from "@/lib/p7-model";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -44,6 +44,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    clearLegacyDrafts();
     const current = getCachedSession();
 
     if (!current) {

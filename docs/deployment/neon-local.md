@@ -1,5 +1,7 @@
 # Local Docker services with an existing Neon database
 
+> The current source requires `0023_account_access`. Required/deployed revision statements later in this guide record older diagnostics. Verify the actual target; this guide does not authorize a shared migration.
+
 Docker Compose reads the root `.env`. The host Python launcher reads the file
 passed to `--env-file`; `backend/.env` is not automatically used by Compose.
 

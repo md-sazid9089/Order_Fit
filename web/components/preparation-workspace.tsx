@@ -1,10 +1,11 @@
 "use client";
 
+import { useScope } from "@/components/layout/auth-shell";
 import { useCollection, CollectionPages } from "@/components/collection-pages";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRight, ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
-import { ApiError, get, mutate, type Deal, type Evaluation, type Operation, type Session } from "@/lib/orderfit-api";
+import { ArrowLeft, FileText, CheckCircle2, History, Landmark, Layers } from "lucide-react";
+import { ApiError, get, mutate, type Deal, type Evaluation, type Operation } from "@/lib/orderfit-api";
 import { ApprovalWorkflow } from "@/components/approval/approval-workflow";
 import { BankChangeHold } from "@/components/p7/bank-hold";
 import { messageForCode } from "@/lib/approval-model";
@@ -28,7 +29,10 @@ function describeResult(result: NonNullable<Operation["result"]>): string {
 }
 
 export function PreparationWorkspace({ dealId, businessId: requestedBusiness, operationId: initialOperation }: { dealId: string; businessId?: string; operationId?: string }) {
-  const [businessId, setBusinessId] = useState(""); const [role, setRole] = useState("");
+  const { session, businessId: selectedBusiness } = useScope();
+  const membership = session.memberships.find(m => m.business_id === selectedBusiness && (!requestedBusiness || m.business_id === requestedBusiness));
+  const businessId = membership?.business_id ?? "";
+  const role = membership?.role ?? "";
   const [deal, setDeal] = useState<Deal | null>(null); const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [state, setState] = useState<PreparationState | null>(null); const [catalogue, setCatalogue] = useState<OptionCatalogue | null>(null);
   const payeePages = useCollection<PayeeView>(`/businesses/${businessId}/payees`, !!businessId);
@@ -41,30 +45,6 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
   const prefix = `/businesses/${businessId}`;
   const versions = () => ({ expected_version: deal!.version, expected_input_version: deal!.input_version, expected_financial_revision: deal!.financial_revision });
 
-  useEffect(() => {
-    let active = true;
-    get<Session>("/auth/me").then(s => {
-      const membership = s.memberships.find(m => m.business_id === requestedBusiness) ?? (!requestedBusiness ? s.memberships[0] : undefined);
-      if (!membership) {
-        if (requestedBusiness) {
-          if (active) { setBusinessId(requestedBusiness); setRole("owner"); }
-          return;
-        }
-        throw new Error("Select a business from your saved orders.");
-      }
-      if (active) { setBusinessId(membership.business_id); setRole(membership.role); }
-    }).catch(e => {
-      if (active) {
-        if (requestedBusiness) {
-          setBusinessId(requestedBusiness);
-          setRole("owner");
-        } else {
-          setError(e.message);
-        }
-      }
-    });
-    return () => { active = false; };
-  }, [requestedBusiness, dealId]);
   const refresh = useCallback(async () => {
     if (!businessId) return;
     const stamp = ++generation.current;
@@ -204,7 +184,7 @@ export function PreparationWorkspace({ dealId, businessId: requestedBusiness, op
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
           >
             <FileText className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Source Documents &amp; OCR</span>
+            <span>Source documents</span>
           </Link>
           <Link
             href={`/deals/${dealId}/confirm?businessId=${businessId}`}

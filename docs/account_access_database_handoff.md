@@ -11,7 +11,7 @@ before any follow-up SQL changes. Actual files:
 `backend/migrations/versions/0023_account_access.py` and
 `backend/migrations/sql/0023_account_access.sql`. Use the
 [release runbook](deployment/account-access.md) for role/configuration/cleanup
-steps and the [implementation report](account_access_implementation_2026-10-19.md)
+steps and the [implementation report](evidence/reports/account_access_implementation_2026-10-19.md)
 for verified gates. The design below is retained for review; the manual SQL is
 authoritative for exact helper signatures and grants.
 

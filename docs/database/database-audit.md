@@ -1,5 +1,7 @@
 # OrderFit database: audit and backend connection guide
 
+> Use [Development](../development.md), [current contracts](../contracts/README.md), and `backend/orderfit/store/db.py` for current connection/session handling. The original-schema audit and illustrative code below are historical; do not copy their checkpoint or authorization examples into runtime code.
+
 _Status as of 15 Oct 2026, branch `database` (migration `0001_core_schema`)._
 
 Application examples below are historical guidance. For implementation, use the
@@ -17,7 +19,7 @@ This document has two parts:
 
 Related documents:
 - [database.md](database.md): design and the frontend/engine mapping.
-- [../database-verification-report.md](../database-verification-report.md): the full independent review of the first version and the fixes made since.
+- [../database-verification-report.md](../evidence/reports/database-verification-report.md): the full independent review of the first version and the fixes made since.
 
 ---
 

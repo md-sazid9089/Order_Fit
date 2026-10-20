@@ -1,5 +1,9 @@
 # 0005: Postgres from day one
 
+> Historical record. [Current architecture](../architecture/orderfit/03-system-architecture.md)
+> and [later ADRs](../architecture/orderfit/adrs/) supersede framework, fallback,
+> timing, and numeric-verification assumptions below.
+
 **Decision:** Use Postgres in the MVP, not SQLite. Deals, results, LangGraph checkpoints and the audit log all live in one database. psycopg 3 is the only driver. The schema changes only through Alembic migrations.
 
 **Why:**

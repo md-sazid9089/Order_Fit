@@ -1,6 +1,6 @@
 # 06 Roadmap and submission plan
 
-Part of the [OrderFit design set](README.md). All times are **Dhaka time (UTC+6)** unless stated. Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. The team has 5 members and one machine with a 16 GB GPU (stated by the user on 2026-10-14); skills and owners are unknown (`docs/team-assessment.md` is all `TODO` `[R]`), so the plan is by responsibility and every owner field is left for the team.
+Part of the [OrderFit design set](README.md). All times are **Dhaka time (UTC+6)** unless stated. Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. The team has 5 members and one machine with a 16 GB GPU (stated by the user on 2026-10-14); skills and owners are unknown (`docs/development.md` is all `TODO` `[R]`), so the plan is by responsibility and every owner field is left for the team.
 
 ## 1. The calendar
 

@@ -48,7 +48,7 @@ lost-passkey recovery is not supplied; online recipient-fingerprint key rotation
 and generic suppression clearing are deferred. Shared DB deployment/roles,
 privileged cleanup scheduling/keyring restore, sender DNS/tracking/real mailbox
 callbacks, frontend declarations/pages and browser acceptance remain unrun.
-Details, commands and logs: [implementation evidence](account_access_implementation_2026-10-19.md).
+Details, commands and logs: [implementation evidence](evidence/reports/account_access_implementation_2026-10-19.md).
 Next owner actions: [database handoff](account_access_database_handoff.md),
 [frontend handoff](account_access_frontend_handoff.md), and
 [release runbook](deployment/account-access.md).
@@ -126,7 +126,7 @@ sync, frontend integration and joint browser acceptance. Local passing tests do
 not close these gates. Disable through configuration; do not downgrade history.
 
 > Current reconciliation, 17 October 2026: see the
-> [resumed audit matrix](orderfit_audit_2026-10-17.md). The old stress failures below
+> [resumed audit matrix](evidence/reports/orderfit_audit_2026-10-17.md). The old stress failures below
 > were subsequently repaired (reported final 507 backend passes); neither that
 > result nor the old migration-head statement certifies the newer admin/RBAC work.
 > Backend/admin remediation is separately owned and in progress. Fresh frontend
@@ -134,7 +134,7 @@ not close these gates. Disable through configuration; do not downgrade history.
 
 Current phase status (16 October 2026): P0–P3/P5–P7 have local implementation and
 gate evidence, with additional acceptance/scale gaps listed in the
-[current spec audit matrix](orderfit_audit_2026-10-16.md). **P4 and P8 remain partial**:
+[current spec audit matrix](evidence/reports/orderfit_audit_2026-10-16.md). **P4 and P8 remain partial**:
 live/independent AI quality and hosted/restore acceptance are unverified. Earlier
 entries and their counts are historical; later remediation supersedes old gaps.
 
@@ -374,7 +374,7 @@ part of P1. No existing environment-file contents were read, replaced or printed
 - Compose now separates migration, one-time setup provisioning, API and worker
   credentials/processes. CI invokes the disposable DB acceptance harness rather
   than only migrating with a privileged service login. README and
-  `docs/p1_backend_foundation.md` explain operation and phase boundaries.
+  `docs/evidence/reports/p1_backend_foundation.md` explain operation and phase boundaries.
 
 ### Checks actually executed
 
@@ -458,7 +458,7 @@ catalog evidence, not hosted P1 acceptance. Original local PostgreSQL 17 evidenc
 remains distinct from this PostgreSQL 18 managed target.
 
 The concrete pending migration/provisioning/configuration steps are recorded in
-`docs/neon_connection_review.md`. Approval is still needed for these hosted
+`docs/evidence/reports/neon_connection_review.md`. Approval is still needed for these hosted
 schema/role changes beyond the completed read-only inspection. P2 remains unstarted.
 
 ## Approved Neon P1 setup — 15 October 2026
@@ -652,7 +652,7 @@ local acceptance does not establish all hosted workflows.
   sensitivity. Named strategies are checked separately; full series get independent
   checks rather than being hidden from production output.
 - Added the repeatable CPU/memory benchmark, ADR 0010 and
-  `docs/p2_engine_verification.md`; updated README/contract status. No SQL, migration,
+  `docs/evidence/reports/p2_engine_verification.md`; updated README/contract status. No SQL, migration,
   frontend, reference fixture, dependency or environment-file change is needed.
 
 ### Checks actually executed
@@ -1381,7 +1381,7 @@ Root/backend/web instructions, plan/gap/gate registers, requirements, architectu
 ADRs and financial contracts were reconciled with code through codebase-memory
 architecture/search/call-path/snippet exploration and direct reads where the graph
 did not cover recently merged UI. The complete feature matrix, evidence boundaries
-and severity-ranked remainder are in [the audit report](orderfit_audit_2026-10-16.md).
+and severity-ranked remainder are in [the audit report](evidence/reports/orderfit_audit_2026-10-16.md).
 Other security/deployment work arrived concurrently; it was preserved rather than
 overwritten or attributed to this audit. No real application secrets, shared
 database, provider configuration or git history were changed.
@@ -1557,7 +1557,7 @@ matrix before treating any phase or competition deliverable as fully accepted.
   These are finite local measurements, not a sustained production capacity claim.
 - Detailed per-phase/V01–V16 matrix, severity-ranked findings, exact reproductions,
   later HTTP-burst evidence, repair acceptance and unrun gates are in
-  [the stress report](backend_stress_test_report_2026-10-16.md); raw JUnit/console
+  [the stress report](evidence/reports/backend_stress_test_report_2026-10-16.md); raw JUnit/console
   evidence is in `docs/stress-test-2026-10-16/`. The development-context handoff
   was reconciled. No local/hosted phase is newly declared complete from file presence.
 - Live OpenAI/model quality, actual S3/Neon/PgBouncer/Render/Vercel acceptance,
@@ -1624,7 +1624,7 @@ matrix before treating any phase or competition deliverable as fully accepted.
   target/restore pair/rotation evidence supplied. P4/P8 hosted acceptance remains open.
 - Detailed finding matrix, source SHA-256 manifest, exact commands, raw evidence,
   thresholds, limitations and remaining prerequisites:
-  [remediation report](backend_stress_remediation_2026-10-16.md),
+  [remediation report](evidence/reports/backend_stress_remediation_2026-10-16.md),
   [integration contract](contracts/stress-remediation.md),
   [external runbook](deployment/external-acceptance.md). Original audit evidence is intact.
 
@@ -1670,7 +1670,7 @@ matrix before treating any phase or competition deliverable as fully accepted.
   resuming the interrupted verification against an old image. Earlier fixes are
   committed; new admin/RBAC changes arrived afterward. Graph-first discovery did
   not cover the new admin symbols; direct source reads filled that gap. Updated
-  [the current matrix](orderfit_audit_2026-10-17.md), preserving historical reports.
+  [the current matrix](evidence/reports/orderfit_audit_2026-10-17.md), preserving historical reports.
 - The user explicitly assigned concurrent backend/admin remediation to the other
   task and frontend/integration checks here. No competing backend patch, shared DB
   mutation, real credential change or Git-history operation was performed. Initial
@@ -1773,7 +1773,7 @@ Final focused checks: admin provisioner + RBAC6passed; workflow/header assertion
 
 ## 17 October 2026 — remaining-phase integration continuation
 
-See [phase closure evidence](phase_closure_2026-10-17.md) for the reconciled phase
+See [phase closure evidence](evidence/reports/phase_closure_2026-10-17.md) for the reconciled phase
 disposition, exact checks, five-round browser cap and limitations. Backend/MFA
 changes remain with the security task; integration work preserves that ownership.
 
@@ -1837,7 +1837,7 @@ temporary directory recorded in the closure report. Final sustained HTTP run:
 
 Application snapshot `eef7bea2f7d622dc293f8667a120222666fa0d29`, execution branch
 `backend/stress_test`, sole Alembic head `0019_merge_passkey_roles`. See the
-[detailed report](backend_stress_test_report_2.md) and
+[detailed report](evidence/reports/backend_stress_test_report_2.md) and
 [raw evidence](backend-stress-2/2026-10-17-eef7bea/summary.json). SHA256 checks
 confirmed all 170 manifest application/migration/lock files unchanged.
 
@@ -1880,7 +1880,7 @@ telemetry and hosted Neon/Azure/Caddy/S3/provider/restore gates remain open.
 User requested opening/testing the application and fixing reproduced issues.
 Started from clean main `8a9d1c2`; used the development context and graph-first
 discovery, falling back where the graph lacked current client symbols. See
-[failure map and evidence](app_reliability_2026-10-17.md).
+[failure map and evidence](evidence/reports/app_reliability_2026-10-17.md).
 
 - Opened the frontend and reproduced unhelpful sign-in failure during API outage.
   Restored the local Docker engine after stale runtime-socket startup failures,
@@ -1915,7 +1915,7 @@ remain open; next step is separately configured live-quality/hosted acceptance.
 ## 17 October 2026 — measured dashboard performance repair
 
 User clarified that performance meant application speed. Preserved the existing
-reliability working-tree edits. See [measurements and limits](performance_review_2026-10-17.md).
+reliability working-tree edits. See [measurements and limits](evidence/reports/performance_review_2026-10-17.md).
 
 - Reproduced the 20-row pipeline's serial missing-customer lookup waterfall with
   a controlled browser benchmark:20customers outside the first list,20live
@@ -2008,7 +2008,7 @@ non-owner runtime checks using explicit read-only transactions.
   IPv4 frontend health proxies1877–2995ms. These separate observations are neither
   a controlled speedup comparison nor deployed Azure/Vercel latency acceptance.
 
-See [performance follow-up](performance_review_2026-10-17.md). User sign-in is
+See [performance follow-up](evidence/reports/performance_review_2026-10-17.md). User sign-in is
 pending for authenticated dashboard measurements; no financial payload, synthetic
 business/account creation, outgoing action, shared migration or destructive load
 test was performed on Neon. Preserve all earlier reliability/performance changes.
@@ -2062,7 +2062,7 @@ historical and must not be interpreted as claiming zero writes after signup.
   task. After interruption the local API and web were restarted hidden on loopback
   ports8000/3000. Browser transport closed on both recovery attempts, preventing
   post-fix authenticated browser measurement. Sign-in screenshot remains in the
-  artifact path recorded in [the performance report](performance_review_2026-10-17.md).
+  artifact path recorded in [the performance report](evidence/reports/performance_review_2026-10-17.md).
 
 Next step: restore the browser connection and repeat the three authenticated
 reloads. No shared-schema migration, destructive Neon load, new privilege or
@@ -2399,7 +2399,7 @@ isolated native PG16.11;the live flow passed again on current shared source.
 It covers upload/extract/human amount review/supply missing dates/confirm/evaluate/
 what-if,six calculated series,saved live response identity and unchanged canonical
 deal state after the fork. Exact IDs and distinctions are in
-[the evidence report](freellmpool_integration_2026-10-18.md).
+[the evidence report](evidence/reports/freellmpool_integration_2026-10-18.md).
 
 Isolated API8000 and worker were refreshed from current source with ignored
 backend/.env.freellmpool. Existing web3000 proxies to this separate test DB;
@@ -2644,3 +2644,72 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   jobs (account payment/spending limit), not because of test results. Full DB suite, engine
   suite, web checks and the hosted deployment were not re-run. Frontend does not yet show
   the new `WEAK_PASSWORD` message specifically.
+
+### 20 October 2026 — Approved repository cleanup and saved-workflow repairs
+
+- Worked from local `main` at `97ec81b4c3c35189fed4e644143880af3a114277`
+  on `codex/repository-cleanup`. The owner approved documentation/dead-stub cleanup,
+  browser contract/workflow repairs, and the README; deployment repair and broad
+  dependency/skill removal remain deferred. Existing unrelated untracked work was preserved.
+- Consolidated current setup, workflow, architecture, financial and security guidance;
+  shortened agent context; updated references before removing the approved 18 files.
+  Preserved 18 dated reports plus one XML under `docs/evidence/reports/`. Consolidated
+  the QA handoff into `docs/workflows.md`; preserved substantive ADRs, requirements,
+  original implementation evidence, fixtures and raw experiment bundles.
+- Inspected and reused specific frontend changes from `c7980cd` and `9e77161`,
+  then reconciled them against this checkout. Intake now saves API resources; legacy
+  validation/confirmation routes redirect; retired fake evaluation and confirmation
+  components were removed. Failed reads remain errors, roles come from verified
+  memberships, legacy browser drafts are purged on scope reset, and admin screens
+  use existing capability-gated bounded reads. Synchronized browser declarations;
+  clarified that generated ownership lists include proposed operations.
+- Fixed the Windows PowerShell browser runner's handling of Docker stderr without
+  masking exit status. Added saved-read 404/503 regressions and optional screenshot
+  capture to the persisted sandbox lifecycle test. The README includes four genuine
+  synthetic/provider-off captures and two locally rendered Mermaid diagrams; screenshot
+  reproduction is documented. No application license was invented.
+- Checks executed against this checkout: Ruff; generated contracts (**134 operations**);
+  frontend lint/typecheck and strict contract examples; **128 frontend unit tests**;
+  reference calculator/selftests; API/web Docker builds; and the focused persisted
+  Playwright journey (**1 passed, 38.3 s**) through evaluation, review, approvals,
+  dispatch, reply acceptance, commitment, compensation and lost-response recovery.
+  The first browser run exposed a stale heading locator; corrected it to the actual
+  page heading and reran successfully. **115 Markdown files** have no missing local
+  link targets; README anchors resolve and three Mermaid diagrams render locally.
+- Full backend run: **838 passed, 1 failed, 1 live deselected, 5 warnings, 1023.53 s**.
+  The failure was the existing worker-log test after in-process Alembic `fileConfig`
+  disabled its logger. Reproduced that cause without DB access; the same test passed
+  alone. Its setup now temporarily enables/restores the logger via `monkeypatch`,
+  preserving all error and secret-exclusion assertions. Subsequent migration-plus-
+  regression run: **29 passed, 16.06 s** on disposable PG17. Separate deliberate-
+  disabled-logger and P7 run: **41 passed, 4.95 s**, including state restoration.
+  Ruff/contracts pass after the fix. No second full backend run is claimed.
+- Follow-up Render Blueprint repair: both API and worker now select the existing
+  S3 adapter with separate service keys and one external private bucket; per-service
+  disks were removed. The API `dockerCommand` removes `DATABASE_URL_DIRECT` before
+  starting Uvicorn; that migration-only secret remains on the API service so its
+  separate pre-deploy command can run. YAML parsing and credential/storage invariant
+  checks pass, as do the existing S3 adapter/configuration tests (**8 passed**).
+  The Vercel and security indexes now describe these requirements accurately.
+- Follow-up completion after the owner asked to implement the remaining safe
+  cleanup: removed seven direct web dependencies with no source/configuration
+  references and updated the npm lockfile. The first clean Linux image build
+  exposed missing cross-platform optional `@emnapi` records; restored those
+  records, then confirmed Linux `npm ci` and the production image build succeed.
+  Hardened the E2E runner's partial-build cleanup so a missing image cannot skip
+  temporary configuration cleanup.
+- Final local verification: the complete backend suite passes (**839 passed,
+  1 live-provider test deselected, 5 deprecation warnings, 1033.69 s**); Ruff and
+  the generated API contract check pass (**134 operations**); frontend lint,
+  TypeScript, strict generated declaration validation and **128 unit tests** pass;
+  local and clean-container production builds pass; all **13 Playwright acceptance
+  tests** pass. The deterministic reference set passes all 22 cases and its
+  brute-force/boundary self-tests report **0 failures**. The bounded browser load
+  test completed 5,746 requests in 60 seconds with p95 186.83 ms. Local Markdown
+  links and Mermaid diagrams were checked after documentation edits.
+- The 819 installed skills have unique `SKILL.md` content; no additional skill or
+  component deletion met the evidence bar. No engine, migration, or schema change;
+  no shared DB migration, live provider, real commercial effect, actual Render
+  manifest submission, hosted/restore acceptance, commit, or push. Render CLI
+  schema validation and real bucket-policy/credential/restore checks remain open.
+  Local browser evidence is not a production-readiness claim.

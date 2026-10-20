@@ -12,7 +12,7 @@
 >
 > They are verified by the new `backend/migrations/tests/test_schema.sql` (**296/296 pass** on PostgreSQL 16, run as the real roles under RLS) and `test_concurrency.sh` (**pass**). The Alembic upgrade → downgrade → upgrade round trip is clean.
 >
-> Still open, because it is backend application code: G4, G5, G7–G13 and G19 (DB sessions as a member of `orderfit_app` with `set_config` per transaction, UUID ids in `domain.py`, auth, the SQLSTATE → HTTP mapping). The current design is in [database/database.md](database/database.md).
+> Still open, because it is backend application code: G4, G5, G7–G13 and G19 (DB sessions as a member of `orderfit_app` with `set_config` per transaction, UUID ids in `domain.py`, auth, the SQLSTATE → HTTP mapping). The current design is in [database/database.md](../../database/database.md).
 
 Reviewer: Claude Code (strict review, read-only on the repository). Date: 2026-10-15.
 Scope: `backend/migrations/sql/0001..0004`, `down_0001.sql`, `backend/migrations/versions/0001_core_schema.py`, `docs/database/database.md`, checked against the repository code, the frontend and the design spec.

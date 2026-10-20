@@ -1,5 +1,9 @@
-import { UnavailablePage } from "@/components/unavailable-notice";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <UnavailablePage title="Orders" reason="Saved orders are listed under Orders." href="/deals" linkLabel="Go to saved orders" />;
+type Props = { searchParams: Promise<{ businessId?: string }> };
+
+// Saved orders live in the Deals pipeline; this legacy path forwards there with the business scope intact.
+export default async function OrdersRedirect({ searchParams }: Props) {
+  const { businessId } = await searchParams;
+  redirect(`/deals${businessId ? `?businessId=${encodeURIComponent(businessId)}` : ""}`);
 }

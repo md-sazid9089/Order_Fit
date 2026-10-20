@@ -31,12 +31,12 @@ export function DealsWorkflowStepper({
     {
       step: 2 as WorkflowStep,
       label: "2. Validate",
-      href: `/deals/new/validate${query}${dealId ? `&poNumber=${encodeURIComponent(dealId)}` : ""}`,
+      href: dealId ? `/deals/${po}/documents${query}` : `/deals/new${query}`,
     },
     {
       step: 3 as WorkflowStep,
       label: "3. Confirm",
-      href: `/deals/${po}/confirm${query}`,
+      href: `/deals/${po}${query}`,
     },
     {
       step: 4 as WorkflowStep,

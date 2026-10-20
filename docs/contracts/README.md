@@ -1,12 +1,14 @@
-# P0 contract freeze — 15 October 2026
+# API contracts
 
-This document records the P0 freeze. Its source/decision matrix below describes
-that historical checkout. As of 16 October 2026 the application has registered
-business endpoints, a worker, readiness and a typed `web/` client; the generated
-catalogue contains 108 operations. A target contract is not proof of acceptance:
-see the [current audit matrix](../orderfit_audit_2026-10-16.md) for implementation
-and verification evidence. No mock success handlers are mounted. The original SQL
-revision and its four component files remain unchanged; forward revisions extend them.
+Typed backend contracts generate OpenAPI, the ownership catalogue, and both
+TypeScript declaration copies. A target contract does not establish registration,
+enablement, deployment, or acceptance: inspect actual routers and capabilities.
+The browser copy lives inside its Docker context and must stay synchronized;
+`--backend-only` is a partial export, not a CI shortcut.
+
+See [Workflows](../workflows.md) and [Development](../development.md). The P0
+source/decision matrix below retains historical rationale. Current SQL, accepted
+ADRs, and versioned contracts supersede conflicting old checkout/status claims.
 
 The code authority is `backend/orderfit/contracts/`: primitives, financial inputs,
 resources, workflow/results, language proposals, protocol predicates, configuration,
@@ -222,7 +224,7 @@ combinations × (scan+3) × max(1,event count,horizon days) × (1+sum sensitivit
 100,000,000 units. This is a conservative contract admission count, not a measured
 timeout guarantee. P2 adds a stricter engine admission estimate, a shared actual
 work counter and a 500,000-point output ceiling; see the
-[P2 engine contract and measurements](../p2_engine_verification.md). P3 must apply
+[P2 engine contract and measurements](../evidence/reports/p2_engine_verification.md). P3 must apply
 bounded worker execution before enabling queued compute. Expanded monetary bounds account
 for 100% extension surcharge + 100% stress overrun and fees/interest. Full horizon
 includes late offer funding/repayment, extended costs, shifted receipts/deposits,

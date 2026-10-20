@@ -6,7 +6,7 @@ sections 11 and 13.2. Current modes are `off`, `recorded` and explicit `live`;
 recorded misses fall back visibly without automatic provider traffic. `local`
 Ollama is not implemented. The original proposal below is retained as rationale,
 not a promise that all four modes or live acceptance exist. See the
-[audit matrix](../../../orderfit_audit_2026-10-16.md).
+[audit matrix](../../../evidence/reports/orderfit_audit_2026-10-16.md).
 
 ## Context
 

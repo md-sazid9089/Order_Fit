@@ -177,5 +177,5 @@ The17October user-authorized branch drill also reduced runtime role/schema
 validation from3SQL queries to1. Seven warm Neon samples measured235ms median
 before and125ms after (46.8% lower for that check only).43fresh disposable-PG17
 DB tests and4architecture tests passed. No main schema/compute change or whole-app
-speedup is claimed. See [hosted acceptance](security/neon_acceptance_2026-10-17.md)
+speedup is claimed. See [hosted acceptance](../../security/neon_acceptance_2026-10-17.md)
 for complete samples, the encrypted hosted restore and remaining storage controls.

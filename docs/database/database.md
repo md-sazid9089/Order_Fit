@@ -1,11 +1,13 @@
 # OrderFit database design (PostgreSQL 15+)
 
+> This describes the original schema package. The current source head is `0023_account_access`; later migrations extend this design. [Development](../development.md) and [Security](../security/README.md) describe runtime boundaries. Original object counts below are historical, not current totals.
+
 Status: built and tested on PostgreSQL 16. The checks are:
 - `backend/migrations/tests/test_schema.sql`: 296 checks, run as the real application roles under RLS.
 - `test_concurrency.sh`: 8 concurrent writers on the audit chain, plus the optimistic lock.
 - An Alembic upgrade → downgrade → upgrade round trip.
 
-There are 28 tables plus `alembic_version`, 5 views and 1 domain. The independent review and its fixes are in [../database-verification-report.md](../database-verification-report.md). For how to connect the backend, see [database-audit.md](database-audit.md).
+There are 28 tables plus `alembic_version`, 5 views and 1 domain. The independent review and its fixes are in [../database-verification-report.md](../evidence/reports/database-verification-report.md). For how to connect the backend, see [database-audit.md](database-audit.md).
 
 ## 1. Principles
 

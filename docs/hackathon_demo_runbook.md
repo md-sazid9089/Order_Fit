@@ -1,7 +1,9 @@
 # Reproducible local hackathon demo
 
+> The current provider-free persisted journey is `./scripts/run-e2e.ps1 -TestPattern "an owner evaluates, approves, commits and compensates"`. It creates and tears down a labeled disposable stack. See [Workflows](workflows.md) for current UI behavior; the dated campaign below remains historical.
+
 17 October 2026. Sandbox-only, synthetic inputs, provider off by default. Final
-acceptance status is in [the readiness report](hackathon_readiness_report.md).
+acceptance status is in [the readiness report](evidence/reports/hackathon_readiness_report.md).
 Do not use an existing/shared Neon URL as a substitute for this disposable setup.
 
 ## Setup and reset

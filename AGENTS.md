@@ -4,7 +4,8 @@ These instructions apply throughout the repository. Read additional `AGENTS.md` 
 
 ## Development context and maintenance
 
-For development or continuation work, read the concise
+Start with [Development](docs/development.md), [Workflows](docs/workflows.md), and
+the relevant current contract. For continuation work, read the concise
 [development context skill](.agents/skills/orderfit-development-context/SKILL.md).
 Reconcile its snapshot with the checkout. Update it when phase status, material
 decisions, schema/paths or verified blockers change; put detailed evidence in
@@ -22,7 +23,7 @@ Prefer small, cohesive modules and explicit interfaces. Avoid speculative abstra
 ## Read before backend implementation
 
 1. Inspect the current branch, HEAD, working-tree changes and applicable scoped instructions. Preserve existing user changes; do not switch branches, reset, clean or overwrite work to match a document.
-2. Read [the backend implementation plan](docs/initial_backend_implementation_plan.md), especially its source map, database gap register, contracts, phases and acceptance gates.
+2. When changing a phase contract or reconciling an unresolved requirement, read [the backend implementation plan](docs/initial_backend_implementation_plan.md), especially its source map, database gap register, contracts, phases and acceptance gates.
 3. Read `docs/backend_implementation_progress.md` if it exists. Create/update it when implementing backend phases, recording actual files, decisions, checks, limitations and next steps. Do not create a fictional history of completed work.
 4. Inspect the current files for the capability you are changing, including its producers, consumers, database rules and tests. Historical documentation is evidence to reconcile, not proof of current implementation.
 
@@ -37,7 +38,7 @@ When sources disagree, separate the current implementation from the intended beh
 - `docs/initial_backend_implementation_plan.md`: backend implementation handoff and phase gates.
 - `docs/architecture/orderfit/`: revised requirements, architecture, ADRs and financial contracts.
 - `docs/architecture/orderfit/fixtures/`: executable reference calculator, cases and expected results.
-- `docs/database/` and `docs/database-verification-report.md`: database design and historical verification evidence.
+- `docs/database/` and `docs/evidence/reports/database-verification-report.md`: database design and historical verification evidence.
 - `data/` and `scripts/`: synthetic/demo inputs and helper scripts; inspect for stubs before relying on them.
 - `docker-compose.yml` and `.github/workflows/`: runtime/build/CI integration.
 

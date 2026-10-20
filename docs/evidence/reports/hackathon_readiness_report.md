@@ -84,8 +84,8 @@ These sources support design choices; executed regressions establish local behav
 
 ## Evidence ledger
 
-See [risk/test matrix](hackathon_test_matrix.md) for requirements, actual checks,
-targets, outcomes and exclusions; [demo runbook](hackathon_demo_runbook.md) for a
+See [risk/test matrix](../../hackathon_test_matrix.md) for requirements, actual checks,
+targets, outcomes and exclusions; [demo runbook](../../hackathon_demo_runbook.md) for a
 reproducible supported workflow. Final results and reviewer dispositions are
 pending integration. Historical evidence remains in the existing security,
 stress, performance and AI-assisted-review reports and is not relabeled fresh.

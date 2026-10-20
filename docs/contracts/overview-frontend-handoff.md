@@ -1,5 +1,7 @@
 # Overview endpoint: frontend handoff
 
+> The current overview client calls the overview endpoint. Preserve the metric definitions and acceptance requirements below; earlier statements assigning initial integration work describe the handoff snapshot.
+
 Backend implementation: 18 October 2026. **No files under `web/` were changed.**
 
 ## Request and ownership

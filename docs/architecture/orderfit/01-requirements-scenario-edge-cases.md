@@ -238,7 +238,7 @@ Count: 10 (R) + 8 (P) + 6 (T) + 12 (D) + 4 (F) + 8 (S) + 12 (M) + 6 (L) + 3 (E) 
 2. Which submission items are required for the International Track, and how is the submission delivered (form, email, site)? Which contact receives the registration (`wangyr@pbcsf.tsinghua.edu.cn` in the PDF, `fintechathon@ican-x.com` on the site)? Is a passport copy required, or only the ID type and number `[W: research-market.md]`?
 3. May a real-deployment or hosted-demo element earn the 0 to 5 bonus on a non-on-chain topic (the site's wording is broader than the PDF's)?
 4. Is any LLM provider required, forbidden or preferred? (Nothing in the rules says.)
-5. Who owns each area and each person's skills (`docs/team-assessment.md` is all `TODO`); the GPU model and operating system; how many of the five are non-Chinese nationals (a team of 5 needs at least 3 `[W]`).
+5. Who owns each area and each person's skills (`docs/development.md` is all `TODO`); the GPU model and operating system; how many of the five are non-Chinese nationals (a team of 5 needs at least 3 `[W]`).
 6. Which owner priorities and scenario delays are realistic for the segment (15 and 45 days are placeholders).
 7. Jurisdiction-dependent obligations ([05](05-security-and-evaluation.md) section 5.5).
 

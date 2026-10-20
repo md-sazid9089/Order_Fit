@@ -104,3 +104,16 @@ test("static headers retain baseline protections while HTML uses request-specifi
   assert.match(proxy, /randomBytes\(32\)/);
   assert.match(proxy, /headers.set\("Content-Security-Policy", policy\)/);
 });
+
+
+test("session and business reset purge private legacy drafts without deleting preferences", () => {
+  const removed = [];
+  const localStorage = { removeItem: key => removed.push(`local:${key}`) };
+  const sessionStorage = { removeItem: key => removed.push(`session:${key}`) };
+  const reset = load("session-reset.ts", { "./orderfit-api": { clearPendingCommands() {}, clearStoredToken() {} } }, { localStorage, sessionStorage });
+  for (const method of ["resetSessionState", "resetBusinessState"]) {
+    removed.length = 0;
+    reset[method]({ clear() {} });
+    assert.deepEqual(removed.sort(), ["local:orderfit_deal_draft", "local:orderfit_deal_validated", "session:orderfit_deal_draft", "session:orderfit_deal_validated"].sort());
+  }
+});

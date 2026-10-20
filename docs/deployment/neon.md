@@ -1,6 +1,6 @@
 # Neon PostgreSQL runbook
 
-Scope: the hosted database for the Vercel (web) + Render (API, worker) deployment. Companion documents: [render.md](render.md), [vercel.md](vercel.md), [../neon_connection_review.md](../neon_connection_review.md) (the historical record of the first Neon setup).
+Scope: the hosted database for the Vercel (web) + Render (API, worker) deployment. Companion documents: [render.md](render.md), [vercel.md](vercel.md), [../neon_connection_review.md](../evidence/reports/neon_connection_review.md) (the historical record of the first Neon setup).
 
 Everything here is a procedure to follow. **None of it has been executed against a hosted Neon branch by this change.** See "Unverified hosted gates" at the end. Passwords and URLs below are placeholders; never paste real values into a committed file, a chat or a log.
 
@@ -203,6 +203,6 @@ unexpired global worker heartbeat as well as restricted DB/schema/storage checks
 monitoring so a worker outage does not restart a healthy API. Reserve one extra
 restricted DB connection per worker for liveness; do not inject migration access.
 See the [integration contract](../contracts/stress-remediation.md),
-[current evidence](../backend_stress_remediation_2026-10-16.md) and
+[current evidence](../evidence/reports/backend_stress_remediation_2026-10-16.md) and
 [executable external acceptance procedures](external-acceptance.md).
 Hosted acceptance and historical credential rotation remain unverified.

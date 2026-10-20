@@ -1,5 +1,7 @@
 # Frontend handoff: admin consistency and review recovery
 
+> The frontend now consumes the existing capability-gated admin read DTOs with bounded continuation, exact currency totals, explicit errors, and real signout. This checkout still requires schema head `0023_account_access`; the backend enablement/deployment gates below remain separate.
+
 Prepared 18 October 2026 from `4578538`. **Backend implemented; deployment and frontend integration pending.** Schema head: `0021_admin_reads`. Reads default disabled via `ADMIN_READS_ENABLED=false`. Companion: [backend fix plan](../admin_backend_fix_plan_2026-10-18.md), [deployment runbook](../deployment/admin-reads.md), [synthetic response fixtures](admin.example.json). Verification evidence is recorded in the backend progress file.
 
 Local evidence: 757 full backend tests passed (1 live test deselected; 3 deprecation

@@ -2,7 +2,7 @@
 
 FreeLLMPool now has a native, credential-free testing integration. The default
 OpenAI provider remains separate. This addresses provider integration; the broader
-capabilities in [the AI workflow plan](AI_WORKFLOW_PLAN.md) have their own status.
+capabilities in [the AI workflow plan](../../AI_WORKFLOW_PLAN.md) have their own status.
 
 ## Implementation
 
@@ -84,7 +84,7 @@ The cluster is intentionally retained for user testing. The main database,
 existing `.env`, existing PostgreSQL service on port 5432 and web process were
 not changed. Main-account credentials do not belong to this separate database;
 create a synthetic test account there. API/worker start commands use the explicit
-test file described in [the guide](deployment/freellmpool.md).
+test file described in [the guide](../../deployment/freellmpool.md).
 
 Initial `/health`, `/ready` and web `/api/health` checks passed, including schema,
 storage and worker readiness with zero backlog. The browser entry and sign-in
@@ -106,6 +106,6 @@ does not establish general extraction quality, privacy/retention acceptance or
 ongoing upstream availability. Explanations, drafting and reply parsing retain
 their existing template/parser behavior.
 
-See the [contract](contracts/freellmpool-testing.md),
-[synthetic input](../data/ai_workflow/synthetic_order.txt) and
-[live smoke command](../scripts/test_freellmpool.py).
+See the [contract](../../contracts/freellmpool-testing.md),
+[synthetic input](../../../data/ai_workflow/synthetic_order.txt) and
+[live smoke command](../../../scripts/test_freellmpool.py).

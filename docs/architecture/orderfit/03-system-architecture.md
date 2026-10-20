@@ -1,15 +1,95 @@
-# 03 System architecture
+# System architecture
+
+## Current implementation
+
+OrderFit is a modular monolith with a separate durable worker. Next.js (`web/`)
+uses a same-origin REST proxy to FastAPI. Routes validate contracts and current
+identity; services coordinate short transactions; repositories use manually migrated
+PostgreSQL with restricted runtime roles and forced tenant row-level security.
+The source schema head for this checkout is `0023_account_access`.
+
+```mermaid
+flowchart LR
+    Owner[Business reviewer] --> Web[Next.js web]
+    Web --> API[FastAPI API]
+    API --> DB[(PostgreSQL and durable jobs)]
+    DB --> Worker[Separate worker]
+    Worker --> Compute[compute.py boundary]
+    Compute --> Engine[Pure deterministic engine]
+    Worker --> LLM[llm.py proposal boundary]
+    API --> Store[(Private documents)]
+    Worker --> Store
+    Worker --> Sandbox[Approved sandbox effects]
+    Sandbox --> DB
+```
+
+One confirmed-input pipeline serves initial evaluation, what-if, and reply
+reassessment. Confirmation freezes immutable evidence and revisions; calculations
+occur outside database transactions. Only `agent/nodes/compute.py` calls the
+application engine entry point. The engine performs no I/O, provider access, or
+implicit clock reads. AI proposals cannot change confirmed facts or authorize effects.
+
+Workflow state, numerical verdict, review flags, and background-operation state
+are separate. Jobs persist admission/idempotency, leases, heartbeats, fencing,
+and bounded recovery. Exact sandbox bundles require current session/membership,
+fresh inputs, step-up, acceptance evidence where required, and unexpired approval.
+Successful local effects and audit evidence commit together; partial runs retain
+identity and the business commitment gate until settlement or approved compensation.
+
+The eight persisted deal states remain unchanged. Confirmation/approval are durable
+application evidence, not LangGraph interrupts. No LangGraph queue/checkpointer is
+adopted. PostgreSQL generates the audit canonical bytes and per-business chain.
+
+The UI creates saved UUID resources, reads saved evaluations, and surfaces errors.
+Legacy validation/confirmation routes redirect into this pipeline. No timer,
+localStorage draft, fabricated role, or synthetic fallback establishes business success.
+Admin global summaries are independent capability-gated reads; platform authority
+never grants business membership. Account-access backend features default off pending
+consumer/provider/operational acceptance. See [workflows](../../workflows.md),
+[contracts](../../contracts/README.md), and [security](../../security/README.md).
+
+## AI capability and verification boundaries
+
+| Capability | Current implementation | Availability and evidence |
+| --- | --- | --- |
+| Source-document fact proposals | `agent/llm.py` provides bounded extraction; `workflow/extraction.py` persists candidates for human review with quote, source and conflict checks. | `off`, recorded and bounded `live` modes exist. Live OpenAI quality acceptance is open; missing recordings never fall through to a provider. |
+| Natural-language what-if proposals | `agent/llm.py` converts bounded language intent into a proposed fork. The production engine calculates the fork. | Deterministic fallback covers explicit supported requests; recorded/live modes are bounded. A person must still apply, review, confirm and evaluate the fork. |
+| Financial evaluation and recommendations | The deterministic engine is the only source of calculations, feasibility and recommendation. | Implemented and persisted. A model cannot supply a figure, alter confirmed inputs or approve a decision. |
+| Reply reading, clause readings, slot explanations, multilingual review (C2-C6) | Typed reply terms/conditions/stance, clause hypotheses tested on isolated engine forks, slot-only model wording of an explanation, language/script provenance and optional glosses. See `AI_WORKFLOW_PLAN.md`. | Off by default; recorded/live when configured. Verified only on recorded synthetic cases (`evaluation.md`); live OpenAI quality is open. Every AI output carries a provenance badge. |
+| Explanations and exact message preparation | Engine-backed explanations, exact-term templates and constrained reply parsing are implemented. | Available without a provider key. These are deterministic templates/parsers, not conversational generative drafting. |
+| Risk and missing-information assistance | Evaluation already returns alerts, coverage gaps and value-of-information questions. The order page now presents them in a Decision guide with a route to the bounded what-if workspace. | Implemented in the current UI. The guide is read-only and displays existing evaluation facts only. |
+| Choosing recipients, sending messages, approvals, payments or lending | Intentionally excluded from AI authority. | Human review and exact sandbox approval remain required; real external adapters are not in scope. |
+
+
+OpenAI is the hosted provider path. FreeLLMPool remains a local-only testing option
+with loopback/filesystem restrictions in this checkout. Off and recorded modes do
+not silently call live providers. Extraction, reply/clause readings, bounded what-if,
+and slot-only explanations retain quote/provenance/guard checks. Message drafting is
+currently deterministic template preparation. Language qualification on authored
+recordings is not proof of live multilingual quality. Guards flag problems; they do
+not silently rewrite original evidence or financial inputs.
+
+See [AI evaluation](../../evaluation.md) for the synthetic corpus and
+[AI proposals](../../AI_WORKFLOW_PLAN.md) for explicitly unimplemented additions.
+
+## Historical design rationale
+
+The remaining sections preserve the 14 October design and counterexamples. Proposed
+entities, state names, providers, fallback rules, scope, and delivery dates are historical.
+Current code/contracts and ADRs 0007–0010 supersede conflicting implementation claims.
+
+# 14 October design baseline
 
 > Historical design baseline: the implementation now exists. Follow the later
 > [plan](../../initial_backend_implementation_plan.md) and accepted ADRs 0007–0010
 > for the eight-state workflow, existing SQL entities, strict RLS and restricted
 > runtime roles. In particular, recorded mode never silently calls a live provider.
-> See the [current audit](../../orderfit_audit_2026-10-16.md) for verified boundaries
+> See the [current audit](../../evidence/reports/orderfit_audit_2026-10-16.md) for verified boundaries
 > and partial acceptance. Diagrams below retain their original design vocabulary.
 
 Part of the [OrderFit design set](README.md). Calculation semantics, entities and API payloads are in [04](04-decision-engine-and-data-contracts.md); threats, tests and fixtures in [05](05-security-and-evaluation.md); requirements and the demo in [01](01-requirements-scenario-edge-cases.md). This document is written so that sections 1 to 9 can become competition deliverable 1 (technical documentation) with light editing.
 
-Evidence labels: `[R]` repo, `[W]` web (accessed 2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. Nothing is built; no performance result exists. The only executed artefact is the reference calculation in [`fixtures/`](fixtures/).
+Evidence labels: `[R]` repo, `[W]` web (accessed 2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. At the design snapshot, nothing was built and no performance result existed. The only executed artefact is the reference calculation in [`fixtures/`](fixtures).
 
 **Revised after the independent review** (`_work/review-log.md`): the approval now binds the exact actions that run; execution is split into an *ask* phase and a *commit* phase; the model-visible strings are enumerated; the number check is slot-based; staged delivery, deferral and invoice-advance financing are deferred out of the MVP; Row-Level Security is hardening rather than a dependency; the reference engine is the starting point of the production engine.
 
@@ -515,4 +595,4 @@ One row per attempted action or decision, in order, **chained per tenant**:
 2. Replace `agent/graph.py` and `store/checkpoint.py` with the plain `WorkflowRunner` (or keep them only if the LangGraph gate passes); if kept, raise the floors to `langgraph>=1.2.14`, `langgraph-checkpoint>=4.1.1`, `langgraph-checkpoint-postgres>=3.1.1`.
 3. Fill `data/demo/`, `data/financing_catalogue.json` and `data/test_cases.json` from `fixtures/cases/` and `fixtures/expected/`; make `tests/engine/test_catalogue.py` compare every case to its expected output.
 4. Replace `current_business_id()` with real sessions, add two seeded tenants and a non-owner application role.
-5. Update the README and `docs/agent.md` statements that call the pause points LangGraph interrupts if the gate fails.
+5. Update the README and `docs/architecture/orderfit/03-system-architecture.md` statements that call the pause points LangGraph interrupts if the gate fails.

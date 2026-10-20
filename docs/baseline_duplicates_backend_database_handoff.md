@@ -1,6 +1,6 @@
 # Baseline duplicate prevention: backend and database handoff
 
-Prepared 18 October 2026. Share this report with the backend owner **and the database owner**. The companion [frontend handoff](baseline_duplicates_frontend_handoff.md) describes the consumer work. The [original investigation](baseline_duplicate_investigation_2026-10-18.md) records the pre-fix behavior.
+Prepared 18 October 2026. Share this report with the backend owner **and the database owner**. The companion [frontend handoff](baseline_duplicates_frontend_handoff.md) describes the consumer work. The [original investigation](evidence/reports/baseline_duplicate_investigation_2026-10-18.md) records the pre-fix behavior.
 
 ## Deployment status and ownership
 

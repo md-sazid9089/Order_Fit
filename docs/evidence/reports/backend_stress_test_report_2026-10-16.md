@@ -21,8 +21,8 @@ not close these gates.
 
 - Checkout: `D:\Kam 2\Order_Fit`, clean `main` at
   `61aaff8a1a6f8abd06ca4c0eed7f5fddc07fd663` before audit additions.
-- Inputs: [implementation plan](initial_backend_implementation_plan.md),
-  [progress](backend_implementation_progress.md), root/backend instructions,
+- Inputs: [implementation plan](../../initial_backend_implementation_plan.md),
+  [progress](../../backend_implementation_progress.md), root/backend instructions,
   development-context handoff, existing audit reports, actual test fixtures,
   phase-relevant services, workflow, storage, SQL and integration configuration.
 - Locked Python 3.12 through `uv`; PostgreSQL 17 disposable Docker fixtures;
@@ -41,7 +41,7 @@ not close these gates.
   certification. Unavailable gates are listed explicitly below.
 
 Machine-readable results and reproducible probes are in
-[stress-test-2026-10-16](stress-test-2026-10-16/). Counts from reruns overlap and must
+[stress-test-2026-10-16](../../stress-test-2026-10-16). Counts from reruns overlap and must
 not be added as distinct coverage. The full 494-case run was collected before the
 seven new probes were added; no single all-501-case green run is claimed.
 
@@ -63,20 +63,20 @@ seven new probes were added; no single all-501-case green run is claimed.
 
 | Check | Result | Evidence |
 |---|---|---|
-| Existing complete backend suite | 492 passed, 2 failed, 1 upstream Starlette/httpx warning; 560.20 s | [pytest.xml](stress-test-2026-10-16/pytest.xml) |
-| Added seven stress/regression probes | 5 passed, 2 strict xfails; 17.93 s | [console](stress-test-2026-10-16/stress-console.txt), [JUnit](stress-test-2026-10-16/stress.xml) |
-| P7 failure alone | 1 failed; same reauthentication conflict | [isolated result](stress-test-2026-10-16/p7-isolated.txt) |
-| Session-authority file alone | 3 passed | [isolated result](stress-test-2026-10-16/session-isolated.txt) |
-| Queue-cap then worker-authority pair | 1 passed, 1 failed; reproduces wrong claimed job | [ordered reproduction](stress-test-2026-10-16/queue-order.txt) |
-| Ruff / contract export / Alembic | Pass / 108 current / sole head 0015 | Commands below; full-suite module totals in [summary](stress-test-2026-10-16/results-summary.json) |
+| Existing complete backend suite | 492 passed, 2 failed, 1 upstream Starlette/httpx warning; 560.20 s | [pytest.xml](../../stress-test-2026-10-16/pytest.xml) |
+| Added seven stress/regression probes | 5 passed, 2 strict xfails; 17.93 s | [console](../../stress-test-2026-10-16/stress-console.txt), [JUnit](../../stress-test-2026-10-16/stress.xml) |
+| P7 failure alone | 1 failed; same reauthentication conflict | [isolated result](../../stress-test-2026-10-16/p7-isolated.txt) |
+| Session-authority file alone | 3 passed | [isolated result](../../stress-test-2026-10-16/session-isolated.txt) |
+| Queue-cap then worker-authority pair | 1 passed, 1 failed; reproduces wrong claimed job | [ordered reproduction](../../stress-test-2026-10-16/queue-order.txt) |
+| Ruff / contract export / Alembic | Pass / 108 current / sole head 0015 | Commands below; full-suite module totals in [summary](../../stress-test-2026-10-16/results-summary.json) |
 | Reference check and selftest | 22 cases, 0 problems / 0 failures | Executed independently; fixtures unchanged |
 | Frontend unit tests | 86 passed | `npm test` executed |
 | Frontend typecheck | Pass after regenerating stale local Next route types | Initial cache-only failure described below |
 | TypeScript contract examples | Pass | Strict `tsc` against both contract files |
-| Frontend lint | 0 errors / 10 warnings | [lint log](stress-test-2026-10-16/web-lint.txt) |
-| Original built browser suite | 3 passed, 1 failed; 20.2 s | [browser log](stress-test-2026-10-16/browser-console.txt) |
-| Final browser + HTTP stress suite | 4 passed, 1 failed; 20.1 s; same CSP failure | [final log](stress-test-2026-10-16/browser-http-console.txt) |
-| Independent CSP diagnostic | Unnonced/wrong-nonce parser scripts blocked; correct nonce and dynamic script execute | [result](stress-test-2026-10-16/csp-probe.json), [probe](stress-test-2026-10-16/csp-probe.cjs) |
+| Frontend lint | 0 errors / 10 warnings | [lint log](../../stress-test-2026-10-16/web-lint.txt) |
+| Original built browser suite | 3 passed, 1 failed; 20.2 s | [browser log](../../stress-test-2026-10-16/browser-console.txt) |
+| Final browser + HTTP stress suite | 4 passed, 1 failed; 20.1 s; same CSP failure | [final log](../../stress-test-2026-10-16/browser-http-console.txt) |
+| Independent CSP diagnostic | Unnonced/wrong-nonce parser scripts blocked; correct nonce and dynamic script execute | [result](../../stress-test-2026-10-16/csp-probe.json), [probe](../../stress-test-2026-10-16/csp-probe.cjs) |
 
 The browser passes cover persisted order/evaluation/reload, accessible sign-in,
 390-pixel mobile navigation, CSRF challenge recovery and failed-read retry. They
@@ -112,7 +112,7 @@ timeout and 512-MiB child limit; Compose gives the worker 768 MiB. This benchmar
 calls the engine directly and does not measure the parent's plus child's combined
 peak, JSON/IPC/publication cost, or performance on hosted hardware. The near-ceiling
 label concerns admission's conservative estimate, not 100 million charged units.
-See [recorded metrics](stress-test-2026-10-16/engine-benchmark.json).
+See [recorded metrics](../../stress-test-2026-10-16/engine-benchmark.json).
 
 ### Real HTTP through the built proxy
 
@@ -336,7 +336,7 @@ CSP diagnostic is `node docs/stress-test-2026-10-16/csp-probe.cjs`.
 - The initial new stress harness left its synthetic capacity jobs queued before
   reusing a fixture that claims one global job, causing fixture setup failure.
   Added explicit module-local synthetic-job cleanup and reran. This is recorded
-  in [initial evidence](stress-test-2026-10-16/stress-initial-harness-error.txt),
+  in [initial evidence](../../stress-test-2026-10-16/stress-initial-harness-error.txt),
   not counted as an application failure. Existing-suite ST-04 was independently
   reproduced without that new module.
 - Automatic approval review rejected an initial cleanup command for insufficiently

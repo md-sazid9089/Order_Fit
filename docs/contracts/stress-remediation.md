@@ -1,6 +1,6 @@
 # Worker readiness and collection continuation
 
-Applies to remediation of the [16 October audit](../backend_stress_test_report_2026-10-16.md).
+Applies to remediation of the [16 October audit](../evidence/reports/backend_stress_test_report_2026-10-16.md).
 Money, deterministic calculations, financial versions and sandbox approval semantics are unchanged.
 
 ## Worker capacity

@@ -122,14 +122,14 @@ HTTP runtime dependencies; final focus uses that locked environment.
 
 ## Handoff and remaining gates
 
-1. [Database teammate](account_access_database_handoff.md): review/apply the supplied
+1. [Database teammate](../../account_access_database_handoff.md): review/apply the supplied
    migration in the correct target; preserve owner/runtime separation, backup/
    restore posture and exact-head API/worker cutover. Do not independently recreate
    0023. Earlier 0021/0022 rollout still needs reconciliation against actual DB.
-2. [Frontend teammate](account_access_frontend_handoff.md): synchronize declarations,
+2. [Frontend teammate](../../account_access_frontend_handoff.md): synchronize declarations,
    build verification/reset/invitation flows, handle signed-in users with zero
    memberships, and perform real desktop/mobile/theme/accessibility checks.
-3. [Deployment owner](deployment/account-access.md): configure HTTPS origin, sender
+3. [Deployment owner](../../deployment/account-access.md): configure HTTPS origin, sender
    DNS, tracking-disabled security links, worker-only send key, signing secret,
    keyring backup/restore, privileged cleanup and real mailbox/callback tests.
 

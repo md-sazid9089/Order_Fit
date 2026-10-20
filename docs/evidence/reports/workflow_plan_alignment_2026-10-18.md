@@ -65,7 +65,7 @@ behavior or closes the remaining P4/P8 external gates.
 ## Recommended next work
 
 1. Have QA execute the fresh disposable-stack journey in
-   `docs/qa_frontend_workflow_handoff.md`, including every role and stale/retry
+   `docs/workflows.md`, including every role and stale/retry
    boundary. Treat failures in the core order-to-commit path as P0/P1.
 2. Keep platform administration disabled. If it becomes a product requirement,
    write and approve its cross-tenant authorization, audit, data-retention and

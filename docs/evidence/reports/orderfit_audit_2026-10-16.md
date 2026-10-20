@@ -23,7 +23,7 @@ document and checkout disagree. Historical checks in progress are not reruns.
 No real application secrets or shared/hosted databases were inspected, changed or tested. No git history
 was changed. Other security/deployment edits arrived concurrently in the shared
 tree; they were preserved and are not attributed to this audit's fixes.
-The concurrent [security audit](security/security_audit_2026-10-16.md) records its
+The concurrent [security audit](../../security/security_audit_2026-10-16.md) records its
 own findings and verification scope; its historical credential-exposure/rotation
 handoff remains a release risk, not a claim that this audit inspected credentials.
 

@@ -2,10 +2,11 @@
 
 Run the offline regression corpus from the repository root:
 
-```text
-python scripts/ai_eval.py --mode recorded --output data/ai_workflow/report.json
+```powershell
+backend/.venv/Scripts/python.exe scripts/ai_eval.py --mode recorded --output "$env:TEMP/orderfit-ai-evaluation.json"
 ```
 
+Routine runs write outside the tracked corpus; regeneration is an intentional fixture change.
 The runner never loads `.env`. Recorded extraction and what-if cases call the
 same public functions as production and use committed synthetic recordings under
 `data/ai_workflow/recordings/`. Reply cases measure the deterministic baseline merged with a recorded typed reading when

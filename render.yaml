@@ -2,13 +2,14 @@
 # https://docs.render.com/blueprint-spec
 #
 # The frontend is deployed separately on Vercel (see docs/deployment/vercel.md).
-# The database is hosted on Neon (see docs/neon_connection_review.md).
+# The database is hosted on Neon (see docs/evidence/reports/neon_connection_review.md).
 #
 # Usage:
 #   1. Push this file to the repository.
 #   2. In the Render dashboard, create a new Blueprint Instance pointing at this repo.
 #   3. Set all environment variables marked sync: false in the Render dashboard.
-#   4. Deploy. The pre-deploy command runs migrations before the API starts.
+#   4. Configure the private S3-compatible bucket and separate restricted DB logins.
+#   5. Deploy. Pre-deploy migrations run with the direct URL; the API process drops it.
 #
 # Both services share one Docker image built from backend/Dockerfile.
 
@@ -25,9 +26,12 @@ services:
     region: oregon           # us-west, close to Neon's default US region
     healthCheckPath: /health
 
-    # Runs inside the built image before each deploy. Uses the migrator URL
-    # (DATABASE_URL_DIRECT) which is only available during this phase.
+    # This runs in a separate pre-deploy process, before the service starts.
+    # DATABASE_URL_DIRECT is a secret on this service for the migration phase.
+    # The custom API command removes it before starting the long-running server.
     preDeployCommand: alembic upgrade head
+    # Never pass the migration credential into the long-running API process.
+    dockerCommand: /bin/sh -ec 'unset DATABASE_URL_DIRECT; exec python -m orderfit.api.serve'
 
     envVars:
       # Account mail remains off until schema/frontend/provider staging gates pass.
@@ -57,9 +61,21 @@ services:
         sync: false          # ≥32 chars, must differ from SESSION_SECRET
       - key: ACCOUNT_FINGERPRINT_KEY_VERSION
         value: "1"
-      # ── Document storage (Render Persistent Disk) ──
+      # ── Shared private object storage (configure a private S3-compatible bucket) ──
       - key: DOCUMENT_DIR
-        value: /var/data/orderfit/documents
+        value: /tmp/orderfit/documents
+      - key: DOCUMENT_STORAGE_BACKEND
+        value: "s3"
+      - key: DOCUMENT_S3_BUCKET
+        sync: false
+      - key: DOCUMENT_S3_REGION
+        sync: false
+      - key: DOCUMENT_S3_ENDPOINT_URL
+        sync: false
+      - key: DOCUMENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
+        sync: false
       # ── OpenAI / LLM ──
       - key: LLM_MODE
         value: "off"         # change to "live" after model evaluation
@@ -81,11 +97,6 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-
-    disk:
-      name: orderfit-documents
-      mountPath: /var/data/orderfit
-      sizeGB: 1              # uploaded documents; increase as needed
 
   # ── Background Worker ──────────────────────────────────────────────────
   - type: worker
@@ -120,7 +131,19 @@ services:
       - key: DATABASE_URL
         sync: false          # set to the WORKER_DATABASE_URL value (worker login)
       - key: DOCUMENT_DIR
-        value: /var/data/orderfit/documents
+        value: /tmp/orderfit/documents
+      - key: DOCUMENT_STORAGE_BACKEND
+        value: "s3"
+      - key: DOCUMENT_S3_BUCKET
+        sync: false
+      - key: DOCUMENT_S3_REGION
+        sync: false
+      - key: DOCUMENT_S3_ENDPOINT_URL
+        sync: false
+      - key: DOCUMENT_S3_ACCESS_KEY_ID
+        sync: false
+      - key: DOCUMENT_S3_SECRET_ACCESS_KEY
+        sync: false
       - key: LLM_MODE
         value: "off"
       - key: LLM_PROVIDER
@@ -145,8 +168,3 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-
-    disk:
-      name: orderfit-worker-documents
-      mountPath: /var/data/orderfit
-      sizeGB: 1

@@ -1,10 +1,12 @@
 # 05 Security and evaluation
 
+> Current enforced controls and open release gates are in [Security](../../security/README.md). The registry and design evidence below retain their original snapshot; they are not proof of hosted acceptance.
+
 Part of the [OrderFit design set](README.md). Architecture and tiers are in [03](03-system-architecture.md); calculation and contracts in [04](04-decision-engine-and-data-contracts.md); requirements, edge cases and the test-ID registry's consumers in [01](01-requirements-scenario-edge-cases.md). Sections 1 to 5 are written so they can become competition deliverable 5 (security self-assessment) with light editing; sections 6 to 9 are the evaluation plan.
 
 **Revised after the independent review** (`_work/review-log.md`): the approval binds the exact actions, the number check is slot-based, security evidence that could not fail was replaced by evidence that can (live adversarial runs, value-manipulation documents, a red-team script), and tenant isolation no longer depends on Row-Level Security.
 
-Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. **This is a historical design and evaluation plan, not an implementation-status record.** Its original baseline statement that nothing was implemented must not be used to assess the current checkout. Current, evidence-backed status is maintained in [`../../backend_implementation_progress.md`](../../backend_implementation_progress.md) and [`../../phase_closure_2026-10-17.md`](../../phase_closure_2026-10-17.md); controls without current evidence remain unverified.
+Evidence labels: `[R]` repo, `[W]` web (2026-10-14), `[I]` inference, `[A]` assumption, `[?]` unverified. **This is a historical design and evaluation plan, not an implementation-status record.** Its original baseline statement that nothing was implemented must not be used to assess the current checkout. Current, evidence-backed status is maintained in [`../../backend_implementation_progress.md`](../../backend_implementation_progress.md) and [`../../phase_closure_2026-10-17.md`](../../evidence/reports/phase_closure_2026-10-17.md); controls without current evidence remain unverified.
 
 ## 1. Scope, assets, trust boundaries
 
