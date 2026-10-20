@@ -22,7 +22,10 @@ x-runtime-env: &runtime-env
   COOKIE_SECURE: "true"
   DOCUMENT_STORAGE_BACKEND: filesystem
   DOCUMENT_DIR: /app/var/documents
-  LLM_MODE: "off"
+  # AI stays off unless .env sets LLM_MODE=live with OPENAI_API_KEY and OPENAI_MODEL.
+  LLM_MODE: ${LLM_MODE:-off}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_MODEL: ${OPENAI_MODEL:-}
   # Passkeys stay disabled unless both are set (HTTPS browser origin and its hostname).
   WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
   WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
