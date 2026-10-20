@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { finishSignup } from "./helpers/signup";
 
 // Controlled client-scheduling benchmark, not a backend-capacity measurement.
 // Real signup/session; only read-only pipeline responses are synthetic.
@@ -11,6 +12,7 @@ test("a full pipeline page loads related records under controlled network latenc
   await page.getByLabel("Email", { exact: true }).fill(`performance-${randomUUID()}@example.invalid`);
   await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(`Synthetic-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await finishSignup(page);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
 
   const customers = Array.from({ length: 20 }, (_, i) => ({ id: randomUUID(), customer: { name: `Synthetic customer ${i}`, known_domains: [], red_flags: [] } }));

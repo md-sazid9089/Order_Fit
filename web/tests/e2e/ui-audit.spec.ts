@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { finishSignup } from "./helpers/signup";
 
 test("authentication fields have persistent accessible names and visible keyboard focus", async ({ page }) => {
   await page.goto("/auth/signin");
@@ -43,7 +44,7 @@ test("mobile workspace fits the viewport and recovers an expired CSRF challenge"
   await page.getByPlaceholder("Email*").fill(`audit-${suffix}@example.invalid`);
   await page.getByPlaceholder("Password (min. 12 characters)*").fill(`Audit-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+  await finishSignup(page);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("mobile-workspace.png"), fullPage: true });
   const dimensions = await page.evaluate(() => ({ content: document.documentElement.scrollWidth, viewport: innerWidth }));

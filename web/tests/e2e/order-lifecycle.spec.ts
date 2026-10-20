@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { fillManualOrder, openManualOrderForm } from "./helpers/manual-order";
+import { finishSignup } from "./helpers/signup";
 
 function isoDateFrom(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -40,7 +41,7 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByPlaceholder("Email*").fill(`orderfit-e2e-${suffix}@example.invalid`);
   await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+  await finishSignup(page);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("desktop-workspace.png"), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);

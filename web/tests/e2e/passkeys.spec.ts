@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { finishSignup } from "./helpers/signup";
 
 test("password plus verified passkey enrollment and login through the real proxy", async ({ page, context }) => {
   test.setTimeout(120_000);
@@ -18,7 +19,7 @@ test("password plus verified passkey enrollment and login through the real proxy
     await page.getByPlaceholder("Email*").fill(email);
     await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
     await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+    await finishSignup(page);
     const oldCookie = (await context.cookies()).find(cookie => cookie.name === "orderfit_session")?.value;
     await page.goto("/settings");
     const panel = page.getByRole("region", { name: "Passkey multi-factor authentication" });

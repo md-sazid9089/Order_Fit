@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { finishSignup } from "./helpers/signup";
 
 // Sign-up must create a real account (no client-side verification step), and the unavailable
 // password-reset flow must not pretend to send or accept a code.
@@ -34,7 +35,7 @@ test("sign-up with a duplicate email shows the server error and stays on the for
     await page.getByPlaceholder("Password (min. 12 characters)*").fill(password);
     await page.getByRole("button", { name: "Create account" }).click();
     if (attempt === 1) {
-      await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+      await finishSignup(page);
       await page.context().clearCookies();
     } else {
       await expect(page.getByRole("alert")).toBeVisible();

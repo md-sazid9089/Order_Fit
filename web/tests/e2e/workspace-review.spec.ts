@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { finishSignup } from "./helpers/signup";
 
 test("owner workspace routes render without crashes or failed API reads on desktop and mobile", async ({ page }) => {
   test.setTimeout(120_000);
@@ -17,6 +18,7 @@ test("owner workspace routes render without crashes or failed API reads on deskt
   await page.getByLabel("Email", { exact: true }).fill(`review-${randomUUID()}@example.invalid`);
   await page.getByLabel("Password (min. 12 characters)", { exact: true }).fill(`Synthetic-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account", exact: true }).click();
+  await finishSignup(page);
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
 
   const routes = ["/deals", "/deals/new", "/deals/customers", "/deals/sources", "/cash-flow",

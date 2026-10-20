@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { openManualOrderForm } from "./helpers/manual-order";
+import { finishSignup } from "./helpers/signup";
 
 test("older saved customer is selectable after a recoverable continuation failure", async ({ page, baseURL }) => {
   test.setTimeout(60_000);
@@ -10,7 +11,7 @@ test("older saved customer is selectable after a recoverable continuation failur
   await page.getByPlaceholder("Email*").fill(`pages-${randomUUID()}@example.invalid`);
   await page.getByPlaceholder("Password (min. 12 characters)*").fill(`Synthetic-${randomUUID()}`);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/deals(?:\?|$)/);
+  await finishSignup(page);
   await page.getByRole("link", { name: "New order" }).first().click();
   const today = new Date().toISOString().slice(0, 10);
   const coverage = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
