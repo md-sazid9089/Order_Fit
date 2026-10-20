@@ -356,8 +356,8 @@ export function AppSidebar({
                 </div>
               )}
             </div>
-          ) : (
-            onSignOut && (
+          ) : null}
+          {onSignOut && (
               <button
                 type="button"
                 onClick={() => {
@@ -376,8 +376,7 @@ export function AppSidebar({
                 </div>
                 {showExpanded && <span className="whitespace-nowrap overflow-hidden truncate">Sign Out</span>}
               </button>
-            )
-          )}
+            )}
         </div>
       </div>
     );

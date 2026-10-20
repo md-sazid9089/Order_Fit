@@ -274,8 +274,8 @@ export default function OverviewPage() {
   const selectedPt = inflowPoints[safePointIndex] ?? null;
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -665,7 +665,7 @@ export default function OverviewPage() {
           {secondaryGraphTab === "sensitivity" ? (
             <div className="space-y-4">
               {/* Delay Scenarios Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
                 {delayScenarios.map((sc, i) => {
                   const isSelected = i === safeDelayIndex;
                   const troughVal = BigInt(sc.projected_trough_minor);
@@ -746,7 +746,7 @@ export default function OverviewPage() {
           ) : (
             <div className="space-y-4 pt-2">
               {/* Verdict Distribution breakdown */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="p-3.5 bg-[#FAF9F7] dark:bg-[#222425] border border-[#E8E6E1] dark:border-[#2A2C2D] rounded-xl">
                   <span className="text-[11px] font-semibold text-[#737373] dark:text-neutral-400 uppercase">Feasible As-Is</span>
                   <div className="text-xl font-bold font-display text-[#1E2021] dark:text-white mt-1">

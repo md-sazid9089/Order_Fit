@@ -1,4 +1,4 @@
-"""Always creates a labeled disposable PG17 container. Never consumes application URLs."""
+"""Creates labeled disposable PG17/18 containers. Never consumes application URLs."""
 
 import json
 import os
@@ -43,6 +43,9 @@ def docker(*args, input=None):
 
 @pytest.fixture(scope="session")
 def postgres():
+    major = os.environ.get("ORDERFIT_TEST_POSTGRES_MAJOR", "17")
+    if major not in {"17", "18"}:
+        raise ValueError("ORDERFIT_TEST_POSTGRES_MAJOR must be 17 or 18")
     suffix = uuid4().hex[:12]
     name = "orderfit-p1-test-" + suffix
     dbname = "orderfit_p1_test_" + suffix
@@ -63,7 +66,7 @@ def postgres():
         "POSTGRES_DB=" + dbname,
         "-p",
         "127.0.0.1::5432",
-        "postgres:17-bookworm",
+        f"postgres:{major}-bookworm",
     )
     runtime = worker = None
     try:
@@ -88,7 +91,7 @@ def postgres():
                 time.sleep(0.5)
         else:
             raise RuntimeError("Disposable PostgreSQL did not start")
-        print("\nDisposable PG17 target: " + name + " / " + dbname + " (loopback)")
+        print(f"\nDisposable PG{major} target: " + name + " / " + dbname + " (loopback)")
 
         # Accept the application's declared schema, independently of unfinished
         # later-phase migration branches that may exist during development.

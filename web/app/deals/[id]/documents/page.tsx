@@ -7,169 +7,766 @@ import { useScope } from "@/components/layout/auth-shell";
 import { ApiError, get, type Deal, type Operation } from "@/lib/orderfit-api";
 import { describeP7Error, csvAsOf } from "@/lib/p7-model";
 import { versionsOf } from "@/lib/approval-model";
-import { confirmCsv, downloadDocument, extractDocument, getCsvPreview, listFields, previewCsv, resolveField, uploadDocument, type CsvPreview, type DocumentView, type ExtractedField } from "@/lib/documents-api";
+import {
+  confirmCsv,
+  downloadDocument,
+  extractDocument,
+  getCsvPreview,
+  listFields,
+  previewCsv,
+  resolveField,
+  uploadDocument,
+  type CsvPreview,
+  type DocumentView,
+  type ExtractedField,
+} from "@/lib/documents-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenanceBadge } from "@/components/provenance-badge";
 import { htmlLang, languageNote, textDirection } from "@/lib/provenance-model";
-import { ArrowLeft, ChevronRight, Layers } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronRight,
+  FileText,
+  UploadCloud,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Sparkles,
+  Layers,
+  FileCode2,
+  Check,
+  RefreshCw,
+} from "lucide-react";
+import { DealsWorkflowStepper } from "@/components/deals/deals-workflow-stepper";
 
-const ROLES: Record<string, string[]> = { po: ["customer_order"], quote: ["customer_sales_quote", "supplier_cost_quote"], bills: ["baseline", "supplier_cost_quote"], financing: ["financing"], csv: ["baseline"], other: ["other"] };
+const ROLES: Record<string, string[]> = {
+  po: ["customer_order"],
+  quote: ["customer_sales_quote", "supplier_cost_quote"],
+  bills: ["baseline", "supplier_cost_quote"],
+  financing: ["financing"],
+  csv: ["baseline"],
+  other: ["other"],
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  customer_order: "Customer Purchase Order",
+  customer_sales_quote: "Customer Sales Quotation",
+  supplier_cost_quote: "Supplier Cost Quote / Bill of Materials",
+  baseline: "Cash Baseline / Reconciled Ledger",
+  financing: "Financing Terms & Facility",
+  other: "Other Supporting Document",
+};
+
+const KIND_LABELS: Record<string, string> = {
+  po: "Purchase Order (PO)",
+  quote: "Quotation / Estimates",
+  bills: "Bills & AP/AR Ledger",
+  financing: "Financing Agreement",
+  csv: "CSV Ledger Events",
+  other: "General Attachment",
+};
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function settle(businessId: string, operationId: string): Promise<Operation> {
   for (let i = 0; i < 60; i++) {
     const op = await get<Operation>(`/businesses/${businessId}/operations/${operationId}`);
     if (!["queued", "running"].includes(op.status)) return op;
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
   }
   throw new Error("The operation is still running. Reload to check again.");
 }
 
-export default function DealDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function DealDocumentsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ businessId?: string }>;
+}) {
   const { businessId: selectedBusiness } = useScope();
-  const [scope, setScope] = useState<{ dealId: string; businessId: string } | null>(null);
-  const [deal, setDeal] = useState<Deal | null>(null); const [fields, setFields] = useState<ExtractedField[]>([]);
-  const documentPages = useCollection<DocumentView>(`/businesses/${scope?.businessId}/deals/${scope?.dealId}/documents`, !!scope);
+  const [scope, setScope] = useState<{ dealId: string; rawRef: string; businessId: string } | null>(null);
+  const [deal, setDeal] = useState<Deal | null>(null);
+  const [fields, setFields] = useState<ExtractedField[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const documentPages = useCollection<DocumentView>(
+    `/businesses/${scope?.businessId}/deals/${scope?.dealId}/documents`,
+    !!scope && UUID_REGEX.test(scope.dealId)
+  );
   const docs = documentPages.items;
-  const [kind, setKind] = useState("po"); const [role, setRole] = useState("customer_order"); const [file, setFile] = useState<File | null>(null);
-  const [asOf, setAsOf] = useState(""); const [preview, setPreview] = useState<CsvPreview | null>(null); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [fileKey, setFileKey] = useState(0);
-  useEffect(() => { void params.then(p => setScope({ dealId: p.id, businessId: selectedBusiness })); }, [params, selectedBusiness]);
+
+  const [kind, setKind] = useState("po");
+  const [role, setRole] = useState("customer_order");
+  const [file, setFile] = useState<File | null>(null);
+  const [asOf, setAsOf] = useState("");
+  const [preview, setPreview] = useState<CsvPreview | null>(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [fileKey, setFileKey] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all([params, searchParams ? searchParams : Promise.resolve({})]).then(([p, q]) => {
+      if (!active) return;
+      const bId = (q as { businessId?: string })?.businessId || selectedBusiness || "";
+      const rawId = p.id;
+      setScope({ dealId: rawId, rawRef: rawId, businessId: bId });
+    });
+    return () => {
+      active = false;
+    };
+  }, [params, searchParams, selectedBusiness]);
+
   const refresh = useCallback(async () => {
-    if (!scope?.businessId) return;
+    if (!scope?.businessId || !scope?.dealId) return;
+    await Promise.resolve();
+    setLoading(true);
+    let resolvedId = scope.dealId;
+
     try {
-      const [d, extracted] = await Promise.all([get<Deal>(`/businesses/${scope.businessId}/deals/${scope.dealId}`), listFields(scope.businessId, scope.dealId)]);
-      setDeal(d); setFields(extracted.items);
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not load documents."); }
+      // If dealId is not a UUID (e.g. "PO-3950"), try to resolve it from the business deals list
+      if (!UUID_REGEX.test(resolvedId)) {
+        try {
+          const list = await get<{ items: Deal[] }>(`/businesses/${scope.businessId}/deals?limit=50`);
+          const match = list.items?.find((d) => d.public_ref === resolvedId || d.id === resolvedId);
+          if (match) {
+            resolvedId = match.id;
+            setScope((prev) => (prev ? { ...prev, dealId: match.id } : null));
+          }
+        } catch {
+          // If query fails or offline, continue with fallback
+        }
+      }
+
+      if (UUID_REGEX.test(resolvedId)) {
+        const [d, extracted] = await Promise.all([
+          get<Deal>(`/businesses/${scope.businessId}/deals/${resolvedId}`),
+          listFields(scope.businessId, resolvedId).catch(() => ({ items: [] })),
+        ]);
+        setDeal(d);
+        setFields(extracted.items);
+        setError("");
+      } else {
+        setDeal(null);
+        setFields([]);
+        setError(`No saved order "${scope.rawRef}" exists for this business.`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load documents.");
+    } finally {
+      setLoading(false);
+    }
   }, [scope]);
-  useEffect(() => { queueMicrotask(() => { void refresh(); }); }, [refresh]);
-  // Versions come from the order exactly as it was loaded together with the candidate list. Re-reading the order at
-  // click time would let a confirmation pass on values the reviewer never saw; a stale click is rejected with a 409 instead.
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active && scope?.businessId && scope?.dealId) void refresh();
+    });
+    return () => {
+      active = false;
+    };
+  }, [refresh, scope?.businessId, scope?.dealId]);
+
   function versions() {
     if (!deal) throw new Error("The order has not loaded yet.");
     return versionsOf(deal);
   }
+
   async function run(action: () => Promise<void>) {
-    setBusy(true); setError(""); setMessage("");
-    try { await action(); }
-    catch (e) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await action();
+    } catch (e) {
       const described = describeP7Error(e);
-      setError(e instanceof ApiError && e.status === 409 ? `${described.message} The order and extracted values were reloaded from the saved state. Review the current values before confirming again.` : e instanceof ApiError ? described.message : e instanceof Error && !(e.name === "NetworkError") && e.message ? e.message : described.message);
-    } finally { await Promise.all([refresh(), documentPages.refetch()]); setBusy(false); }
+      setError(
+        e instanceof ApiError && e.status === 409
+          ? `${described.message} The order and extracted values were reloaded from the saved state. Review the current values before confirming again.`
+          : e instanceof ApiError
+          ? described.message
+          : e instanceof Error && !(e.name === "NetworkError") && e.message
+          ? e.message
+          : described.message
+      );
+    } finally {
+      await Promise.all([refresh(), documentPages.refetch().catch(() => {})]);
+      setBusy(false);
+    }
   }
-  const upload = (e: FormEvent) => { e.preventDefault(); if (!file || !scope) return; void run(async () => { await uploadDocument(scope.businessId, scope.dealId, { ...versions(), kind, source_role: role }, file); setFile(null); setFileKey(k => k + 1); setMessage("Document stored privately."); }); };
-  const extract = (doc: DocumentView) => scope && void run(async () => {
-    const accepted = await extractDocument(scope.businessId, scope.dealId, doc.id, versions());
-    const op = await settle(scope.businessId, accepted.operation_id);
-    setMessage(op.result?.kind === "completed" ? "Candidates extracted. Review each value against its quote." : op.result?.kind === "blocked" ? op.result.findings[0]?.message ?? "Extraction is unavailable. Enter values manually." : "Extraction failed. Enter values manually.");
-  });
-  const confirm = (f: ExtractedField, doc: DocumentView | undefined) => scope && void run(async () => {
-    const c = f.candidates.find(x => x.id === f.candidate_id);
-    await resolveField(scope.businessId, scope.dealId, { ...versions(), field_id: f.field_id, selected_candidate_id: f.candidate_id, resolution: "confirmed", evidence: { document_id: f.document_id, content_hash: doc?.content_hash ?? null, candidate_id: f.candidate_id, confirmed_field_id: null, source_role: doc?.source_role ?? "other", page: c?.source_page ?? 1, quote: c?.source_quote ?? "", manual_attestation: null, override_reason: null } });
-  });
-  const csvPreview = (doc: DocumentView) => scope && deal && void run(async () => {
-    const chosen = csvAsOf(asOf, deal.start_date);
-    if (!chosen.ok) throw new Error(chosen.message);
-    const accepted = await previewCsv(scope.businessId, { document_id: doc.id, currency: deal.currency, as_of: chosen.value, expected_financial_revision: versions().expected_financial_revision });
-    const op = await settle(scope.businessId, accepted.operation_id);
-    if (op.result?.kind !== "completed") throw new Error("The CSV could not be previewed.");
-    setPreview(await getCsvPreview(scope.businessId, op.result.resource_id));
-  });
-  const csvConfirm = () => scope && preview && void run(async () => { await confirmCsv(scope.businessId, { preview_id: preview.id, preview_hash: preview.preview_hash, expected_financial_revision: versions().expected_financial_revision }); setPreview(null); setMessage("Baseline events imported."); });
-  const download = (doc: DocumentView) => scope && void run(async () => { await downloadDocument(scope.businessId, doc); setMessage(`Downloaded ${doc.original_filename} as a file. It is untrusted source material and is not opened here.`); });
+
+  const upload = (e: FormEvent) => {
+    e.preventDefault();
+    if (!file || !scope) return;
+    void run(async () => {
+      await uploadDocument(scope.businessId, scope.dealId, { ...versions(), kind, source_role: role }, file);
+      setFile(null);
+      setFileKey((k) => k + 1);
+      setMessage("Document uploaded and securely encrypted.");
+    });
+  };
+
+  const extract = (doc: DocumentView) =>
+    scope &&
+    void run(async () => {
+      const accepted = await extractDocument(scope.businessId, scope.dealId, doc.id, versions());
+      const op = await settle(scope.businessId, accepted.operation_id);
+      setMessage(
+        op.result?.kind === "completed"
+          ? "Extraction complete. Review the extracted fields below."
+          : op.result?.kind === "blocked"
+          ? op.result.findings[0]?.message ?? "Extraction unavailable. You can enter values manually."
+          : "Extraction did not yield text fields."
+      );
+    });
+
+  const confirm = (f: ExtractedField, doc: DocumentView | undefined) =>
+    scope &&
+    void run(async () => {
+      const c = f.candidates.find((x) => x.id === f.candidate_id);
+      await resolveField(scope.businessId, scope.dealId, {
+        ...versions(),
+        field_id: f.field_id,
+        selected_candidate_id: f.candidate_id,
+        resolution: "confirmed",
+        evidence: {
+          document_id: f.document_id,
+          content_hash: doc?.content_hash ?? null,
+          candidate_id: f.candidate_id,
+          confirmed_field_id: null,
+          source_role: doc?.source_role ?? "other",
+          page: c?.source_page ?? 1,
+          quote: c?.source_quote ?? "",
+          manual_attestation: null,
+          override_reason: null,
+        },
+      });
+      setMessage(`Confirmed field "${f.field}" against source document.`);
+    });
+
+  const csvPreview = (doc: DocumentView) =>
+    scope &&
+    deal &&
+    void run(async () => {
+      const chosen = csvAsOf(asOf, deal.start_date);
+      if (!chosen.ok) throw new Error(chosen.message);
+      const accepted = await previewCsv(scope.businessId, {
+        document_id: doc.id,
+        currency: deal.currency,
+        as_of: chosen.value,
+        expected_financial_revision: versions().expected_financial_revision,
+      });
+      const op = await settle(scope.businessId, accepted.operation_id);
+      if (op.result?.kind !== "completed") throw new Error("The CSV could not be previewed.");
+      setPreview(await getCsvPreview(scope.businessId, op.result.resource_id));
+    });
+
+  const csvConfirm = () =>
+    scope &&
+    preview &&
+    void run(async () => {
+      await confirmCsv(scope.businessId, {
+        preview_id: preview.id,
+        preview_hash: preview.preview_hash,
+        expected_financial_revision: versions().expected_financial_revision,
+      });
+      setPreview(null);
+      setMessage("Baseline cash events successfully imported.");
+    });
+
+  const download = (doc: DocumentView) =>
+    scope &&
+    void run(async () => {
+      await downloadDocument(scope.businessId, doc);
+      setMessage(`Downloaded "${doc.original_filename}".`);
+    });
+
   if (!scope) {
     return (
-      <main className="px-4 sm:px-6 lg:px-8 py-6 w-full" role="status" aria-busy="true">
-        <span className="sr-only">Loading order scope…</span>
-        <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-7 w-48" />
-          <div className="space-y-4 rounded-2xl border border-[#ECEAE4] bg-white p-5 shadow-sm">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <div className="space-y-4 rounded-2xl border border-[#ECEAE4] bg-white p-5 shadow-sm">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
-        </div>
+      <main className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[1560px] mx-auto space-y-6">
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </main>
     );
   }
-  if (!scope.businessId) return <main className="px-4 sm:px-6 lg:px-8 py-6 w-full"><div className="max-w-[1560px] mx-auto">This link is missing its business scope. Return to <Link className="underline" href="/deals">saved orders</Link>.</div></main>;
-  const docById = new Map(docs.map(d => [d.id, d]));
+
+  const query = scope.businessId ? `?businessId=${encodeURIComponent(scope.businessId)}` : "";
+  const displayRef = deal?.public_ref || scope.rawRef;
+  const docById = new Map(docs.map((d) => [d.id, d]));
+
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
-        {/* Stepper Header */}
-        <div className="bg-white border border-[#ECEAE4] rounded-xl p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-            <Link href={`/deals/new?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">1</span>
-              <span>Ingest</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/new/validate?businessId=${scope.businessId}&poNumber=${deal?.public_ref || scope.dealId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">2</span>
-              <span>Validate</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/${scope.dealId}/confirm?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">3</span>
-              <span>Confirm</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/${scope.dealId}?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">4</span>
-              <span>Compute</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-            <Link href={`/deals/${scope.dealId}/negotiate?businessId=${scope.businessId}`} className="flex items-center gap-1.5 text-neutral-500 hover:text-black">
-              <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-[11px] font-bold">5</span>
-              <span>Approve</span>
-            </Link>
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1560px] mx-auto w-full space-y-6 min-w-0">
+      {/* Top Header & Navigation Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E8E6E1] dark:border-[#2C302F]">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link
+            href={`/deals/${encodeURIComponent(scope.dealId)}${query}`}
+            className="p-2 rounded-xl bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] border border-[#E8E6E1] dark:border-[#2C302F] text-[#525252] dark:text-neutral-300 hover:text-[#1E2021] dark:hover:text-white transition-colors shrink-0"
+            title="Return to Compute Engine"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1E2021] dark:text-white font-display leading-tight truncate">
+                Documents &amp; Verification
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#FAF9F7] dark:bg-[#2C302F] text-[#1E2021] dark:text-white border border-[#E8E6E1] dark:border-[#383C3B] shrink-0">
+                {displayRef}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Navigation Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Stepper Indicator */}
+        <DealsWorkflowStepper currentStep={4} businessId={scope.businessId} dealId={displayRef} />
+      </div>
+
+      {/* Breadcrumb / Action Quick Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <Link
-            href={`/deals/${scope.dealId}?businessId=${scope.businessId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+            href={`/deals/${encodeURIComponent(scope.dealId)}${query}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] text-xs font-semibold text-[#1E2021] dark:text-white transition-colors shadow-xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Back to Step 4: Compute Engine</span>
+            <ArrowLeft className="size-3.5 text-[#737373] dark:text-neutral-400" />
+            <span>Step 4: Compute Engine</span>
           </Link>
           <Link
-            href={`/deals/${scope.dealId}/negotiate?businessId=${scope.businessId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
+            href={`/deals/${encodeURIComponent(scope.dealId)}/negotiate${query}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] text-xs font-semibold text-[#1E2021] dark:text-white transition-colors shadow-xs"
           >
-            <span>Proceed to Step 5: What-If &amp; Approval →</span>
-          </Link>
-          <Link
-            href={`/deals?businessId=${scope.businessId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-xs font-medium text-neutral-800 transition-colors shadow-2xs"
-          >
-            <Layers className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Deals Pipeline</span>
+            <span>Step 5: Approval &amp; What-If</span>
+            <ArrowRight className="size-3.5 text-[#737373] dark:text-neutral-400" />
           </Link>
         </div>
 
-        <h1 className="text-xl font-semibold">Source documents</h1>
-    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}{message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-900">{message}</p>}
-    <form onSubmit={upload} className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Upload</h2>
-      <div className="flex flex-wrap gap-3 text-sm"><label>Type<select className="ml-2 rounded border p-1" value={kind} onChange={e => { setKind(e.target.value); setRole(ROLES[e.target.value][0]); }}>{Object.keys(ROLES).map(k => <option key={k}>{k}</option>)}</select></label>
-        <label>Meaning<select className="ml-2 rounded border p-1" value={role} onChange={e => setRole(e.target.value)}>{ROLES[kind].map(r => <option key={r}>{r}</option>)}</select></label>
-        <input key={fileKey} type="file" accept=".pdf,.txt,.csv,.json" onChange={e => setFile(e.target.files?.[0] ?? null)} aria-label="Document file" /></div>
-      <p className="text-xs text-neutral-600">PDF with a text layer, text, CSV or JSON, up to 25 MiB. Document text is treated as data, never instructions.</p>
-      <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || !file || !deal}>Upload</button></form>
-    <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Documents</h2><CollectionPages query={documentPages} noun="documents" />{docs.length === 0 && !documentPages.isPending && !documentPages.isError ? <p className="text-sm">No documents yet. You can still enter values manually.</p> : <ul className="space-y-2 text-sm">{docs.map(d => <li key={d.id} className="flex flex-wrap items-center gap-3"><span className="font-medium">{d.original_filename}</span><span>{d.source_role} · {d.parse_status === "ocr_required" ? "scanned, no text layer" : d.parse_status}</span>
-      <button className="rounded border px-2 py-1" disabled={busy} onClick={() => download(d)}>Download original</button>{d.kind === "csv" ? <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => csvPreview(d)}>Preview import</button> : <button className="rounded border px-2 py-1" disabled={busy || d.parse_status !== "parsed"} onClick={() => extract(d)}>Extract values</button>}</li>)}</ul>}</section>
-    {docs.some(d => d.kind === "csv") && deal && <div className="space-y-1 rounded-2xl border bg-white p-5 text-sm"><label className="block">As-of date for CSV import<input type="date" min="2000-01-01" max="2100-12-31" className="ml-2 rounded border p-1" value={asOf || deal.start_date} onChange={e => { setAsOf(e.target.value); setPreview(null); }} /></label><p className="text-xs text-neutral-600">The as-of date tells the preview which day the imported balances describe. It starts as this order&apos;s start date ({deal.start_date}); change it if the file describes another day.</p></div>}
-    {preview && <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Import preview</h2><p className="text-sm">As of {asOf || deal?.start_date}: {preview.events.length} events, {preview.duplicate_keys.length} duplicates skipped, {preview.errors.length} errors. Nothing is saved until you confirm.</p>
-      {preview.errors.length > 0 && <ul className="list-disc pl-5 text-sm text-red-800">{preview.errors.map((x, i) => <li key={i}>{x.message}</li>)}</ul>}
-      <button className="rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50" disabled={busy || preview.errors.length > 0} onClick={csvConfirm}>Confirm import</button></section>}
-    <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="font-semibold">Extracted values</h2>{fields.length === 0 ? <p className="text-sm">Nothing extracted.</p> : <ul className="space-y-3 text-sm">{fields.map(f => { const c = f.candidates.find(x => x.id === f.candidate_id); return <li key={f.field_id} className="rounded-lg border p-3"><p><span className="font-medium">{f.field}</span>: {f.value ?? "missing"} <span className="rounded bg-neutral-100 px-1">{f.status}</span></p>{c && <p className="mt-1 text-xs"><ProvenanceBadge kind={c.provenance ?? "template"} model={c.model} />{languageNote(c.page_language, c.page_script) ? ` · page language: ${languageNote(c.page_language, c.page_script)!.text}` : ""}</p>}{c?.source_quote && <blockquote dir={textDirection(c.page_language)} lang={htmlLang(c.page_language)} className="script-text mt-1 border-l-2 pl-2 text-neutral-700">“{c.source_quote}” {c.source_page ? `(page ${c.source_page})` : ""}</blockquote>}{c?.gloss_en && <p className="mt-1 text-xs italic text-neutral-600">English gloss (reviewer aid, not evidence; confirm against the original quote above): {c.gloss_en}</p>}{["extracted", "ambiguous", "conflicting"].includes(f.status) && f.value !== null && <button className="mt-2 rounded border px-2 py-1" disabled={busy} onClick={() => confirm(f, docById.get(f.document_id))}>Confirm against source</button>}</li>; })}</ul>}</section>
-  </div></main>
+        <Link
+          href={`/deals${query}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#1E2021] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] text-xs font-semibold text-[#737373] dark:text-neutral-300 hover:text-[#1E2021] dark:hover:text-white transition-colors shadow-xs"
+        >
+          <Layers className="size-3.5 text-[#737373] dark:text-neutral-400" />
+          <span>Deals Pipeline</span>
+        </Link>
+      </div>
+
+      {/* Notifications / Alerts */}
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl flex items-center gap-3 text-xs text-red-800 dark:text-red-200 shadow-xs">
+          <AlertCircle className="size-4 shrink-0 text-red-600 dark:text-red-400" />
+          <span>{error}</span>
+        </div>
+      )}
+      {message && (
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-2xl flex items-center gap-3 text-xs text-emerald-800 dark:text-emerald-200 shadow-xs">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>{message}</span>
+        </div>
+      )}
+
+      {/* Main Grid: Upload Card & Documents List */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Upload New Document (4 cols on lg) */}
+        <div className="lg:col-span-5 bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="flex items-center gap-2 border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+            <UploadCloud className="size-4 text-[#1E2021] dark:text-white" />
+            <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+              Upload Source Document
+            </h2>
+          </div>
+
+          <form onSubmit={upload} className="space-y-4">
+            {/* Kind & Meaning in a neat 2-col arrangement */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                  Document Type
+                </label>
+                <select
+                  value={kind}
+                  onChange={(e) => {
+                    const newKind = e.target.value;
+                    setKind(newKind);
+                    setRole(ROLES[newKind][0]);
+                  }}
+                  className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                >
+                  {Object.keys(ROLES).map((k) => (
+                    <option key={k} value={k}>
+                      {KIND_LABELS[k] || k}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                  Semantic Meaning
+                </label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs text-[#1E2021] dark:text-white font-medium focus:outline-none focus:border-[#1E2021] dark:focus:border-white transition-colors"
+                >
+                  {ROLES[kind].map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABELS[r] || r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Drag & Drop File Zone */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#1E2021] dark:text-neutral-200">
+                Attach File
+              </label>
+              <label className="border-2 border-dashed border-[#E8E6E1] dark:border-[#2C302F] hover:border-[#1E2021] dark:hover:border-white/50 rounded-2xl p-6 text-center cursor-pointer transition-colors block bg-[#FAF9F7] dark:bg-[#151718]/40">
+                <input
+                  key={fileKey}
+                  type="file"
+                  accept=".pdf,.txt,.csv,.json"
+                  className="hidden"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  aria-label="Document file"
+                />
+                <UploadCloud className="size-6 text-[#737373] dark:text-neutral-400 mx-auto mb-2" />
+                <div className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                  {file ? file.name : "Click to select or drag document"}
+                </div>
+                <div className="text-[11px] text-[#737373] dark:text-neutral-400 mt-1">
+                  {file
+                    ? `${(file.size / 1024).toFixed(0)} KB · ${file.type || "binary"}`
+                    : "PDF with text layer, TXT, CSV, or JSON (max 25 MB)"}
+                </div>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy || !file || !deal}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              {busy ? (
+                <>
+                  <RefreshCw className="size-3.5 animate-spin" />
+                  <span>Encrypting &amp; Storing…</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="size-3.5" />
+                  <span>Upload &amp; Verify Document</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Column: Stored Documents Table & Extracted Candidate Cards (7 cols on lg) */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Documents Section */}
+          <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="size-4 text-[#1E2021] dark:text-white" />
+                <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                  Stored Documents ({docs.length})
+                </h2>
+              </div>
+              <CollectionPages query={documentPages} noun="documents" />
+            </div>
+
+            {loading ? (
+              <div className="space-y-3 py-2">
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+              </div>
+            ) : docs.length === 0 ? (
+              <div className="py-10 text-center border border-dashed border-[#E8E6E1] dark:border-[#2C302F] rounded-xl space-y-1 bg-[#FAF9F7]/50 dark:bg-[#151718]/20">
+                <p className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                  No source documents attached yet
+                </p>
+                <p className="text-[11px] text-[#737373] dark:text-neutral-400">
+                  Upload a PDF, supplier quote, or CSV balance ledger to enable automated verification.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F0EEEA] dark:divide-[#2C302F]">
+                {docs.map((d) => (
+                  <div key={d.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#1E2021] dark:text-white truncate">
+                          {d.original_filename}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF9F7] dark:bg-[#2C302F] text-[#525252] dark:text-neutral-300 border border-[#E8E6E1] dark:border-[#383C3B] shrink-0">
+                          {ROLE_LABELS[d.source_role] || d.source_role}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#737373] dark:text-neutral-400 flex items-center gap-2">
+                        <span>{d.kind.toUpperCase()}</span>
+                        <span>·</span>
+                        <span>
+                          {d.parse_status === "ocr_required"
+                            ? "Scanned (OCR required)"
+                            : d.parse_status === "parsed"
+                            ? "Verified & Parsed"
+                            : d.parse_status}
+                        </span>
+                        {d.size_bytes ? (
+                          <>
+                            <span>·</span>
+                            <span>{(d.size_bytes / 1024).toFixed(0)} KB</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => download(d)}
+                        disabled={busy}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E8E6E1] dark:border-[#2C302F] bg-white dark:bg-[#151718] hover:bg-[#FAF9F7] dark:hover:bg-[#2C302F] text-[11px] font-semibold text-[#1E2021] dark:text-white transition-colors cursor-pointer"
+                        title="Download original file"
+                      >
+                        <Download className="size-3 text-[#737373] dark:text-neutral-400" />
+                        <span>Download</span>
+                      </button>
+
+                      {d.kind === "csv" ? (
+                        <button
+                          type="button"
+                          onClick={() => csvPreview(d)}
+                          disabled={busy || d.parse_status !== "parsed"}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-40"
+                        >
+                          <FileSpreadsheet className="size-3" />
+                          <span>Preview CSV</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => extract(d)}
+                          disabled={busy || d.parse_status !== "parsed"}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-40"
+                        >
+                          <Sparkles className="size-3" />
+                          <span>Extract Values</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* CSV Import As-Of Config (if CSV present) */}
+          {docs.some((d) => d.kind === "csv") && deal && (
+            <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                  As-Of Date for CSV Import
+                </label>
+                <input
+                  type="date"
+                  min="2000-01-01"
+                  max="2100-12-31"
+                  className="px-3 py-1.5 bg-white dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl text-xs font-semibold text-[#1E2021] dark:text-white focus:outline-none focus:border-[#1E2021] dark:focus:border-white"
+                  value={asOf || deal.start_date}
+                  onChange={(e) => {
+                    setAsOf(e.target.value);
+                    setPreview(null);
+                  }}
+                />
+              </div>
+              <p className="text-[11px] text-[#737373] dark:text-neutral-400">
+                The as-of date anchors the ledger position for baseline cash calculations (default is order start date:{" "}
+                <span className="font-semibold text-[#1E2021] dark:text-white">{deal.start_date}</span>).
+              </p>
+            </div>
+          )}
+
+          {/* CSV Import Preview Box */}
+          {preview && (
+            <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="size-4 text-[#1E2021] dark:text-white" />
+                  <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                    CSV Import Preview
+                  </h2>
+                </div>
+                <span className="text-xs font-semibold text-[#737373] dark:text-neutral-400">
+                  {preview.events.length} valid events
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+                  <span className="text-[10px] text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                    Events
+                  </span>
+                  <span className="text-base font-bold text-[#1E2021] dark:text-white">
+                    {preview.events.length}
+                  </span>
+                </div>
+                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+                  <span className="text-[10px] text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                    Skipped Duplicates
+                  </span>
+                  <span className="text-base font-bold text-[#1E2021] dark:text-white">
+                    {preview.duplicate_keys.length}
+                  </span>
+                </div>
+                <div className="p-3 bg-[#FAF9F7] dark:bg-[#151718] rounded-xl border border-[#E8E6E1] dark:border-[#2C302F]">
+                  <span className="text-[10px] text-[#737373] dark:text-neutral-400 uppercase tracking-wider block">
+                    Format Errors
+                  </span>
+                  <span
+                    className={`text-base font-bold ${
+                      preview.errors.length > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    {preview.errors.length}
+                  </span>
+                </div>
+              </div>
+
+              {preview.errors.length > 0 && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl space-y-1">
+                  {preview.errors.map((x, i) => (
+                    <div key={i} className="text-xs text-red-800 dark:text-red-200">
+                      • {x.message}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={csvConfirm}
+                disabled={busy || preview.errors.length > 0}
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] dark:hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                <Check className="size-3.5" />
+                <span>Confirm &amp; Import Baseline Events</span>
+              </button>
+            </div>
+          )}
+
+          {/* Extracted Values & AI Verification */}
+          <div className="bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0EEEA] dark:border-[#2C302F] pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-[#1E2021] dark:text-white" />
+                <h2 className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                  Extracted Candidates ({fields.length})
+                </h2>
+              </div>
+              <span className="text-[11px] text-[#737373] dark:text-neutral-400">
+                Audited &amp; Reversible
+              </span>
+            </div>
+
+            {fields.length === 0 ? (
+              <div className="py-8 text-center border border-dashed border-[#E8E6E1] dark:border-[#2C302F] rounded-xl space-y-1 bg-[#FAF9F7]/50 dark:bg-[#151718]/20">
+                <p className="text-xs font-semibold text-[#1E2021] dark:text-white">
+                  No extracted fields pending review
+                </p>
+                <p className="text-[11px] text-[#737373] dark:text-neutral-400">
+                  Click &quot;Extract Values&quot; on any uploaded document to populate AI OCR extractions.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {fields.map((f) => {
+                  const c = f.candidates.find((x) => x.id === f.candidate_id);
+                  const isConfirmed = f.status === "confirmed";
+
+                  return (
+                    <div
+                      key={f.field_id}
+                      className="p-4 bg-[#FAF9F7] dark:bg-[#151718] border border-[#E8E6E1] dark:border-[#2C302F] rounded-xl space-y-3 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#1E2021] dark:text-white uppercase tracking-wider">
+                              {f.field.replace(/_/g, " ")}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                isConfirmed
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                  : "bg-white text-[#1E2021] dark:bg-[#2C302F] dark:text-white border-[#E8E6E1] dark:border-[#383C3B]"
+                              }`}
+                            >
+                              {f.status}
+                            </span>
+                          </div>
+                          <div className="text-sm font-bold text-[#1E2021] dark:text-white mt-1">
+                            {f.value ?? "Not specified / missing"}
+                          </div>
+                        </div>
+
+                        {["extracted", "ambiguous", "conflicting"].includes(f.status) && f.value !== null && (
+                          <button
+                            type="button"
+                            onClick={() => confirm(f, docById.get(f.document_id))}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E2021] hover:bg-black text-white dark:bg-white dark:text-[#1E2021] text-xs font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                          >
+                            <Check className="size-3" />
+                            <span>Confirm Value</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {c && (
+                        <div className="text-xs space-y-1.5 pt-2 border-t border-[#E8E6E1] dark:border-[#2C302F]">
+                          <div className="flex items-center gap-2">
+                            <ProvenanceBadge kind={c.provenance ?? "template"} model={c.model} />
+                            {languageNote(c.page_language, c.page_script) ? (
+                              <span className="text-[11px] text-[#737373] dark:text-neutral-400">
+                                Language: {languageNote(c.page_language, c.page_script)!.text}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {c.source_quote && (
+                            <blockquote
+                              dir={textDirection(c.page_language)}
+                              lang={htmlLang(c.page_language)}
+                              className="text-xs italic text-[#525252] dark:text-neutral-300 border-l-2 border-[#1E2021] dark:border-white pl-2.5 py-0.5 mt-1"
+                            >
+                              &ldquo;{c.source_quote}&rdquo; {c.source_page ? `(page ${c.source_page})` : ""}
+                            </blockquote>
+                          )}
+
+                          {c.gloss_en && (
+                            <p className="text-[11px] text-[#737373] dark:text-neutral-400 italic">
+                              Translation: {c.gloss_en}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

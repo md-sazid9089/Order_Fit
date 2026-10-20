@@ -45,18 +45,18 @@ function MemberRow({ member, isSelf, onChanged }: { member: Member; isSelf: bool
   const revoked = !!member.revoked_at;
   return <li className="space-y-2 py-3">
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-      <span className="min-w-0 flex-1"><strong>{member.full_name}</strong>{isSelf && <span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs">You</span>}<br /><span className="text-sm text-neutral-600">{member.email}</span></span>
+      <span className="min-w-0 flex-1"><strong>{member.full_name}</strong>{isSelf && <span className="ml-2 rounded bg-neutral-100 px-1.5 py-0.5 text-xs">You</span>}<br /><span className="text-sm text-neutral-600 break-all">{member.email}</span></span>
       <span className="text-sm">{revoked ? <span className="text-red-700">Revoked {when(member.revoked_at)}</span> : <>{roleLabel(member.role)} · {memberStatus(member)}</>}</span>
     </div>
     {!revoked && <div className="flex flex-wrap items-end gap-3">
-      <label className="text-sm">Role<select className={field} value={role} disabled={busy} onChange={e => setRole(e.target.value as Role)}>{ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</select></label>
-      <button type="button" className={primary} disabled={busy || revision === undefined || role === member.role} onClick={() => revision !== undefined && void run(async () => { await changeRole(businessId, member.user_id, buildRoleChange(member, role, revision)); onChanged(); }, `Role changed to ${roleLabel(role)}.`)}>Save role</button>
-      <button type="button" className={danger} disabled={busy} onClick={() => setRevoking(!revoking)}>{revoking ? "Cancel revoke" : "Revoke access"}</button>
+      <label className="text-sm w-full sm:w-auto">Role<select className={field} value={role} disabled={busy} onChange={e => setRole(e.target.value as Role)}>{ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</select></label>
+      <button type="button" className={`${primary} w-full sm:w-auto`} disabled={busy || revision === undefined || role === member.role} onClick={() => revision !== undefined && void run(async () => { await changeRole(businessId, member.user_id, buildRoleChange(member, role, revision)); onChanged(); }, `Role changed to ${roleLabel(role)}.`)}>Save role</button>
+      <button type="button" className={`${danger} w-full sm:w-auto`} disabled={busy} onClick={() => setRevoking(!revoking)}>{revoking ? "Cancel revoke" : "Revoke access"}</button>
     </div>}
     {revoking && !revoked && <form className="space-y-2 rounded-lg bg-neutral-50 p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { await revokeMember(businessId, member.user_id, buildRevocation(member, reason, revision)); setRevoking(false); setReason(""); onChanged(); }, "Access revoked."); }}>
       <label className="block text-sm">Reason (recorded in the audit log, at least 10 characters)<textarea className={field} value={reason} onChange={e => setReason(e.target.value)} maxLength={2000} /></label>
       <p className="text-xs text-neutral-600">{isSelf ? "You are revoking your own access. " : ""}The last active owner cannot be revoked or demoted; the server refuses it.</p>
-      <button className={danger} disabled={busy || revision === undefined || !reasonValid(reason)}>Revoke {member.full_name}</button>
+      <button className={`${danger} w-full sm:w-auto`} disabled={busy || revision === undefined || !reasonValid(reason)}>Revoke {member.full_name}</button>
     </form>}
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
   </li>;
@@ -93,9 +93,9 @@ function Invitations({ onChanged }: { onChanged: () => void }) {
     <h2 id="invitations-heading" className="text-lg font-semibold">Invite someone</h2>
     <p className="text-sm text-neutral-700">The invitee must already have an OrderFit account (they can sign up first) and be signed in when they open the link. Invitations expire after 72 hours. Nothing is emailed: you share the link yourself.</p>
     <form onSubmit={invite} className="flex flex-wrap items-end gap-3">
-      <label className="min-w-60 flex-1 text-sm">Email<input required type="email" className={field} value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" /></label>
-      <label className="text-sm">Role<select className={field} value={role} onChange={e => setRole(e.target.value as Role)}>{ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</select></label>
-      <button className={primary} disabled={busy || revision === undefined || !emailValid(email)}>Create invitation</button>
+      <label className="w-full sm:w-auto min-w-0 sm:min-w-60 flex-1 text-sm">Email<input required type="email" className={field} value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" /></label>
+      <label className="w-full sm:w-auto text-sm">Role<select className={field} value={role} onChange={e => setRole(e.target.value as Role)}>{ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</select></label>
+      <button className={`${primary} w-full sm:w-auto`} disabled={busy || revision === undefined || !emailValid(email)}>Create invitation</button>
     </form>
     <RevisionNotice revision={revision} error={revisionError} />
     {error && <Alert>{error}</Alert>}{notice && <Alert tone="ok">{notice}</Alert>}
@@ -103,8 +103,8 @@ function Invitations({ onChanged }: { onChanged: () => void }) {
       {link.url ? <>
         <p><strong>One-time invitation link for {link.email}.</strong> It is shown only now and cannot be retrieved later. If it is lost, revoke this invitation and create a new one.</p>
         <input readOnly aria-label="Invitation link" className={`${field} font-mono text-xs`} value={link.url} onFocus={e => e.currentTarget.select()} />
-        <div className="flex flex-wrap items-center gap-3"><button type="button" className={primary} onClick={() => void copy(link.url!)}>Copy link</button><button type="button" className={button} onClick={() => { setLink(null); setCopied(""); }}>I have saved it, hide it</button>{copied && <span>{copied}</span>}</div>
-      </> : <><p><strong>The invitation for {link.email} was recorded, but no link was returned.</strong> This happens when a request is repeated after the first response was lost: the link is never stored. Revoke this invitation below and create a new one.</p><button type="button" className={button} onClick={() => setLink(null)}>Dismiss</button></>}
+        <div className="flex flex-wrap items-center gap-3"><button type="button" className={`${primary} w-full sm:w-auto`} onClick={() => void copy(link.url!)}>Copy link</button><button type="button" className={`${button} w-full sm:w-auto`} onClick={() => { setLink(null); setCopied(""); }}>I have saved it, hide it</button>{copied && <span>{copied}</span>}</div>
+      </> : <><p><strong>The invitation for {link.email} was recorded, but no link was returned.</strong> This happens when a request is repeated after the first response was lost: the link is never stored. Revoke this invitation below and create a new one.</p><button type="button" className={`${button} w-full sm:w-auto`} onClick={() => setLink(null)}>Dismiss</button></>}
     </div>}
     <div className="space-y-2">
       <h3 className="font-semibold">Invitations created in this session</h3>
@@ -113,11 +113,11 @@ function Invitations({ onChanged }: { onChanged: () => void }) {
       <ul className="divide-y">{issued.map(inv => {
         const state = invitationState(inv, now);
         return <li key={inv.id} className="space-y-2 py-2 text-sm">
-          <div className="flex flex-wrap items-center gap-3"><span className="min-w-0 flex-1">{inv.email} · {roleLabel(inv.role)}</span><span>{state === "pending" ? `Pending until ${when(inv.expires_at)}` : state === "revoked" ? `Revoked ${when(inv.revoked_at)}` : state === "accepted" ? `Accepted ${when(inv.accepted_at)}` : `Expired ${when(inv.expires_at)}`}</span>
-            {state === "pending" && <button type="button" className={danger} disabled={busy} onClick={() => setRevoking(revoking === inv.id ? "" : inv.id)}>{revoking === inv.id ? "Cancel" : "Revoke"}</button>}</div>
+          <div className="flex flex-wrap items-center gap-3"><span className="min-w-0 flex-1 break-all">{inv.email} · {roleLabel(inv.role)}</span><span>{state === "pending" ? `Pending until ${when(inv.expires_at)}` : state === "revoked" ? `Revoked ${when(inv.revoked_at)}` : state === "accepted" ? `Accepted ${when(inv.accepted_at)}` : `Expired ${when(inv.expires_at)}`}</span>
+            {state === "pending" && <button type="button" className={`${danger} w-full sm:w-auto`} disabled={busy} onClick={() => setRevoking(revoking === inv.id ? "" : inv.id)}>{revoking === inv.id ? "Cancel" : "Revoke"}</button>}</div>
           {revoking === inv.id && <form className="space-y-2 rounded-lg bg-neutral-50 p-3" onSubmit={(e: FormEvent) => { e.preventDefault(); if (revision === undefined) return; void run(async () => { const updated = await revokeInvitation(businessId, inv.id, buildRevocation(inv, reason, revision)); setIssued(list => upsertInvitation(list, updated)); setRevoking(""); setReason(""); onChanged(); }, "Invitation revoked."); }}>
             <label className="block">Reason (at least 10 characters)<textarea className={field} value={reason} onChange={e => setReason(e.target.value)} maxLength={2000} /></label>
-            <button className={danger} disabled={busy || revision === undefined || !reasonValid(reason)}>Revoke invitation</button></form>}
+            <button className={`${danger} w-full sm:w-auto`} disabled={busy || revision === undefined || !reasonValid(reason)}>Revoke invitation</button></form>}
         </li>;
       })}</ul>
     </div>

@@ -12,7 +12,7 @@ from sqlalchemy.exc import TimeoutError as PoolTimeout
 from orderfit.api.errors import ApplicationError
 from orderfit.contracts.protocol import PERMISSIONS
 
-SCHEMA_REVISION = "0023_account_access"
+SCHEMA_REVISION = "0025_admin_read_isolation"
 
 
 def digest_token(token: str | None) -> bytes:

@@ -1,5 +1,11 @@
 """Persisted extraction review and isolated what-if through the actual free adapter."""
 
+import pytest
+
+pytest.skip("FreeLLMPool is retired; this historical integration suite is not supported",
+            allow_module_level=True)
+
+# ruff: noqa: E402
 import json
 import os
 import re
@@ -7,7 +13,6 @@ from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock
 
-import pytest
 from fastapi.testclient import TestClient
 from freellmpool.client import HTTPResult
 

@@ -125,13 +125,13 @@ def test_recording_that_is_not_an_object_is_invalid_output(tmp_path, payload):
     assert llm._recorded(request, settings).result.code == "INVALID_OUTPUT"
 
 
-def test_semaphores_are_scoped_to_the_running_loop():
-    async def grab():
-        sem = llm._semaphore(2)
-        assert llm._semaphore(2) is sem
-        async with sem:
-            await asyncio.sleep(0)
-        return sem
+def test_provider_slots_are_shared_across_worker_event_loops():
+    async def acquire():
+        return await llm._acquire_slot(2, 0)
 
-    first, second = asyncio.run(grab()), asyncio.run(grab())
-    assert first is not second
+    first = asyncio.run(acquire())
+    second = asyncio.run(acquire())
+    blocked = asyncio.run(llm._acquire_slot(2, 0))
+    assert first is not None and second is first and blocked is None
+    first.release()
+    second.release()

@@ -17,6 +17,7 @@ test("money stays decimal-string minor units and never passes through a float", 
   assert.equal(m.formatMinor("-123456", "EUR"), "-EUR 1,234.56");
   assert.equal(m.formatMinor("12.5", "USD"), "amount unavailable");
   assert.equal(m.formatMinor(null, "USD"), "amount unavailable");
+  assert.equal(m.formatMinor("9999999999999999999999999999999999999999", "USD"), "USD 99,999,999,999,999,999,999,999,999,999,999,999,999.99");
 });
 
 test("approval and run errors map to specific, truthful messages", () => {

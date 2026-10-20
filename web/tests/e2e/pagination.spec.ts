@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { openManualOrderForm } from "./helpers/manual-order";
 
 test("older saved customer is selectable after a recoverable continuation failure", async ({ page, baseURL }) => {
   test.setTimeout(60_000);
@@ -11,14 +12,9 @@ test("older saved customer is selectable after a recoverable continuation failur
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/deals(?:\?|$)/);
   await page.getByRole("link", { name: "New order" }).first().click();
-  await page.getByLabel("Opening date").fill("2026-10-16");
-  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
-  await page.getByLabel("Coverage through").fill("2027-10-16");
-  await page.getByLabel("Source attestation").fill("Synthetic pagination baseline");
-  await page.getByRole("button", { name: "Save baseline" }).click();
-  await expect(page.getByRole("heading", { name: "Order details" })).toBeVisible();
-  const me = await (await page.request.get("/api/v1/auth/me")).json();
-  const business = me.memberships[0].business_id;
+  const today = new Date().toISOString().slice(0, 10);
+  const coverage = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const business = await openManualOrderForm(page, today, coverage);
   const csrf = (await page.context().cookies()).find(c => c.name === "orderfit_csrf")!.value;
   let revision = (await (await page.request.get(`/api/v1/businesses/${business}/profile`)).json()).financial_revision;
   let oldest = "";

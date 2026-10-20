@@ -42,6 +42,16 @@ def test_harden_downgrades_unrecognised_basis_and_conflicting_values_only():
     assert harden([_candidate("order_value_minor", None, "missing")])[0][0].status == "missing"
 
 
+def test_harden_canonicalizes_only_explicit_payment_day_unit():
+    candidate = _candidate("payment_days", "30 calendar days", quote="Payment due 30 calendar days after invoice")
+    normalized, _ = harden([candidate])
+    assert normalized[0].normalized_value == "30"
+    assert quote_supports(normalized[0].field, normalized[0].normalized_value, normalized[0].exact_quote,
+                         candidate.exact_quote) == "ok"
+    vague, _ = harden([_candidate("payment_days", "about 30 days")])
+    assert vague[0].normalized_value == "about 30 days"
+
+
 def test_two_stated_totals_and_multi_date_quotes_need_a_person():
     page = "Total: BDT 1,000.00\nRevised Total: BDT 1,150.00"
     assert quote_supports("order_value_minor", "100000", "Total: BDT 1,000.00", page) == "ambiguous"
@@ -121,6 +131,15 @@ def test_reviewer_disagreement_is_reported_between_model_and_baseline_stance():
     _, _, disagreement = merge_reply(body, baseline, ReplyReading(provenance="live", stance="accept"))
     assert disagreement
     assert baseline_stance("We do not accept the exact proposed terms.", []) == "reject"
+
+
+def test_unsupported_language_reply_does_not_merge_model_interpretation():
+    body = "نقبل الدفع خلال 30 يوما"
+    model_reading = ReplyReading(
+        terms=[_term("payment_days", "30", "30")], provenance="live", stance="partial"
+    )
+    merged, stance, disagreement = merge_reply(body, [], model_reading)
+    assert merged == [] and stance == "unclear" and not disagreement
 
 
 def _live(monkeypatch, output):

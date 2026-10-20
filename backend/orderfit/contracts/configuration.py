@@ -25,10 +25,6 @@ class RuntimeConfiguration(BaseSettings):
     document_s3_secret_access_key: SecretStr | None = None
     document_s3_addressing_style: Literal["auto", "path", "virtual"] = "auto"
     llm_mode: Literal["off", "recorded", "live"] = "off"
-    llm_provider: Literal["openai", "freellmpool"] = "openai"
-    freellmpool_model: str | None = None
-    freellmpool_state_dir: str = "./var/freellmpool"
-    freellmpool_min_interval_seconds: Annotated[int, Field(ge=0, le=60)] = 35
     openai_api_key: SecretStr | None = None
     openai_model: str | None = None
     llm_recordings_dir: str | None = None
@@ -139,22 +135,7 @@ class RuntimeConfiguration(BaseSettings):
                 )
             ):
                 raise ValueError("S3 endpoint must be HTTPS (HTTP is allowed only on localhost)")
-        if self.llm_mode == "live" and self.llm_provider == "freellmpool":
-            route = (self.freellmpool_model or "").split("/", 1)
-            if (len(route) != 2 or route[0] not in {"pollinations", "ovh", "llm7", "kilo"}
-                or not route[1].strip() or any(ch.isspace() for ch in self.freellmpool_model)
-                or not self.freellmpool_state_dir.strip()):
-                raise ValueError("FreeLLMPool requires an explicit keyless provider/model and state directory")
-            # The keyless pool is a local synthetic-test adapter.  It must never
-            # become an accidental hosted-provider path, even when live mode is
-            # selected deliberately.
-            origin_hosts = {urlsplit(origin).hostname for origin in self.allowed_origins}
-            if (
-                not origin_hosts <= {"localhost", "127.0.0.1", "::1"}
-                or self.document_storage_backend == "s3"
-            ):
-                raise ValueError("FreeLLMPool is permitted only with loopback origins and filesystem storage")
-        if self.llm_mode == "live" and self.llm_provider == "openai" and (
+        if self.llm_mode == "live" and (
             not self.openai_api_key
             or not self.openai_api_key.get_secret_value()
             or not self.openai_model

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Calendar, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, Calendar, Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { Deal, Evaluation } from "@/lib/orderfit-api";
 import { loadPipeline, type PipelineData } from "@/lib/pipeline-data";
 import { formatMinor } from "@/lib/approval-model";
@@ -48,7 +48,10 @@ export default function DealsPage() {
     return () => { active = false; controller.abort(); };
   }, [businessId, offset, refreshToken]);
 
-  const rows = useMemo(() => (data?.deals ?? []).map(d => ({ deal: d, evaluation: data?.evaluations[d.id] ?? null })), [data]);
+  const rows = useMemo(
+    () => (data?.deals ?? []).map(d => ({ deal: d, evaluation: data?.evaluations[d.id] ?? null })),
+    [data],
+  );
   const counts = useMemo(() => {
     const c = { all: rows.length, action: 0, recommended: 0, closed: 0 };
     for (const r of rows) c[tabOf(r.deal, r.evaluation)]++;
@@ -78,8 +81,8 @@ export default function DealsPage() {
   const safe = trough.headroom !== null && /^-?\d+$/.test(trough.headroom) && BigInt(trough.headroom) >= BigInt(0);
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 w-full">
-      <div className="max-w-[1560px] mx-auto space-y-6 w-full">
+    <main className="px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6 w-full min-w-0">
+      <div className="max-w-[1560px] mx-auto space-y-6 w-full min-w-0">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -88,6 +91,13 @@ export default function DealsPage() {
             </h1>
           </div>
           <div className="flex items-center flex-wrap gap-2.5">
+            <Link
+              href={`/deals/new${query}`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1E2021] dark:bg-white text-white dark:text-[#1E2021] hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Plus className="size-3.5" />
+              <span>New Order</span>
+            </Link>
             <button
               type="button"
               onClick={() => reload()}

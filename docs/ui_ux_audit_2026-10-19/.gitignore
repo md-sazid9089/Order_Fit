@@ -1,0 +1,4 @@
+# Browser traces can contain synthetic sessions and one-time invitation fragments.
+evidence/**/trace.zip
+evidence/**/error-context.md
+evidence/**/.last-run.json

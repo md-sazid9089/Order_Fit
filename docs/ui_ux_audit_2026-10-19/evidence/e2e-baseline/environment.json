@@ -1,0 +1,13 @@
+﻿{
+    "project":  "orderfit-e2e-f182f8c1c7",
+    "base_url":  "http://localhost:58692",
+    "head":  "97ec81b4c3c35189fed4e644143880af3a114277",
+    "images":  {
+                   "api":  "sha256:1e1bf9023e81ca6ece333b2cd2e0fa2b77f60471ca337b0a60f5d4841caf1937",
+                   "worker":  "sha256:1e1bf9023e81ca6ece333b2cd2e0fa2b77f60471ca337b0a60f5d4841caf1937",
+                   "web":  "sha256:c9aa457d7c0864be2a43a738e502b73350b3765963cde353b75a46bf8adcee97",
+                   "db":  "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24"
+               },
+    "llm_mode":  "off",
+    "evidence_directory":  "E:\\Order_Fit\\docs\\ui_ux_audit_2026-10-19\\evidence\\e2e-baseline"
+}

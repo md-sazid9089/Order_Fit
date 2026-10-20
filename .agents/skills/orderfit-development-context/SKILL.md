@@ -1,57 +1,32 @@
----
-name: orderfit-development-context
-description: Resume OrderFit using current contracts, source locations, safety boundaries, and verification pointers.
----
-
 # OrderFit development context
 
-Read root and scoped AGENTS instructions. Check branch, HEAD, and changes before
-relying on historical evidence or recovering work from another branch.
+Read root and scoped AGENTS instructions. Check the current branch, HEAD, and worktree before relying on historical reports or recovering work from another branch.
 
-## Implementation
+## Current implementation
 
-- Frontend: `web/`, Next.js 16.4.1/React 19.3.0; consult installed Next docs.
-- Backend: Python 3.12, FastAPI/Pydantic, SQLAlchemy/Core, psycopg, manual SQL/Alembic.
-- Required source schema head: `0023_account_access`; this is not a deployed-DB claim.
-- Saved review feeds immutable confirmed snapshots. Evaluation, what-if, and reply
-  reassessment share `agent/nodes/compute.py` and the pure deterministic engine.
-- API/worker are separate processes with PostgreSQL jobs, restricted runtime roles,
-  idempotency, leases, fencing, and transaction-local tenant context.
-- Only `agent/llm.py` invokes providers. OpenAI is the hosted path; FreeLLMPool is
-  local-loopback/filesystem testing only. Off/recorded never silently call live.
-- Commercial dispatch/commit/compensation are sandbox-only and separately approved.
-  Account mail is an independent default-off backend capability; its frontend,
-  provider, and operational rollout remain separate from commercial execution.
-- Admin summaries require verified platform authority and backend capabilities;
-  business details still require membership. Global logs/mutations are unavailable.
+- Frontend: `web/`, Next.js 16.4.1 and React 19.3.0; read the installed Next.js docs before frontend edits.
+- Backend: Python 3.12, FastAPI/Pydantic, SQLAlchemy/Core, psycopg, PostgreSQL and manual Alembic/SQL migrations.
+- Required source schema head: `0025_admin_read_isolation`. This describes repository migrations, not the current state of any hosted database.
+- One confirmed-input pipeline and one pure deterministic financial engine serve evaluation, what-if and reply reassessment. `agent/nodes/compute.py` is the application boundary to engine analysis.
+- `agent/llm.py` is the only provider boundary. OpenAI is the supported live provider; off and recorded modes never silently fall through to live calls.
+- API and worker are separate processes using PostgreSQL-backed jobs, restricted runtime roles, idempotency, leases, fencing and transaction-local tenant context.
+- Commercial dispatch, commitments and compensation are sandbox-only and separately approved. Account email is an independent default-off capability.
+- Admin summaries use verified platform authority and bounded capability-gated reads; business details require membership. Global log access and platform mutations are unavailable.
 
 ## Navigation
 
 | Task | Source |
 |---|---|
 | Setup, checks, contributions | [Development](../../../docs/development.md) |
-| Current user journey | [Workflows](../../../docs/workflows.md) |
+| User journey | [Workflows](../../../docs/workflows.md) |
 | Financial meaning | [Specification](../../../docs/architecture/orderfit/04-decision-engine-and-data-contracts.md) |
-| API/types | [Contracts](../../../docs/contracts/README.md), `backend/orderfit/contracts/`, `web/lib/generated-api.d.ts` |
+| API and types | [Contracts](../../../docs/contracts/README.md), `backend/orderfit/contracts/`, `web/lib/generated-api.d.ts` |
 | Persistence | `backend/orderfit/store/`, `backend/migrations/sql/`, `backend/migrations/versions/` |
-| Approval/recovery | `services/bundles.py`, `services/execution.py`, `workflow/execution.py` |
+| Approval and recovery | `backend/orderfit/services/bundles.py`, `services/execution.py`, `workflow/execution.py` |
 | Security and release limits | [Security](../../../docs/security/README.md) |
 | Deployment choices | [Deployment](../../../docs/deployment/README.md) |
+| Implementation evidence | [Progress record](../../../docs/backend_implementation_progress.md), [dated reports](../../../docs/evidence/reports/) |
 
-## Evidence
+## Evidence limits
 
-Use the committed locks and Development commands. DB tests verify disposable
-targets and restricted logins; browser acceptance uses `scripts/run-e2e.ps1`.
-Never infer business success from health, timers, localStorage, mocks, or build success.
-
-[Implementation evidence](../../../docs/backend_implementation_progress.md) and
-[dated reports](../../../docs/evidence/reports/) establish only their executed scope.
-Hosted/provider quality, scoped object credentials, durable restore/retention,
-historical credential rotation, and account-mail rollout need separate acceptance.
-Render Blueprint config uses private S3-compatible document storage and removes the
-migration URL from the API process. Provider policy, hosted acceptance and joint
-restore still require operator verification. Never select a shared DB just because a URL exists.
-
-Keep this context short. Update material schema/path/decision/blocker changes;
-put detailed evidence in the existing implementation record. Do not append session
-narratives or duplicate backend financial/security instructions.
+Use the committed locks and Development commands. Database tests must use disposable targets and restricted logins; browser acceptance uses `scripts/run-e2e.ps1`. A health response, mock, timer or local storage value does not establish a persisted business operation. Hosted/provider quality, scoped object-storage credentials, durable restore/retention, historical credential rotation and account-mail rollout require separate acceptance. Never infer hosted state from local repository evidence or select a shared database just because a URL is available.

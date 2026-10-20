@@ -14,7 +14,7 @@ export function OldVsNewWay() {
           <span className="text-xs sm:text-sm font-bold tracking-widest text-[#093A2F] dark:text-[#34D399] uppercase mb-3 inline-block">
             Spreadsheet Guesswork vs. Deterministic Certainty
           </span>
-          <h2 className="font-heading font-medium text-[2.25rem] leading-[115%] md:leading-[110%] md:text-[3.1875rem] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] mb-4">
+          <h2 className="font-heading font-medium text-2xl sm:text-4xl md:text-[3.1875rem] leading-[115%] md:leading-[110%] md:tracking-[0.02rem] text-center text-[#1A1A1A] dark:text-[#F3F4F6] mb-4 break-words">
             Stop Gambling on Order Feasibility
           </h2>
           <p className="font-sans text-lg md:text-xl text-[#526975] dark:text-[#9CA3AF] leading-relaxed max-w-2xl mx-auto font-normal">
@@ -38,7 +38,7 @@ export function OldVsNewWay() {
               />
             </div>
 
-            <div className="p-8 sm:p-10 flex-1 flex flex-col justify-between">
+            <div className="p-6 sm:p-8 lg:p-10 flex-1 flex flex-col justify-between">
               <div>
                 <h3 className="font-heading font-medium text-[1.688rem] leading-[110%] md:text-[2.1rem] text-[#1A1A1A] dark:text-[#F3F4F6] mb-6">
                   The old way
@@ -102,7 +102,7 @@ export function OldVsNewWay() {
               />
             </div>
 
-            <div className="p-8 sm:p-10 flex-1 flex flex-col justify-between">
+            <div className="p-6 sm:p-8 lg:p-10 flex-1 flex flex-col justify-between">
               <div>
                 <h3 className="font-heading font-medium text-[1.688rem] leading-[110%] md:text-[2.1rem] text-[#1A1A1A] dark:text-[#F3F4F6] mb-6">
                   The OrderFit way

@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { fillManualOrder, openManualOrderForm } from "./helpers/manual-order";
 
 function isoDateFrom(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -51,23 +52,14 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await expect(page.getByRole("textbox", { name: "Search orders" })).toBeVisible();
 
   await page.getByRole("link", { name: "New order" }).first().click();
-  await expect(page.getByRole("heading", { name: "Set the business cash baseline first" })).toBeVisible();
-  await page.getByLabel("Opening date").fill(today);
-  await page.getByLabel("Opening cash (integer minor units)").fill("10000000");
-  await page.getByLabel("Coverage through").fill(isoDateFrom(addDays(new Date(), 365)));
-  await page.getByLabel("Source attestation").fill("Synthetic E2E baseline");
-  await page.getByRole("button", { name: "Save baseline" }).click();
-  await expect(page.getByRole("heading", { name: "Order details" })).toBeVisible();
-
-  await page.getByLabel("Order reference").fill(`E2E-${suffix}`);
-  await page.getByLabel("As-of/start date").fill(today);
-  await page.getByLabel("New customer name").fill("Synthetic E2E Customer");
-  await page.getByLabel("Known customer email domains (comma separated)").fill("buyer.test");
-  await page.getByRole("textbox", { name: "Order date" }).fill(today);
-  await page.getByLabel("Delivery date").fill(delivery);
-  await page.getByLabel("Invoice date").fill(delivery);
-  await page.getByLabel("Order amount (integer minor units)").fill("5000000");
-  await page.getByLabel("Payment days").fill("30");
+  await openManualOrderForm(page, today, isoDateFrom(addDays(new Date(), 365)));
+  await fillManualOrder(page, {
+    reference: `E2E-${suffix}`,
+    customer: "Synthetic E2E Customer",
+    amount: "50000",
+    orderDate: today,
+    deliveryDate: delivery,
+  });
   await preview("manual-order");
   // A gateway can lose the response after the draft has already been persisted.
   // Retrying the form must recover that exact draft with the original command key.
@@ -223,8 +215,9 @@ test("an owner evaluates, approves, commits and compensates a sandbox order", as
   await page.getByRole("link", { name: "Customers" }).click();
   await expect(page.getByRole("main").getByRole("heading", { name: "Customers", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "New order" }).first().click();
-  await expect(page.getByLabel("Order reference")).toBeEnabled();
-  await expect(page.getByLabel("Order reference")).toHaveValue("");
+  await page.getByRole("button", { name: "Manual Order Form" }).click();
+  await expect(page.getByPlaceholder("e.g. PO-8841")).toBeEnabled();
+  await expect(page.getByPlaceholder("e.g. PO-8841")).toHaveValue(/PO-/);
   await page.goto("/audit-log");
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("heading", { name: /audit/i }).first()).toBeVisible();

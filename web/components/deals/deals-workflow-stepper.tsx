@@ -31,12 +31,13 @@ export function DealsWorkflowStepper({
     {
       step: 2 as WorkflowStep,
       label: "2. Validate",
-      href: dealId ? `/deals/${po}/documents${query}` : `/deals/new${query}`,
+      // Saved inputs are reviewed and confirmed on the order page itself.
+      href: dealId && dealId !== "new" ? `/deals/${po}${query}` : `/deals/new${query}`,
     },
     {
       step: 3 as WorkflowStep,
       label: "3. Confirm",
-      href: `/deals/${po}${query}`,
+      href: dealId && dealId !== "new" ? `/deals/${po}${query}` : `/deals/new${query}`,
     },
     {
       step: 4 as WorkflowStep,
@@ -52,7 +53,7 @@ export function DealsWorkflowStepper({
 
   return (
     <div
-      className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[11px] font-medium text-[#737373] dark:text-neutral-400 shadow-xs ${className}`}
+      className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white dark:bg-[#1E2021] border border-[#E8E6E1] dark:border-[#2C302F] text-[10px] sm:text-[11px] font-medium text-[#737373] dark:text-neutral-400 shadow-xs max-w-full overflow-x-auto ${className}`}
     >
       {steps.map((item, index) => {
         const isCurrent = item.step === currentStep;

@@ -156,14 +156,14 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-[#F7F6F5] text-[#1A1A1A] font-sans flex flex-row selection:bg-neutral-300 selection:text-neutral-900">
       <AppSidebar links={links} current={current} query={query} companyName={scope.membership?.business_name ?? "No business"} roleLabel={roleLabel(scope.membership?.role)} onSignOut={() => { void signOut(); }} busy={busy} isAdmin={isAdmin} />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-3">
+        <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-[#E8E6E1] px-3 sm:px-6 lg:px-8">
+          <div className="max-w-[1560px] mx-auto h-full flex items-center justify-between gap-2 sm:gap-3">
             <h1 className="sr-only sm:not-sr-only sm:block min-w-0 truncate sm:pl-12 lg:pl-0 text-base font-bold text-[#1E2021] dark:text-white font-display leading-tight">{title}</h1>
-            <div className="ml-auto flex min-w-0 items-center gap-2 text-sm pl-10 sm:pl-0">
+            <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2 text-sm pl-9 sm:pl-0">
               <ThemeToggle variant="icon" />
               {businessId && <NotificationBell />}
               <label className="sr-only" htmlFor="business-switcher">Business</label>
-              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[9rem] sm:max-w-[14rem] xl:max-w-none rounded-xl border border-[#E8E6E1] bg-white px-3 py-1.5 text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
+              <select id="business-switcher" className="appearance-none bg-none min-w-0 max-w-[5.5rem] sm:max-w-[14rem] xl:max-w-none truncate rounded-xl border border-[#E8E6E1] bg-white px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs text-center cursor-pointer disabled:cursor-default focus:outline-none" value={businessId} disabled={busy || scope.session.memberships.length < 2} onChange={e => changeBusiness(e.target.value)}>
                 {scope.session.memberships.length === 0 && <option value="">No business</option>}
                 {scope.session.memberships.map(m => <option key={m.business_id} value={m.business_id}>{m.business_name} ({roleLabel(m.role)})</option>)}
               </select>

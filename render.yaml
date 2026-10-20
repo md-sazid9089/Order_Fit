@@ -79,10 +79,6 @@ services:
       # ── OpenAI / LLM ──
       - key: LLM_MODE
         value: "off"         # change to "live" after model evaluation
-      - key: LLM_PROVIDER
-        value: "openai"
-      - key: FREELLMPOOL_MODEL
-        value: ""
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
@@ -146,10 +142,6 @@ services:
         sync: false
       - key: LLM_MODE
         value: "off"
-      - key: LLM_PROVIDER
-        value: "openai"
-      - key: FREELLMPOOL_MODEL
-        value: ""
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

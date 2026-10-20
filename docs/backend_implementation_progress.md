@@ -1,5 +1,87 @@
 # Backend implementation progress
 
+## 20 October 2026: Global admin access, user management and multi-tenant telemetry (Revision 0024)
+
+Resolved the issue where authenticated Global Admin/Owner accounts could not see all registered users in the User Management page.
+
+Root causes identified and repaired:
+1. `backend/.env` lacked `ADMIN_READS_ENABLED=true` (it was unset, defaulting to `false` in `RuntimeConfiguration`).
+2. In PostgreSQL, `orderfit_runtime` lacked the `orderfit_admin_api` role grant, causing `admin_repository.prerequisites()` to fail catalog inspection and raise 503 `ADMIN_TELEMETRY_UNAVAILABLE`.
+3. The frontend fell back to `loadAggregatedUsers(sess)`, which mapped exclusively over `sess.memberships` calling `/api/v1/businesses/{m.business_id}/members`. Because the platform admin belonged only to a single tenant (`orderfit`), all 16 other registered database users were excluded.
+4. `0021_admin_reads.sql` lacked `membership` SELECT permissions and RLS policies for `orderfit_admin_reader`, and `admin_read_users` did not join `membership` or `business`.
+
+Changes implemented:
+- Added migration `0024_admin_user_management.sql` and Alembic version `0024_admin_user_management.py`:
+  - `GRANT orderfit_admin_api TO orderfit_runtime;`
+  - `GRANT SELECT(user_id, business_id, role, created_at, version, revoked_at) ON membership TO orderfit_admin_reader;`
+  - `GRANT SELECT(status, created_at) ON app_user TO orderfit_admin_reader;`
+  - `CREATE POLICY admin_summary_read ON membership FOR SELECT TO orderfit_admin_reader USING (true);`
+  - Upgraded `admin_read_users` to query `app_user` LEFT JOIN `membership` LEFT JOIN `business` with JSONB aggregation for tenant memberships. Multi-tenant users appear once with their memberships, while zero-tenant users are preserved.
+  - Upgraded `admin_read_overview` to return accurate `privileged_users`, `active_memberships`, `revoked_memberships`, and `total_memberships`.
+- Synchronized contracts (`backend/orderfit/contracts/admin.py`, `export.py` -> 134 operations): added `AdminUserMembership`, extended `AdminUser` and `AdminOverview`.
+- Updated `backend/orderfit/store/admin_repository.py` (`READ_COLUMNS` and catalog policy checks for 5 tables).
+- Updated `backend/orderfit/store/db.py`: bumped `SCHEMA_REVISION = "0024_admin_user_management"`, allowed platform admins cross-tenant management.
+- Updated `web/lib/admin-api.ts`: enhanced `loadAggregatedUsers` to call `fetchAdminUsers()` for platform admins, paging through all users while retaining strict tenant-scoped boundaries for non-platform admins.
+- Updated `web/app/admin/users/page.tsx`: added 4 summary metric cards, bound filters/search/pagination to the complete dataset, enabled tenant selection for invites.
+- Updated `web/app/admin/page.tsx`, `web/app/admin/logs/page.tsx`, and `web/app/admin/orders/page.tsx` with live multi-tenant telemetry and real tenant resolution.
+
+Verification results:
+- Backend RBAC & security tests: **9 passed**.
+- Backend contract tests: **81 passed** across 134 operations.
+- Frontend unit tests: **121 passed**.
+- Frontend production build (`next build`): **passed successfully in 4.2s**.
+- Live end-to-end API verification against Neon PostgreSQL: **17 distinct users**, **17 privileged accounts**, **17 active memberships**, **17 tenants**, **7 orders** retrieved authoritatively. Zero RLS bypasses, zero table owner privilege leaks.
+
+## 20 October 2026: live OpenAI proposal workflow verification
+
+Ran the synthetic AI evaluation suite with `LLM_MODE=live`, configured model
+`gpt-6-luna`, and credentials loaded from the ignored backend environment file.
+The final run passed **49/49 cases**: extraction 13/13, what-if 16/16, reply
+reading 13/13, clause interpretation 4/4 and explanations 3/3. All cases used
+live model output; zero unsafe proposal changes were recorded. This exercises
+the AI proposal boundary with synthetic text, not authenticated persistence,
+database-backed job recovery, browser journeys, hosted configuration or real
+business documents.
+
+Live evaluation surfaced and fixed several issues: OpenAI's structured-output
+schema rejected a discriminated `oneOf`; flat what-if DTOs now map explicit day
+values into the typed domain contract; unsupported-language replies no longer
+merge model terms; payment-day unit formatting is canonicalized only for an
+explicit number-plus-days value and still must pass source grounding; ambiguous
+bare Net/day clauses retain the complete deterministic anchor hypotheses; and
+slot explanations use readable priority labels and reject unsupported
+resilience/trade-off claims. The evaluator now distinguishes live labels from
+weak replay recordings and accepts semantically equivalent grounded quotes.
+
+Verification: focused architecture/runtime/contracts/agent/AI suite **214
+passed**; Ruff passed; `uv lock --check` passed; frontend provenance unit tests
+**5 passed**. The final live report is an ignored local artifact at
+`var/ai-eval-live.json`; it is not committed. No configured/shared database or
+hosted service was contacted. Persisted AI job workflows and production
+provider behavior remain unverified. The repository-wide backend run completed
+with **821 passed, 2 failed, 2 skipped**. The two failures were stale test
+assumptions about limiter scope and logger state; the updated affected test files
+pass (**63 passed**) and the focused suite was rerun (**214 passed**). The entire
+14-minute suite was not repeated after those test-only corrections.
+
+## 19 October 2026: OpenAI-only live model provider
+
+The live model integration now has one provider: OpenAI Responses API with typed
+structured output. Removed FreeLLMPool dispatch, configuration fields and
+package. The user-restored historical probes/tests and setup pages remain in the
+repository for reference; provider test modules are skipped and their setup
+pages are marked retired. The `off` and `recorded` modes remain available and
+never make live provider calls.
+This does not move financial arithmetic or decision authority to OpenAI; the
+deterministic engine and human-confirmation/approval boundaries remain unchanged.
+
+Verification: focused contracts/runtime/architecture/agent/P4/AI-eval suite
+**183 passed**; focused frontend provenance suite **5 passed**; Ruff and
+`uv lock --check` passed after removing the dependency. Live OpenAI calls/quality,
+hosted config and deployment were not run at that time. Historical FreeLLMPool
+probe and integration entries below are retained as past evidence, not current
+capability or supported configuration.
+
 ## 19 October 2026: account recovery and emailed invitations backend
 
 Implemented locally from `42e9bc2` against
@@ -374,7 +456,7 @@ part of P1. No existing environment-file contents were read, replaced or printed
 - Compose now separates migration, one-time setup provisioning, API and worker
   credentials/processes. CI invokes the disposable DB acceptance harness rather
   than only migrating with a privileged service login. README and
-  `docs/evidence/reports/p1_backend_foundation.md` explain operation and phase boundaries.
+  `docs/p1_backend_foundation.md` explain operation and phase boundaries.
 
 ### Checks actually executed
 
@@ -458,7 +540,7 @@ catalog evidence, not hosted P1 acceptance. Original local PostgreSQL 17 evidenc
 remains distinct from this PostgreSQL 18 managed target.
 
 The concrete pending migration/provisioning/configuration steps are recorded in
-`docs/evidence/reports/neon_connection_review.md`. Approval is still needed for these hosted
+`docs/neon_connection_review.md`. Approval is still needed for these hosted
 schema/role changes beyond the completed read-only inspection. P2 remains unstarted.
 
 ## Approved Neon P1 setup — 15 October 2026
@@ -652,7 +734,7 @@ local acceptance does not establish all hosted workflows.
   sensitivity. Named strategies are checked separately; full series get independent
   checks rather than being hidden from production output.
 - Added the repeatable CPU/memory benchmark, ADR 0010 and
-  `docs/evidence/reports/p2_engine_verification.md`; updated README/contract status. No SQL, migration,
+  `docs/p2_engine_verification.md`; updated README/contract status. No SQL, migration,
   frontend, reference fixture, dependency or environment-file change is needed.
 
 ### Checks actually executed
@@ -2644,72 +2726,76 @@ badges/fonts, and live/recorded multilingual qualification remain unimplemented.
   jobs (account payment/spending limit), not because of test results. Full DB suite, engine
   suite, web checks and the hosted deployment were not re-run. Frontend does not yet show
   the new `WEAK_PASSWORD` message specifically.
+### 20 October 2026 — Admin handoff reconciliation
 
-### 20 October 2026 — Approved repository cleanup and saved-workflow repairs
+Compared both supplied administrator handoffs with HEAD `81b0b36` on
+`ui-release-2026-10-19`. Existing backend read-only routes/services are retained;
+frontend membership-derived admin views are replaced with capability-gated global
+contracts, bounded continuation, exact money, independent system checks, honest
+unavailable/error states and actual signout/cache clearing. Contract declarations
+were regenerated. Full implementation/evidence and acceptance gaps are recorded in
+[the reconciliation report](admin_readiness_2026-10-20.md).
 
-- Worked from local `main` at `97ec81b4c3c35189fed4e644143880af3a114277`
-  on `codex/repository-cleanup`. The owner approved documentation/dead-stub cleanup,
-  browser contract/workflow repairs, and the README; deployment repair and broad
-  dependency/skill removal remain deferred. Existing unrelated untracked work was preserved.
-- Consolidated current setup, workflow, architecture, financial and security guidance;
-  shortened agent context; updated references before removing the approved 18 files.
-  Preserved 18 dated reports plus one XML under `docs/evidence/reports/`. Consolidated
-  the QA handoff into `docs/workflows.md`; preserved substantive ADRs, requirements,
-  original implementation evidence, fixtures and raw experiment bundles.
-- Inspected and reused specific frontend changes from `c7980cd` and `9e77161`,
-  then reconciled them against this checkout. Intake now saves API resources; legacy
-  validation/confirmation routes redirect; retired fake evaluation and confirmation
-  components were removed. Failed reads remain errors, roles come from verified
-  memberships, legacy browser drafts are purged on scope reset, and admin screens
-  use existing capability-gated bounded reads. Synchronized browser declarations;
-  clarified that generated ownership lists include proposed operations.
-- Fixed the Windows PowerShell browser runner's handling of Docker stderr without
-  masking exit status. Added saved-read 404/503 regressions and optional screenshot
-  capture to the persisted sandbox lifecycle test. The README includes four genuine
-  synthetic/provider-off captures and two locally rendered Mermaid diagrams; screenshot
-  reproduction is documented. No application license was invented.
-- Checks executed against this checkout: Ruff; generated contracts (**134 operations**);
-  frontend lint/typecheck and strict contract examples; **128 frontend unit tests**;
-  reference calculator/selftests; API/web Docker builds; and the focused persisted
-  Playwright journey (**1 passed, 38.3 s**) through evaluation, review, approvals,
-  dispatch, reply acceptance, commitment, compensation and lost-response recovery.
-  The first browser run exposed a stale heading locator; corrected it to the actual
-  page heading and reran successfully. **115 Markdown files** have no missing local
-  link targets; README anchors resolve and three Mermaid diagrams render locally.
-- Full backend run: **838 passed, 1 failed, 1 live deselected, 5 warnings, 1023.53 s**.
-  The failure was the existing worker-log test after in-process Alembic `fileConfig`
-  disabled its logger. Reproduced that cause without DB access; the same test passed
-  alone. Its setup now temporarily enables/restores the logger via `monkeypatch`,
-  preserving all error and secret-exclusion assertions. Subsequent migration-plus-
-  regression run: **29 passed, 16.06 s** on disposable PG17. Separate deliberate-
-  disabled-logger and P7 run: **41 passed, 4.95 s**, including state restoration.
-  Ruff/contracts pass after the fix. No second full backend run is claimed.
-- Follow-up Render Blueprint repair: both API and worker now select the existing
-  S3 adapter with separate service keys and one external private bucket; per-service
-  disks were removed. The API `dockerCommand` removes `DATABASE_URL_DIRECT` before
-  starting Uvicorn; that migration-only secret remains on the API service so its
-  separate pre-deploy command can run. YAML parsing and credential/storage invariant
-  checks pass, as do the existing S3 adapter/configuration tests (**8 passed**).
-  The Vercel and security indexes now describe these requirements accurately.
-- Follow-up completion after the owner asked to implement the remaining safe
-  cleanup: removed seven direct web dependencies with no source/configuration
-  references and updated the npm lockfile. The first clean Linux image build
-  exposed missing cross-platform optional `@emnapi` records; restored those
-  records, then confirmed Linux `npm ci` and the production image build succeed.
-  Hardened the E2E runner's partial-build cleanup so a missing image cannot skip
-  temporary configuration cleanup.
-- Final local verification: the complete backend suite passes (**839 passed,
-  1 live-provider test deselected, 5 deprecation warnings, 1033.69 s**); Ruff and
-  the generated API contract check pass (**134 operations**); frontend lint,
-  TypeScript, strict generated declaration validation and **128 unit tests** pass;
-  local and clean-container production builds pass; all **13 Playwright acceptance
-  tests** pass. The deterministic reference set passes all 22 cases and its
-  brute-force/boundary self-tests report **0 failures**. The bounded browser load
-  test completed 5,746 requests in 60 seconds with p95 186.83 ms. Local Markdown
-  links and Mermaid diagrams were checked after documentation edits.
-- The 819 installed skills have unique `SKILL.md` content; no additional skill or
-  component deletion met the evidence bar. No engine, migration, or schema change;
-  no shared DB migration, live provider, real commercial effect, actual Render
-  manifest submission, hosted/restore acceptance, commit, or push. Render CLI
-  schema validation and real bucket-policy/credential/restore checks remain open.
-  Local browser evidence is not a production-readiness claim.
+Fresh read-only shared Neon probes confirm separate restricted API/worker logins,
+API function grants and worker function denial. Database revision is now
+`0024_admin_user_management`, ahead of this checkout's sole required/head
+`0023_account_access`, so complete admin prerequisites fail. Historical commit
+`7986f51` was inspected but not recovered because it also changes tenant authority
+and shared-role grants contrary to the read-only isolation contract. No schema,
+role, account, business-data or live feature-setting change ran. Docker daemon is
+unavailable; disposable DB and signed-in deployed acceptance remain open.
+
+Executed: 125 frontend unit tests; two isolated synthetic Playwright tests;
+web build/typecheck; focused changed-file ESLint; 15 backend admin tests; contract
+export drift check (134 operations), Alembic head check and diff whitespace check.
+Full web lint has 28 pre-existing errors/68 warnings outside this task. Next step:
+reconcile deployed SQL/source on a disposable target before any runtime schema
+requirement change, then disabled deployment and approved joint synthetic gates.
+
+### 20 October 2026 — Admin forward isolation repair and joint acceptance
+
+User authorized completion of the remaining fixes. Recovered the historical 0024
+revision/SQL byte-for-byte, excluding its application tenant-authorization changes;
+added `0025_admin_read_isolation` to restore bounded read DTOs, remove private
+membership-reader grants/policy and shared/worker admin-role inheritance. Required
+schema/head is 0025. Prerequisites now reject shared inheritance/membership access.
+Updated migration graph/preservation tests and allowed disposable PG18 selection
+(default remains PG17); no configured URLs are accepted by those fixtures.
+
+Docker Desktop was started. Admin/security/migration suites: 29 passed on PG17 and
+29 on PG18, each with one existing deprecation warning. Focused backend
+admin/architecture/runtime/startup suite:28passed. Backend Ruff and contracts pass.
+Verified deployed Neon function bodies against known sources, created a full PG18
+verify-full dump encrypted under a Windows-DPAPI-protected key, checked decryption
+and archive catalog, then applied only 0024→0025 through Alembic on the configured
+shared database. Both runtime identities validate; API prerequisites pass; worker
+admin-function EXECUTE is denied. No shared business/account rows were modified.
+
+Real isolated joint browser acceptance passes; it caught a transient NOWAIT session
+lock conflict under parallel overview/system GETs. Added bounded abortable retries
+only for dependency/capacity GET failures, with recovery/bound regressions. Final
+web checks:127unit tests,2fixture browser tests,1real joint browser test,build,
+typecheck and focused ESLint pass. Full web lint retains unrelated existing failures.
+Local API8000/web3001 were launched, then admin reads enabled after acceptance;
+fresh readiness200 and configured service capabilitytrue. No hosted frontend or
+signed-in shared-Neon browser acceptance is claimed. Provider branch classification,
+full backup restore and exhaustive visual matrix remain unverified. Complete files,
+backup paths, image identities, commands and limits are in
+[the updated evidence](admin_readiness_2026-10-20.md).
+
+### 20 October 2026 — Repository cleanup and approved test-case catalog
+
+- The owner approved repository documentation/dead-stub cleanup, browser contract/workflow repairs, README improvements and the existing approved synthetic case catalog. Broad skill removal, deployment submission, and unrelated local artifacts were outside scope.
+- Consolidated developer, workflow, architecture, security and deployment navigation. Preserved dated verification reports under `docs/evidence/reports/`, consolidated the QA handoff into `docs/workflows.md`, and retained substantive ADRs, requirements, fixtures, and raw experiments. Removed only the reviewed maintenance files and confirmed unused stubs/dependencies.
+- Updated saved intake and workflow boundaries, removed legacy fake evaluation paths, retained honest failed-read behavior and verified membership roles, cleared browser drafts on scope changes, and used bounded capability-gated admin reads. Updated generated API declarations and Windows PowerShell E2E cleanup.
+- Added four authentic synthetic/provider-off README screenshots and Mermaid diagrams. Added `docs/test-cases.md` as a catalog of the existing 22 approved synthetic cases; no scenario inputs or expected financial outputs were invented. The catalog's reference checks passed before it was added.
+- Checks on the cleanup checkout before integration with the then-current `origin/main`: complete backend suite **839 passed**, one live-provider test deselected; Ruff and generated contracts passed (**134 operations**); frontend lint, typecheck, strict declaration validation and **128 unit tests** passed; local and clean-container builds passed; all **13 Playwright acceptance tests** passed. All 22 reference cases matched; independent reference self-tests reported **0 failures**. The bounded browser load test completed 5,746 requests in 60 seconds with p95 186.83 ms. These results do not validate the subsequent merge or hosted deployment.
+- A follow-up reference-catalog check also matched all 22 cases and reported 0 self-test failures; Markdown links and `git diff --check` passed.
+- Preserved the untracked `.claude/worktrees/`, backend temporary test directories, UI audit workspace and demo-video workspace. The local cleanup commit is `1fc8821`; it was fast-forwarded to local `main`. No force push or hosted acceptance is claimed.
+
+### 20 October 2026 — Main integration verification
+
+- Merged cleanup commit `1fc8821` with current `origin/main`, keeping the current split workflow: opening cash is saved under Cash & Financing, and order data is entered through the Manual Order Form.
+- Repaired the three browser tests that still assumed the retired combined baseline/order screen. They now create the baseline through the persisted Cash & Financing form and reuse a shared manual-order setup helper. This preserves the real API-backed prerequisite instead of mocking it.
+- Current merged-tree checks passed: backend Ruff; contract export check (134 operations); full backend suite (**828 passed, 2 skipped**); frontend typecheck; frontend unit suite (**138 passed**); production build; reference calculator (**22 cases, 0 problems**) and self-test (**0 failures**). Frontend lint completes with **0 errors and 62 pre-existing warnings**.
+- The first isolated browser run exercised the new build and found only the stale test selectors. The selector repair typechecks and lint passes, but a confirmation rerun could not start because the local Docker Desktop Linux engine stopped after cleanup (`dockerDesktopLinuxEngine` pipe absent). No hosted or deployment acceptance is claimed; rerun `scripts/run-e2e.ps1` once Docker is running to confirm all browser paths.
