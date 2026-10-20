@@ -1,11 +1,11 @@
 # OrderFit frontend (Next.js standalone output)
 
-FROM node:22-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-FROM node:22-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 # NEXT_PUBLIC_* values are inlined into the browser bundle at build time,
 # so the API URL must be the address the BROWSER uses, not the compose service name.
@@ -18,7 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
